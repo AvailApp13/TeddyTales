@@ -32,3 +32,29 @@ flutter:
   uses-material-design: true
   assets:
     - assets/rive/
+
+  fonts:
+    # Семейство обязано называться буквально «Roboto».
+    #
+    # Веб-движок Flutter сверяет имена семейств в FontManifest.json со строкой
+    # 'Roboto' (lib/web_ui/.../canvaskit/fonts.dart) и, не найдя её, безусловно
+    # качает woff2 с fonts.gstatic.com — независимо от того, какой fontFamily
+    # стоит в теме. Без сети шрифт не приходит, и приложение рисуется вообще
+    # без текста: экран есть, букв нет.
+    #
+    # Файлы взяты из кэша самого Flutter — это тот же дизайн, который движок и
+    # собирался скачать, поэтому метрики и вёрстка не меняются. Лицензия
+    # Apache 2.0 лежит рядом, её нужно сохранять при распространении.
+    #
+    # Кириллицу покрывают полностью, китайского в них нет — для локали zh
+    # (КП 16.1) нужен отдельный CJK-шрифт, см. docs/fonts.md.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Roboto-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
