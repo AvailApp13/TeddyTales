@@ -60,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
   /// **ЗАГЛУШКА.** Рост и вес — часть карточки рождения (КП 2.2), но их
   /// определяет сервер при рождении вместе с полом и знаком (КП 2.4, 2.5).
   /// Значения взяты из каталога TeddyTales®: «Карманный мишка Фортуна, 15 см».
-  /// Когда карточка начнёт приходить с бэкенда, обе строки уедут в [PetProfile].
+  /// Когда карточка начнёт приходить с бэкенда, обе строки уедут в `PetProfile`.
   static const String _heightStub = '15 см';
   static const String _weightStub = '180 г';
 
@@ -147,10 +147,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
                         const _SectionTitle('История стадий · КП 14.1'),
-                        _StageTimeline(
-                          history: history,
-                          current: state.stage,
-                        ),
+                        _StageTimeline(history: history, current: state.stage),
 
                         const _SectionTitle('Разделы'),
                         _LinkTile(
@@ -359,8 +356,6 @@ class _InfoRows extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -374,44 +369,53 @@ class _InfoRows extends StatelessWidget {
           // Dart схлопывает в один объект, и сравнение «это последняя строка?»
           // по значению однажды соврало бы.
           for (var i = 0; i < rows.length; i++) ...[
-            Builder(
-              builder: (context) {
-                final row = rows[i];
-
-                return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    row.label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      row.value,
-                      textAlign: TextAlign.right,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  if (row.isStub) ...[
-                    const SizedBox(width: 5),
-                    const _StubBadge(),
-                  ],
-                ],
-              ),
-            ),
+            _InfoRowTile(row: rows[i]),
             // Разделителя после последней строки нет — иначе он читался бы как
             // обрезанная снизу карточка.
-            if (row != rows.last)
+            if (i != rows.length - 1)
               const Divider(height: 1, thickness: 1, color: AppColors.outline),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Отрисовка одной строки карточки.
+class _InfoRowTile extends StatelessWidget {
+  const _InfoRowTile({required this.row});
+
+  final _InfoRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: Row(
+        // Выравнивание по базовой линии: подпись и значение разного веса и
+        // размера, по центру они бы «плавали» относительно друг друга.
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            row.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              row.value,
+              textAlign: TextAlign.right,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (row.isStub) ...[const SizedBox(width: 5), const _StubBadge()],
         ],
       ),
     );
