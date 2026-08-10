@@ -93,7 +93,31 @@ def load_registry(generated: Path) -> tuple[dict[int, str], dict[int, str]]:
                     fields[keys[name]] = ret.group(1)
             pending = []
 
+    load_registry.property_keys = keys
     return fields, types
+
+
+def property_key(name: str) -> int:
+    """Номер свойства по имени вида `ArtboardBase::widthPropertyKey`.
+
+    Работает после [load_registry]: номера свойств не константы формата,
+    а сгенерированные значения, и брать их надо из той же версии рантайма,
+    которой собрано приложение.
+    """
+    keys = getattr(load_registry, 'property_keys', None)
+    if keys is None:
+        raise SystemExit('Сначала вызовите load_registry')
+    if name not in keys:
+        raise SystemExit(f'В этой версии Rive нет свойства {name}')
+    return keys[name]
+
+
+def type_key(types: dict[int, str], name: str) -> int:
+    """Номер типа объекта по имени класса, например `Artboard`."""
+    for key, class_name in types.items():
+        if class_name == name:
+            return key
+    raise SystemExit(f'В этой версии Rive нет типа {name}')
 
 
 class Reader:
@@ -121,6 +145,31 @@ class Reader:
         # старое значение `at` до вызова и теряет байты длины.
         length = self.varuint()
         self.at += length
+
+
+def value_at(data: bytes, field: str, at: int):
+    """Читает значение свойства по смещению, которое вернул [parse]."""
+    if field in VARUINT_FIELDS:
+        reader = Reader(data)
+        reader.at = at
+        return reader.varuint()
+    if field in BLOB_FIELDS:
+        reader = Reader(data)
+        reader.at = at
+        length = reader.varuint()
+        raw = data[reader.at:reader.at + length]
+        return raw.decode('utf-8', 'replace') if field == 'String' else raw
+    if field == 'Double':
+        return struct.unpack_from('<f', data, at)[0]
+    return struct.unpack_from('<I', data, at)[0]
+
+
+def prop(data: bytes, props: list, key: int):
+    """Значение свойства с ключом [key] или None, если его нет."""
+    for prop_key, field, at in props:
+        if prop_key == key:
+            return value_at(data, field, at)
+    return None
 
 
 def parse(data: bytes, fields: dict[int, str]) -> list[tuple[int, list]]:
