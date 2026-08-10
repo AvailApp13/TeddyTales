@@ -25,7 +25,10 @@ abstract final class BearRigSpec {
   /// Нужен, чтобы до прихода `bear_main.riv` убедиться, что живо всё
   /// остальное: загрузка файла, выбор артборда и машины, откат на объекты по
   /// умолчанию, рендер и реакция на касания.
-  static const String demoAssetPath = 'assets/rive/demo_bunny.riv';
+  static const String demoAssetPath = 'assets/rive/demo_monster.riv';
+
+  /// Второй демонстрационный файл — интерактивный кролик.
+  static const String demoBunnyAssetPath = 'assets/rive/demo_bunny.riv';
 
   /// Сцена рождения — отдельный артборд и отдельный файл (раздел 7.8).
   /// В основной State Machine не входит, проигрывается один раз при старте

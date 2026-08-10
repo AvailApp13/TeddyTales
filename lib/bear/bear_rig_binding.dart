@@ -27,16 +27,20 @@ class BearRigBinding implements BearRigSink {
     required _BooleanChannel isWalking,
     required Map<String, _TriggerChannel> triggers,
     required StateMachine stateMachine,
+    required ViewModelInstance? viewModelInstance,
   }) : _numbers = numbers,
        _isWalking = isWalking,
        _triggers = triggers,
-       _stateMachine = stateMachine;
+       _stateMachine = stateMachine,
+       _viewModelInstance = viewModelInstance;
 
   /// Собирает биндинг поверх созданного рантаймом контроллера.
   factory BearRigBinding.attach(RiveWidgetController controller) {
     final stateMachine = controller.stateMachine;
+    final viewModel = _tryDataBind(controller);
 
     return BearRigBinding._(
+      viewModelInstance: viewModel,
       numbers: <String, _NumberChannel>{
         for (final name in const [
           BearRigSpec.stage,
@@ -66,6 +70,18 @@ class BearRigBinding implements BearRigSink {
   final _BooleanChannel _isWalking;
   final Map<String, _TriggerChannel> _triggers;
   final StateMachine _stateMachine;
+
+  /// View model instance артборда, если он там есть.
+  ///
+  /// Нашим контрактом он не предусмотрен — раздел 8.1 ТЗ аниматора требует
+  /// управлять персонажем только через входы. Но привязку всё равно делаем:
+  /// в риге она может обслуживать внутреннюю механику, не связанную с
+  /// приложением, — например кликабельные области и реакции на них, которые
+  /// State Machine читает из своей же модели. Без привязки такие места молча
+  /// перестают работать: анимация играет, а нажатия ни к чему не приводят.
+  ///
+  /// Создан здесь — значит, освобождается тоже здесь.
+  final ViewModelInstance? _viewModelInstance;
 
   bool _disposed = false;
 
@@ -124,6 +140,23 @@ class BearRigBinding implements BearRigSink {
       trigger.dispose();
     }
     _triggers.clear();
+    _viewModelInstance?.dispose();
+  }
+}
+
+/// Пробует привязать view model instance артборда.
+///
+/// Возвращает `null`, если его нет: для рига, собранного строго на входах, это
+/// норма, а не ошибка.
+ViewModelInstance? _tryDataBind(RiveWidgetController controller) {
+  try {
+    return controller.dataBind(DataBind.auto());
+  } on RiveException catch (error) {
+    if (kDebugMode) {
+      debugPrint('[TeddyTales] View model не привязан ($error) — это нормально, '
+          'если риг работает только на входах State Machine.');
+    }
+    return null;
   }
 }
 
