@@ -4,10 +4,13 @@ import 'dart:math';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
+import 'bear_action.dart';
+import 'bear_initiative.dart';
 import 'bear_rig_sink.dart';
 import 'bear_rig_spec.dart';
 import 'bear_state.dart';
 import 'bear_stats.dart';
+import 'bear_trait_tracker.dart';
 
 /// Контроллер мишки — единственная точка, через которую игровая логика
 /// приложения общается с персонажем.
@@ -23,10 +26,26 @@ class BearController extends ChangeNotifier {
   BearController({
     BearState initialState = const BearState(),
     BearDecayConfig decay = const BearDecayConfig(),
+    BearTraitTracker? traitTracker,
+    this.initiativePolicy = const BearInitiativePolicy(),
+    this.autoTrait = true,
     Random? random,
   }) : _state = initialState,
        _decay = decay,
+       traitTracker = traitTracker ?? BearTraitTracker(),
        _random = random ?? Random();
+
+  /// Накопитель действий, из которых формируется характер (КП 7.3).
+  final BearTraitTracker traitTracker;
+
+  /// Правило пузыря инициативы (КП 3.4).
+  final BearInitiativePolicy initiativePolicy;
+
+  /// Применять ли характер, посчитанный из действий, автоматически.
+  ///
+  /// Выключить, если характер приходит с сервера и клиент только показывает
+  /// результат.
+  final bool autoTrait;
 
   BearState _state;
   BearDecayConfig _decay;
@@ -52,6 +71,14 @@ class BearController extends ChangeNotifier {
   bool get isRigAttached => _rig != null;
   bool get isDecayRunning => _decayTimer != null;
 
+  /// Что питомец хочет предложить прямо сейчас, или `null`, если поводов нет
+  /// (КП 3.4). Как часто показывать пузырь — [initiativeCooldown].
+  BearInitiative? get initiative => initiativePolicy.propose(_state);
+
+  /// Пауза между пузырями инициативы — зависит от характера (КП 7.4).
+  Duration get initiativeCooldown =>
+      initiativePolicy.cooldownFor(_state.trait);
+
   // --- Связь с ригом ------------------------------------------------------
 
   /// Подключает риг и сразу заливает в него текущее состояние, чтобы мишка не
@@ -70,6 +97,7 @@ class BearController extends ChangeNotifier {
   void feedBear({double amount = 35}) {
     _update(_state.copyWith(stats: stats.copyWith(food: stats.food + amount)));
     _fire(BearRigSpec.trgEat, varied: true);
+    recordAction(BearAction.feed);
   }
 
   /// Умыть. `act_wash`, стадии 2–5.
@@ -78,6 +106,7 @@ class BearController extends ChangeNotifier {
       _state.copyWith(stats: stats.copyWith(hygiene: stats.hygiene + amount)),
     );
     _fire(BearRigSpec.trgWash);
+    recordAction(BearAction.wash);
   }
 
   /// Уложить спать. `act_sleep` — укладывается и засыпает (фаза сна зациклена).
@@ -89,21 +118,27 @@ class BearController extends ChangeNotifier {
       ),
     );
     _fire(BearRigSpec.trgSleep);
+    recordAction(BearAction.sleep);
   }
 
   /// Разбудить. `act_wake`.
-  void wakeBear() => _fire(BearRigSpec.trgWake);
+  void wakeBear() {
+    _fire(BearRigSpec.trgWake);
+    recordAction(BearAction.wake);
+  }
 
   /// Поиграть. `act_play`, стадии 2–5.
   void playWithBear({double amount = 30}) {
     _update(_state.copyWith(stats: stats.copyWith(play: stats.play + amount)));
     _fire(BearRigSpec.trgPlay);
+    recordAction(BearAction.play);
   }
 
   /// Погладить — касание экрана. `act_pet`, два варианта (7.6).
   void petBear({double amount = 20}) {
     _update(_state.copyWith(stats: stats.copyWith(love: stats.love + amount)));
     _fire(BearRigSpec.trgPet, varied: true);
+    recordAction(BearAction.pet);
   }
 
   // --- Эмоциональные акценты (раздел 7.7) ---------------------------------
@@ -158,6 +193,24 @@ class BearController extends ChangeNotifier {
   /// Заменяет состояние целиком — например, при загрузке прогресса с сервера
   /// (КП 1.4).
   void restoreState(BearState state) => _update(state);
+
+  // --- Формирование характера (КП 7.3) ------------------------------------
+
+  /// Записывает действие в историю, из которой считается характер.
+  ///
+  /// Действия ухода контроллер записывает сам. Снаружи метод нужен модулям,
+  /// которые тоже влияют на характер, но живут отдельно: обучение (КП 9),
+  /// гардероб (10.6), редактор комнаты (10.7).
+  ///
+  /// При [autoTrait] характер применяется сразу, как только накопится
+  /// достаточно данных.
+  void recordAction(BearAction action, {DateTime? at}) {
+    traitTracker.record(action, at: at);
+    if (!autoTrait) return;
+
+    final resolved = traitTracker.resolve();
+    if (resolved != null) _update(_state.copyWith(trait: resolved));
+  }
 
   // --- Затухание показателей ----------------------------------------------
 

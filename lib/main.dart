@@ -44,6 +44,7 @@ class BearDevScreen extends StatefulWidget {
 
 class _BearDevScreenState extends State<BearDevScreen> {
   late final BearController _bear = BearController()..startDecay();
+  BearLanguage _language = BearLanguage.ru;
 
   @override
   void dispose() {
@@ -51,19 +52,63 @@ class _BearDevScreenState extends State<BearDevScreen> {
     super.dispose();
   }
 
+  void _openBirthScene() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => BirthSceneView(
+          language: _language,
+          onFinished: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('TeddyTales — риг мишки')),
+      appBar: AppBar(
+        title: const Text('TeddyTales — риг мишки'),
+        actions: [
+          IconButton(
+            tooltip: 'Сцена рождения',
+            onPressed: _openBirthScene,
+            icon: const Icon(Icons.nights_stay_outlined),
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          Expanded(flex: 3, child: BearView(controller: _bear)),
+          Expanded(
+            flex: 3,
+            child: Stack(
+              children: [
+                Positioned.fill(child: BearView(controller: _bear)),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 12,
+                  child: AnimatedBuilder(
+                    animation: _bear,
+                    builder: (context, _) => _SpeechBubble(
+                      controller: _bear,
+                      language: _language,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Divider(height: 1),
           Expanded(
             flex: 4,
             child: AnimatedBuilder(
               animation: _bear,
-              builder: (context, _) => _DevPanel(controller: _bear),
+              builder: (context, _) => _DevPanel(
+                controller: _bear,
+                language: _language,
+                onLanguageChanged: (value) =>
+                    setState(() => _language = value),
+              ),
             ),
           ),
         ],
@@ -72,11 +117,71 @@ class _BearDevScreenState extends State<BearDevScreen> {
   }
 }
 
-/// Панель отладки: показатели ухода, входы State Machine и триггеры.
-class _DevPanel extends StatelessWidget {
-  const _DevPanel({required this.controller});
+/// Пузырь инициативы и реплика питомца (КП 3.4, 13.3).
+///
+/// В дев-панели реплика берётся первой из контекста, чтобы не мигала на каждой
+/// перерисовке. В приложении её нужно выбирать случайно и держать до смены
+/// контекста.
+class _SpeechBubble extends StatelessWidget {
+  const _SpeechBubble({required this.controller, required this.language});
 
   final BearController controller;
+  final BearLanguage language;
+
+  @override
+  Widget build(BuildContext context) {
+    final initiative = controller.initiative;
+    final context0 = switch (initiative?.action) {
+      BearAction.play => BearPhraseContext.invitePlay,
+      BearAction.learn => BearPhraseContext.inviteLearn,
+      BearAction.feed => BearPhraseContext.hungry,
+      BearAction.sleep => BearPhraseContext.sleepy,
+      BearAction.wash => BearPhraseContext.dirty,
+      BearAction.pet => BearPhraseContext.sad,
+      _ => BearPhrases.contextForMood(controller.state.mood),
+    };
+
+    final phrase = BearPhrases.forContext(context0).first;
+    final theme = Theme.of(context);
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(phrase.text(language), style: theme.textTheme.bodyMedium),
+            if (initiative != null)
+              Text(
+                'инициатива: ${initiative.action.name} '
+                '(${initiative.reason.name}), '
+                'раз в ${controller.initiativeCooldown.inMinutes} мин',
+                style: theme.textTheme.labelSmall,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Панель отладки: показатели ухода, входы State Machine и триггеры.
+class _DevPanel extends StatelessWidget {
+  const _DevPanel({
+    required this.controller,
+    required this.language,
+    required this.onLanguageChanged,
+  });
+
+  final BearController controller;
+  final BearLanguage language;
+  final ValueChanged<BearLanguage> onLanguageChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +191,23 @@ class _DevPanel extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
+        Row(
+          children: [
+            const Text('Язык'),
+            const SizedBox(width: 12),
+            SegmentedButton<BearLanguage>(
+              segments: const [
+                ButtonSegment(value: BearLanguage.ru, label: Text('RU')),
+                ButtonSegment(value: BearLanguage.en, label: Text('EN')),
+                ButtonSegment(value: BearLanguage.zh, label: Text('中文')),
+              ],
+              selected: {language},
+              onSelectionChanged: (s) => onLanguageChanged(s.first),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
         _SectionTitle('Показатели ухода → вход mood: ${state.mood.name}'),
         _StatSlider(
           label: 'Еда',
@@ -192,7 +314,10 @@ class _DevPanel extends StatelessWidget {
         ),
 
         const SizedBox(height: 16),
-        _SectionTitle('Характер'),
+        _SectionTitle(
+          'Характер — накоплено действий: '
+          '${controller.traitTracker.history.length}',
+        ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
