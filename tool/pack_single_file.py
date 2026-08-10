@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import gzip
 import json
 import sys
 from pathlib import Path
@@ -46,11 +47,13 @@ ASSET_FILES = [
     'assets/AssetManifest.bin',
     'assets/AssetManifest.bin.json',
     'assets/fonts/MaterialIcons-Regular.otf',
-    # Только два начертания из четырёх: в один файл всё не влезает, а Light и
-    # Medium в интерфейсе почти не встречаются — Flutter подберёт ближайшее.
-    # В самом приложении остаются все четыре, это ограничение только упаковки.
+    'assets/assets/fonts/Roboto-Light.ttf',
     'assets/assets/fonts/Roboto-Regular.ttf',
+    'assets/assets/fonts/Roboto-Medium.ttf',
     'assets/assets/fonts/Roboto-Bold.ttf',
+    # Без него эмодзи-заглушки предметов превращаются в квадраты: движок за
+    # недостающими глифами ходит в сеть, а её здесь нет.
+    'assets/assets/fonts/NotoColorEmoji-Subset.ttf',
     # Шейдеры при старте не грузятся, но дёргаются на первом ripple и стоят копейки.
     'assets/shaders/ink_sparkle.frag',
     'assets/shaders/stretch_effect.frag',
@@ -108,7 +111,18 @@ def patch_canvaskit(src: str) -> str:
 
 
 def read_b64(path: Path) -> str:
-    return base64.b64encode(path.read_bytes()).decode('ascii')
+    """Сжимает файл и кодирует в base64.
+
+    Base64 раздувает данные на треть, поэтому без сжатия страница не влезает
+    в лимит. Распаковкой занимается сам браузер — DecompressionStream есть
+    во всех актуальных.
+    """
+    return gz_b64(path.read_bytes())
+
+
+def gz_b64(data: bytes) -> str:
+    packed = gzip.compress(data, 9)
+    return base64.b64encode(packed).decode('ascii')
 
 
 def guard(name: str, text: str) -> str:
@@ -132,7 +146,9 @@ def _trim_font_manifest(assets: dict[str, dict[str, str]]) -> None:
     if entry is None:
         return
 
-    manifest = json.loads(base64.b64decode(entry['b64']).decode('utf-8'))
+    manifest = json.loads(
+        gzip.decompress(base64.b64decode(entry['b64'])).decode('utf-8')
+    )
     for family in manifest:
         family['fonts'] = [
             f for f in family['fonts']
@@ -140,10 +156,7 @@ def _trim_font_manifest(assets: dict[str, dict[str, str]]) -> None:
         ]
 
     trimmed = json.dumps(manifest, ensure_ascii=False).encode('utf-8')
-    assets[key] = {
-        'b64': base64.b64encode(trimmed).decode('ascii'),
-        'mime': 'application/json',
-    }
+    assets[key] = {'b64': gz_b64(trimmed), 'mime': 'application/json'}
 
 
 def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> None:
@@ -254,28 +267,36 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
     return out;
   }};
 
+  // Всё вложенное лежит сжатым: без этого страница не влезает в лимит размера.
+  // Распаковывает сам браузер, штатным DecompressionStream.
+  const inflate = async (b64) => {{
+    const packed = decode(b64);
+    const stream = new Blob([packed]).stream()
+      .pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }};
+  window.__teddyInflate = inflate;
+
   const cache = new Map();
-  const get = (key) => {{
-    if (!cache.has(key)) cache.set(key, decode(ASSETS[key].b64));
+  const get = async (key) => {{
+    if (!cache.has(key)) cache.set(key, await inflate(ASSETS[key].b64));
     return cache.get(key);
   }};
 
   // Приложение не знает, что сервера нет: все его запросы обслуживаются отсюда.
   // Наружу не выпускаем ничего — иначе на странице со строгой политикой
   // безопасности запрос либо упадёт с ошибкой, либо повиснет.
-  window.fetch = (input, init) => {{
+  window.fetch = async (input, init) => {{
     const url = typeof input === 'string' ? input : (input && input.url) || '';
 
-    if (ROBOTO_KEY && url.includes(ROBOTO_MARKER)) {{
-      const bytes = get(ROBOTO_KEY);
-      return Promise.resolve(new Response(bytes, {{
-        status: 200, headers: {{ 'Content-Type': 'font/ttf' }},
-      }}));
-    }}
+    const serve = async (key, mime) => new Response(await get(key), {{
+      status: 200,
+      headers: {{ 'Content-Type': mime || ASSETS[key].mime }},
+    }});
 
-    const serve = (key) => Promise.resolve(new Response(get(key), {{
-      status: 200, headers: {{ 'Content-Type': ASSETS[key].mime }},
-    }}));
+    if (ROBOTO_KEY && url.includes(ROBOTO_MARKER)) {{
+      return serve(ROBOTO_KEY, 'font/ttf');
+    }}
 
     for (const key of Object.keys(ASSETS)) {{
       if (url.endsWith(key)) return serve(key);
@@ -291,9 +312,8 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
       }}
     }}
 
-    // Например, .riv персонажа: в демо-сборке его нет, и приложение штатно
-    // показывает заглушку вместо мишки.
-    return Promise.resolve(new Response(null, {{ status: 404 }}));
+    // Неизвестный адрес: наружу не выпускаем, отвечаем сами.
+    return new Response(null, {{ status: 404 }});
   }};
 
   // Приложение ищет _flutter.loader, отдаёт ему инициализатор и останавливается.
@@ -327,7 +347,7 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
     maybeStart();
   }};
 
-  window.__teddyWasm = decode({wasm_b64!r});
+  window.__teddyWasm = inflate({wasm_b64!r});
 }})();
 </script>
 
@@ -338,15 +358,20 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
 
 <!-- S3. Инициализация CanvasKit из памяти, без единого запроса. -->
 <script>
-CanvasKitInit({{
-  instantiateWasm: (imports, callback) => {{
-    // Именно так, а не через compileStreaming: у нас нет ответа с
-    // Content-Type: application/wasm, и потоковая компиляция бы его потребовала.
-    WebAssembly.instantiate(window.__teddyWasm, imports)
-      .then((r) => callback(r.instance, r.module));
-    return {{}};
-  }},
-}}).then((ck) => window.__teddyCanvasKitReady(ck));
+(async () => {{
+  const wasm = await window.__teddyWasm;
+  const ck = await CanvasKitInit({{
+    instantiateWasm: (imports, callback) => {{
+      // Именно так, а не через compileStreaming: у нас нет ответа с
+      // Content-Type: application/wasm, и потоковая компиляция бы его
+      // потребовала.
+      WebAssembly.instantiate(wasm, imports)
+        .then((r) => callback(r.instance, r.module));
+      return {{}};
+    }},
+  }});
+  window.__teddyCanvasKitReady(ck);
+}})();
 </script>
 
 <!-- S3b. Рантайм анимации Rive: определяет window.RiveNative заранее. -->

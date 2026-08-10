@@ -4,6 +4,7 @@ import 'package:rive/rive.dart' show RiveNative;
 
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
+import 'game/game_state.dart';
 import 'game/pet_profile.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
@@ -56,6 +57,10 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// Значения повторяют шапку макета: имя «Мой малыш», возраст «3 месяца
   /// 12 дней», 1250 монет. В бою профиль приезжает с сервера вместе с
   /// прогрессом (КП 1.4, 2.2).
+  late final GameState _game = GameState(bear: _bear, profile: _profile);
+
+  BearLanguage _language = BearLanguage.ru;
+
   late final PetProfile _profile = PetProfile(
     name: 'Мой малыш',
     birthAt: DateTime.now().subtract(
@@ -67,6 +72,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   @override
   void dispose() {
+    _game.dispose();
     _bear.dispose();
     super.dispose();
   }
@@ -79,8 +85,10 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       theme: AppTheme.light(),
       home: HomeScreen(
         controller: _bear,
-        profile: _profile,
+        game: _game,
         calendar: _calendar,
+        language: _language,
+        onLanguageChanged: (value) => setState(() => _language = value),
         // ВРЕМЕННО: настоящего рига ещё нет, поэтому показываем сторонний
         // демонстрационный файл — он подтверждает, что пайплайн загрузки,
         // выбора State Machine и рендера работает. Убрать, как только придёт

@@ -47,10 +47,15 @@ abstract final class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
-      textTheme: base.textTheme.apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
-      ),
+      // fontFamilyFallback нужен явно: движок ищет недостающие глифы в сети,
+      // и без запасного семейства эмодзи офлайн превращаются в квадраты.
+      textTheme: base.textTheme
+          .apply(
+            bodyColor: AppColors.textPrimary,
+            displayColor: AppColors.textPrimary,
+            fontFamily: 'Roboto',
+          )
+          .apply(fontFamilyFallback: const ['NotoColorEmoji']),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
