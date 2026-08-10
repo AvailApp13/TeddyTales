@@ -1,10 +1,14 @@
 # assets/rive
 
-Сюда кладутся экспортированные из Rive Editor файлы (пункт 10 ТЗ аниматора).
+Сюда кладутся экспортированные из Rive Editor файлы.
+
+Требования к ригу — `docs/tz-animator-v2.md` (редакция 2, растровый
+конвейер). Старый `docs/tz-animator.md` действует только в части, которую
+редакция 2 не отменяет; таблица отличий — в её разделе 0.
 
 | Файл | Что это | Константа в коде |
 | --- | --- | --- |
-| `bear_main.riv` | основной персонаж: артборд и State Machine `bear_main`, 108 клипов | `BearRigSpec.assetPath` |
+| `bear_slow.riv` / `bear_joy.riv` | основной персонаж по героям: артборд и State Machine `bear_main`, 85 клипов + 6 служебных таймлайнов | `BearRigSpec.assetPath` |
 | `birth_scene.riv` | сцена рождения, отдельный артборд, вне основной State Machine | `BearRigSpec.birthSceneAssetPath` |
 | `demo_monster.riv` | временная заглушка, сторонний файл — см. ниже | `BearRigSpec.demoAssetPath` |
 
