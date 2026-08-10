@@ -774,10 +774,8 @@ class _RecipeTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    // Форма «шага» — как в принятом прототипе. При 5–6 шагах
-                    // она неверна; правку текста согласовать с Заказчиком.
                     Text(
-                      '$stars · ${recipe.steps.length} шага',
+                      '$stars · ${_plural(recipe.steps.length, 'шаг', 'шага', 'шагов')}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -916,4 +914,19 @@ class _Note extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Русские числительные: 1 шаг, 2 шага, 5 шагов, 11 шагов, 21 шаг.
+///
+/// Своя реализация, а не `intl`: ради одной строки тянуть пакет и заводить
+/// локали незачем. Когда дойдём до локализации по КП 16.1, склонения переедут
+/// туда вместе с остальными текстами.
+String _plural(int n, String one, String few, String many) {
+  final mod100 = n % 100;
+  final mod10 = n % 10;
+
+  if (mod100 >= 11 && mod100 <= 14) return '$n $many';
+  if (mod10 == 1) return '$n $one';
+  if (mod10 >= 2 && mod10 <= 4) return '$n $few';
+  return '$n $many';
 }

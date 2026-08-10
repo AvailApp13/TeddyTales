@@ -316,6 +316,36 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
     return new Response(null, {{ status: 404 }});
   }};
 
+  // Загрузчик Rive вставляет в документ <script src=...> и ждёт от него события
+  // load. Настоящий скрипт уже вшит в страницу ниже, поэтому вставляемый тег
+  // нужен только ради события — но на площадке со строгой политикой
+  // безопасности он не выполнится, события не будет, и загрузчик зависнет
+  // навсегда. Поэтому такой тег в документ не попадает вовсе: мы сразу шлём
+  // ему load.
+  const STUB_PREFIX = 'data:text/javascript';
+
+  const isStub = (node) =>
+    node && node.tagName === 'SCRIPT' &&
+    typeof node.src === 'string' && node.src.startsWith(STUB_PREFIX);
+
+  const fireLoad = (node) =>
+    queueMicrotask(() => node.dispatchEvent(new Event('load')));
+
+  const origAppend = Element.prototype.append;
+  Element.prototype.append = function (...nodes) {{
+    const rest = nodes.filter((n) => (isStub(n) ? (fireLoad(n), false) : true));
+    if (rest.length) origAppend.apply(this, rest);
+  }};
+
+  const origAppendChild = Node.prototype.appendChild;
+  Node.prototype.appendChild = function (node) {{
+    if (isStub(node)) {{
+      fireLoad(node);
+      return node;
+    }}
+    return origAppendChild.call(this, node);
+  }};
+
   // Приложение ищет _flutter.loader, отдаёт ему инициализатор и останавливается.
   // Мы стартуем движок сами — когда CanvasKit будет готов.
   let initializer = null;
