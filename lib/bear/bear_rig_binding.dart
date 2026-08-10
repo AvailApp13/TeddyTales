@@ -45,6 +45,8 @@ class BearRigBinding implements BearRigSink {
           BearRigSpec.variant,
           BearRigSpec.skin,
           BearRigSpec.outfitId,
+          BearRigSpec.topId,
+          BearRigSpec.bottomId,
           BearRigSpec.headwearId,
           BearRigSpec.shoesId,
           BearRigSpec.accessoryId,
@@ -78,6 +80,8 @@ class BearRigBinding implements BearRigSink {
 
     final outfit = state.outfit;
     _setNumber(BearRigSpec.outfitId, outfit.outfitId);
+    _setNumber(BearRigSpec.topId, outfit.topId);
+    _setNumber(BearRigSpec.bottomId, outfit.bottomId);
     _setNumber(BearRigSpec.headwearId, outfit.headwearId);
     _setNumber(BearRigSpec.shoesId, outfit.shoesId);
     _setNumber(BearRigSpec.accessoryId, outfit.accessoryId);

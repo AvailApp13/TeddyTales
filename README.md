@@ -31,6 +31,18 @@ lib/
     bear_rig_sink.dart          интерфейс «передать в риг»
     bear_rig_binding.dart       единственный файл, знающий про API Rive
     bear_view.dart              виджет: загрузка .riv, подключение рига
+  game/
+    game_calendar.dart          игровой возраст: «3 месяца 12 дней»
+    pet_profile.dart            карточка питомца: имя, рождение, монеты
+    app_section.dart            разделы навигации и замки по стадии
+  screens/
+    home_screen.dart            главный экран по макету
+    dev_screen.dart             пульт: все входы State Machine руками
+  widgets/
+    pet_header.dart             шапка: имя, возраст, монеты
+    care_stats_panel.dart       пять показателей ухода
+    pet_speech_bubble.dart      пузырь инициативы и реплики
+    app_bottom_nav.dart         нижняя навигация
   theme/
     app_colors.dart             палитра, снятая с макета
     app_theme.dart              тема, радиусы, отступы
@@ -40,6 +52,8 @@ docs/
   rig-naming.md                 чеклист приёмки рига
   runtime-api-note.md           расхождения документов и как они разрешены
   design-review.md              сверка макета с КП: что подтвердилось, что разошлось
+  heroes-and-catalog.md         SLOW и JOY, каталог TeddyTales®
+  rig-change-request.md         запрос аниматору: раздельные верх и низ
   tz-rive-animation.md          устаревший черновик, оставлен ради MCP-раздела
 test/                           тесты логики (без нативного рантайма)
 ```
@@ -137,7 +151,7 @@ dart run rive_native:setup --verbose --clean --platform <macos|ios|android|...>
 flutter test
 ```
 
-91 тест: показатели и затухание, свёртка в `mood`, контроллер, соответствие
+95 тестов: показатели и затухание, свёртка в `mood`, контроллер, соответствие
 значений входов разделу 8.1, формирование характера, инициатива, комплектность
 реплик и субтитров. Тестов рига нет — без реального `.riv` тестировать нечего.
 

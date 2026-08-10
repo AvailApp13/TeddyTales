@@ -260,17 +260,66 @@ void main() {
   });
 
   group('BearController — одежда', () {
-    test('слоты независимы и зажимаются по диапазонам раздела 8.1', () {
+    test('слоты зажимаются по диапазонам раздела 8.1', () {
       final controller = BearController();
 
       controller.setOutfit(
-        const BearOutfit().copyWith(outfitId: 99, headwearId: 2),
+        BearOutfit().copyWith(outfitId: 99, headwearId: 2),
       );
 
       expect(controller.state.outfit.outfitId, BearOutfit.maxOutfitId);
       expect(controller.state.outfit.headwearId, 2);
       expect(controller.state.outfit.shoesId, 0);
       expect(controller.state.outfit.accessoryId, 0);
+    });
+
+    test('комплект снимает верх и низ', () {
+      final controller = BearController();
+
+      controller.setOutfit(BearOutfit(topId: 2, bottomId: 3));
+      expect(controller.state.outfit.topId, 2);
+      expect(controller.state.outfit.bottomId, 3);
+
+      controller.setOutfit(controller.state.outfit.copyWith(outfitId: 5));
+
+      expect(controller.state.outfit.outfitId, 5);
+      expect(controller.state.outfit.topId, 0);
+      expect(controller.state.outfit.bottomId, 0);
+      expect(controller.state.outfit.wearsFullOutfit, isTrue);
+    });
+
+    test('верх снимает комплект, низ остаётся снятым', () {
+      final controller = BearController();
+      controller.setOutfit(BearOutfit(outfitId: 5));
+
+      controller.setOutfit(controller.state.outfit.copyWith(topId: 2));
+
+      expect(controller.state.outfit.outfitId, 0);
+      expect(controller.state.outfit.topId, 2);
+      expect(controller.state.outfit.bottomId, 0);
+      expect(controller.state.outfit.wearsFullOutfit, isFalse);
+    });
+
+    test('головной убор, обувь и аксессуар от комплекта не зависят', () {
+      final controller = BearController();
+
+      controller.setOutfit(
+        BearOutfit(topId: 1, headwearId: 2, shoesId: 1, accessoryId: 3),
+      );
+      controller.setOutfit(controller.state.outfit.copyWith(outfitId: 4));
+
+      final outfit = controller.state.outfit;
+      expect(outfit.headwearId, 2);
+      expect(outfit.shoesId, 1);
+      expect(outfit.accessoryId, 3);
+    });
+
+    test('несочетаемое сочетание нельзя собрать даже напрямую', () {
+      final outfit = BearOutfit(outfitId: 3, topId: 7, bottomId: 7);
+
+      expect(outfit.outfitId, 3);
+      expect(outfit.topId, 0);
+      expect(outfit.bottomId, 0);
     });
   });
 
@@ -340,8 +389,8 @@ void main() {
       controller.attachRig(rig);
       rig.applied.clear();
 
-      const restored = BearState(
-        stats: BearCareStats(food: 12, love: 88),
+      final restored = BearState(
+        stats: const BearCareStats(food: 12, love: 88),
         stage: BearStage.growing,
         trait: BearTrait.reserved,
         skin: BearSkin.girl,

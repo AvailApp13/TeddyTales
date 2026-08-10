@@ -2,21 +2,64 @@ import 'bear_mood_policy.dart';
 import 'bear_rig_spec.dart';
 import 'bear_stats.dart';
 
-/// Надетые вещи — четыре независимых слота (раздел 5.2 ТЗ аниматора).
+/// Надетые вещи.
 ///
-/// Значения — идентификаторы предметов внутри рига, диапазоны из раздела 8.1.
-/// Это не идентификаторы товаров магазина: сопоставление «товар → id в риге»
-/// живёт в каталоге и в границы этого модуля не входит.
+/// Значения — идентификаторы предметов внутри рига. Это не идентификаторы
+/// товаров магазина: сопоставление «товар → id в риге» живёт в каталоге и в
+/// границы этого модуля не входит.
+///
+/// Слотов шесть, а не четыре, как в разделе 5.2 ТЗ аниматора: верх и низ
+/// разведены по решению от 10.08.2026. В каталоге TeddyTales® они и правда
+/// продаются порознь — есть «Outfit Set» целиком, а есть отдельные вещи и
+/// обувь, — и на фотографии JOY зелёная кофта надета с розовой юбкой.
+/// Запрос на изменение рига — `docs/rig-change-request.md`.
+///
+/// Комплект и раздельные вещи взаимно исключаются: надет комплект — верх и низ
+/// обнуляются, надет верх или низ — обнуляется комплект. Иначе риг получил бы
+/// сочетание, которого в анимации нет: свитер поверх готового наряда.
 class BearOutfit {
-  const BearOutfit({
-    this.outfitId = 0,
-    this.headwearId = 0,
-    this.shoesId = 0,
-    this.accessoryId = 0,
+  const BearOutfit._({
+    required this.outfitId,
+    required this.topId,
+    required this.bottomId,
+    required this.headwearId,
+    required this.shoesId,
+    required this.accessoryId,
   });
 
-  /// Комплект, 0–8 (0 — без одежды).
+  factory BearOutfit({
+    int outfitId = 0,
+    int topId = 0,
+    int bottomId = 0,
+    int headwearId = 0,
+    int shoesId = 0,
+    int accessoryId = 0,
+  }) {
+    final outfit = outfitId.clamp(0, maxOutfitId);
+    final top = topId.clamp(0, maxTopId);
+    final bottom = bottomId.clamp(0, maxBottomId);
+
+    // Комплект главнее: если задан и он, и раздельные вещи, побеждает комплект.
+    final wearsOutfit = outfit != 0;
+
+    return BearOutfit._(
+      outfitId: outfit,
+      topId: wearsOutfit ? 0 : top,
+      bottomId: wearsOutfit ? 0 : bottom,
+      headwearId: headwearId.clamp(0, maxHeadwearId),
+      shoesId: shoesId.clamp(0, maxShoesId),
+      accessoryId: accessoryId.clamp(0, maxAccessoryId),
+    );
+  }
+
+  /// Комплект целиком, 0–8 (0 — комплект не надет).
   final int outfitId;
+
+  /// Верх, 0–8 (0 — без верха). Игнорируется, если надет [outfitId].
+  final int topId;
+
+  /// Низ, 0–8 (0 — без низа). Игнорируется, если надет [outfitId].
+  final int bottomId;
 
   /// Головной убор, 0–3 (0 — без головного убора).
   final int headwearId;
@@ -27,24 +70,51 @@ class BearOutfit {
   /// Аксессуар, 0–3 (0 — без аксессуара).
   final int accessoryId;
 
-  static const BearOutfit none = BearOutfit();
+  static const BearOutfit none = BearOutfit._(
+    outfitId: 0,
+    topId: 0,
+    bottomId: 0,
+    headwearId: 0,
+    shoesId: 0,
+    accessoryId: 0,
+  );
 
+  /// Диапазоны комплектов, головных уборов, обуви и аксессуаров — из раздела
+  /// 8.1 ТЗ аниматора и КП 10.5.
   static const int maxOutfitId = 8;
   static const int maxHeadwearId = 3;
   static const int maxShoesId = 2;
   static const int maxAccessoryId = 3;
 
+  /// Сколько будет верхов и низов, ещё не решено: КП 10.5 считает одежду
+  /// комплектами. До пересчёта каталога (КП 15.3) взят тот же потолок, что и у
+  /// комплектов.
+  static const int maxTopId = 8;
+  static const int maxBottomId = 8;
+
+  /// Надет ли комплект целиком.
+  bool get wearsFullOutfit => outfitId != 0;
+
   BearOutfit copyWith({
     int? outfitId,
+    int? topId,
+    int? bottomId,
     int? headwearId,
     int? shoesId,
     int? accessoryId,
   }) {
+    // Надеваем верх или низ — комплект снимается, и наоборот.
+    final putsOnSeparate =
+        (topId != null && topId != 0) || (bottomId != null && bottomId != 0);
+    final putsOnOutfit = outfitId != null && outfitId != 0;
+
     return BearOutfit(
-      outfitId: (outfitId ?? this.outfitId).clamp(0, maxOutfitId),
-      headwearId: (headwearId ?? this.headwearId).clamp(0, maxHeadwearId),
-      shoesId: (shoesId ?? this.shoesId).clamp(0, maxShoesId),
-      accessoryId: (accessoryId ?? this.accessoryId).clamp(0, maxAccessoryId),
+      outfitId: putsOnSeparate ? 0 : (outfitId ?? this.outfitId),
+      topId: putsOnOutfit ? 0 : (topId ?? this.topId),
+      bottomId: putsOnOutfit ? 0 : (bottomId ?? this.bottomId),
+      headwearId: headwearId ?? this.headwearId,
+      shoesId: shoesId ?? this.shoesId,
+      accessoryId: accessoryId ?? this.accessoryId,
     );
   }
 
@@ -52,18 +122,26 @@ class BearOutfit {
   bool operator ==(Object other) =>
       other is BearOutfit &&
       other.outfitId == outfitId &&
+      other.topId == topId &&
+      other.bottomId == bottomId &&
       other.headwearId == headwearId &&
       other.shoesId == shoesId &&
       other.accessoryId == accessoryId;
 
   @override
-  int get hashCode =>
-      Object.hash(outfitId, headwearId, shoesId, accessoryId);
+  int get hashCode => Object.hash(
+    outfitId,
+    topId,
+    bottomId,
+    headwearId,
+    shoesId,
+    accessoryId,
+  );
 
   @override
   String toString() =>
-      'BearOutfit(outfit: $outfitId, headwear: $headwearId, '
-      'shoes: $shoesId, accessory: $accessoryId)';
+      'BearOutfit(outfit: $outfitId, top: $topId, bottom: $bottomId, '
+      'headwear: $headwearId, shoes: $shoesId, accessory: $accessoryId)';
 }
 
 /// Полное состояние персонажа — всё, что уезжает в риг, плюс показатели ухода,
