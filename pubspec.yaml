@@ -1,0 +1,34 @@
+name: teddy_tales
+description: "TeddyTales — анимированный персонаж-медведь (Rive + Flutter)."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Источник времени для decay-таймера. Нужен именно он, а не DateTime.now():
+  # fakeAsync подменяет `clock`, и таймер можно прокручивать в тестах.
+  clock: ^1.1.2
+
+  # Официальный рантайм rive-app/rive-flutter (НЕ rive-flutter-legacy).
+  # Версии >= 0.14 тянут за собой rive_native — нативные библиотеки
+  # скачиваются автоматически на `flutter run` / `flutter build`.
+  rive: ^0.14.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # Нужен, чтобы гонять decay-таймер без ожидания реального времени.
+  # Начиная с 1.3.0 подменяет и Stopwatch, а не только Timer.
+  fake_async: ^1.3.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/rive/
