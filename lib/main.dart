@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' show RiveNative;
 
 import 'bear/bear.dart';
+import 'theme/app_theme.dart';
 
 /// Дев-харнесс для рига мишки.
 ///
@@ -26,10 +27,7 @@ class TeddyTalesDevApp extends StatelessWidget {
     return MaterialApp(
       title: 'TeddyTales — риг мишки',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF9CBF9C),
-        brightness: Brightness.light,
-      ),
+      theme: AppTheme.light(),
       home: const BearDevScreen(),
     );
   }

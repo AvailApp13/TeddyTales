@@ -31,11 +31,15 @@ lib/
     bear_rig_sink.dart          интерфейс «передать в риг»
     bear_rig_binding.dart       единственный файл, знающий про API Rive
     bear_view.dart              виджет: загрузка .riv, подключение рига
+  theme/
+    app_colors.dart             палитра, снятая с макета
+    app_theme.dart              тема, радиусы, отступы
 docs/
   tz-animator.md                ТЗ для аниматора — контракт с ригом
   tz-app.md                     состав приложения из КП
   rig-naming.md                 чеклист приёмки рига
   runtime-api-note.md           расхождения документов и как они разрешены
+  design-review.md              сверка макета с КП: что подтвердилось, что разошлось
   tz-rive-animation.md          устаревший черновик, оставлен ради MCP-раздела
 test/                           тесты логики (без нативного рантайма)
 ```
