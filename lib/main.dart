@@ -81,6 +81,11 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         controller: _bear,
         profile: _profile,
         calendar: _calendar,
+        // ВРЕМЕННО: настоящего рига ещё нет, поэтому показываем сторонний
+        // демонстрационный файл — он подтверждает, что пайплайн загрузки,
+        // выбора State Machine и рендера работает. Убрать, как только придёт
+        // bear_main.riv.
+        riveAssetPath: BearRigSpec.demoAssetPath,
         // Дев-панель со всеми входами State Machine — только в отладке.
         onOpenDevPanel: kDebugMode
             ? (context) => Navigator.of(context).push(

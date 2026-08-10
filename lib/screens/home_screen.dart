@@ -27,6 +27,7 @@ class HomeScreen extends StatefulWidget {
     this.calendar = const GameCalendar(),
     this.language = BearLanguage.ru,
     this.onOpenDevPanel,
+    this.riveAssetPath = BearRigSpec.assetPath,
   });
 
   final BearController controller;
@@ -37,6 +38,10 @@ class HomeScreen extends StatefulWidget {
   /// Открыть дев-панель со всеми входами State Machine. `null` в релизе —
   /// кнопки просто нет.
   final void Function(BuildContext context)? onOpenDevPanel;
+
+  /// Какой `.riv` показывать. Пока настоящий риг не собран, сюда можно
+  /// подставить [BearRigSpec.demoAssetPath] и убедиться, что пайплайн живой.
+  final String riveAssetPath;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -110,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: widget.controller,
                       language: widget.language,
                       onAcceptInitiative: _runAction,
+                      riveAssetPath: widget.riveAssetPath,
                     ),
                   ),
                   const SizedBox(height: AppDimens.gap),
@@ -161,11 +167,13 @@ class _RoomScene extends StatelessWidget {
     required this.controller,
     required this.language,
     required this.onAcceptInitiative,
+    required this.riveAssetPath,
   });
 
   final BearController controller;
   final BearLanguage language;
   final ValueChanged<BearAction> onAcceptInitiative;
+  final String riveAssetPath;
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +190,9 @@ class _RoomScene extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          Positioned.fill(child: BearView(controller: controller)),
+          Positioned.fill(
+            child: BearView(controller: controller, assetPath: riveAssetPath),
+          ),
           Positioned(
             left: 16,
             right: 16,

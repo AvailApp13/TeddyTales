@@ -46,14 +46,25 @@ ASSET_FILES = [
     'assets/AssetManifest.bin',
     'assets/AssetManifest.bin.json',
     'assets/fonts/MaterialIcons-Regular.otf',
-    'assets/assets/fonts/Roboto-Light.ttf',
+    # Только два начертания из четырёх: в один файл всё не влезает, а Light и
+    # Medium в интерфейсе почти не встречаются — Flutter подберёт ближайшее.
+    # В самом приложении остаются все четыре, это ограничение только упаковки.
     'assets/assets/fonts/Roboto-Regular.ttf',
-    'assets/assets/fonts/Roboto-Medium.ttf',
     'assets/assets/fonts/Roboto-Bold.ttf',
     # Шейдеры при старте не грузятся, но дёргаются на первом ripple и стоят копейки.
     'assets/shaders/ink_sparkle.frag',
     'assets/shaders/stretch_effect.frag',
 ]
+
+# Рантайм анимации Rive. Подключается отдельно от остального: его загрузчик
+# вставляет <script src=...>, а такой тег ни перехватить, ни выполнить из
+# памяти нельзя. Обходим так: сам скрипт вшиваем в страницу обычным тегом, а
+# загрузчику подсовываем пустую data:-заглушку, которая мгновенно «загрузится».
+# К этому моменту window.RiveNative уже определён, и загрузчик его подхватит.
+# Чтобы это сработало, приложение должно быть собрано с
+#     --dart-define=RIVE_NATIVE_WASM_HOST=data:text/javascript,//#
+RIVE_JS = 'wasm/rive_native.js'
+RIVE_WASM = 'wasm/rive_native.wasm'
 
 MIME = {
     '.json': 'application/json',
@@ -110,6 +121,31 @@ def guard(name: str, text: str) -> str:
     return text
 
 
+def _trim_font_manifest(assets: dict[str, dict[str, str]]) -> None:
+    """Выбрасывает из манифеста начертания, которых нет в упаковке.
+
+    Иначе движок пойдёт за ними по сети, получит от шима 404 и будет ругаться
+    в консоль на каждом запуске.
+    """
+    key = 'assets/FontManifest.json'
+    entry = assets.get(key)
+    if entry is None:
+        return
+
+    manifest = json.loads(base64.b64decode(entry['b64']).decode('utf-8'))
+    for family in manifest:
+        family['fonts'] = [
+            f for f in family['fonts']
+            if 'assets/' + f['asset'] in assets or f['asset'] in assets
+        ]
+
+    trimmed = json.dumps(manifest, ensure_ascii=False).encode('utf-8')
+    assets[key] = {
+        'b64': base64.b64encode(trimmed).decode('ascii'),
+        'mime': 'application/json',
+    }
+
+
 def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> None:
     canvaskit_js = build_dir / 'canvaskit' / 'canvaskit.js'
     canvaskit_wasm = build_dir / 'canvaskit' / 'canvaskit.wasm'
@@ -141,6 +177,28 @@ def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> Non
         }
         print(f'  {rel} — {f.stat().st_size} Б')
 
+    # Риг персонажа: если он уже лежит в сборке, кладём внутрь — тогда в
+    # упакованном файле персонаж будет живой, а не заглушкой.
+    for rig in sorted((build_dir / 'assets' / 'assets' / 'rive').glob('*.riv')):
+        rel = str(rig.relative_to(build_dir))
+        assets[rel] = {'b64': read_b64(rig), 'mime': MIME['.riv']}
+        print(f'  {rel} — {rig.stat().st_size} Б')
+
+    rive_js_file = build_dir / RIVE_JS
+    rive_wasm_file = build_dir / RIVE_WASM
+    rive_js = ''
+    if rive_js_file.exists() and rive_wasm_file.exists():
+        rive_js = guard('rive_native.js', rive_js_file.read_text(encoding='utf-8'))
+        assets[RIVE_WASM] = {
+            'b64': read_b64(rive_wasm_file),
+            'mime': 'application/wasm',
+        }
+        print(f'  {RIVE_WASM} — {rive_wasm_file.stat().st_size} Б')
+    else:
+        print('  рантайм Rive не найден — персонаж будет заглушкой')
+
+    _trim_font_manifest(assets)
+
     roboto = assets.get('assets/assets/fonts/Roboto-Regular.ttf')
 
     template = FRAGMENT_TEMPLATE if fragment else PAGE_TEMPLATE
@@ -151,6 +209,7 @@ def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> Non
         roboto_key='assets/assets/fonts/Roboto-Regular.ttf' if roboto else '',
         wasm_b64=wasm_b64,
         canvaskit_js=ck_src,
+        rive_js=rive_js,
         main_js=main_src,
     )
 
@@ -214,12 +273,21 @@ PAGE_TEMPLATE = '''<!DOCTYPE html>
       }}));
     }}
 
+    const serve = (key) => Promise.resolve(new Response(get(key), {{
+      status: 200, headers: {{ 'Content-Type': ASSETS[key].mime }},
+    }}));
+
     for (const key of Object.keys(ASSETS)) {{
-      if (url.endsWith(key)) {{
-        const bytes = get(key);
-        return Promise.resolve(new Response(bytes, {{
-          status: 200, headers: {{ 'Content-Type': ASSETS[key].mime }},
-        }}));
+      if (url.endsWith(key)) return serve(key);
+    }}
+
+    // Вшитый скрипт не знает своего каталога, поэтому просит соседний файл без
+    // пути — например rive_native.wasm вместо wasm/rive_native.wasm.
+    // Досопоставляем по имени файла.
+    const base = url.split('?')[0].split('#')[0].split('/').pop();
+    if (base) {{
+      for (const key of Object.keys(ASSETS)) {{
+        if (key.split('/').pop() === base) return serve(key);
       }}
     }}
 
@@ -279,6 +347,11 @@ CanvasKitInit({{
     return {{}};
   }},
 }}).then((ck) => window.__teddyCanvasKitReady(ck));
+</script>
+
+<!-- S3b. Рантайм анимации Rive: определяет window.RiveNative заранее. -->
+<script>
+{rive_js}
 </script>
 
 <!-- S4. Само приложение. -->

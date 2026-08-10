@@ -22,6 +22,7 @@ class BearView extends StatefulWidget {
     this.fit = Fit.contain,
     this.alignment = Alignment.center,
     this.tapToReact = true,
+    this.assetPath = BearRigSpec.assetPath,
   });
 
   /// Рендерер по умолчанию.
@@ -49,13 +50,20 @@ class BearView extends StatefulWidget {
   /// Rive Listeners — иначе тап отработает дважды.
   final bool tapToReact;
 
+  /// Какой `.riv` показывать. По умолчанию — риг персонажа.
+  ///
+  /// Отдельный параметр нужен, чтобы можно было подсунуть демонстрационный
+  /// файл ([BearRigSpec.demoAssetPath]) и проверить пайплайн, пока настоящий
+  /// риг не собран.
+  final String assetPath;
+
   @override
   State<BearView> createState() => _BearViewState();
 }
 
 class _BearViewState extends State<BearView> {
   late final FileLoader _fileLoader = FileLoader.fromAsset(
-    BearRigSpec.assetPath,
+    widget.assetPath,
     riveFactory: BearView.riveFactory,
   );
   BearRigBinding? _binding;
