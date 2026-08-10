@@ -28,6 +28,11 @@ pubspec.lock
 # linux/
 # windows/
 
+# Скрипты из tool/ импортируются друг другом как модули — Python кладёт рядом
+# байт-код, в репозитории он не нужен.
+__pycache__/
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db
