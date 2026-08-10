@@ -1,110 +1,148 @@
-import 'bear_rig_spec.dart';
-
-/// Игровые характеристики мишки.
+/// Пять показателей ухода, 0–100 (КП 6.1 и панель показателей на главном
+/// экране, КП 3.2).
 ///
-/// ЗАГЛУШКА до ответа по открытому вопросу 8.1 ТЗ: точный список характеристик
-/// (голод? настроение? чистота? энергия?) и их decay-таймеры не подтверждены.
-/// Здесь только то, что явно названо в разделе 5 ТЗ: `hunger`, `mood`,
-/// `growthStage`. Механика пренебрежения/болезни (вопрос 8.2) не реализована —
-/// не выдумываем.
+/// Это состояние приложения, а не рига: в риг они не уезжают. Из них
+/// выводится единственный вход `mood` — см. `bear_mood_policy.dart`.
 ///
-/// Класс намеренно не знает про Rive и Flutter: его можно гонять в тестах без
-/// нативных библиотек `rive_native`.
-class BearStats {
-  const BearStats({
-    this.hunger = 50,
-    this.mood = 50,
-    this.growthStage = BearGrowthStage.cub,
+/// Класс не знает про Rive и Flutter: тестируется без нативных библиотек.
+class BearCareStats {
+  const BearCareStats({
+    this.food = 100,
+    this.hygiene = 100,
+    this.sleep = 100,
+    this.play = 100,
+    this.love = 100,
   });
 
-  /// Голод, 0–100. Больше — сытнее.
-  ///
-  /// Направление шкалы выбрано так, чтобы 0 = «плохо», 100 = «хорошо» — как у
-  /// [mood]. В риге это удобно: обе величины можно скармливать blend state
-  /// одинаково. Если в редакторе окажется наоборот («100 = голоден»),
-  /// инвертировать нужно здесь, а не в биндинге.
-  final double hunger;
+  /// Еда. Низкое значение → `mood = hungry`.
+  final double food;
 
-  /// Настроение, 0–100. Управляет blend state выражения морды (раздел 5 ТЗ).
-  final double mood;
+  /// Гигиена. Низкое значение → `mood = dirty` (только стадии 3–5).
+  final double hygiene;
 
-  /// Стадия роста.
-  final BearGrowthStage growthStage;
+  /// Сон. Низкое значение → `mood = sleepy`.
+  final double sleep;
+
+  /// Игра. Своего idle-состояния нет — влияет на общий фон (happy/sad).
+  final double play;
+
+  /// Любовь. Своего idle-состояния нет — влияет на общий фон (happy/sad).
+  final double love;
 
   static const double min = 0;
   static const double max = 100;
 
-  BearStats copyWith({
-    double? hunger,
-    double? mood,
-    BearGrowthStage? growthStage,
+  /// Все пять значений в порядке панели показателей.
+  List<double> get all => <double>[food, hygiene, sleep, play, love];
+
+  /// Средний уровень ухода. По нему выбирается `happy` / `sad`.
+  double get average => all.reduce((a, b) => a + b) / all.length;
+
+  BearCareStats copyWith({
+    double? food,
+    double? hygiene,
+    double? sleep,
+    double? play,
+    double? love,
   }) {
-    return BearStats(
-      hunger: clamp(hunger ?? this.hunger),
-      mood: clamp(mood ?? this.mood),
-      growthStage: growthStage ?? this.growthStage,
+    return BearCareStats(
+      food: clamp(food ?? this.food),
+      hygiene: clamp(hygiene ?? this.hygiene),
+      sleep: clamp(sleep ?? this.sleep),
+      play: clamp(play ?? this.play),
+      love: clamp(love ?? this.love),
     );
   }
 
-  /// Приводит значение характеристики в допустимый диапазон 0–100.
   static double clamp(double value) => value.clamp(min, max);
 
   @override
   bool operator ==(Object other) =>
-      other is BearStats &&
-      other.hunger == hunger &&
-      other.mood == mood &&
-      other.growthStage == growthStage;
+      other is BearCareStats &&
+      other.food == food &&
+      other.hygiene == hygiene &&
+      other.sleep == sleep &&
+      other.play == play &&
+      other.love == love;
 
   @override
-  int get hashCode => Object.hash(hunger, mood, growthStage);
+  int get hashCode => Object.hash(food, hygiene, sleep, play, love);
 
   @override
   String toString() =>
-      'BearStats(hunger: $hunger, mood: $mood, growthStage: ${growthStage.name})';
+      'BearCareStats(food: $food, hygiene: $hygiene, sleep: $sleep, '
+      'play: $play, love: $love)';
 }
 
-/// Скорость затухания характеристик, единиц шкалы в секунду.
+/// Скорость падения показателей, единиц шкалы в секунду.
 ///
-/// ЗАГЛУШКА: конкретные таймеры — открытый вопрос 8.1 ТЗ. Значения по умолчанию
-/// подобраны только чтобы decay был заметен в дев-сборке (полная шкала примерно
-/// за час), а не как продуктовый баланс.
+/// ЗАГЛУШКА. По КП 15.4 скорости показателей настраиваются из панели
+/// управления и хранятся на сервере, а по КП 1.5 время игры серверное —
+/// перевод часов на телефоне не должен ускорять игру. Значения по умолчанию
+/// подобраны только чтобы видеть движение в дев-сборке.
 ///
-/// Отдельный вопрос — **где** живёт decay. Раздел 5 ТЗ описывает его как
-/// Luau-скрипт внутри Rive (паттерн Sasquatch). Если решим оставить его там,
-/// приложение не должно считать его второй раз: передавайте
-/// [BearDecayConfig.disabled] в [BearController].
+/// Когда появится backend (открытый вопрос: стек не подтверждён), этот объект
+/// должен приезжать с сервера, а не жить в коде.
 class BearDecayConfig {
   const BearDecayConfig({
-    this.hungerPerSecond = 100 / 3600,
-    this.moodPerSecond = 100 / 5400,
+    this.foodPerSecond = 100 / 14400, // полная шкала за 4 часа
+    this.hygienePerSecond = 100 / 28800,
+    this.sleepPerSecond = 100 / 21600,
+    this.playPerSecond = 100 / 28800,
+    this.lovePerSecond = 100 / 36000,
+    this.floor = 20,
   });
 
-  /// Decay выключен — значения меняются только явными вызовами.
-  /// Использовать, если затухание считает Luau-скрипт внутри рига.
-  const BearDecayConfig.disabled() : hungerPerSecond = 0, moodPerSecond = 0;
+  /// Затухание выключено — значения меняются только явными действиями.
+  const BearDecayConfig.disabled()
+    : foodPerSecond = 0,
+      hygienePerSecond = 0,
+      sleepPerSecond = 0,
+      playPerSecond = 0,
+      lovePerSecond = 0,
+      floor = 0;
 
-  final double hungerPerSecond;
-  final double moodPerSecond;
+  final double foodPerSecond;
+  final double hygienePerSecond;
+  final double sleepPerSecond;
+  final double playPerSecond;
+  final double lovePerSecond;
 
-  bool get isEnabled => hungerPerSecond != 0 || moodPerSecond != 0;
-
-  /// Применяет затухание за [elapsed] к [stats].
+  /// Безопасный предел (КП 6.3): при долгом отсутствии показатели не падают
+  /// ниже этого уровня. Болезней и смерти в игре нет (КП 6.2), поэтому дно
+  /// именно мягкое.
   ///
-  /// Настроение дополнительно проседает, когда мишка голоден: связь голода и
-  /// настроения в ТЗ не описана, но без неё `hunger` ни на что не влияет.
-  /// Помечено как допущение — снести одной строкой, если Руслан скажет иначе.
-  BearStats apply(BearStats stats, Duration elapsed) {
+  /// Значение 20 — плейсхолдер, настраивается с сервера (КП 15.4).
+  final double floor;
+
+  bool get isEnabled =>
+      foodPerSecond != 0 ||
+      hygienePerSecond != 0 ||
+      sleepPerSecond != 0 ||
+      playPerSecond != 0 ||
+      lovePerSecond != 0;
+
+  /// Применяет затухание за [elapsed].
+  ///
+  /// Показатель, уже опустившийся ниже [floor] (например, его специально
+  /// уронили в дев-панели), не поднимается — предел только не даёт падать
+  /// дальше.
+  BearCareStats apply(BearCareStats stats, Duration elapsed) {
     if (!isEnabled || elapsed <= Duration.zero) return stats;
 
     final seconds = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
-    final hunger = stats.hunger - hungerPerSecond * seconds;
 
-    // ДОПУЩЕНИЕ (не из ТЗ): голодный мишка грустит быстрее.
-    final isHungry = hunger < 25;
-    final moodRate = isHungry ? moodPerSecond * 2 : moodPerSecond;
-    final mood = stats.mood - moodRate * seconds;
+    double decayed(double value, double rate) {
+      final next = value - rate * seconds;
+      return next < floor ? (value < floor ? value : floor) : next;
+    }
 
-    return stats.copyWith(hunger: hunger, mood: mood);
+    return stats.copyWith(
+      food: decayed(stats.food, foodPerSecond),
+      hygiene: decayed(stats.hygiene, hygienePerSecond),
+      sleep: decayed(stats.sleep, sleepPerSecond),
+      play: decayed(stats.play, playPerSecond),
+      love: decayed(stats.love, lovePerSecond),
+    );
   }
 }

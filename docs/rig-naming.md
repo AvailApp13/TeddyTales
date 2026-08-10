@@ -1,91 +1,91 @@
 # Конвенция именования рига — чеклист
 
-Источник: раздел 3 ТЗ (`docs/tz-rive-animation.md`). Этот файл — рабочий чеклист
-для художника и для сборки рига в Rive Editor.
+Источник: раздел 4 «ТЗ для аниматора» (`docs/tz-animator.md`). Этот файл —
+рабочий чеклист для приёмки первого этапа.
+
+> Ранняя редакция чеклиста строилась по черновому PDF, где имена были другими
+> (`eyebrow_left`, `eyelid_top_left`, `forearm`, `hand`, `finger_1_nail`,
+> `ctrl_*`). Актуальны имена ниже.
 
 ## Общее
 
-- Naming convention в файле Rive: `Workspace → Admin → Options → Naming convention → snake_case`.
-- Художник поставляет **раздельные слои**, не готовую анимацию.
-- Каждая перечисленная часть — отдельный слой с именем из списка (или максимально
-  близким аналогом).
+- Именование: латиница, нижний регистр, **snake_case**. В редакторе включить
+  `Workspace → Admin → Options → Naming convention → snake_case`.
+- Каждая перечисленная часть — **отдельный объект** со своим именем.
+- Растровые вставки не допускаются: вся графика — вектор внутри Rive.
+- Холст 1024 × 1024 px, персонаж по центру, запас по краям 5%, sRGB, 60 fps.
 
-## Слои от художника
+## Голова
 
-### Тело
+- [ ] `head` — основа
+- [ ] `ear_left` / `ear_right` — с внутренней частью отдельным объектом
+- [ ] `muzzle` — мордочка (светлое пятно)
+- [ ] `nose`
+- [ ] `mouth` — с возможностью деформации: улыбка, открыт, грусть, «о»
+- [ ] `eye_left` / `eye_right` — глаз целиком
+- [ ] `pupil_left` / `pupil_right` — **обязательно отдельно**, для взгляда и слежения
+- [ ] `eyelid_left` / `eyelid_right` — **обязательно отдельно**, для моргания и сонного состояния
+- [ ] `brow_left` / `brow_right` — для эмоций
+- [ ] `blush_left` / `blush_right` — румянец с управляемой прозрачностью
 
-- [ ] `body`, `body_base`
-- [ ] `head`, `head_shadow`
-- [ ] `forearm`, `forearm_light` (левая/правая)
-- [ ] `hand`, `hand_light` (левая/правая)
-- [ ] `finger_1_nail`, `finger_2_nail`, `finger_3_nail`
+## Тело
 
-### Уши
+- [ ] `body`
+- [ ] `arm_left_upper` / `arm_left_lower`, `arm_right_upper` / `arm_right_lower`
+- [ ] `paw_left` / `paw_right` — кисти отдельно
+- [ ] `leg_left_upper` / `leg_left_lower`, `leg_right_upper` / `leg_right_lower`
+- [ ] `foot_left` / `foot_right` — стопы отдельно
+- [ ] `tail` — если предусмотрен брендом
 
-- [ ] `ear_left` / `ear_right`
-- [ ] `ear_in_left` / `ear_in_right` — внутренняя часть, отдельный слой
-- [ ] `ear_light_left` / `ear_light_right` — блик, отдельный слой
+## Порядок слоёв
 
-### Лицо
-
-- [ ] `eye_left` / `eye_right`
-- [ ] `pupil_left` / `pupil_right`
-- [ ] `pupil_light_left` / `pupil_light_right`
-- [ ] `eyebrow_left` / `eyebrow_right`
-- [ ] `eyelid_top_left` / `eyelid_top_right`
-- [ ] `eyelid_bottom_left` / `eyelid_bottom_right`
-- [ ] `nose`, `mouth`, `teeth`, `tongue`, `lips`
-
-### Аксессуары
-
-- [ ] `scarf_1` / `scarf_2` / `scarf_3` — посегментно, под физику покачивания
-      (нужна ли физика на MVP — открытый вопрос 8.5)
-
-## Иерархия костей (собирается в редакторе вручную)
+Строго снизу вверх:
 
 ```
-root
-└── root_body
-    ├── body
-    ├── body_base
-    ├── head
-    └── head_shadow
-root_arm_left  → forearm → forearm_light → hand → hand_light → finger_*_nail
-root_arm_right → forearm → forearm_light → hand → hand_light → finger_*_nail
+дальняя рука → дальняя нога → тело → ближняя нога → ближняя рука
+→ голова → элементы лица → слои одежды
 ```
 
-Bone rigging делается руками: MCP не подтверждён как надёжно расставляющий кости
-(раздел 4.4 ТЗ). MCP подключается уже поверх готового рига — для View Model,
-State Machine и поведенческой логики.
+Одежда всегда выше соответствующей части тела и никогда не вплавлена в неё.
 
-## Control-узлы
+## Одежда — 4 слота
 
-Невидимые «рычаги» для управления группами частей:
+- [ ] `outfit` — комплект, крепится к `body`
+- [ ] `headwear` — головной убор, крепится к `head`
+- [ ] `shoes` — обувь, крепится к `foot_left` / `foot_right`
+- [ ] `accessory` — аксессуар
 
-- [ ] `ctrl_face` — общий контроль лица
-- [ ] `ctrl_eyes` — направление взгляда (двигает оба глаза разом)
-- [ ] `ctrl_pupils` — контроль зрачков
-- [ ] `ctrl_mouth` — управление ртом
-- [ ] `ctrl_nose` — управление носом
-- [ ] `ctrl_eyebrow_left` / `ctrl_eyebrow_right`
+Слоты независимы. Mesh одежды привязан к тем же костям, что и тело, — одежда не
+съезжает при движении. На первом этапе достаточно 4 тестовых предметов, по
+одному на слот.
 
-Имена control-узлов продублированы в коде: `BearRigSpec.controlNodes`
-(`lib/bear/bear_rig_spec.dart`). В актуальном рантайме код не дёргает узлы
-напрямую — влияние идёт через State Machine и View Model, — но список нужен для
-сверки рига и как документация контракта.
+## Ограничения (раздел 9 ТЗ)
+
+- [ ] не более 60 костей на персонажа
+- [ ] не более 400 вершин mesh на объект
+- [ ] не более 5 уровней вложенности групп
+- [ ] `.riv` не тяжелее 3 МБ (персонаж) и 4 МБ (сцена рождения)
+- [ ] стабильные 60 fps на iPhone 11 и Android-устройствах 2020 года и новее
 
 ## Связь с кодом
 
-Всё, что код ожидает от `.riv`, собрано в одном файле —
+Всё, что приложение ожидает от `.riv`, собрано в одном файле —
 `lib/bear/bear_rig_spec.dart`:
 
 | В редакторе Rive | Константа |
 | --- | --- |
-| Имя файла экспорта | `BearRigSpec.assetPath` → `assets/rive/bear.riv` |
-| Артборд | `BearRigSpec.artboard` |
-| State Machine | `BearRigSpec.stateMachine` |
-| View Model свойства | `BearRigSpec.hunger` / `mood` / `growthStage` |
-| Триггеры | `BearRigSpec.feedTrigger` / `petTrigger` / `tapTrigger` |
-| Состояния SM | `BearRigSpec.states` |
+| Файл экспорта | `BearRigSpec.assetPath` → `assets/rive/bear_main.riv` |
+| Артборд | `BearRigSpec.artboard` → `bear_main` |
+| State Machine | `BearRigSpec.stateMachine` → `bear_main` |
+| Сцена рождения | `BearRigSpec.birthSceneAssetPath` → `assets/rive/birth_scene.riv` |
+| Number inputs | `stage`, `mood`, `trait`, `variant`, `skin`, `outfit_id`, `headwear_id`, `shoes_id`, `accessory_id` |
+| Boolean input | `is_walking` |
+| Triggers | `BearRigSpec.triggers` — 11 штук |
 
-Если в редакторе имена другие — правится только этот файл.
+Имена частей тела в коде не используются: приложение не трогает узлы напрямую,
+всё идёт через входы State Machine. Чеклист выше нужен для приёмки рига, а не
+для интеграции.
+
+Если в редакторе имена входов разойдутся с контрактом — приложение не упадёт,
+но напишет в дев-лог, какого входа не нашлось. Правится
+`lib/bear/bear_rig_spec.dart`, остальной код не трогается.

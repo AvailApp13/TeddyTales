@@ -1,123 +1,169 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
-import 'bear_rig_spec.dart';
 import 'bear_rig_sink.dart';
+import 'bear_rig_spec.dart';
+import 'bear_state.dart';
 import 'bear_stats.dart';
 
 /// Контроллер мишки — единственная точка, через которую игровая логика
 /// приложения общается с персонажем.
 ///
-/// Структура взята с `teddy_controller.dart` из референса
-/// (`2d-inc/Flare-Flutter/example/teddy`), пункт 6.4 ТЗ: хранение состояния,
-/// реакция на внешние события (`coverEyes()`/`submitPassword()` в референсе →
-/// [feedBear]/[petBear] у нас), передача значений в риг.
+/// Держит состояние ([BearState]) и переводит действия пользователя в команды
+/// рига по контракту раздела 8.1 ТЗ аниматора. Прямых ссылок на узлы рига не
+/// хранит: State Machine сама решает, что двигать, — приложение только
+/// выставляет входы.
 ///
-/// Отличие от референса — контроллер не хранит прямых ссылок на control-узлы
-/// рига. В актуальном рантайме Rive (0.14.x) узлами не управляют из кода:
-/// значения уезжают в View Model / State Machine inputs, а State Machine сама
-/// решает, что двигать. Ссылки на риг спрятаны за [BearRigSink], поэтому сам
-/// контроллер о Rive ничего не знает и тестируется без нативных библиотек.
-///
-/// ЗАГЛУШКА: набор характеристик и величины изменений — плейсхолдеры до ответа
-/// по открытому вопросу 8.1 ТЗ.
+/// Про Rive контроллер не знает: риг спрятан за [BearRigSink], поэтому логика
+/// тестируется без нативных библиотек.
 class BearController extends ChangeNotifier {
   BearController({
-    BearStats initialStats = const BearStats(),
+    BearState initialState = const BearState(),
     BearDecayConfig decay = const BearDecayConfig(),
-  }) : _stats = initialStats,
-       _decay = decay;
+    Random? random,
+  }) : _state = initialState,
+       _decay = decay,
+       _random = random ?? Random();
 
-  BearStats _stats;
+  BearState _state;
   BearDecayConfig _decay;
   BearRigSink? _rig;
   Timer? _decayTimer;
 
   /// Момент последнего тика. Время берётся из `package:clock`, а не из
-  /// `DateTime.now()`/`Stopwatch`: так decay-таймер можно прокручивать в тестах
-  /// через `fakeAsync` — он подменяет и таймеры, и `clock`.
+  /// `DateTime.now()`/`Stopwatch`: так decay-таймер прокручивается в тестах
+  /// через `fakeAsync`.
+  ///
+  /// Отдельно: по КП 1.5 игровое время серверное — перевод часов на телефоне
+  /// не должен ускорять игру. Локальный таймер годится только для сессии;
+  /// отыгрыш «сколько прошло, пока приложение было закрыто» обязан считаться
+  /// на сервере.
   DateTime? _lastTickAt;
 
-  /// Текущие характеристики мишки.
-  BearStats get stats => _stats;
+  final Random _random;
 
-  /// Настройки затухания. См. [BearDecayConfig] про то, где decay должен жить.
+  BearState get state => _state;
+  BearCareStats get stats => _state.stats;
   BearDecayConfig get decay => _decay;
 
-  /// Подключён ли риг. Пока `.riv` не загрузился — `false`, и вызовы
-  /// [feedBear]/[petBear] просто меняют состояние без анимации.
   bool get isRigAttached => _rig != null;
-
-  /// Идёт ли автоматическое затухание.
   bool get isDecayRunning => _decayTimer != null;
 
   // --- Связь с ригом ------------------------------------------------------
 
   /// Подключает риг и сразу заливает в него текущее состояние, чтобы мишка не
-  /// появлялся со значениями по умолчанию из редактора.
-  ///
-  /// Вызывается из [BearView] по `onLoaded`. Повторный вызов заменяет
-  /// предыдущий приёмник.
+  /// появился со значениями по умолчанию из редактора.
   void attachRig(BearRigSink rig) {
     _rig = rig;
-    rig.applyStats(_stats);
+    rig.applyState(_state);
   }
 
-  /// Отключает риг (виджет ушёл с экрана / файл перезагружается).
-  ///
-  /// Владение приёмником остаётся за вызывающей стороной — контроллер его
-  /// не освобождает.
+  /// Отключает риг. Владение приёмником остаётся за вызывающей стороной.
   void detachRig() => _rig = null;
 
-  // --- Внешние события (аналог coverEyes/submitPassword из референса) ------
+  // --- Действия ухода (КП 6.4) --------------------------------------------
 
-  /// Покормить. Поднимает сытость и настроение, дёргает триггер `feed`
-  /// (переход в состояние `eating`).
-  void feedBear({double amount = 25}) {
+  /// Покормить. Раздел 7.2: `act_eat`, два варианта (7.6).
+  void feedBear({double amount = 35}) {
+    _update(_state.copyWith(stats: stats.copyWith(food: stats.food + amount)));
+    _fire(BearRigSpec.trgEat, varied: true);
+  }
+
+  /// Умыть. `act_wash`, стадии 2–5.
+  void washBear({double amount = 40}) {
     _update(
-      _stats.copyWith(hunger: _stats.hunger + amount, mood: _stats.mood + 5),
+      _state.copyWith(stats: stats.copyWith(hygiene: stats.hygiene + amount)),
     );
-    _rig?.fireTrigger(BearRigSpec.feedTrigger);
+    _fire(BearRigSpec.trgWash);
   }
 
-  /// Погладить. Поднимает настроение, дёргает триггер `pet`.
-  void petBear({double amount = 15}) {
-    _update(_stats.copyWith(mood: _stats.mood + amount));
-    _rig?.fireTrigger(BearRigSpec.petTrigger);
+  /// Уложить спать. `act_sleep` — укладывается и засыпает (фаза сна зациклена).
+  void putToSleep({double amount = 50}) {
+    _update(
+      _state.copyWith(
+        stats: stats.copyWith(sleep: stats.sleep + amount),
+        isWalking: false,
+      ),
+    );
+    _fire(BearRigSpec.trgSleep);
   }
 
-  /// Тап по мишке — состояние `tap_reaction`.
-  ///
-  /// По аналогии с примером Sasquatch из раздела 5 ТЗ, где тапы растили
-  /// переменную, а та управляла blend state. Величина прибавки — плейсхолдер.
-  void tapBear({double amount = 3}) {
-    _update(_stats.copyWith(mood: _stats.mood + amount));
-    _rig?.fireTrigger(BearRigSpec.tapTrigger);
+  /// Разбудить. `act_wake`.
+  void wakeBear() => _fire(BearRigSpec.trgWake);
+
+  /// Поиграть. `act_play`, стадии 2–5.
+  void playWithBear({double amount = 30}) {
+    _update(_state.copyWith(stats: stats.copyWith(play: stats.play + amount)));
+    _fire(BearRigSpec.trgPlay);
   }
 
-  // --- Прямая установка значений (для игровой логики и дев-панели) ---------
+  /// Погладить — касание экрана. `act_pet`, два варианта (7.6).
+  void petBear({double amount = 20}) {
+    _update(_state.copyWith(stats: stats.copyWith(love: stats.love + amount)));
+    _fire(BearRigSpec.trgPet, varied: true);
+  }
 
-  void setHunger(double value) => _update(_stats.copyWith(hunger: value));
+  // --- Эмоциональные акценты (раздел 7.7) ---------------------------------
 
-  void setMood(double value) => _update(_stats.copyWith(mood: value));
+  /// Радость — например, после верного ответа в обучении (КП 9.3).
+  void showHappy() => _fire(BearRigSpec.trgEmoHappy);
 
-  void setGrowthStage(BearGrowthStage stage) =>
-      _update(_stats.copyWith(growthStage: stage));
+  void showSad() => _fire(BearRigSpec.trgEmoSad);
 
-  /// Заменяет состояние целиком — например, при загрузке сохранения.
+  void showSurprise() => _fire(BearRigSpec.trgEmoSurprise);
+
+  void showLove() => _fire(BearRigSpec.trgEmoLove);
+
+  // --- Стадии роста -------------------------------------------------------
+
+  /// Переводит мишку на следующую стадию.
   ///
-  /// Источник состояния (локальное хранилище или backend) намеренно не задан:
-  /// бэкенд-стек не подтверждён, открытый вопрос 8.3 ТЗ.
-  void setStats(BearStats stats) => _update(stats);
-
-  // --- Decay --------------------------------------------------------------
-
-  /// Запускает автоматическое затухание с шагом [interval].
+  /// По разделу 8.2 ТЗ аниматора смена стадии идёт только через
+  /// `trg_stage_up`, никогда мгновенно: сначала триггер, и лишь потом новое
+  /// значение `stage`, иначе State Machine перескочит переход взросления.
   ///
-  /// Ничего не делает, если decay выключен ([BearDecayConfig.disabled]) —
-  /// например, когда затухание считает Luau-скрипт внутри рига.
+  /// Когда именно взрослеть — решает сервер (КП 5.6, 5.7: скорость роста
+  /// зависит от общего ухода и настраивается с панели). Контроллер только
+  /// исполняет.
+  ///
+  /// Возвращает `false`, если мишка уже взрослый.
+  bool growUp() {
+    final next = _state.stage.next;
+    if (next == null) return false;
+
+    _fire(BearRigSpec.trgStageUp);
+    _update(_state.copyWith(stage: next));
+    return true;
+  }
+
+  // --- Прямая установка (загрузка сохранения, дев-панель, гардероб) --------
+
+  void setStats(BearCareStats stats) => _update(_state.copyWith(stats: stats));
+
+  void setStage(BearStage stage) => _update(_state.copyWith(stage: stage));
+
+  void setTrait(BearTrait trait) => _update(_state.copyWith(trait: trait));
+
+  void setSkin(BearSkin skin) => _update(_state.copyWith(skin: skin));
+
+  /// Смена образа из гардероба (КП 10.6) — слоты независимы.
+  void setOutfit(BearOutfit outfit) => _update(_state.copyWith(outfit: outfit));
+
+  /// Включает или выключает цикл ходьбы. Для новорождённого игнорируется.
+  void setWalking(bool value) => _update(_state.copyWith(isWalking: value));
+
+  /// Заменяет состояние целиком — например, при загрузке прогресса с сервера
+  /// (КП 1.4).
+  void restoreState(BearState state) => _update(state);
+
+  // --- Затухание показателей ----------------------------------------------
+
+  /// Запускает локальное затухание с шагом [interval].
+  ///
+  /// Ничего не делает при [BearDecayConfig.disabled].
   void startDecay({Duration interval = const Duration(seconds: 1)}) {
     if (!_decay.isEnabled || _decayTimer != null) return;
     _lastTickAt = clock.now();
@@ -137,13 +183,9 @@ class BearController extends ChangeNotifier {
 
   /// Применяет затухание за [elapsed]. Отделено от таймера, чтобы decay можно
   /// было прогонять в тестах без ожидания реального времени.
-  ///
-  /// Считает по фактически прошедшему времени, а не по числу тиков: таймер
-  /// Flutter не гарантирует точный интервал, а в фоне приложение и вовсе
-  /// засыпает.
-  void tick(Duration elapsed) => _update(_decay.apply(_stats, elapsed));
+  void tick(Duration elapsed) =>
+      _update(_state.copyWith(stats: _decay.apply(stats, elapsed)));
 
-  /// Меняет настройки затухания на лету (дев-панель, эксперименты с балансом).
   void setDecayConfig(BearDecayConfig config) {
     _decay = config;
     if (!config.isEnabled) stopDecay();
@@ -151,10 +193,16 @@ class BearController extends ChangeNotifier {
 
   // --- Внутреннее ---------------------------------------------------------
 
-  void _update(BearStats next) {
-    if (next == _stats) return;
-    _stats = next;
-    _rig?.applyStats(next);
+  /// Дёргает триггер. При [varied] заранее выбирает случайный вариант
+  /// анимации — раздел 7.6: повторное действие не должно выглядеть одинаково.
+  void _fire(String trigger, {bool varied = false}) {
+    _rig?.fireTrigger(trigger, variant: varied ? _random.nextInt(2) : null);
+  }
+
+  void _update(BearState next) {
+    if (next == _state) return;
+    _state = next;
+    _rig?.applyState(next);
     notifyListeners();
   }
 

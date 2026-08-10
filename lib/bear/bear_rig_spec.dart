@@ -1,106 +1,203 @@
-/// Контракт между кодом приложения и `.riv`-файлом.
+/// Контракт между приложением и файлом рига.
 ///
-/// Единственное место, где захардкожены имена из Rive Editor. Если в редакторе
-/// артборд, State Machine или свойства View Model названы иначе — правится
-/// только этот файл, остальной код не трогается.
-///
-/// Источник имён: раздел 5 ТЗ (`docs/tz-rive-animation.md`). Набор свойств —
-/// **шаблон, не финал**: точный список характеристик мишки и decay-таймеры это
-/// открытый вопрос 8.1, ответа Руслана ещё нет.
+/// Источник — раздел 8.1 «ТЗ для аниматора» (`docs/tz-animator.md`). Там же
+/// зафиксировано жёстко: «Приложение управляет персонажем только через
+/// перечисленные ниже входы. Никаких других способов запуска анимаций быть не
+/// должно». Поэтому имена ниже — не наше предложение, а согласованный контракт;
+/// менять их можно только вместе с аниматором.
 ///
 /// Файл намеренно не импортирует `package:rive` — чтобы игровая логика и её
-/// тесты не тянули за собой нативный рантайм. Выбор рендерера живёт в
-/// [BearView.riveFactory].
+/// тесты не тянули за собой нативный рантайм.
 abstract final class BearRigSpec {
-  /// Путь к экспортированному ригу. Файла пока нет в репозитории — он появится
-  /// после того, как риг будет собран в редакторе (пункт 9.3 ТЗ).
-  /// До этого [BearView] показывает плейсхолдер вместо падения.
-  static const String assetPath = 'assets/rive/bear.riv';
+  /// Основной риг: артборд `bear_main` + State Machine `bear_main`
+  /// (разделы 8 и 9 ТЗ аниматора).
+  static const String assetPath = 'assets/rive/bear_main.riv';
+  static const String artboard = 'bear_main';
+  static const String stateMachine = 'bear_main';
 
-  /// Имя артборда. `null` — взять артборд по умолчанию.
-  static const String? artboard = null;
+  /// Сцена рождения — отдельный артборд и отдельный файл (раздел 7.8).
+  /// В основной State Machine не входит, проигрывается один раз при старте
+  /// игры. Виджета под неё пока нет: она сдаётся ещё и видеорендером, и как её
+  /// показывать (Rive или mp4) — вопрос к продукту.
+  static const String birthSceneAssetPath = 'assets/rive/birth_scene.riv';
 
-  /// Имя State Machine. Из раздела 6.2 ТЗ.
-  /// Если в файле такой машины нет, [BearView] откатывается на машину
-  /// по умолчанию и пишет предупреждение в лог.
-  static const String stateMachine = 'State Machine 1';
+  // --- Number inputs ------------------------------------------------------
 
-  // --- View Model properties (раздел 5 ТЗ) --------------------------------
-  // Пути указываются через «/» для вложенных view model'ей, например
-  // 'stats/hunger'. Пока плоские.
+  /// Текущая стадия роста, 1–5. См. [BearStage].
+  static const String stage = 'stage';
 
-  /// Голод, 0–100.
-  static const String hunger = 'hunger';
-
-  /// Настроение, 0–100. Управляет blend state выражения морды.
+  /// Код состояния, 0–5. См. [BearMood]. Это НЕ шкала 0–100:
+  /// значение выбирает, какой idle играть.
   static const String mood = 'mood';
 
-  /// Стадия роста. В риге — number (см. [BearGrowthStage]).
-  static const String growthStage = 'growthStage';
+  /// Тип характера, 0–5. См. [BearTrait].
+  static const String trait = 'trait';
 
-  // --- Триггеры -----------------------------------------------------------
-  // Имён триггеров в ТЗ нет — раздел 6.3 упоминает только абстрактный
-  // `bumpTrigger.fire()`. Взяты по аналогии с `feedBear()` / `petBear()`
-  // из раздела 6.4. Сверить при сборке рига.
+  /// Выбор варианта анимации, 0–1 (раздел 7.6: повторные действия не должны
+  /// выглядеть одинаково). Приложение выставляет его перед триггером.
+  static const String variant = 'variant';
 
-  /// Кормление — вход в состояние `eating`.
-  static const String feedTrigger = 'feed';
+  // --- Слоты одежды (раздел 5.2, диапазоны из 8.1) ------------------------
 
-  /// Поглаживание.
-  static const String petTrigger = 'pet';
+  /// Комплект одежды, 0–8 (0 — без одежды).
+  static const String outfitId = 'outfit_id';
 
-  /// Тап по мишке — вход в состояние `tap_reaction`.
-  static const String tapTrigger = 'tap';
+  /// Головной убор, 0–3.
+  static const String headwearId = 'headwear_id';
 
-  /// Состояния State Machine (раздел 5 ТЗ).
+  /// Обувь, 0–2.
+  static const String shoesId = 'shoes_id';
+
+  /// Аксессуар, 0–3.
+  static const String accessoryId = 'accessory_id';
+
+  /// Пол персонажа, 0 мальчик / 1 девочка. См. [BearSkin].
   ///
-  /// Рантайм не переключает состояния напрямую — они выбираются переходами
-  /// внутри State Machine по значениям свойств и триггерам. Список нужен для
-  /// сверки рига и как документация контракта.
-  static const List<String> states = <String>[
-    'idle',
-    'happy',
-    'sad',
-    'eating',
-    'tap_reaction',
-    'growth_transition',
-  ];
+  /// Один общий риг на обоих героев — раздел 6 ТЗ аниматора; два набора
+  /// анимаций не принимаются.
+  static const String skin = 'skin';
 
-  /// Control-узлы из раздела 3.4 ТЗ.
-  ///
-  /// Код к ним не обращается: в актуальном рантайме влияние на риг идёт через
-  /// State Machine и View Model, а не через прямые ссылки на узлы, как в
-  /// legacy-референсе `teddy_controller.dart`. Список — для сверки рига.
-  static const List<String> controlNodes = <String>[
-    'ctrl_face',
-    'ctrl_eyes',
-    'ctrl_pupils',
-    'ctrl_mouth',
-    'ctrl_nose',
-    'ctrl_eyebrow_left',
-    'ctrl_eyebrow_right',
+  // --- Boolean inputs -----------------------------------------------------
+
+  /// Включает цикл ходьбы.
+  static const String isWalking = 'is_walking';
+
+  // --- Trigger inputs -----------------------------------------------------
+
+  static const String trgEat = 'trg_eat';
+  static const String trgWash = 'trg_wash';
+  static const String trgSleep = 'trg_sleep';
+  static const String trgWake = 'trg_wake';
+  static const String trgPlay = 'trg_play';
+  static const String trgPet = 'trg_pet';
+  static const String trgStageUp = 'trg_stage_up';
+  static const String trgEmoHappy = 'trg_emo_happy';
+  static const String trgEmoSad = 'trg_emo_sad';
+
+  /// Именно `trg_emo_surpr`, а не `trg_emo_surprise` — так в ТЗ.
+  static const String trgEmoSurprise = 'trg_emo_surpr';
+  static const String trgEmoLove = 'trg_emo_love';
+
+  /// Все триггеры контракта — для сверки рига и для дев-панели.
+  static const List<String> triggers = <String>[
+    trgEat,
+    trgWash,
+    trgSleep,
+    trgWake,
+    trgPlay,
+    trgPet,
+    trgStageUp,
+    trgEmoHappy,
+    trgEmoSad,
+    trgEmoSurprise,
+    trgEmoLove,
   ];
 }
 
-/// Стадии роста мишки.
+/// Стадия роста, вход `stage` (1–5).
 ///
-/// ЗАГЛУШКА: полный список стадий и триггеры перехода между ними — открытый
-/// вопрос 8.4 ТЗ. Три стадии взяты как минимальный рабочий набор, чтобы было
-/// что передавать в риг.
-enum BearGrowthStage {
-  cub(0),
-  young(1),
-  adult(2);
+/// Названия и поведение — раздел 6 ТЗ аниматора, длительности — раздел 5 КП.
+/// Длительности здесь не хранятся: они настраиваются с сервера (КП 5.6), а
+/// скорость роста зависит от общего ухода, а не от таймера (КП 5.7).
+enum BearStage {
+  /// Лежит, голова крупная, глаза чаще закрыты. ~1 день.
+  newborn(1, 'Новорождённый'),
 
-  const BearGrowthStage(this.riveValue);
+  /// Сидит и ползает. ~2 дня.
+  crawling(2, 'Ползающий малыш'),
 
-  /// Значение, которое уезжает в number-свойство [BearRigSpec.growthStage].
-  final double riveValue;
+  /// Стоит неуверенно, первые шаги. 1–2 дня.
+  firstSteps(3, 'Первые шаги'),
 
-  static BearGrowthStage fromRiveValue(double value) {
-    return BearGrowthStage.values.firstWhere(
-      (stage) => stage.riveValue == value,
-      orElse: () => BearGrowthStage.cub,
-    );
+  /// Уверенно ходит, открываются все механики. До ~14 дня.
+  growing(4, 'Подрастающий'),
+
+  /// Финальные пропорции, полный набор движений.
+  adult(5, 'Взрослый');
+
+  const BearStage(this.riveValue, this.title);
+
+  final int riveValue;
+  final String title;
+
+  /// Следующая стадия или `null`, если это уже взрослый.
+  BearStage? get next {
+    final index = BearStage.values.indexOf(this);
+    return index + 1 < BearStage.values.length
+        ? BearStage.values[index + 1]
+        : null;
   }
+
+  static BearStage fromRiveValue(int value) => BearStage.values.firstWhere(
+    (stage) => stage.riveValue == value,
+    orElse: () => BearStage.newborn,
+  );
+}
+
+/// Код состояния покоя, вход `mood` (0–5).
+///
+/// Раздел 8.1 ТЗ аниматора. Значение выбирает, какой idle-клип играет; шкал
+/// внутри значения нет.
+enum BearMood {
+  normal(0),
+  happy(1),
+  sad(2),
+  hungry(3),
+  sleepy(4),
+
+  /// `idle_dirty` есть только для стадий 3–5 (раздел 7.1) — см.
+  /// [BearMood.isAvailableOn].
+  dirty(5);
+
+  const BearMood(this.riveValue);
+
+  final int riveValue;
+
+  /// Доступно ли это состояние на стадии [stage].
+  bool isAvailableOn(BearStage stage) {
+    if (this != BearMood.dirty) return true;
+    return stage.riveValue >= BearStage.firstSteps.riveValue;
+  }
+
+  static BearMood fromRiveValue(int value) => BearMood.values.firstWhere(
+    (mood) => mood.riveValue == value,
+    orElse: () => BearMood.normal,
+  );
+}
+
+/// Тип характера, вход `trait` (0–5).
+///
+/// Порядок — из раздела 7.5 ТЗ аниматора («0 активный … 5 замкнутый»).
+/// Совпадает с перечислением в КП 7.1.
+enum BearTrait {
+  active(0, 'Активный'),
+  curious(1, 'Любознательный'),
+  affectionate(2, 'Ласковый'),
+  calm(3, 'Спокойный'),
+  independent(4, 'Самостоятельный'),
+  reserved(5, 'Замкнутый');
+
+  const BearTrait(this.riveValue, this.title);
+
+  final int riveValue;
+  final String title;
+
+  static BearTrait fromRiveValue(int value) => BearTrait.values.firstWhere(
+    (trait) => trait.riveValue == value,
+    orElse: () => BearTrait.active,
+  );
+}
+
+/// Пол персонажа, вход `skin` (0–1). Определяется сервером при рождении
+/// (КП 2.4).
+enum BearSkin {
+  boy(0),
+  girl(1);
+
+  const BearSkin(this.riveValue);
+
+  final int riveValue;
+
+  static BearSkin fromRiveValue(int value) =>
+      value == girl.riveValue ? girl : boy;
 }

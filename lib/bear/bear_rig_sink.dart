@@ -1,19 +1,23 @@
-import 'bear_stats.dart';
+import 'bear_state.dart';
 
 /// Приёмник команд на стороне рига.
 ///
-/// Это и есть «точка интеграции» из пункта 9.4 ТЗ: игровая логика приложения
-/// разговаривает с ригом только через этот интерфейс.
+/// Игровая логика приложения разговаривает с персонажем только через этот
+/// интерфейс — это и есть граница между приложением и анимацией.
 ///
-/// Интерфейс не зависит от Rive — благодаря этому [BearController] тестируется
-/// без нативных библиотек `rive_native`, а замена рантайма (например, откат на
-/// legacy-API, см. `docs/runtime-api-note.md`) не задевает игровую логику.
-/// Единственная боевая реализация — `BearRigBinding` в `bear_rig_binding.dart`.
+/// Интерфейс не зависит от Rive: благодаря этому [BearController] тестируется
+/// без нативных библиотек `rive_native`, а смена рантайма не задевает игровую
+/// логику. Единственная боевая реализация — `BearRigBinding`.
 abstract interface class BearRigSink {
-  /// Передаёт текущие характеристики в риг: `hunger`, `mood`, `growthStage`.
-  void applyStats(BearStats stats);
+  /// Заливает в риг все Number/Boolean входы контракта: `stage`, `mood`,
+  /// `trait`, `skin`, `is_walking`, `outfit_id`, `headwear_id`, `shoes_id`,
+  /// `accessory_id`.
+  void applyState(BearState state);
 
-  /// Дёргает триггер State Machine по имени (см. `BearRigSpec.feedTrigger` и
-  /// соседние константы). Неизвестное имя игнорируется с предупреждением в лог.
-  void fireTrigger(String name);
+  /// Дёргает Trigger по имени (константы `BearRigSpec.trg*`).
+  ///
+  /// Если передан [variant], значение входа `variant` выставляется **до**
+  /// триггера — порядок важен: State Machine читает его в момент перехода
+  /// (раздел 7.6 ТЗ аниматора: варианты выбирает приложение).
+  void fireTrigger(String name, {int? variant});
 }

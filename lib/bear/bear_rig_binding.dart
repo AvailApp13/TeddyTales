@@ -1,247 +1,203 @@
 // Единственный файл проекта, знающий про API рантайма Rive. Всё остальное
 // общается с ригом через `BearRigSink`.
 //
-// State machine inputs объявлены в 0.14.x deprecated в пользу data binding, но
-// пункт 6.3 ТЗ прямо требует поддержать `stateMachineInputs` — поэтому оба пути
-// живут рядом, и `ignore: deprecated_member_use` здесь осознанный.
-// Подробности — в `docs/runtime-api-note.md`.
+// Управление идёт через State Machine Inputs — так требует раздел 8.1 ТЗ
+// аниматора: «Приложение управляет персонажем только через перечисленные ниже
+// входы. Никаких других способов запуска анимаций быть не должно».
+//
+// В rive 0.14.x inputs помечены deprecated в пользу data binding, поэтому
+// `ignore: deprecated_member_use` здесь осознанный: контракт с аниматором
+// важнее рекомендации рантайма. Если риг однажды переедет на View Model,
+// переписывается только этот файл. Подробности — в docs/runtime-api-note.md.
 import 'package:flutter/foundation.dart';
 import 'package:rive/rive.dart';
 
 import 'bear_rig_sink.dart';
 import 'bear_rig_spec.dart';
-import 'bear_stats.dart';
+import 'bear_state.dart';
 
-/// Мост между [BearController] и загруженным ригом.
+/// Мост между [BearRigSink] и загруженным ригом.
 ///
-/// Для каждого свойства сначала пробуется **data binding** (View Model,
-/// раздел 5 ТЗ), и только если такого свойства в View Model нет — идёт откат на
-/// **state machine input** с тем же именем (раздел 6.3 ТЗ). Так риг можно
-/// собирать любым из двух способов, а код остаётся тем же.
-///
-/// Если свойства нет ни там, ни там — пишется одно предупреждение в лог, и
-/// канал молча игнорирует дальнейшие записи. Приложение не падает из-за того,
-/// что художник ещё не завёл поле в редакторе.
+/// Отсутствующий в файле вход не роняет приложение: канал один раз пишет
+/// предупреждение в дев-лог и дальше молча игнорирует записи. Это важно, пока
+/// риг собирается поэтапно (раздел 11 ТЗ аниматора — шесть этапов приёмки).
 class BearRigBinding implements BearRigSink {
   BearRigBinding._({
-    required _NumberChannel hunger,
-    required _NumberChannel mood,
-    required _NumberChannel growthStage,
+    required Map<String, _NumberChannel> numbers,
+    required _BooleanChannel isWalking,
     required Map<String, _TriggerChannel> triggers,
     required StateMachine stateMachine,
-    required ViewModelInstance? viewModelInstance,
-  }) : _hunger = hunger,
-       _mood = mood,
-       _growthStage = growthStage,
+  }) : _numbers = numbers,
+       _isWalking = isWalking,
        _triggers = triggers,
-       _stateMachine = stateMachine,
-       _viewModelInstance = viewModelInstance;
+       _stateMachine = stateMachine;
 
-  /// Собирает биндинг поверх уже созданного [controller].
-  ///
-  /// Data binding подключается здесь, а не через параметр `dataBind`
-  /// у `RiveWidgetBuilder`, намеренно: `DataBind.auto()` бросает исключение,
-  /// если в артборде нет экспортированного view model instance, и весь виджет
-  /// уходит в `RiveFailed`. Для рига, собранного на state machine inputs
-  /// (путь из раздела 6.3 ТЗ), это ложное падение. Здесь же отсутствие view
-  /// model — просто повод откатиться на инпуты.
+  /// Собирает биндинг поверх созданного рантаймом контроллера.
   factory BearRigBinding.attach(RiveWidgetController controller) {
     final stateMachine = controller.stateMachine;
-    final vmi = _tryDataBind(controller);
 
     return BearRigBinding._(
-      hunger: _NumberChannel.resolve(BearRigSpec.hunger, vmi, stateMachine),
-      mood: _NumberChannel.resolve(BearRigSpec.mood, vmi, stateMachine),
-      growthStage: _NumberChannel.resolve(
-        BearRigSpec.growthStage,
-        vmi,
-        stateMachine,
-      ),
-      triggers: <String, _TriggerChannel>{
+      numbers: <String, _NumberChannel>{
         for (final name in const [
-          BearRigSpec.feedTrigger,
-          BearRigSpec.petTrigger,
-          BearRigSpec.tapTrigger,
+          BearRigSpec.stage,
+          BearRigSpec.mood,
+          BearRigSpec.trait,
+          BearRigSpec.variant,
+          BearRigSpec.skin,
+          BearRigSpec.outfitId,
+          BearRigSpec.headwearId,
+          BearRigSpec.shoesId,
+          BearRigSpec.accessoryId,
         ])
-          name: _TriggerChannel.resolve(name, vmi, stateMachine),
+          name: _NumberChannel.resolve(name, stateMachine),
+      },
+      isWalking: _BooleanChannel.resolve(BearRigSpec.isWalking, stateMachine),
+      triggers: <String, _TriggerChannel>{
+        for (final name in BearRigSpec.triggers)
+          name: _TriggerChannel.resolve(name, stateMachine),
       },
       stateMachine: stateMachine,
-      viewModelInstance: vmi,
     );
   }
 
-  final _NumberChannel _hunger;
-  final _NumberChannel _mood;
-  final _NumberChannel _growthStage;
+  final Map<String, _NumberChannel> _numbers;
+  final _BooleanChannel _isWalking;
   final Map<String, _TriggerChannel> _triggers;
   final StateMachine _stateMachine;
-
-  /// View model instance, привязанный в [BearRigBinding.attach]. `null`, если
-  /// в артборде его нет и работаем через state machine inputs.
-  ///
-  /// Создан здесь — значит, освобождается тоже здесь, в [dispose].
-  final ViewModelInstance? _viewModelInstance;
 
   bool _disposed = false;
 
   @override
-  void applyStats(BearStats stats) {
+  void applyState(BearState state) {
     if (_disposed) return;
-    _hunger.value = stats.hunger;
-    _mood.value = stats.mood;
-    _growthStage.value = stats.growthStage.riveValue;
+
+    _setNumber(BearRigSpec.stage, state.stage.riveValue);
+    _setNumber(BearRigSpec.mood, state.mood.riveValue);
+    _setNumber(BearRigSpec.trait, state.trait.riveValue);
+    _setNumber(BearRigSpec.skin, state.skin.riveValue);
+
+    final outfit = state.outfit;
+    _setNumber(BearRigSpec.outfitId, outfit.outfitId);
+    _setNumber(BearRigSpec.headwearId, outfit.headwearId);
+    _setNumber(BearRigSpec.shoesId, outfit.shoesId);
+    _setNumber(BearRigSpec.accessoryId, outfit.accessoryId);
+
+    _isWalking.value = state.isWalking;
   }
 
   @override
-  void fireTrigger(String name) {
+  void fireTrigger(String name, {int? variant}) {
     if (_disposed) return;
-    final trigger = _triggers[name];
-    if (trigger == null) {
-      // Триггер не из BearRigSpec — резолвим на лету и кэшируем.
-      _triggers[name] =
-          _TriggerChannel.resolve(name, _viewModelInstance, _stateMachine)
-            ..fire();
-      return;
-    }
+
+    // Порядок обязателен: `variant` читается State Machine в момент перехода,
+    // поэтому выставляется до триггера.
+    if (variant != null) _setNumber(BearRigSpec.variant, variant);
+
+    final trigger =
+        _triggers[name] ??= _TriggerChannel.resolve(name, _stateMachine);
     trigger.fire();
   }
 
-  /// Аналог `play(String animationName)` из референсного
-  /// `teddy_controller.dart` (пункт 6.4 ТЗ).
-  ///
-  /// В актуальном рантайме нельзя «проиграть анимацию по имени» в обход State
-  /// Machine: состояние выбирает сама машина. Поэтому здесь — дёрганье
-  /// одноимённого триггера, то есть просьба к State Machine перейти в это
-  /// состояние, если такой переход в ней заведён.
-  ///
-  /// Имена состояний — в [BearRigSpec.states].
-  void play(String stateName) => fireTrigger(stateName);
+  void _setNumber(String name, int value) {
+    final channel =
+        _numbers[name] ??= _NumberChannel.resolve(name, _stateMachine);
+    channel.value = value.toDouble();
+  }
 
-  /// Освобождает нативные хэндлы свойств, инпутов и view model instance.
+  /// Освобождает нативные хэндлы инпутов.
   ///
   /// Сам `RiveWidgetController` и загруженный `File` освобождает
   /// `RiveWidgetBuilder` — трогать их отсюда нельзя.
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    _hunger.dispose();
-    _mood.dispose();
-    _growthStage.dispose();
+    for (final channel in _numbers.values) {
+      channel.dispose();
+    }
+    _numbers.clear();
+    _isWalking.dispose();
     for (final trigger in _triggers.values) {
       trigger.dispose();
     }
     _triggers.clear();
-    _viewModelInstance?.dispose();
   }
 }
 
-/// Пробует привязать view model instance по умолчанию.
-///
-/// Возвращает `null`, если в артборде его нет — тогда каналы уйдут на state
-/// machine inputs.
-ViewModelInstance? _tryDataBind(RiveWidgetController controller) {
-  try {
-    return controller.dataBind(DataBind.auto());
-  } on RiveDataBindException catch (error) {
-    if (kDebugMode) {
-      debugPrint(
-        '[TeddyTales] Data binding недоступен ($error). '
-        'Откатываемся на state machine inputs.',
-      );
-    }
-    return null;
-  }
-}
-
-/// Канал записи числа: View Model property → state machine input → пустышка.
+/// Number input с отсечкой повторных записей.
 class _NumberChannel {
-  _NumberChannel._(this._property, this._input, this._name);
+  _NumberChannel._(this._input);
 
-  factory _NumberChannel.resolve(
-    String name,
-    ViewModelInstance? vmi,
-    StateMachine stateMachine,
-  ) {
-    final property = vmi?.number(name);
-    if (property != null) return _NumberChannel._(property, null, name);
-
+  factory _NumberChannel.resolve(String name, StateMachine stateMachine) {
     // ignore: deprecated_member_use
     final input = stateMachine.number(name);
-    if (input != null) return _NumberChannel._(null, input, name);
-
-    _warnMissing('number', name);
-    return _NumberChannel._(null, null, name);
+    if (input == null) _warnMissing('Number input', name);
+    return _NumberChannel._(input);
   }
 
-  final ViewModelInstanceNumber? _property;
   // ignore: deprecated_member_use
   final NumberInput? _input;
-  final String _name;
 
   double? _lastWritten;
 
   set value(double next) {
-    // Запись в нативный слой не бесплатна, а applyStats зовётся на каждый тик
-    // decay — отсекаем повторы.
+    // applyState зовётся на каждый тик затухания, а запись в нативный слой не
+    // бесплатна — отсекаем повторы.
     if (_lastWritten == next) return;
     _lastWritten = next;
-    _property?.value = next;
     _input?.value = next;
   }
 
-  void dispose() {
-    _property?.dispose();
-    _input?.dispose();
-  }
-
-  @override
-  String toString() => '_NumberChannel($_name)';
+  void dispose() => _input?.dispose();
 }
 
-/// Канал триггера: View Model trigger → state machine input → пустышка.
+/// Boolean input с отсечкой повторных записей.
+class _BooleanChannel {
+  _BooleanChannel._(this._input);
+
+  factory _BooleanChannel.resolve(String name, StateMachine stateMachine) {
+    // ignore: deprecated_member_use
+    final input = stateMachine.boolean(name);
+    if (input == null) _warnMissing('Boolean input', name);
+    return _BooleanChannel._(input);
+  }
+
+  // ignore: deprecated_member_use
+  final BooleanInput? _input;
+
+  bool? _lastWritten;
+
+  set value(bool next) {
+    if (_lastWritten == next) return;
+    _lastWritten = next;
+    _input?.value = next;
+  }
+
+  void dispose() => _input?.dispose();
+}
+
 class _TriggerChannel {
-  _TriggerChannel._(this._property, this._input, this._name);
+  _TriggerChannel._(this._input);
 
-  factory _TriggerChannel.resolve(
-    String name,
-    ViewModelInstance? vmi,
-    StateMachine stateMachine,
-  ) {
-    final property = vmi?.trigger(name);
-    if (property != null) return _TriggerChannel._(property, null, name);
-
+  factory _TriggerChannel.resolve(String name, StateMachine stateMachine) {
     // ignore: deprecated_member_use
     final input = stateMachine.trigger(name);
-    if (input != null) return _TriggerChannel._(null, input, name);
-
-    _warnMissing('trigger', name);
-    return _TriggerChannel._(null, null, name);
+    if (input == null) _warnMissing('Trigger', name);
+    return _TriggerChannel._(input);
   }
 
-  final ViewModelInstanceTrigger? _property;
   // ignore: deprecated_member_use
   final TriggerInput? _input;
-  final String _name;
 
-  void fire() {
-    _property?.trigger();
-    _input?.fire();
-  }
+  void fire() => _input?.fire();
 
-  void dispose() {
-    _property?.dispose();
-    _input?.dispose();
-  }
-
-  @override
-  String toString() => '_TriggerChannel($_name)';
+  void dispose() => _input?.dispose();
 }
 
 void _warnMissing(String kind, String name) {
   if (!kDebugMode) return;
   debugPrint(
-    '[TeddyTales] В риге нет $kind «$name» — ни как свойства View Model, '
-    'ни как state machine input. Значения по этому каналу игнорируются. '
-    'Сверьте имена: lib/bear/bear_rig_spec.dart и docs/rig-naming.md.',
+    '[TeddyTales] В State Machine «${BearRigSpec.stateMachine}» нет входа '
+    '$kind «$name». Команды по этому каналу игнорируются. Сверьте риг с '
+    'разделом 8.1 ТЗ аниматора и с lib/bear/bear_rig_spec.dart.',
   );
 }

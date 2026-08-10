@@ -40,7 +40,10 @@ class BearView extends StatefulWidget {
   final Fit fit;
   final Alignment alignment;
 
-  /// Реагировать ли на тап по мишке ([BearController.tapBear]).
+  /// Реагировать ли на тап по мишке ([BearController.petBear]).
+  ///
+  /// Раздел 8.1 ТЗ аниматора: `trg_pet` — «поглаживание (касание экрана)»;
+  /// КП 3.1: питомец реагирует на касание.
   ///
   /// Выключить, если реакция на тап заведена внутри самой State Machine через
   /// Rive Listeners — иначе тап отработает дважды.
@@ -75,34 +78,31 @@ class _BearViewState extends State<BearView> {
     super.dispose();
   }
 
-  /// Создаёт контроллер рантайма с State Machine из ТЗ, откатываясь на машину
-  /// по умолчанию, если такой в файле нет.
+  /// Создаёт контроллер рантайма на артборде и State Machine из контракта
+  /// (`bear_main`), откатываясь на объекты по умолчанию, если имена в файле
+  /// разошлись.
   ///
-  /// Имя `State Machine 1` — дефолт редактора Rive; если Руслан переименует
-  /// машину в файле, а константу поправить забудут, без отката виджет просто
-  /// падал бы в `RiveFailed`.
+  /// Откат нужен на время сборки рига: аниматор сдаёт файл шестью этапами
+  /// (раздел 11 ТЗ), и на ранних этапах имена могут не совпасть. Без отката
+  /// виджет просто уходил бы в `RiveFailed` вместо показа персонажа.
   RiveWidgetController _createRiveController(File file) {
     try {
       return RiveWidgetController(
         file,
-        artboardSelector: BearRigSpec.artboard == null
-            ? const ArtboardDefault()
-            : ArtboardNamed(BearRigSpec.artboard!),
-        stateMachineSelector: StateMachineNamed(BearRigSpec.stateMachine),
+        artboardSelector: const ArtboardNamed(BearRigSpec.artboard),
+        stateMachineSelector: const StateMachineNamed(
+          BearRigSpec.stateMachine,
+        ),
       );
-    } on RiveStateMachineException catch (error) {
+    } on RiveException catch (error) {
       if (kDebugMode) {
         debugPrint(
-          '[TeddyTales] $error Берём State Machine по умолчанию. '
-          'Сверьте BearRigSpec.stateMachine с именем в редакторе.',
+          '[TeddyTales] $error Берём артборд и State Machine по умолчанию. '
+          'Сверьте имена с разделом 8 ТЗ аниматора — должно быть '
+          '«${BearRigSpec.stateMachine}».',
         );
       }
-      return RiveWidgetController(
-        file,
-        artboardSelector: BearRigSpec.artboard == null
-            ? const ArtboardDefault()
-            : ArtboardNamed(BearRigSpec.artboard!),
-      );
+      return RiveWidgetController(file);
     }
   }
 
@@ -146,7 +146,7 @@ class _BearViewState extends State<BearView> {
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: widget.controller.tapBear,
+      onTap: widget.controller.petBear,
       child: rive,
     );
   }
