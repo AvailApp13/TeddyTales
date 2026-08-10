@@ -275,17 +275,59 @@ def lint(path: Path, repo: Path, report: Report) -> None:
         report.note('Экземпляр вью-модели один — DataBind.auto() однозначен')
 
     # --- фоновая подложка ---------------------------------------------------
+    #
+    # Подложек в Rive две разновидности, и путать их нельзя. Первая — заливка,
+    # повешенная прямо на артборд: в редакторе это «цвет фона артборда», и
+    # рантайм её честно рисует. Именно она давала чёрный экран в демо-риге.
+    # Вторая — обычная фигура во весь артборд с видимой заливкой.
+    #
+    # А вот фигура во весь артборд с ВЫКЛЮЧЕННОЙ заливкой — это штатный приём:
+    # невидимая хит-зона под слушателя. Её трогать нельзя, иначе линтер будет
+    # ругаться на правильно собранный риг.
+    visible_key = pk('ShapePaintBase::isVisiblePropertyKey')
+
+    def paints_of(component: int) -> list:
+        """Заливки и обводки, повешенные на компонент."""
+        found = []
+        for kind in ('Fill', 'Stroke'):
+            for index, props in by_type.get(kind, []):
+                if riv.prop(data, props, parent_key) == component:
+                    visible = riv.prop(data, props, visible_key)
+                    found.append((kind, index, visible is None or visible == 1))
+        return found
+
     if artboards:
         width = value(artboard_props, 'LayoutComponentBase::widthPropertyKey') or 0
         height = value(artboard_props, 'LayoutComponentBase::heightPropertyKey') or 0
+
+        for kind, index, visible in paints_of(0):
+            if visible:
+                report.error(
+                    f'На артборде висит собственная {kind} (объект {index}) — '
+                    'это и есть «цвет фона артборда». Фон рисует приложение, '
+                    'артборд сдаётся прозрачным'
+                )
+
+        component_of_index = {
+            index: component for component, index in index_of_component.items()
+        }
         for index, props in by_type.get('Rectangle', []):
             rect_w = value(props, 'ParametricPathBase::widthPropertyKey') or 0
             rect_h = value(props, 'ParametricPathBase::heightPropertyKey') or 0
-            if rect_w >= width * 0.95 and rect_h >= height * 0.95:
+            if rect_w < width * 0.95 or rect_h < height * 0.95:
+                continue
+            shape = riv.prop(data, props, parent_key)
+            painted = [p for p in paints_of(shape) if p[2]] if shape is not None else []
+            if painted:
                 report.error(
-                    f'Прямоугольник {rect_w:.0f}x{rect_h:.0f} (объект {index}) '
-                    'закрывает весь артборд — фон рисует приложение, подложки '
+                    f'Фигура с прямоугольником {rect_w:.0f}x{rect_h:.0f} '
+                    f'(объект {index}) закрывает артборд и залита — подложки '
                     'в риге быть не должно'
+                )
+            else:
+                report.note(
+                    f'Прямоугольник {rect_w:.0f}x{rect_h:.0f} во весь артборд '
+                    'без видимой заливки — это хит-зона, не подложка'
                 )
 
     # --- ключи вне рабочей области ------------------------------------------
