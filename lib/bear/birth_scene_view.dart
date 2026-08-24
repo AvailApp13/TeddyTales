@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rive/rive.dart';
 
+import '../l10n/birth_l10n.dart';
+import '../l10n/l10n.dart';
 import 'bear_phrases.dart' show BearLanguage;
 import 'bear_rig_spec.dart';
 import 'birth_scene_script.dart';
@@ -31,6 +33,10 @@ class BirthSceneView extends StatefulWidget {
   /// Дальше по КП 2.2 идёт карточка рождения.
   final VoidCallback onFinished;
 
+  /// Язык сцены. Тексты субтитров и кнопки берутся из локализации по локали
+  /// приложения (язык у приложения один на всё — см. `lib/l10n/l10n.dart`,
+  /// [BearLanguage] отображается в неё один в один), поэтому параметр на
+  /// отрисовку больше не влияет и оставлен ради совместимости вызовов.
   final BearLanguage language;
   final BirthSceneScript script;
   final Fit fit;
@@ -165,7 +171,7 @@ class _BirthSceneViewState extends State<BirthSceneView>
                   child: cue == null
                       ? const SizedBox.shrink()
                       : Text(
-                          cue.text(widget.language),
+                          birthCueText(context.l10n, cue.id),
                           key: ValueKey(cue.start),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -199,7 +205,7 @@ class _BirthSceneViewState extends State<BirthSceneView>
               child: TextButton(
                 onPressed: _finish,
                 style: TextButton.styleFrom(foregroundColor: Colors.white70),
-                child: const Text('Пропустить'),
+                child: Text(context.l10n.birthSkip),
               ),
             ),
           ),
@@ -222,9 +228,9 @@ class _BirthScenePlaceholder extends StatelessWidget {
         children: [
           const Icon(Icons.nights_stay, size: 64, color: Colors.white24),
           const SizedBox(height: 12),
-          const Text(
-            'Сцена рождения ещё не собрана',
-            style: TextStyle(color: Colors.white54),
+          Text(
+            context.l10n.birthSceneNotReady,
+            style: const TextStyle(color: Colors.white54),
           ),
           const SizedBox(height: 4),
           Text(

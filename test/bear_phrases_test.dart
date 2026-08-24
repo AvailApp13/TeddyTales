@@ -103,12 +103,12 @@ void main() {
       }
     });
 
-    test('каждый субтитр переведён на три языка', () {
-      for (final cue in script.cues) {
-        for (final language in BearLanguage.values) {
-          expect(cue.text(language), isNotEmpty);
-        }
-      }
+    // Тексты субтитров переехали в ARB (ключи birthCue*, см.
+    // lib/l10n/birth_l10n.dart): совпадение ключей трёх языков проверяет
+    // gen-l10n, здесь остаётся проверить сам сценарий.
+    test('каждому субтитру отвечает свой шаг сценария', () {
+      final ids = script.cues.map((cue) => cue.id).toSet();
+      expect(ids, hasLength(script.cues.length));
     });
 
     test('сцена заканчивается на своей длительности', () {
