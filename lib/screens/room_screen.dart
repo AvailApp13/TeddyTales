@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
 import '../game/shop_items.dart';
+import '../l10n/catalog_l10n.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -41,6 +43,8 @@ class _RoomScreenState extends State<RoomScreen> {
   /// Тап по карточке: не куплено — покупаем, куплено — ставим или убираем.
   void _onTap(ShopItem item) {
     final game = widget.game;
+    final l10n = context.l10n;
+    final name = shopItemName(l10n, item.id);
 
     if (!game.isOwned(item.id)) {
       // Карточка недоступных по деньгам предметов и так не нажимается, но
@@ -48,10 +52,10 @@ class _RoomScreenState extends State<RoomScreen> {
       // значило бы завести второй источник правды о стоимости (КП 10.9 цены
       // ещё будут меняться).
       if (!game.buy(item.id)) {
-        _toast('Не хватает монет');
+        _toast(l10n.roomNotEnoughCoins);
         return;
       }
-      _toast('${item.title} куплено');
+      _toast(l10n.roomItemBought(name));
       return;
     }
 
@@ -64,8 +68,8 @@ class _RoomScreenState extends State<RoomScreen> {
     // неправдой.
     _toast(
       game.isPlaced(item.id)
-          ? '${item.title} поставлено'
-          : '${item.title} убрано',
+          ? l10n.roomItemPlaced(name)
+          : l10n.roomItemRemoved(name),
     );
   }
 
@@ -90,7 +94,10 @@ class _RoomScreenState extends State<RoomScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SheetHeader(title: 'Моя комната', coins: widget.game.coins),
+                _SheetHeader(
+                  title: context.l10n.roomTitle,
+                  coins: widget.game.coins,
+                ),
                 _TabsRow(
                   current: _tab,
                   onSelected: (tab) => setState(() => _tab = tab),
@@ -142,10 +149,7 @@ class _RoomScreenState extends State<RoomScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          '52 предмета по КП 10: мебель 10, декор 16, '
-                          'игрушки 10, одежда 16. Сетка мест и предпросмотр — '
-                          'следующий шаг, сейчас предмет просто ставится или '
-                          'убирается.',
+                          context.l10n.roomFooterNote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -172,14 +176,13 @@ class _RoomScreenState extends State<RoomScreen> {
 /// заменяют предыдущие, и мешать их с картинами и подушками в одном списке
 /// сбивает.
 enum _RoomTab {
-  furniture('Мебель', ItemKind.furniture),
-  decor('Декор', ItemKind.decor),
-  walls('Обои', ItemKind.wallpaper),
-  floor('Пол', ItemKind.floor);
+  furniture(ItemKind.furniture),
+  decor(ItemKind.decor),
+  walls(ItemKind.wallpaper),
+  floor(ItemKind.floor);
 
-  const _RoomTab(this.title, this.kind);
+  const _RoomTab(this.kind);
 
-  final String title;
   final ItemKind kind;
 }
 
@@ -204,7 +207,9 @@ class _TabsRow extends StatelessWidget {
           for (final tab in _RoomTab.values) ...[
             Expanded(
               child: _TabButton(
-                title: tab.title,
+                // Вкладки комнаты один в один совпадают с разделами каталога —
+                // названия берём оттуда же, а не заводим отдельные ключи.
+                title: shopCategoryTitle(context.l10n, tab.kind),
                 selected: tab == current,
                 onTap: () => onSelected(tab),
               ),
@@ -322,7 +327,7 @@ class _ItemTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          item.title,
+                          shopItemName(context.l10n, item.id),
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -334,7 +339,9 @@ class _ItemTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         if (owned)
                           Text(
-                            placed ? 'Выбрано' : 'Куплено',
+                            placed
+                                ? context.l10n.roomSelectedLabel
+                                : context.l10n.roomOwnedLabel,
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 10,
                               color: AppColors.sageDark,

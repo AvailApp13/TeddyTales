@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
 import '../game/shop_items.dart';
+import '../l10n/catalog_l10n.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -46,11 +48,11 @@ class _ShopScreenState extends State<ShopScreen> {
     // `checkout` — держать здесь вторую проверку цены значило бы завести второй
     // источник правды о стоимости (КП 10.9 цены ещё будут меняться).
     if (!widget.game.checkout()) {
-      _toast('Не хватает монет');
+      _toast(context.l10n.shopNotEnoughCoins);
       return;
     }
 
-    _toast('Куплено предметов: $count');
+    _toast(context.l10n.shopCheckoutDone(count));
   }
 
   void _toast(String message) {
@@ -77,7 +79,7 @@ class _ShopScreenState extends State<ShopScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SheetHeader(title: 'Магазин', coins: game.coins),
+                _SheetHeader(title: context.l10n.shopTitle, coins: game.coins),
                 _TabsRow(
                   current: _tab,
                   onSelected: (tab) => setState(() => _tab = tab),
@@ -123,9 +125,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Корзины нет в КП — она с макета, я её отношу ко '
-                          'второй версии, но собрал, чтобы было видно '
-                          'поведение. Цены — плейсхолдеры (КП 10.9).',
+                          context.l10n.shopCartDisclaimer,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -160,14 +160,21 @@ class _ShopScreenState extends State<ShopScreen> {
 /// Порядок как в прототипе — от одежды к игрушкам; он же порядок разделов
 /// каталога по востребованности, а не по номеру пункта КП.
 enum _ShopTab {
-  clothes('Одежда'),
-  furniture('Мебель'),
-  decor('Декор'),
-  toys('Игрушки');
+  clothes,
+  furniture,
+  decor,
+  toys;
 
-  const _ShopTab(this.title);
-
-  final String title;
+  /// Название вкладки.
+  ///
+  /// «Одежда» — своя строка, а не название раздела каталога: в каталоге такой
+  /// категории нет (там наряды, верх, низ и т.д.), это вкладка магазина.
+  String title(AppLocalizations l10n) => switch (this) {
+    _ShopTab.clothes => l10n.shopTabClothes,
+    _ShopTab.furniture => l10n.shopTabFurniture,
+    _ShopTab.decor => l10n.shopTabDecor,
+    _ShopTab.toys => l10n.shopTabToys,
+  };
 
   /// Товары вкладки.
   ///
@@ -204,7 +211,7 @@ class _TabsRow extends StatelessWidget {
           for (final tab in _ShopTab.values) ...[
             Expanded(
               child: _TabButton(
-                title: tab.title,
+                title: tab.title(context.l10n),
                 selected: tab == current,
                 onTap: () => onSelected(tab),
               ),
@@ -324,7 +331,7 @@ class _ItemTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          item.title,
+                          shopItemName(context.l10n, item.id),
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -336,7 +343,7 @@ class _ItemTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         if (owned)
                           Text(
-                            'Куплено',
+                            context.l10n.shopOwnedLabel,
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 9.5,
                               color: AppColors.sageDark,
@@ -452,15 +459,18 @@ class _CartBar extends StatelessWidget {
           disabledForegroundColor: Colors.white.withValues(alpha: 0.45),
         ),
         child: count == 0
-            ? const Text(
-                'Корзина пуста',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+            ? Text(
+                context.l10n.shopCartEmpty,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Купить за $total',
+                    context.l10n.shopBuyFor(total),
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
