@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../game/audience.dart';
 import '../game/game_state.dart';
+import '../games/adult_games.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -124,6 +126,53 @@ const List<_EduCategory> _categories = [
 /// 30 уровней из заголовка раздела 9 КП.
 const int _levelsPerCategory = 10;
 
+/// Взрослая категория: та же строка списка, но вместо квиза открывается
+/// собственный экран игры.
+class _AdultCategory {
+  const _AdultCategory({
+    required this.id,
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.builder,
+  });
+
+  final String id;
+  final String emoji;
+  final String title;
+  final String subtitle;
+
+  /// Экран уровня. [onWin] обязан позвать `GameState.completeLevel`.
+  final Widget Function(int level, VoidCallback onWin) builder;
+}
+
+/// Взрослый набор (аудитория 18+, см. `docs/tz-app.md» — «Аудитория»):
+/// пазл с фото героя — это ещё и витрина каталога, дальше классика
+/// взрослого казуала. Ключи прогресса свои, с детскими не пересекаются.
+final List<_AdultCategory> _adultCategories = [
+  _AdultCategory(
+    id: 'puzzle',
+    emoji: '🧩',
+    title: 'Пазлы',
+    subtitle: 'Соберите фото мишки',
+    builder: (level, onWin) => SlidingPuzzleScreen(level: level, onWin: onWin),
+  ),
+  _AdultCategory(
+    id: 'logic',
+    emoji: '🎯',
+    title: 'Головоломки',
+    subtitle: '2048 в фирменных цветах',
+    builder: (level, onWin) => Game2048Screen(level: level, onWin: onWin),
+  ),
+  _AdultCategory(
+    id: 'memory',
+    emoji: '🃏',
+    title: 'Память',
+    subtitle: 'Найдите пары',
+    builder: (level, onWin) => PairsScreen(level: level, onWin: onWin),
+  ),
+];
+
 /// Награда за пройденный уровень (КП 9.5 — монеты за обучение).
 ///
 /// Значение дублирует умолчание [GameState.completeLevel] и передаётся туда
@@ -156,6 +205,10 @@ class LearningScreen extends StatefulWidget {
 class _LearningScreenState extends State<LearningScreen> {
   /// Открытая категория. `null` — показываем список категорий.
   _EduCategory? _category;
+
+  /// Открытая взрослая категория. Взрослый уровень — отдельный экран через
+  /// Navigator, поэтому третьего состояния, как у детского квиза, здесь нет.
+  _AdultCategory? _adultCategory;
 
   /// Открытый уровень внутри категории. `null` — показываем сетку уровней.
   int? _level;
@@ -244,8 +297,37 @@ class _LearningScreenState extends State<LearningScreen> {
     return AnimatedBuilder(
       animation: widget.game,
       builder: (context, _) {
+        final age = widget.game.playerAge;
         final category = _category;
         final level = _level;
+
+        // Возраст ещё не спрашивали — раздел начинается с этого вопроса.
+        // Это и есть «регистрация» возрастной развилки: КП входа без
+        // регистрации (1.2) не даёт другой точки спросить.
+        if (age == null) {
+          return Scaffold(
+            body: SafeArea(bottom: false, child: _buildAgeGate(context)),
+          );
+        }
+
+        if (Audience.forAge(age) == Audience.adult) {
+          final adult = _adultCategory;
+          return PopScope(
+            canPop: adult == null,
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop) return;
+              setState(() => _adultCategory = null);
+            },
+            child: Scaffold(
+              body: SafeArea(
+                bottom: false,
+                child: adult == null
+                    ? _buildAdultCategories(context)
+                    : _buildAdultLevels(context, adult),
+              ),
+            ),
+          );
+        }
 
         return PopScope(
           // Системная «назад» должна повторять кнопку в шапке: сначала выйти из
@@ -271,6 +353,171 @@ class _LearningScreenState extends State<LearningScreen> {
           ),
         );
       },
+    );
+  }
+
+  // --- Возрастная развилка ---------------------------------------------------
+
+  /// Первый вход: спрашиваем возраст игрока. Взрослый вариант — первым:
+  /// основная аудитория 18+ (см. `docs/tz-app.md`, «Аудитория»).
+  Widget _buildAgeGate(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        _SheetHead(
+          title: 'Игры',
+          coins: widget.game.coins,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.pagePadding,
+              8,
+              AppDimens.pagePadding,
+              AppDimens.pagePadding,
+            ),
+            children: [
+              Text(
+                'Кто будет играть?',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'От возраста зависит набор игр. Поменять можно в любой момент.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _AgeOption(
+                emoji: '🧸',
+                title: 'Взрослый',
+                subtitle: 'Пазлы с мишками, 2048, память',
+                onTap: () => widget.game.setPlayerAge(18),
+              ),
+              const SizedBox(height: 8),
+              _AgeOption(
+                emoji: '🎈',
+                title: 'Ребёнок до ${Audience.adultFrom}',
+                subtitle: 'Цвета и формы, счёт, окружающий мир',
+                onTap: () => widget.game.setPlayerAge(6),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Взрослый набор --------------------------------------------------------
+
+  Widget _buildAdultCategories(BuildContext context) {
+    return Column(
+      children: [
+        _SheetHead(
+          title: 'Игры',
+          coins: widget.game.coins,
+          onBack: () => Navigator.maybePop(context),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.pagePadding,
+              0,
+              AppDimens.pagePadding,
+              AppDimens.pagePadding,
+            ),
+            children: [
+              for (final category in _adultCategories) ...[
+                _AdultCategoryTile(
+                  category: category,
+                  done: widget.game.eduProgress(category.id),
+                  onTap: () => setState(() => _adultCategory = category),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdultLevels(BuildContext context, _AdultCategory category) {
+    final done = widget.game.eduProgress(category.id);
+
+    return Column(
+      children: [
+        _SheetHead(
+          title: category.title,
+          coins: widget.game.coins,
+          onBack: () => setState(() => _adultCategory = null),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.pagePadding,
+              0,
+              AppDimens.pagePadding,
+              AppDimens.pagePadding,
+            ),
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _levelsPerCategory,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemBuilder: (context, index) {
+                  final isDone = index < done;
+                  final isLocked = index > done;
+
+                  return _LevelTile(
+                    number: index + 1,
+                    isDone: isDone,
+                    onTap: isLocked
+                        ? null
+                        : () => _openAdultLevel(category, index),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              const _Note(
+                'Уровень пройден — монеты в кошелёк, следующий открывается. '
+                'Сложность растёт с номером уровня.',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openAdultLevel(_AdultCategory category, int level) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => category.builder(level, () {
+          widget.game.completeLevel(category.id, level, reward: _levelReward);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Уровень пройден! +$_levelReward монет'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+        }),
+      ),
     );
   }
 
@@ -749,6 +996,143 @@ class _Note extends StatelessWidget {
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
         color: isError ? AppColors.blushStrong : AppColors.textSecondary,
         height: 1.5,
+      ),
+    );
+  }
+}
+
+/// Вариант ответа на вопрос «кто будет играть».
+class _AgeOption extends StatelessWidget {
+  const _AgeOption({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+            border: Border.all(color: AppColors.outline),
+          ),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 26)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка взрослой категории: как детская, но с подзаголовком-описанием.
+class _AdultCategoryTile extends StatelessWidget {
+  const _AdultCategoryTile({
+    required this.category,
+    required this.done,
+    required this.onTap,
+  });
+
+  final _AdultCategory category;
+  final int done;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+            border: Border.all(color: AppColors.outline),
+          ),
+          child: Row(
+            children: [
+              Text(category.emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      category.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      category.subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$done/$_levelsPerCategory',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.sageDark,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -47,6 +47,13 @@ class GameState extends ChangeNotifier {
   };
   bool _quietHours = true;
 
+  /// Возраст игрока. `null` — ещё не спрашивали; раздел игр спросит при
+  /// первом входе. Хранится только в профиле и выбирает набор контента
+  /// (см. `lib/game/audience.dart`). ЗАГЛУШКА по хранению: слоя сохранения
+  /// у приложения пока нет вообще, с его появлением возраст уедет туда же,
+  /// куда кошелёк и прогресс.
+  int? _playerAge;
+
   PetProfile get profile => _profile;
   int get coins => _profile.coins;
 
@@ -62,6 +69,13 @@ class GameState extends ChangeNotifier {
 
   /// Сколько уровней категории пройдено (КП 9.2, по 10 на категорию).
   int eduProgress(String categoryId) => _eduProgress[categoryId] ?? 0;
+
+  int? get playerAge => _playerAge;
+
+  void setPlayerAge(int age) {
+    _playerAge = age.clamp(1, 120);
+    notifyListeners();
+  }
 
   int get cartTotal =>
       _cart.fold(0, (sum, id) => sum + ItemCatalog.byId(id).price);

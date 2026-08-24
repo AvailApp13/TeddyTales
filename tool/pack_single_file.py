@@ -80,7 +80,9 @@ MIME = {
     '.ttf': 'font/ttf',
     '.frag': 'text/plain',
     '.riv': 'application/octet-stream',
+    '.jpg': 'image/jpeg',
     '.png': 'image/png',
+    '.webp': 'image/webp',
 }
 
 # Адрес, по которому движок жёстко просит Roboto, если не нашёл семейство в
@@ -200,6 +202,17 @@ def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> Non
         rel = str(rig.relative_to(build_dir))
         assets[rel] = {'b64': read_b64(rig), 'mime': MIME['.riv']}
         print(f'  {rel} — {rig.stat().st_size} Б')
+
+    # Картинки приложения (фото героя для пазла и всё, что появится рядом).
+    images_dir = build_dir / 'assets' / 'assets' / 'images'
+    if images_dir.exists():
+        for image in sorted(images_dir.iterdir()):
+            mime = MIME.get(image.suffix.lower())
+            if mime is None:
+                continue
+            rel = str(image.relative_to(build_dir))
+            assets[rel] = {'b64': read_b64(image), 'mime': mime}
+            print(f'  {rel} — {image.stat().st_size} Б')
 
     rive_js_file = build_dir / RIVE_JS
     rive_wasm_file = build_dir / RIVE_WASM
