@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
 import '../l10n/l10n.dart';
+import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -115,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
                               l10n.profileZodiacLabel,
                               // ДОПУЩЕНИЕ: пока сервера нет, показываем Льва —
                               // ровно как в прототипе, чтобы строка не пустовала.
-                              (profile.zodiac ?? BearZodiac.leo).title,
+                              zodiacTitle(context.l10n, profile.zodiac ?? BearZodiac.leo),
                               // Пометка стоит только здесь: остальные две
                               // заглушки объяснены подписью внизу экрана, и три
                               // одинаковых ярлыка подряд превратили бы карточку

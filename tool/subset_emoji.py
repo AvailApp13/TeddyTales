@@ -44,11 +44,13 @@ def is_emoji(code: int) -> bool:
 
 def collect(lib_dir: Path) -> set[int]:
     found: set[int] = set()
-    for path in sorted(lib_dir.rglob('*.dart')):
-        for char in path.read_text(encoding='utf-8'):
-            code = ord(char)
-            if is_emoji(code):
-                found.add(code)
+    # И код, и ARB-словари: после локализации часть эмодзи живёт в переводах.
+    for pattern in ('*.dart', '*.arb'):
+        for path in sorted(lib_dir.rglob(pattern)):
+            for char in path.read_text(encoding='utf-8'):
+                code = ord(char)
+                if is_emoji(code):
+                    found.add(code)
     return found
 
 
