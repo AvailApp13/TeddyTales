@@ -1,0 +1,7 @@
+{
+  "@@locale": "ru",
+  "appTitle": "TeddyTales",
+  "commonBack": "Назад",
+  "commonCoins": "{count} монет",
+  "@commonCoins": {"placeholders": {"count": {"type": "int"}}}
+}

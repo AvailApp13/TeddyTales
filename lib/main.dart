@@ -2,10 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' show RiveNative;
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
 import 'game/game_state.dart';
 import 'game/pet_profile.dart';
+import 'l10n/l10n.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
@@ -83,6 +86,16 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       title: 'TeddyTales',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      // Язык один на всё приложение: реплики питомца и интерфейс
+      // переключаются одним значением из настроек (КП 16.1: ru/en/zh).
+      locale: _language.locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       home: HomeScreen(
         controller: _bear,
         game: _game,

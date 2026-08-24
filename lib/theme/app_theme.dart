@@ -55,7 +55,7 @@ abstract final class AppTheme {
             displayColor: AppColors.textPrimary,
             fontFamily: 'Roboto',
           )
-          .apply(fontFamilyFallback: const ['NotoColorEmoji']),
+          .apply(fontFamilyFallback: const ['CJK', 'NotoColorEmoji']),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,

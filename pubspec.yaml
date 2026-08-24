@@ -10,6 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # Генерация AppLocalizations из ARB (`flutter gen-l10n`).
+  intl: any
 
   # Источник времени для decay-таймера. Нужен именно он, а не DateTime.now():
   # fakeAsync подменяет `clock`, и таймер можно прокручивать в тестах.
@@ -30,6 +34,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/rive/
     - assets/images/
@@ -70,6 +75,11 @@ flutter:
     # ЗАГЛУШКА: эмодзи стоят на месте иллюстраций предметов. По КП 10.4 состав
     # утверждается Заказчиком до отрисовки — когда придут картинки, шрифт
     # останется нужен только для реплик.
+    # Иероглифы для локали zh: сабсет под реально используемые символы,
+    # пересборка — tool/subset_cjk.py. Полный CJK-шрифт весил бы десятки МБ.
+    - family: CJK
+      fonts:
+        - asset: assets/fonts/CJK-Subset.ttf
     - family: NotoColorEmoji
       fonts:
         - asset: assets/fonts/NotoColorEmoji-Subset.ttf

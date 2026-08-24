@@ -58,6 +58,8 @@ ASSET_FILES = [
     # Без него эмодзи-заглушки предметов превращаются в квадраты: движок за
     # недостающими глифами ходит в сеть, а её здесь нет.
     'assets/assets/fonts/NotoColorEmoji-Subset.ttf',
+    # Иероглифы локали zh — без него китайский в упаковке рисуется квадратами.
+    'assets/assets/fonts/CJK-Subset.ttf',
     # Шейдеры при старте не грузятся, но дёргаются на первом ripple и стоят копейки.
     'assets/shaders/ink_sparkle.frag',
     'assets/shaders/stretch_effect.frag',
