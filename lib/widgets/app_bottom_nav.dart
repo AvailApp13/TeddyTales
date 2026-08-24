@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear_rig_spec.dart';
 import '../game/app_section.dart';
+import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 
 /// Нижняя навигация с замками по стадии роста (КП 3.5).
@@ -38,18 +40,21 @@ class AppBottomNav extends StatelessWidget {
         for (final section in AppSection.values)
           NavigationDestination(
             icon: _Icon(section: section, stage: stage),
-            label: section.title,
+            label: sectionTitle(context.l10n, section),
           ),
       ],
     );
   }
 
   void _explainLock(BuildContext context, AppSection section) {
+    final l10n = context.l10n;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${section.title}. ${section.lockReason()}'),
+          content: Text(
+            '${sectionTitle(l10n, section)}. ${sectionLockReason(l10n, section)}',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );

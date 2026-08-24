@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' hide Factory;
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 
+import '../l10n/l10n.dart';
 import 'bear_controller.dart';
 import 'bear_rig_binding.dart';
 import 'bear_rig_spec.dart';
@@ -186,10 +187,13 @@ class _BearPlaceholder extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
-            Text('Риг ещё не подключён', style: theme.textTheme.titleMedium),
+            Text(
+              context.l10n.bearRigMissingTitle,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 4),
             Text(
-              'Положите ${BearRigSpec.assetPath}',
+              context.l10n.bearRigMissingHint(BearRigSpec.assetPath),
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

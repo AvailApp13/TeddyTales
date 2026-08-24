@@ -21,6 +21,8 @@ enum AppSection {
 
   const AppSection(this.title, this.icon, this.minStage);
 
+  /// Русское название — только для дев-целей (логи, отладочная панель).
+  /// UI обязан брать подпись из `lib/l10n/sections_l10n.dart::sectionTitle`.
   final String title;
   final IconData icon;
 
@@ -33,6 +35,7 @@ enum AppSection {
   bool isUnlockedAt(BearStage stage) =>
       stage.riveValue >= minStage.riveValue;
 
-  /// Пояснение к замку.
+  /// Пояснение к замку — только для дев-целей. UI обязан брать текст из
+  /// `lib/l10n/sections_l10n.dart::sectionLockReason`.
   String lockReason() => 'Откроется на стадии «${minStage.title}»';
 }

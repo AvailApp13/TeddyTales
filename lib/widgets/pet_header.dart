@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../bear/bear_phrases.dart' show BearLanguage;
 import '../game/game_calendar.dart';
 import '../game/pet_profile.dart';
+import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -16,12 +17,10 @@ class PetHeader extends StatelessWidget {
     super.key,
     required this.profile,
     required this.age,
-    this.language = BearLanguage.ru,
   });
 
   final PetProfile profile;
   final GameAge age;
-  final BearLanguage language;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +51,7 @@ class PetHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  age.format(language),
+                  formatAge(context.l10n, age),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),

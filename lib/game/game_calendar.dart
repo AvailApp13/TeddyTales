@@ -10,6 +10,11 @@ class GameAge {
   final int days;
 
   /// «3 месяца 12 дней» — формат из шапки главного экрана на макете.
+  ///
+  /// УСТАРЕЛО: ручные склонения ниже вытеснены ICU-плюралами локализации —
+  /// UI обязан использовать `lib/l10n/sections_l10n.dart::formatAge`. Логика
+  /// сохранена намеренно (не удалять): на неё пока опираются старые вызовы,
+  /// мигрируемые по частям.
   String format(BearLanguage language) => switch (language) {
     BearLanguage.ru => _formatRu(),
     BearLanguage.en => _formatEn(),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../bear/bear_action.dart';
 import '../bear/bear_rig_spec.dart';
 import '../bear/bear_stats.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -46,37 +47,37 @@ class CareStatsPanel extends StatelessWidget {
   final BearStage stage;
   final ValueChanged<BearAction>? onAction;
 
-  List<CareStat> get _tiles => [
+  List<CareStat> _tiles(AppLocalizations l10n) => [
     CareStat(
-      label: 'Еда',
+      label: l10n.statsFood,
       icon: Icons.restaurant,
       value: stats.food,
       color: AppColors.statFood,
       action: BearAction.feed,
     ),
     CareStat(
-      label: 'Гигиена',
+      label: l10n.statsHygiene,
       icon: Icons.bathtub_outlined,
       value: stats.hygiene,
       color: AppColors.statHygiene,
       action: BearAction.wash,
     ),
     CareStat(
-      label: 'Сон',
+      label: l10n.statsSleep,
       icon: Icons.nightlight_round,
       value: stats.sleep,
       color: AppColors.statSleep,
       action: BearAction.sleep,
     ),
     CareStat(
-      label: 'Игра',
+      label: l10n.statsPlay,
       icon: Icons.sports_baseball_outlined,
       value: stats.play,
       color: AppColors.statPlay,
       action: BearAction.play,
     ),
     CareStat(
-      label: 'Любовь',
+      label: l10n.statsLove,
       icon: Icons.favorite,
       value: stats.love,
       color: AppColors.statLove,
@@ -86,9 +87,11 @@ class CareStatsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tiles = _tiles(context.l10n);
+
     return Row(
       children: [
-        for (final tile in _tiles) ...[
+        for (final tile in tiles) ...[
           Expanded(
             child: _StatTile(
               stat: tile,
@@ -97,7 +100,7 @@ class CareStatsPanel extends StatelessWidget {
               onTap: () => onAction?.call(tile.action),
             ),
           ),
-          if (tile != _tiles.last) const SizedBox(width: 8),
+          if (tile != tiles.last) const SizedBox(width: 8),
         ],
       ],
     );

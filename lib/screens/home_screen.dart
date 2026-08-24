@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -151,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('Экран для «${action.name}» ещё не собран'),
+          content: Text(context.l10n.homeScreenNotReady(action.name)),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -176,11 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  PetHeader(
-                    profile: profile,
-                    age: age,
-                    language: widget.language,
-                  ),
+                  PetHeader(profile: profile, age: age),
                   const SizedBox(height: AppDimens.gap),
                   Expanded(
                     child: _RoomScene(
@@ -216,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? null
               : FloatingActionButton.small(
                   onPressed: () => widget.onOpenDevPanel!(context),
-                  tooltip: 'Дев-панель рига',
+                  tooltip: context.l10n.homeDevPanelTooltip,
                   child: const Icon(Icons.tune),
                 ),
           bottomNavigationBar: AppBottomNav(
@@ -311,7 +308,7 @@ class _CareButton extends StatelessWidget {
             border: Border.all(color: AppColors.outline),
           ),
           child: Text(
-            'Что будем делать?',
+            context.l10n.homeCareButton,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
