@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -33,13 +34,14 @@ class GrowthScreen extends StatelessWidget {
   /// Хранятся здесь, а не в [BearStage]: это цифры коммерческого предложения,
   /// они настраиваются с сервера (КП 5.6), а перечисление описывает контракт с
   /// ригом и меняться от настроек не должно.
-  static String _durationOf(BearStage stage) => switch (stage) {
-    BearStage.newborn => '1 день',
-    BearStage.crawling => '~2 дня',
-    BearStage.firstSteps => '1–2 дня',
-    BearStage.growing => 'до ~14 дня',
-    BearStage.adult => 'дальше без ограничений',
-  };
+  static String _durationOf(AppLocalizations l10n, BearStage stage) =>
+      switch (stage) {
+        BearStage.newborn => l10n.growthDurationNewborn,
+        BearStage.crawling => l10n.growthDurationCrawling,
+        BearStage.firstSteps => l10n.growthDurationFirstSteps,
+        BearStage.growing => l10n.growthDurationGrowing,
+        BearStage.adult => l10n.growthDurationAdult,
+      };
 
   /// ЗАГЛУШКА: эмодзи вместо кадра мишки на этой стадии.
   ///
@@ -63,7 +65,9 @@ class GrowthScreen extends StatelessWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('Новая стадия: ${controller.state.stage.title}'),
+          content: Text(
+            context.l10n.growthNewStage(controller.state.stage.title),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -77,13 +81,14 @@ class GrowthScreen extends StatelessWidget {
         child: AnimatedBuilder(
           animation: controller,
           builder: (context, _) {
+            final l10n = context.l10n;
             final stage = controller.state.stage;
             final isAdult = stage == BearStage.adult;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SheetHeader(title: 'Рост и развитие'),
+                _SheetHeader(title: l10n.growthTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -119,7 +124,9 @@ class GrowthScreen extends StatelessWidget {
                             // В прототипе к надписи было приписано имя триггера
                             // «(trg_stage_up)» — это отладочная пометка для
                             // сверки с ТЗ аниматора, пользователю она не нужна.
-                            isAdult ? 'Мишка уже взрослый' : 'Повзрослеть',
+                            isAdult
+                                ? l10n.growthAlreadyAdult
+                                : l10n.growthGrowUp,
                             style: const TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
@@ -128,9 +135,7 @@ class GrowthScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Названия и длительности — из КП 5. На макете они '
-                          'другие (Малыш, Детёныш, месяцы вместо дней) — это '
-                          'расхождение висит открытым вопросом.',
+                          l10n.growthFootnote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -162,6 +167,7 @@ class _StageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     // Сравниваем по riveValue, а не по индексу в values: номер стадии — это то
     // же число, которое уходит в риг и которое пользователь видит в подписях
@@ -170,9 +176,9 @@ class _StageRow extends StatelessWidget {
     final isPassed = stage.riveValue < current.riveValue;
 
     final mark = isPassed
-        ? 'пройдено'
+        ? l10n.growthMarkPassed
         : isNow
-        ? 'сейчас'
+        ? l10n.growthMarkNow
         : '';
 
     return Container(
@@ -204,7 +210,7 @@ class _StageRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  GrowthScreen._durationOf(stage),
+                  GrowthScreen._durationOf(l10n, stage),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),

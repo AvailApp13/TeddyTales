@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -57,13 +58,6 @@ class ProfileScreen extends StatelessWidget {
   /// против «3 months 12 days».
   final BearLanguage language;
 
-  /// **ЗАГЛУШКА.** Рост и вес — часть карточки рождения (КП 2.2), но их
-  /// определяет сервер при рождении вместе с полом и знаком (КП 2.4, 2.5).
-  /// Значения взяты из каталога TeddyTales®: «Карманный мишка Фортуна, 15 см».
-  /// Когда карточка начнёт приходить с бэкенда, обе строки уедут в `PetProfile`.
-  static const String _heightStub = '15 см';
-  static const String _weightStub = '180 г';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,6 +68,7 @@ class ProfileScreen extends StatelessWidget {
           // GameState.
           animation: Listenable.merge([controller, game]),
           builder: (context, _) {
+            final l10n = context.l10n;
             final state = controller.state;
             final profile = game.profile;
 
@@ -92,7 +87,7 @@ class ProfileScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SheetHeader(title: 'Профиль'),
+                _SheetHeader(title: l10n.profileTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -106,16 +101,18 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         _BirthCard(name: profile.name, skin: skin),
 
-                        const _SectionTitle('Карточка рождения · КП 2.2'),
+                        _SectionTitle(l10n.profileSectionBirth),
                         _InfoRows(
                           rows: [
                             _InfoRow(
-                              'Пол',
-                              skin == BearSkin.girl ? 'девочка' : 'мальчик',
+                              l10n.profileSexLabel,
+                              skin == BearSkin.girl
+                                  ? l10n.profileSexGirl
+                                  : l10n.profileSexBoy,
                             ),
-                            _InfoRow('Возраст', age.format(language)),
+                            _InfoRow(l10n.profileAgeLabel, age.format(language)),
                             _InfoRow(
-                              'Знак зодиака',
+                              l10n.profileZodiacLabel,
                               // ДОПУЩЕНИЕ: пока сервера нет, показываем Льва —
                               // ровно как в прототипе, чтобы строка не пустовала.
                               (profile.zodiac ?? BearZodiac.leo).title,
@@ -125,57 +122,70 @@ class ProfileScreen extends StatelessWidget {
                               // в список недоделок.
                               isStub: profile.zodiac == null,
                             ),
-                            const _InfoRow('Рост', _heightStub),
-                            const _InfoRow('Вес', _weightStub),
+                            // ЗАГЛУШКА: рост и вес — часть карточки рождения
+                            // (КП 2.2), но их определяет сервер при рождении
+                            // вместе с полом и знаком (КП 2.4, 2.5). Значения —
+                            // из каталога TeddyTales®: «Карманный мишка
+                            // Фортуна, 15 см». Когда карточка начнёт приходить
+                            // с бэкенда, обе строки уедут в `PetProfile`.
+                            _InfoRow(
+                              l10n.profileHeightLabel,
+                              l10n.profileHeightStub,
+                            ),
+                            _InfoRow(
+                              l10n.profileWeightLabel,
+                              l10n.profileWeightStub,
+                            ),
                           ],
                         ),
 
-                        const _SectionTitle('Характер · КП 7'),
+                        _SectionTitle(l10n.profileSectionTrait),
                         _InfoRows(
                           rows: [
-                            _InfoRow('Сейчас', state.trait.title),
+                            _InfoRow(
+                              l10n.profileTraitNowLabel,
+                              state.trait.title,
+                            ),
                             // КП 7.3: характер складывается из совокупности
                             // действий за период, а не из одного действия.
                             // «3 дня» — окно `BearTraitTracker.window`; строка
                             // объясняет, почему черта не меняется от одного
                             // кормления.
-                            const _InfoRow(
-                              'Как считается',
-                              'из действий за 3 дня',
+                            _InfoRow(
+                              l10n.profileTraitHowLabel,
+                              l10n.profileTraitHowValue,
                             ),
                           ],
                         ),
 
-                        const _SectionTitle('История стадий · КП 14.1'),
+                        _SectionTitle(l10n.profileSectionHistory),
                         _StageTimeline(history: history, current: state.stage),
 
-                        const _SectionTitle('Разделы'),
+                        _SectionTitle(l10n.profileSectionLinks),
                         _LinkTile(
                           icon: Icons.trending_up,
-                          title: 'Рост и развитие',
-                          subtitle: 'пять стадий и переходы',
+                          title: l10n.profileLinkGrowth,
+                          subtitle: l10n.profileLinkGrowthSubtitle,
                           onTap: onOpenGrowth,
                         ),
                         const SizedBox(height: 9),
                         _LinkTile(
                           icon: Icons.menu_book_outlined,
-                          title: 'Дневник',
-                          subtitle: 'события и фотоальбом',
+                          title: l10n.profileLinkDiary,
+                          subtitle: l10n.profileLinkDiarySubtitle,
                           onTap: onOpenDiary,
                         ),
                         const SizedBox(height: 9),
                         _LinkTile(
                           icon: Icons.settings_outlined,
-                          title: 'Настройки',
-                          subtitle: 'язык и уведомления',
+                          title: l10n.profileLinkSettings,
+                          subtitle: l10n.profileLinkSettingsSubtitle,
                           onTap: onOpenSettings,
                         ),
 
                         const SizedBox(height: 10),
                         Text(
-                          'Рост, вес и знак зодиака — заглушки: их определяет '
-                          'сервер при рождении (КП 2.2, 2.5), а таблицу '
-                          'склонностей по знакам даёт Заказчик.',
+                          l10n.profileFootnote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -298,9 +308,10 @@ class _BirthCard extends StatelessWidget {
           const SizedBox(height: 2),
           // Герой и цвет меха — из каталога TeddyTales® (SLOW · Milk Tea,
           // JOY · White). По КП 12.1 данные в приложении должны совпадать с
-          // официальным магазином, поэтому названия не переводим.
+          // официальным магазином, поэтому названия не переводим — локализуется
+          // только слово «мех» вокруг них.
           Text(
-            '${skin.heroName} · мех ${skin.furColor}',
+            context.l10n.profileBirthFur(skin.heroName, skin.furColor),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
@@ -435,7 +446,7 @@ class _StubBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        'заглушка',
+        context.l10n.profileStubBadge,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontSize: 9,
           color: AppColors.textSecondary,
@@ -510,7 +521,9 @@ class _StageTimeline extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          stage == current ? 'сейчас' : 'пройдено',
+                          stage == current
+                              ? context.l10n.profileStageNow
+                              : context.l10n.profileStagePassed,
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontSize: 10.5,
                             color: AppColors.textSecondary,

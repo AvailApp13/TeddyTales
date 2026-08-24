@@ -1,35 +1,34 @@
-import 'bear_phrases.dart' show BearLanguage;
+/// Шесть тактов сцены рождения из раздела 7.8 ТЗ аниматора:
+/// кроватка → атмосфера → первый вдох → пробуждение → первый плач → финал.
+///
+/// Сценарий хранит только тайминги и id шага; сам текст субтитра лежит в ARB
+/// (ключи `birthCue*`) и достаётся маппером `birthCueText` из
+/// `lib/l10n/birth_l10n.dart` — так реплики переводятся вместе с остальным
+/// интерфейсом, а данные сцены остаются чистыми данными.
+enum BirthSceneCueId { cradle, stars, firstBreath, awakening, firstCry, finale }
 
-/// Субтитр сцены рождения: текст и отрезок времени, на котором он показан.
+/// Субтитр сцены рождения: шаг сценария и отрезок времени, на котором он
+/// показан.
 class BirthSceneCue {
   const BirthSceneCue({
     required this.start,
     required this.end,
-    required this.ru,
-    required this.en,
-    required this.zh,
+    required this.id,
   });
 
   final Duration start;
   final Duration end;
-  final String ru;
-  final String en;
-  final String zh;
+
+  /// Какой шаг сценария идёт на этом отрезке — по нему выбирается текст.
+  final BirthSceneCueId id;
 
   bool isVisibleAt(Duration position) => position >= start && position < end;
-
-  String text(BearLanguage language) => switch (language) {
-    BearLanguage.ru => ru,
-    BearLanguage.en => en,
-    BearLanguage.zh => zh,
-  };
 }
 
 /// Сценарий субтитров к сцене рождения (КП 2.1: «ролик 20–30 секунд, субтитры
 /// на языке пользователя, кнопка „Пропустить“ после 5 секунд»).
 ///
-/// Реплики положены на шесть тактов сцены из раздела 7.8 ТЗ аниматора:
-/// кроватка → атмосфера → первый вдох → пробуждение → первый плач → финал.
+/// Реплики положены на шесть тактов сцены из раздела 7.8 ТЗ аниматора.
 ///
 /// **Черновик на согласование.** Сцена ещё не собрана, поэтому тайминги
 /// подогнаны под середину допустимого диапазона (26 секунд). Когда придёт
@@ -57,44 +56,32 @@ class BirthSceneScript {
     BirthSceneCue(
       start: Duration.zero,
       end: Duration(seconds: 5),
-      ru: 'Тёплая кроватка. Кто-то тихо дышит под одеялом…',
-      en: 'A warm little bed. Someone is breathing softly under the blanket…',
-      zh: '温暖的小床。被子下有人在轻轻呼吸……',
+      id: BirthSceneCueId.cradle,
     ),
     BirthSceneCue(
       start: Duration(seconds: 5),
       end: Duration(seconds: 10),
-      ru: 'Звёздочки кружатся в мягком свете.',
-      en: 'Little stars drift in the soft light.',
-      zh: '小星星在柔和的光里飘着。',
+      id: BirthSceneCueId.stars,
     ),
     BirthSceneCue(
       start: Duration(seconds: 10),
       end: Duration(seconds: 14),
-      ru: 'Первый вдох…',
-      en: 'The first breath…',
-      zh: '第一次呼吸……',
+      id: BirthSceneCueId.firstBreath,
     ),
     BirthSceneCue(
       start: Duration(seconds: 14),
       end: Duration(seconds: 18),
-      ru: 'Малыш открывает глаза и осматривается.',
-      en: 'The little one opens their eyes and looks around.',
-      zh: '小家伙睁开眼睛，四处张望。',
+      id: BirthSceneCueId.awakening,
     ),
     BirthSceneCue(
       start: Duration(seconds: 18),
       end: Duration(seconds: 22),
-      ru: 'Первый плач — он зовёт тебя.',
-      en: 'The first cry — calling out for you.',
-      zh: '第一声啼哭——他在呼唤你。',
+      id: BirthSceneCueId.firstCry,
     ),
     BirthSceneCue(
       start: Duration(seconds: 22),
       end: Duration(seconds: 26),
-      ru: 'Он успокоился. Здравствуй, малыш.',
-      en: 'Calm at last. Hello, little one.',
-      zh: '他安静下来了。你好呀，小家伙。',
+      id: BirthSceneCueId.finale,
     ),
   ];
 

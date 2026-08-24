@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -17,8 +18,7 @@ import '../theme/app_theme.dart';
 class CatalogBear {
   const CatalogBear({
     required this.id,
-    required this.title,
-    required this.size,
+    required this.sizeCm,
     required this.usd,
     required this.heroes,
     required this.colors,
@@ -26,10 +26,10 @@ class CatalogBear {
   });
 
   final String id;
-  final String title;
 
-  /// Размер мишки: он же определяет совместимость с гардеробом магазина.
-  final String size;
+  /// Размер мишки в сантиметрах: он же определяет совместимость с гардеробом
+  /// магазина. Подпись с единицей измерения собирает [size].
+  final int sizeCm;
 
   /// Цена в долларах — валюта магазина, не игровые монеты.
   final double usd;
@@ -45,6 +45,18 @@ class CatalogBear {
 
   /// Цена строкой — два знака после точки, как в витрине магазина.
   String get priceLabel => '\$${usd.toStringAsFixed(2)}';
+
+  /// Название позиции — по [id] из локализации: карточки в магазине Заказчика
+  /// ведутся на языках витрины, здесь их переводы лежат в ARB.
+  String title(AppLocalizations l10n) => switch (id) {
+    'fortune15' => l10n.catalogItemFortune,
+    'hug38' => l10n.catalogItemHug,
+    'short20' => l10n.catalogItemShortFur,
+    _ => l10n.catalogItemSpaceSet,
+  };
+
+  /// Размер строкой — единица измерения на языке интерфейса.
+  String size(AppLocalizations l10n) => l10n.catalogSizeCm(sizeCm);
 }
 
 /// Каталог физических мишек — данные из официального магазина TeddyTales®.
@@ -61,8 +73,7 @@ class CatalogBear {
 const List<CatalogBear> _catalog = <CatalogBear>[
   CatalogBear(
     id: 'fortune15',
-    title: 'Карманный мишка Фортуна',
-    size: '15 см',
+    sizeCm: 15,
     usd: 119.90,
     heroes: <String>['SLOW', 'JOY'],
     colors: <String>['Milk Tea', 'White'],
@@ -70,8 +81,7 @@ const List<CatalogBear> _catalog = <CatalogBear>[
   ),
   CatalogBear(
     id: 'hug38',
-    title: 'Персиковый Обнимишка',
-    size: '38 см',
+    sizeCm: 38,
     usd: 169.90,
     heroes: <String>['SLOW'],
     colors: <String>['Pink', 'Milk Tea', 'White', 'Gray'],
@@ -79,8 +89,7 @@ const List<CatalogBear> _catalog = <CatalogBear>[
   ),
   CatalogBear(
     id: 'short20',
-    title: 'Мишка с короткой шерсткой',
-    size: '20 см',
+    sizeCm: 20,
     usd: 99.90,
     heroes: <String>['SLOW'],
     colors: <String>['White', 'Purple', 'Blue', 'Latte'],
@@ -88,8 +97,7 @@ const List<CatalogBear> _catalog = <CatalogBear>[
   ),
   CatalogBear(
     id: 'set30',
-    title: 'Набор Космонавт и Невеста',
-    size: '30 см',
+    sizeCm: 30,
     usd: 189.90,
     heroes: <String>['SLOW', 'JOY'],
     colors: <String>['White'],
@@ -110,13 +118,18 @@ const double _shoesUsd = 9.90;
 /// **ЗАГЛУШКА:** настоящий список стран и правила проверки адреса по стране
 /// приходят из системы продаж Заказчика (КП 12.5). Здесь пять стран из
 /// принятого прототипа — их достаточно, чтобы показать поведение поля.
-const List<String> _countries = <String>[
-  'Россия',
-  'Казахстан',
-  'США',
-  'Германия',
-  'Китай',
-];
+/// В состоянии храним код страны, а не подпись: подпись зависит от языка
+/// интерфейса, код — нет.
+const List<String> _countries = <String>['ru', 'kz', 'us', 'de', 'cn'];
+
+/// Название страны по коду — на языке интерфейса.
+String _countryTitle(AppLocalizations l10n, String code) => switch (code) {
+  'ru' => l10n.catalogCountryRussia,
+  'kz' => l10n.catalogCountryKazakhstan,
+  'us' => l10n.catalogCountryUsa,
+  'de' => l10n.catalogCountryGermany,
+  _ => l10n.catalogCountryChina,
+};
 
 /// Каталог физических мишек (КП 12).
 ///
@@ -144,11 +157,12 @@ class CatalogScreen extends StatelessWidget {
           animation: controller,
           builder: (context, _) {
             final isAdult = controller.state.stage == BearStage.adult;
+            final l10n = context.l10n;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SheetHeader(title: 'Заказать мишку'),
+                _SheetHeader(title: l10n.catalogTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -169,11 +183,10 @@ class CatalogScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                         ],
                         Text(
-                          'Товары, цены и размеры — из официального магазина '
-                          'TeddyTales®, как требует КП 12.1. Фотографии '
-                          'подставлены одинаковые: настоящие снимки берутся из '
-                          'каталога Заказчика. Обувь там продаётся отдельно — '
-                          '$_shoesTitle, \$${_shoesUsd.toStringAsFixed(2)}.',
+                          l10n.catalogFootnote(
+                            _shoesTitle,
+                            '\$${_shoesUsd.toStringAsFixed(2)}',
+                          ),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -237,13 +250,13 @@ class _GrownUpBanner extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Твой малыш вырос',
+            context.l10n.catalogGrownTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           Text(
-            'и готов отправиться к тебе домой',
+            context.l10n.catalogGrownSubtitle,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               fontSize: 11.5,
@@ -266,6 +279,7 @@ class _BearCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Container(
       decoration: BoxDecoration(
@@ -293,7 +307,7 @@ class _BearCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  bear.title,
+                  bear.title(l10n),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -313,7 +327,7 @@ class _BearCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      '${bear.size} · ${bear.rarity}',
+                      '${bear.size(l10n)} · ${bear.rarity}',
                       style: _metaStyle(theme),
                     ),
                   ],
@@ -333,9 +347,12 @@ class _BearCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: FilledButton(
               onPressed: onOrder,
-              child: const Text(
-                'Оформить заказ',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+              child: Text(
+                l10n.catalogOrderButton,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -376,8 +393,8 @@ class _OrderScreenState extends State<OrderScreen> {
   final TextEditingController _postcode = TextEditingController();
   final TextEditingController _phone = TextEditingController();
 
-  /// Страна по умолчанию — первая в списке: пустой селект заставил бы
-  /// открывать его ради очевидного значения.
+  /// Страна по умолчанию — первая в списке (код, не подпись): пустой селект
+  /// заставил бы открывать его ради очевидного значения.
   String _country = _countries.first;
 
   @override
@@ -393,8 +410,8 @@ class _OrderScreenState extends State<OrderScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('Оплата подключается на этапе интеграции'),
+        SnackBar(
+          content: Text(context.l10n.catalogPayStub),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -403,6 +420,7 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final item = widget.item;
 
     return Scaffold(
@@ -411,7 +429,7 @@ class _OrderScreenState extends State<OrderScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SheetHeader(title: 'Оформление'),
+            _SheetHeader(title: l10n.catalogCheckoutTitle),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -427,15 +445,15 @@ class _OrderScreenState extends State<OrderScreen> {
                     // платит, до того как начнёт вводить адрес.
                     _SummaryCard(
                       rows: <(String, String)>[
-                        ('Товар', item.title),
-                        ('Размер', item.size),
-                        ('Цена', item.priceLabel),
+                        (l10n.catalogSummaryItem, item.title(l10n)),
+                        (l10n.catalogSummarySize, item.size(l10n)),
+                        (l10n.catalogSummaryPrice, item.priceLabel),
                       ],
                     ),
                     const SizedBox(height: 12),
                     _Field(
-                      label: 'Имя и фамилия',
-                      hint: 'Как в документах',
+                      label: l10n.catalogFieldName,
+                      hint: l10n.catalogFieldNameHint,
                       controller: _name,
                       keyboardType: TextInputType.name,
                     ),
@@ -444,24 +462,24 @@ class _OrderScreenState extends State<OrderScreen> {
                       onChanged: (value) => setState(() => _country = value),
                     ),
                     _Field(
-                      label: 'Адрес',
-                      hint: 'Улица, дом, квартира',
+                      label: l10n.catalogFieldAddress,
+                      hint: l10n.catalogFieldAddressHint,
                       controller: _address,
                       keyboardType: TextInputType.streetAddress,
                     ),
                     _Field(
-                      label: 'Индекс',
+                      label: l10n.catalogFieldPostcode,
                       hint: '123456',
                       controller: _postcode,
                       keyboardType: TextInputType.number,
                     ),
                     _Field(
-                      label: 'Телефон',
+                      label: l10n.catalogFieldPhone,
                       hint: '+7 900 000-00-00',
                       controller: _phone,
                       keyboardType: TextInputType.phone,
                     ),
-                    const _SectionTitle('Оплата · КП 12.4'),
+                    _SectionTitle(l10n.catalogPaySection),
                     // Три способа ровно по КП 12.4. Порядок как в прототипе:
                     // китайские кошельки первыми — магазин работает на Азию, а
                     // PayPal замыкает список как способ «для всех остальных».
@@ -476,15 +494,12 @@ class _OrderScreenState extends State<OrderScreen> {
                       // аккаунта — это свойство PayPal, и его нужно назвать,
                       // иначе человек без аккаунта решит, что способ не для
                       // него.
-                      note: ' — и картой без аккаунта',
+                      note: l10n.catalogPayPalNote,
                       onTap: _pay,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Доставка по данным магазина: США 7–9 рабочих дней, '
-                      'Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в '
-                      'действующую систему продаж Заказчика (КП 12.5) — здесь '
-                      'форма без отправки.',
+                      l10n.catalogDeliveryNote,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                         height: 1.5,
@@ -627,12 +642,14 @@ class _CountryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _FieldLabel('Страна'),
+          _FieldLabel(l10n.catalogFieldCountry),
           DropdownButtonFormField<String>(
             initialValue: value,
             isDense: true,
@@ -647,7 +664,10 @@ class _CountryField extends StatelessWidget {
             decoration: _fieldDecoration(),
             items: <DropdownMenuItem<String>>[
               for (final country in _countries)
-                DropdownMenuItem<String>(value: country, child: Text(country)),
+                DropdownMenuItem<String>(
+                  value: country,
+                  child: Text(_countryTitle(l10n, country)),
+                ),
             ],
             onChanged: (selected) {
               if (selected == null) return;

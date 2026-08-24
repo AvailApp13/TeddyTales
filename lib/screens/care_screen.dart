@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -47,29 +48,21 @@ class CareScreen extends StatelessWidget {
       action: BearAction.feed,
       icon: Icons.restaurant,
       color: AppColors.statFood,
-      title: 'Покормить',
-      subtitle: 'Вкусная еда для малыша',
     ),
     _CareItem(
       action: BearAction.wash,
       icon: Icons.bathtub_outlined,
       color: AppColors.statHygiene,
-      title: 'Купать',
-      subtitle: 'Пора в ванну!',
     ),
     _CareItem(
       action: BearAction.play,
       icon: Icons.sports_baseball_outlined,
       color: AppColors.statPlay,
-      title: 'Играть',
-      subtitle: 'Весёлые игры вместе',
     ),
     _CareItem(
       action: BearAction.sleep,
       icon: Icons.nightlight_round,
       color: AppColors.statSleep,
-      title: 'Уложить спать',
-      subtitle: 'Спокойной ночи, малыш',
     ),
   ];
 
@@ -110,7 +103,7 @@ class CareScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SheetHeader(title: 'Что будем делать?'),
+                _SheetHeader(title: context.l10n.careTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -134,8 +127,7 @@ class CareScreen extends StatelessWidget {
                         ],
                         const SizedBox(height: 10),
                         Text(
-                          'Поглаживания в списке нет: по разделу 8.1 ТЗ это '
-                          'касание экрана — тапните по мишке на главной.',
+                          context.l10n.careFootnote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -155,24 +147,37 @@ class CareScreen extends StatelessWidget {
   }
 }
 
-/// Пункт списка ухода.
+/// Пункт списка ухода. Название и пояснение не хранятся строками, а берутся из
+/// словаря `lib/l10n` по действию — тексты переключаются вместе с языком.
 class _CareItem {
   const _CareItem({
     required this.action,
     required this.icon,
     required this.color,
-    required this.title,
-    required this.subtitle,
   });
 
   final BearAction action;
   final IconData icon;
   final Color color;
-  final String title;
+
+  String titleOf(AppLocalizations l10n) => switch (action) {
+    BearAction.feed => l10n.careFeedTitle,
+    BearAction.wash => l10n.careWashTitle,
+    BearAction.play => l10n.carePlayTitle,
+    BearAction.sleep => l10n.careSleepTitle,
+    // Остальные действия в списке ухода не встречаются (см. `_items`).
+    _ => '',
+  };
 
   /// Показывается, только пока действие доступно: у закрытого пункта на его
   /// месте объяснение, с какой стадии он откроется.
-  final String subtitle;
+  String subtitleOf(AppLocalizations l10n) => switch (action) {
+    BearAction.feed => l10n.careFeedSubtitle,
+    BearAction.wash => l10n.careWashSubtitle,
+    BearAction.play => l10n.carePlaySubtitle,
+    BearAction.sleep => l10n.careSleepSubtitle,
+    _ => '',
+  };
 }
 
 /// Шапка листа: круглая кнопка «назад», заголовок по центру, справа пусто.
@@ -251,13 +256,14 @@ class _CareTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final available = item.action.isAvailableOn(stage);
 
     // Номер стадии, а не название: так было в принятом прототипе, и он же
     // совпадает с номером на шкале роста (КП 5), где пользователь его и видит.
     final subtitle = available
-        ? item.subtitle
-        : 'Откроется на стадии ${item.action.minStage.riveValue}';
+        ? item.subtitleOf(l10n)
+        : l10n.careLockedUntilStage(item.action.minStage.riveValue);
 
     return Opacity(
       opacity: available ? 1 : 0.45,
@@ -283,7 +289,7 @@ class _CareTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        item.title,
+                        item.titleOf(l10n),
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),

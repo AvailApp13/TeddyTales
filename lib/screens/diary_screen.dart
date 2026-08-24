@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
 import '../game/game_calendar.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -26,9 +27,9 @@ import '../theme/app_theme.dart';
 /// с историей КП 14.1. Пока такого источника нет, показываем демонстрационную
 /// ленту.
 ///
-/// **ДОПУЩЕНИЕ:** тексты только на русском, хотя КП 16.1 требует три языка.
-/// Строк дневника нет ни в КП, ни в словаре реплик ([BearPhrases]), переводить
-/// нечего — вернёмся к этому, когда дневник утвердят как механику.
+/// Тексты демонстрационных событий локализованы на три языка (КП 16.1) через
+/// общий словарь `lib/l10n`; когда дневник утвердят как механику и события
+/// поедут с сервера, ключи станут типами событий.
 class DiaryScreen extends StatelessWidget {
   const DiaryScreen({super.key});
 
@@ -38,10 +39,10 @@ class DiaryScreen extends StatelessWidget {
   /// считает [GameAge], тот же код, что и в шапке главного экрана. Иначе
   /// дневник и шапка разойдутся в формулировках при первой же правке правил.
   static const List<_DiaryEvent> _events = [
-    _DiaryEvent(title: 'Первое купание', months: 2, days: 5),
-    _DiaryEvent(title: 'Научился ползать', months: 2, days: 20),
-    _DiaryEvent(title: 'Первый зубик', months: 3, days: 2),
-    _DiaryEvent(title: 'Любимая игрушка', months: 3, days: 10),
+    _DiaryEvent(kind: _DiaryEventKind.firstBath, months: 2, days: 5),
+    _DiaryEvent(kind: _DiaryEventKind.firstCrawl, months: 2, days: 20),
+    _DiaryEvent(kind: _DiaryEventKind.firstTooth, months: 3, days: 2),
+    _DiaryEvent(kind: _DiaryEventKind.favoriteToy, months: 3, days: 10),
   ];
 
   @override
@@ -52,7 +53,7 @@ class DiaryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SheetHeader(title: 'Дневник'),
+            _SheetHeader(title: context.l10n.diaryTitle),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -70,11 +71,7 @@ class DiaryScreen extends StatelessWidget {
                     ],
                     const SizedBox(height: 2),
                     Text(
-                      'Дневника нет в КП — он с макета. Отнесён ко второй '
-                      'версии, собран как заготовка. Фотоальбом и «Поделиться» '
-                      'потребуют камеры и прав на съёмку. Миниатюра события — '
-                      'заглушка: настоящие снимки появятся вместе с '
-                      'фотоальбомом.',
+                      context.l10n.diaryFootnote,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                         height: 1.5,
@@ -91,21 +88,32 @@ class DiaryScreen extends StatelessWidget {
   }
 }
 
+/// Какое именно событие показано в строке: по нему выбирается локализованное
+/// название. В настоящем дневнике тип события приедет с сервера вместе с датой.
+enum _DiaryEventKind { firstBath, firstCrawl, firstTooth, favoriteToy }
+
 /// Одно событие дневника.
 class _DiaryEvent {
   const _DiaryEvent({
-    required this.title,
+    required this.kind,
     required this.months,
     required this.days,
   });
 
-  final String title;
+  final _DiaryEventKind kind;
 
   /// Игровой возраст питомца на момент события (КП 5, игровой календарь).
   final int months;
   final int days;
 
   GameAge get age => GameAge(months: months, days: days);
+
+  String titleOf(AppLocalizations l10n) => switch (kind) {
+    _DiaryEventKind.firstBath => l10n.diaryEventFirstBath,
+    _DiaryEventKind.firstCrawl => l10n.diaryEventFirstCrawl,
+    _DiaryEventKind.firstTooth => l10n.diaryEventFirstTooth,
+    _DiaryEventKind.favoriteToy => l10n.diaryEventFavoriteToy,
+  };
 }
 
 /// Строка события: миниатюра, название, игровой возраст.
@@ -113,6 +121,16 @@ class _DiaryRow extends StatelessWidget {
   const _DiaryRow({required this.event});
 
   final _DiaryEvent event;
+
+  /// Язык форматирования возраста — из текущей локали приложения: у экрана нет
+  /// параметра языка, а локаль и [BearLanguage] переключаются одним значением
+  /// из настроек (см. `l10n.dart`).
+  static BearLanguage _languageOf(BuildContext context) =>
+      switch (Localizations.localeOf(context).languageCode) {
+        'en' => BearLanguage.en,
+        'zh' => BearLanguage.zh,
+        _ => BearLanguage.ru,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -152,14 +170,16 @@ class _DiaryRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  event.title,
+                  event.titleOf(context.l10n),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  event.age.format(BearLanguage.ru),
+                  // Возраст склоняет [GameAge] на языке текущей локали — тот же
+                  // код, что и в шапке главного экрана.
+                  event.age.format(_languageOf(context)),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),

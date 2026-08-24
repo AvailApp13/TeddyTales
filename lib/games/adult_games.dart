@@ -12,6 +12,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'board_2048.dart';
@@ -72,11 +73,11 @@ class _SlidingPuzzleScreenState extends State<SlidingPuzzleScreen> {
     final n = _board.size;
     final solved = _board.isSolved;
 
+    final l10n = context.l10n;
+
     return GameScaffold(
-      title: 'Пазл · уровень ${widget.level + 1}',
-      hint: solved
-          ? 'Собрано! Забирайте награду 🎉'
-          : 'Двигайте плитки тапом — соберите фото.',
+      title: l10n.gamePuzzleTitle(widget.level + 1),
+      hint: solved ? l10n.gamePuzzleSolvedHint : l10n.gamePuzzleHint,
       child: AspectRatio(
         aspectRatio: 1,
         child: Container(
@@ -188,14 +189,15 @@ class _Game2048ScreenState extends State<Game2048Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return GameScaffold(
-      title: '2048 · уровень ${widget.level + 1}',
+      title: l10n.game2048Title(widget.level + 1),
       hint: _won
-          ? 'Есть $_target! Забирайте награду 🎉'
+          ? l10n.game2048WonHint(_target)
           : _board.isStuck
-          ? 'Ходов не осталось — начните заново кнопкой ниже.'
-          : 'Свайпайте: равные плитки сливаются. Цель — $_target. '
-                'Счёт: ${_board.score}',
+          ? l10n.game2048StuckHint
+          : l10n.game2048Hint(_target, _board.score),
       onRestart: _board.isStuck
           ? () => setState(() {
               _board = Board2048(
@@ -346,11 +348,13 @@ class _PairsScreenState extends State<PairsScreen> {
   Widget build(BuildContext context) {
     final columns = _pairCount <= 6 ? 3 : 4;
 
+    final l10n = context.l10n;
+
     return GameScaffold(
-      title: 'Память · уровень ${widget.level + 1}',
+      title: l10n.gamePairsTitle(widget.level + 1),
       hint: _board.isSolved
-          ? 'Все пары найдены за ${_board.moves} ходов 🎉'
-          : 'Откройте две одинаковые карточки. Ходы: ${_board.moves}',
+          ? l10n.gamePairsSolvedHint(_board.moves)
+          : l10n.gamePairsHint(_board.moves),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -487,7 +491,7 @@ class GameScaffold extends StatelessWidget {
                     const SizedBox(height: 8),
                     OutlinedButton(
                       onPressed: onRestart,
-                      child: const Text('Заново'),
+                      child: Text(context.l10n.gameRestart),
                     ),
                   ],
                 ],

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
 import '../game/game_state.dart';
+import '../l10n/l10n.dart';
+import '../l10n/notifications_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -50,10 +52,11 @@ class SettingsScreen extends StatelessWidget {
         child: AnimatedBuilder(
           animation: game,
           builder: (context, _) {
+            final l10n = context.l10n;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SheetHeader(title: 'Настройки'),
+                _SheetHeader(title: l10n.settingsTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -65,13 +68,13 @@ class SettingsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const _SectionTitle('Язык · КП 16.1'),
+                        _SectionTitle(l10n.settingsSectionLanguage),
                         _LanguageRow(
                           current: language,
                           onSelected: onLanguageChanged,
                         ),
 
-                        const _SectionTitle('Уведомления · КП 13.1, 13.2'),
+                        _SectionTitle(l10n.settingsSectionNotifications),
                         _TogglesCard(
                           rows: [
                             // Порядок типов не алфавитный и не случайный: он
@@ -79,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
                             // можно было сверять с договором построчно.
                             for (final kind in NotificationKind.values)
                               _ToggleRow(
-                                title: kind.title,
+                                title: notificationTitle(l10n, kind),
                                 value: game.isNotificationOn(kind.id),
                                 onChanged: (_) =>
                                     game.toggleNotification(kind.id),
@@ -93,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
                             // экономика уведомлений, её место в панели
                             // управления (КП 15.5), а не в клиенте.
                             _ToggleRow(
-                              title: 'Тихие часы 22:00 — 8:00',
+                              title: l10n.settingsQuietHours,
                               value: game.quietHours,
                               onChanged: game.setQuietHours,
                             ),
@@ -109,10 +112,7 @@ class SettingsScreen extends StatelessWidget {
                         // ручки для него нет ни здесь, ни в прототипе —
                         // частоту держит отправляющая сторона, то есть сервер.
                         Text(
-                          'Восемь типов уведомлений по КП 13.1, тихие часы и '
-                          'ограничение частоты — по 13.2. Привязка аккаунта и '
-                          'правовые документы (КП 14.2) появятся вместе с '
-                          'бэкендом.',
+                          l10n.settingsFootnote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,

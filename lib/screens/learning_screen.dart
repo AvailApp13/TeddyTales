@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../game/audience.dart';
 import '../game/game_state.dart';
 import '../games/adult_games.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -52,26 +53,27 @@ class _EduCategory {
 /// кругу — ровно как в прототипе, который заказчик принял.
 ///
 /// Тексты вопросов и наборы вариантов перенесены из прототипа дословно,
-/// переформулировок нет.
-const List<_EduCategory> _categories = [
+/// переформулировок нет. Строится из локализации, поэтому это функция, а не
+/// const-список: язык может смениться на лету.
+List<_EduCategory> _categories(AppLocalizations l10n) => [
   _EduCategory(
     id: 'colors',
     emoji: '🎨',
-    title: 'Цвета и формы',
+    title: l10n.learnCatColorsTitle,
     tasks: [
       _EduTask(
-        question: 'Где красный?',
-        options: ['🔴', '🟢', '🔵', '🟡'],
+        question: l10n.learnTaskColorsRed,
+        options: const ['🔴', '🟢', '🔵', '🟡'],
         correct: 0,
       ),
       _EduTask(
-        question: 'Где круг?',
-        options: ['🔺', '⬛️', '🔵', '⬜️'],
+        question: l10n.learnTaskColorsCircle,
+        options: const ['🔺', '⬛️', '🔵', '⬜️'],
         correct: 2,
       ),
       _EduTask(
-        question: 'Где зелёный?',
-        options: ['🟣', '🟢', '🟠', '⚫️'],
+        question: l10n.learnTaskColorsGreen,
+        options: const ['🟣', '🟢', '🟠', '⚫️'],
         correct: 1,
       ),
     ],
@@ -79,21 +81,21 @@ const List<_EduCategory> _categories = [
   _EduCategory(
     id: 'count',
     emoji: '🔢',
-    title: 'Счёт и простая логика',
+    title: l10n.learnCatCountTitle,
     tasks: [
       _EduTask(
-        question: 'Сколько яблок? 🍎🍎🍎',
-        options: ['2', '3', '4', '5'],
+        question: l10n.learnTaskCountApples,
+        options: const ['2', '3', '4', '5'],
         correct: 1,
       ),
       _EduTask(
-        question: 'Что больше?',
-        options: ['🐘', '🐭', '🐜', '🐝'],
+        question: l10n.learnTaskCountBigger,
+        options: const ['🐘', '🐭', '🐜', '🐝'],
         correct: 0,
       ),
       _EduTask(
-        question: 'Что дальше? 1, 2, 3…',
-        options: ['5', '4', '7', '9'],
+        question: l10n.learnTaskCountNext,
+        options: const ['5', '4', '7', '9'],
         correct: 1,
       ),
     ],
@@ -101,21 +103,21 @@ const List<_EduCategory> _categories = [
   _EduCategory(
     id: 'world',
     emoji: '🌍',
-    title: 'Окружающий мир',
+    title: l10n.learnCatWorldTitle,
     tasks: [
       _EduTask(
-        question: 'Кто живёт в воде?',
-        options: ['🐟', '🐈', '🐦', '🐴'],
+        question: l10n.learnTaskWorldWater,
+        options: const ['🐟', '🐈', '🐦', '🐴'],
         correct: 0,
       ),
       _EduTask(
-        question: 'Что светит днём?',
-        options: ['🌙', '⭐️', '☀️', '💡'],
+        question: l10n.learnTaskWorldDay,
+        options: const ['🌙', '⭐️', '☀️', '💡'],
         correct: 2,
       ),
       _EduTask(
-        question: 'Где растут яблоки?',
-        options: ['🌳', '🌊', '🏔', '🏠'],
+        question: l10n.learnTaskWorldApples,
+        options: const ['🌳', '🌊', '🏔', '🏠'],
         correct: 0,
       ),
     ],
@@ -149,26 +151,26 @@ class _AdultCategory {
 /// Взрослый набор (аудитория 18+, см. `docs/tz-app.md» — «Аудитория»):
 /// пазл с фото героя — это ещё и витрина каталога, дальше классика
 /// взрослого казуала. Ключи прогресса свои, с детскими не пересекаются.
-final List<_AdultCategory> _adultCategories = [
+List<_AdultCategory> _adultCategories(AppLocalizations l10n) => [
   _AdultCategory(
     id: 'puzzle',
     emoji: '🧩',
-    title: 'Пазлы',
-    subtitle: 'Соберите фото мишки',
+    title: l10n.learnAdultPuzzleTitle,
+    subtitle: l10n.learnAdultPuzzleSubtitle,
     builder: (level, onWin) => SlidingPuzzleScreen(level: level, onWin: onWin),
   ),
   _AdultCategory(
     id: 'logic',
     emoji: '🎯',
-    title: 'Головоломки',
-    subtitle: '2048 в фирменных цветах',
+    title: l10n.learnAdultLogicTitle,
+    subtitle: l10n.learnAdultLogicSubtitle,
     builder: (level, onWin) => Game2048Screen(level: level, onWin: onWin),
   ),
   _AdultCategory(
     id: 'memory',
     emoji: '🃏',
-    title: 'Память',
-    subtitle: 'Найдите пары',
+    title: l10n.learnAdultMemoryTitle,
+    subtitle: l10n.learnAdultMemorySubtitle,
     builder: (level, onWin) => PairsScreen(level: level, onWin: onWin),
   ),
 ];
@@ -282,8 +284,8 @@ class _LearningScreenState extends State<LearningScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
-            content: Text('Верно! +$_levelReward монет'),
+          SnackBar(
+            content: Text(context.l10n.learnCorrectToast(_levelReward)),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -362,11 +364,12 @@ class _LearningScreenState extends State<LearningScreen> {
   /// основная аудитория 18+ (см. `docs/tz-app.md`, «Аудитория»).
   Widget _buildAgeGate(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Column(
       children: [
         _SheetHead(
-          title: 'Игры',
+          title: l10n.learnGamesTitle,
           coins: widget.game.coins,
           onBack: () => Navigator.maybePop(context),
         ),
@@ -380,7 +383,7 @@ class _LearningScreenState extends State<LearningScreen> {
             ),
             children: [
               Text(
-                'Кто будет играть?',
+                l10n.learnAgeGateTitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
@@ -388,7 +391,7 @@ class _LearningScreenState extends State<LearningScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'От возраста зависит набор игр. Поменять можно в любой момент.',
+                l10n.learnAgeGateSubtitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textSecondary,
@@ -397,15 +400,15 @@ class _LearningScreenState extends State<LearningScreen> {
               const SizedBox(height: 14),
               _AgeOption(
                 emoji: '🧸',
-                title: 'Взрослый',
-                subtitle: 'Пазлы с мишками, 2048, память',
+                title: l10n.learnAgeAdultTitle,
+                subtitle: l10n.learnAgeAdultSubtitle,
                 onTap: () => widget.game.setPlayerAge(18),
               ),
               const SizedBox(height: 8),
               _AgeOption(
                 emoji: '🎈',
-                title: 'Ребёнок до ${Audience.adultFrom}',
-                subtitle: 'Цвета и формы, счёт, окружающий мир',
+                title: l10n.learnAgeChildTitle(Audience.adultFrom),
+                subtitle: l10n.learnAgeChildSubtitle,
                 onTap: () => widget.game.setPlayerAge(6),
               ),
             ],
@@ -421,7 +424,7 @@ class _LearningScreenState extends State<LearningScreen> {
     return Column(
       children: [
         _SheetHead(
-          title: 'Игры',
+          title: context.l10n.learnGamesTitle,
           coins: widget.game.coins,
           onBack: () => Navigator.maybePop(context),
         ),
@@ -434,7 +437,7 @@ class _LearningScreenState extends State<LearningScreen> {
               AppDimens.pagePadding,
             ),
             children: [
-              for (final category in _adultCategories) ...[
+              for (final category in _adultCategories(context.l10n)) ...[
                 _AdultCategoryTile(
                   category: category,
                   done: widget.game.eduProgress(category.id),
@@ -492,10 +495,7 @@ class _LearningScreenState extends State<LearningScreen> {
                 },
               ),
               const SizedBox(height: 10),
-              const _Note(
-                'Уровень пройден — монеты в кошелёк, следующий открывается. '
-                'Сложность растёт с номером уровня.',
-              ),
+              _Note(context.l10n.learnAdultLevelsNote),
             ],
           ),
         ),
@@ -511,8 +511,8 @@ class _LearningScreenState extends State<LearningScreen> {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
-              const SnackBar(
-                content: Text('Уровень пройден! +$_levelReward монет'),
+              SnackBar(
+                content: Text(context.l10n.learnLevelDoneToast(_levelReward)),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -526,7 +526,7 @@ class _LearningScreenState extends State<LearningScreen> {
     return Column(
       children: [
         _SheetHead(
-          title: 'Обучение',
+          title: context.l10n.learnTitle,
           coins: widget.game.coins,
           onBack: () => Navigator.maybePop(context),
         ),
@@ -539,7 +539,7 @@ class _LearningScreenState extends State<LearningScreen> {
               AppDimens.pagePadding,
             ),
             children: [
-              for (final category in _categories) ...[
+              for (final category in _categories(context.l10n)) ...[
                 _CategoryTile(
                   category: category,
                   done: widget.game.eduProgress(category.id),
@@ -599,11 +599,7 @@ class _LearningScreenState extends State<LearningScreen> {
                 },
               ),
               const SizedBox(height: 10),
-              const _Note(
-                'По 10 уровней в каждой категории (КП 9.2). Движок рассчитан '
-                'на 300 заданий, контент даёт Заказчик через панель (КП 9.4) — '
-                'здесь по три задания на категорию для примера.',
-              ),
+              _Note(context.l10n.learnLevelsNote),
             ],
           ),
         ),
@@ -623,7 +619,7 @@ class _LearningScreenState extends State<LearningScreen> {
     return Column(
       children: [
         _SheetHead(
-          title: '${category.title} · уровень ${level + 1}',
+          title: context.l10n.learnQuizTitle(category.title, level + 1),
           coins: widget.game.coins,
           onBack: _closeLevel,
         ),
@@ -670,8 +666,8 @@ class _LearningScreenState extends State<LearningScreen> {
               const SizedBox(height: 10),
               _Note(
                 isWrong
-                    ? 'Не угадали. Попробуйте ещё раз — штрафа нет (КП 9.3).'
-                    : 'Верный ответ — анимация радости и награда.',
+                    ? context.l10n.learnQuizWrongNote
+                    : context.l10n.learnQuizHintNote,
                 isError: isWrong,
               ),
             ],
@@ -839,7 +835,7 @@ class _CategoryTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$_levelsPerCategory уровней',
+                      context.l10n.learnLevelsCount(_levelsPerCategory),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
