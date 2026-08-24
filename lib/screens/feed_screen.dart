@@ -7,24 +7,23 @@ import '../bear/bear_controller.dart';
 import '../bear/bear_rig_spec.dart' show BearTrait;
 import '../game/food.dart';
 import '../game/game_state.dart';
+import '../l10n/food_l10n.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
 /// Подсказка от характера питомца (КП 8.1 — «подсказка от характера»).
 ///
 /// Реплики принадлежат экрану кормления, а не общему набору фраз BearPhrases:
-/// там реплики привязаны к настроению и стадии и переведены на три языка
-/// (КП 13.3), а эти шесть — про еду и только про неё.
-///
-/// ЗАГЛУШКА: только русский. Локализация экрана — общая работа по КП 16.1,
-/// вместе с остальными строками интерфейса.
-const Map<BearTrait, String> _foodHint = {
-  BearTrait.active: 'Я сегодня носился как заводной — давай посытнее!',
-  BearTrait.curious: 'А приготовим что-нибудь новенькое?',
-  BearTrait.affectionate: 'Хочу что-нибудь сладкое… и чтобы ты рядом.',
-  BearTrait.calm: 'Мне бы чего-то тёплого и простого.',
-  BearTrait.independent: 'Я бы и сам справился. Ну, почти.',
-  BearTrait.reserved: 'Можно просто фрукты?',
+/// там реплики привязаны к настроению и стадии, а эти шесть — про еду и
+/// только про неё.
+String _foodHint(AppLocalizations l10n, BearTrait trait) => switch (trait) {
+  BearTrait.active => l10n.feedHintActive,
+  BearTrait.curious => l10n.feedHintCurious,
+  BearTrait.affectionate => l10n.feedHintAffectionate,
+  BearTrait.calm => l10n.feedHintCalm,
+  BearTrait.independent => l10n.feedHintIndependent,
+  BearTrait.reserved => l10n.feedHintReserved,
 };
 
 /// Любимое блюдо по характеру (КП 7.4 — характер влияет на предпочтения в еде).
@@ -42,14 +41,14 @@ const Map<BearTrait, String> _favouriteDish = {
 };
 
 /// Две вкладки экрана кормления (КП 8.1).
-enum _FeedTab {
-  ready('Готовые блюда'),
-  cook('Приготовить');
+enum _FeedTab { ready, cook }
 
-  const _FeedTab(this.title);
-
-  final String title;
-}
+/// Подпись вкладки. В enum её не положить: локализованная строка требует
+/// контекста, а он есть только в build.
+String _tabTitle(AppLocalizations l10n, _FeedTab tab) => switch (tab) {
+  _FeedTab.ready => l10n.feedTabReady,
+  _FeedTab.cook => l10n.feedTabCook,
+};
 
 /// Экран кормления с мини-игрой готовки (КП 8).
 ///
@@ -107,16 +106,21 @@ class _FeedScreenState extends State<FeedScreen> {
   // --- Готовые блюда (КП 8.2) ----------------------------------------------
 
   void _eat(Dish dish) {
+    final l10n = context.l10n;
+
     // Хватает ли монет, решает кошелёк, а не экран: иначе проверка и списание
     // разъедутся.
     if (!widget.game.feedWithDish(dish)) {
-      _toast('Не хватает монет');
+      _toast(l10n.feedNotEnoughCoins);
       return;
     }
 
     _closeWith(
-      '${dish.title} · еда +${_gainLabel(dish.foodGain)}, '
-      '−${dish.price} монет',
+      l10n.feedEatResult(
+        dishName(l10n, dish.id),
+        dish.foodGain.round(),
+        dish.price,
+      ),
     );
   }
 
@@ -171,9 +175,13 @@ class _FeedScreenState extends State<FeedScreen> {
     }
 
     widget.game.completeRecipe(recipe);
+    final l10n = context.l10n;
     _closeWith(
-      'Готово! ${recipe.title} · +${recipe.reward} монет, '
-      'еда +${_gainLabel(recipe.foodGain)}',
+      l10n.feedCookResult(
+        recipeName(l10n, recipe.id),
+        recipe.reward,
+        recipe.foodGain.round(),
+      ),
     );
   }
 
@@ -224,11 +232,12 @@ class _FeedScreenState extends State<FeedScreen> {
   /// Выбор: вкладки «Готовые блюда» и «Приготовить» (КП 8.1, 8.3).
   Widget _buildPicker(BuildContext context) {
     final trait = widget.controller.state.trait;
+    final l10n = context.l10n;
 
     return Column(
       children: [
         _SheetHead(
-          title: 'Чем покормим?',
+          title: l10n.feedTitle,
           coins: widget.game.coins,
           onBack: () => Navigator.maybePop(context),
         ),
@@ -237,7 +246,7 @@ class _FeedScreenState extends State<FeedScreen> {
           onSelected: (tab) => setState(() => _tab = tab),
         ),
         const SizedBox(height: 10),
-        _HintBar(emoji: '🧸', text: _foodHint[trait] ?? ''),
+        _HintBar(emoji: '🧸', text: _foodHint(l10n, trait)),
         const SizedBox(height: 10),
         Expanded(
           child: _tab == _FeedTab.ready
@@ -282,10 +291,7 @@ class _FeedScreenState extends State<FeedScreen> {
           },
         ),
         const SizedBox(height: 10),
-        const _Note(
-          'Ровно 10 блюд по КП 8.2. Цены и прибавки — плейсхолдеры, '
-          'по КП 10.9 они утверждаются отдельно и настраиваются с сервера.',
-        ),
+        _Note(context.l10n.feedDishesNote),
       ],
     );
   }
@@ -304,10 +310,7 @@ class _FeedScreenState extends State<FeedScreen> {
           const SizedBox(height: 8),
         ],
         const SizedBox(height: 2),
-        const _Note(
-          'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, '
-          'остальные — от 4 до 6.',
-        ),
+        _Note(context.l10n.feedRecipesNote),
       ],
     );
   }
@@ -315,20 +318,17 @@ class _FeedScreenState extends State<FeedScreen> {
   /// Мини-игра: ингредиенты в правильной последовательности (КП 8.4).
   Widget _buildMiniGame(BuildContext context, Recipe recipe) {
     final hasError = _wrongIndex != null;
+    final l10n = context.l10n;
 
     return Column(
       children: [
         _SheetHead(
-          title: recipe.title,
+          title: recipeName(l10n, recipe.id),
           coins: widget.game.coins,
           onBack: _closeRecipe,
         ),
         const SizedBox(height: 10),
-        _HintBar(
-          emoji: recipe.emoji,
-          text: 'Добавляй продукты по порядку. '
-              'Ошибёшься — просто попробуем ещё раз.',
-        ),
+        _HintBar(emoji: recipe.emoji, text: l10n.feedCookHint),
         const SizedBox(height: 10),
         Expanded(
           child: ListView(
@@ -369,11 +369,15 @@ class _FeedScreenState extends State<FeedScreen> {
               const SizedBox(height: 10),
               _Note(
                 hasError
-                    ? 'Не то. Сейчас нужно: ${recipe.steps[_step].title}. '
-                          'Попробуй ещё раз — штрафа нет.'
-                    : 'Шаг ${_step + 1} из ${recipe.steps.length}. '
-                          'Награда: ${recipe.reward} монет и '
-                          'еда +${_gainLabel(recipe.foodGain)}.',
+                    ? l10n.feedWrongStep(
+                        ingredientName(l10n, recipe.steps[_step]),
+                      )
+                    : l10n.feedStepProgress(
+                        _step + 1,
+                        recipe.steps.length,
+                        recipe.reward,
+                        recipe.foodGain.round(),
+                      ),
                 isError: hasError,
               ),
             ],
@@ -383,10 +387,6 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 }
-
-/// Прибавка «еды» в подписи. В каталоге значения целые — дробей в тексте быть
-/// не должно.
-String _gainLabel(double value) => value.round().toString();
 
 /// Шапка экрана: «назад», заголовок по центру, кошелёк справа.
 ///
@@ -567,7 +567,7 @@ class _TabButton extends StatelessWidget {
             ),
           ),
           child: Text(
-            tab.title,
+            _tabTitle(context.l10n, tab),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -635,6 +635,7 @@ class _DishTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     final tile = Material(
       color: AppColors.surface,
@@ -662,7 +663,7 @@ class _DishTile extends StatelessWidget {
                     Text(dish.emoji, style: const TextStyle(fontSize: 24)),
                     const SizedBox(height: 3),
                     Text(
-                      dish.title,
+                      dishName(l10n, dish.id),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelMedium?.copyWith(
@@ -671,7 +672,7 @@ class _DishTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'еда +${_gainLabel(dish.foodGain)}',
+                      l10n.feedFoodGain(dish.foodGain.round()),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -704,7 +705,7 @@ class _DishTile extends StatelessWidget {
     final dimmed = canAfford ? tile : Opacity(opacity: 0.45, child: tile);
 
     if (canAfford) return dimmed;
-    return Tooltip(message: 'Не хватает монет', child: dimmed);
+    return Tooltip(message: l10n.feedNotEnoughCoins, child: dimmed);
   }
 }
 
@@ -721,7 +722,7 @@ class _FavouriteTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        'любимое',
+        context.l10n.feedFavourite,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w700,
@@ -742,6 +743,7 @@ class _RecipeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     // Сложность рецепта звёздами, 1–3 (КП 8.3).
     final stars = '★' * recipe.difficulty + '☆' * (3 - recipe.difficulty);
 
@@ -767,7 +769,7 @@ class _RecipeTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      recipe.title,
+                      recipeName(l10n, recipe.id),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelLarge?.copyWith(
@@ -775,7 +777,7 @@ class _RecipeTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '$stars · ${_plural(recipe.steps.length, 'шаг', 'шага', 'шагов')}',
+                      '$stars · ${l10n.feedRecipeSteps(recipe.steps.length)}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -881,7 +883,7 @@ class _IngredientTile extends StatelessWidget {
                 Text(ingredient.emoji, style: const TextStyle(fontSize: 21)),
                 const SizedBox(height: 3),
                 Text(
-                  ingredient.title,
+                  ingredientName(context.l10n, ingredient),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -914,19 +916,4 @@ class _Note extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Русские числительные: 1 шаг, 2 шага, 5 шагов, 11 шагов, 21 шаг.
-///
-/// Своя реализация, а не `intl`: ради одной строки тянуть пакет и заводить
-/// локали незачем. Когда дойдём до локализации по КП 16.1, склонения переедут
-/// туда вместе с остальными текстами.
-String _plural(int n, String one, String few, String many) {
-  final mod100 = n % 100;
-  final mod10 = n % 10;
-
-  if (mod100 >= 11 && mod100 <= 14) return '$n $many';
-  if (mod10 == 1) return '$n $one';
-  if (mod10 >= 2 && mod10 <= 4) return '$n $few';
-  return '$n $many';
 }
