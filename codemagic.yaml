@@ -9,7 +9,7 @@
 # блок `triggering` ниже.
 #
 # Что должно быть настроено на стороне Codemagic до первого запуска:
-#   1. Интеграция App Store Connect с именем `teddytales_asc`
+#   1. Интеграция App Store Connect с именем `Codemagic Admin 2`
 #      (Teams → Integrations → Developer Portal → добавить ключ API).
 #   2. Группа переменных `appstore` с переменной APP_STORE_APP_ID —
 #      числовой ID приложения из App Store Connect.
@@ -35,7 +35,11 @@ workflows:
     #       include: true
 
     integrations:
-      app_store_connect: teddytales_asc
+      # Имя должно побуквенно совпадать с ключом в Codemagic:
+      # Settings → Integrations → Developer Portal → Manage keys.
+      # Если имя разошлось, автоподпись молча не подключается, и сборка
+      # падает с «No matching profiles found» ещё до первого шага.
+      app_store_connect: Codemagic Admin 2
 
     environment:
       flutter: *flutter_version

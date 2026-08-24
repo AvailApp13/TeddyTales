@@ -13,7 +13,7 @@ App Store Connect и раздача тестировщикам.
 Bundle ID:        com.teddytales.app
 Apple ID:         6804642179
 Issuer ID:        69a6de82-0693-47e3-e053-5b8c7c11a4d1
-Ключ API:         TeddyTales CI, роль «Менеджер приложения»
+Ключ в Codemagic: «Codemagic Admin 2» (Key ID WKU89FQ3YM, роль «Менеджер приложения»)
 ```
 
 Важно про роль ключа: «Разработчик» для публикации не хватает — сборка
@@ -82,13 +82,15 @@ Codemagic → **Teams** → ваша команда → **Integrations** → **D
 
 | Поле | Значение |
 | --- | --- |
-| Name | **`teddytales_asc`** |
+| Name | **`Codemagic Admin 2`** |
 | Issuer ID | из шага 3 |
 | Key ID | из шага 3 |
 | Private key | файл `.p8` из шага 3 |
 
-Имя `teddytales_asc` должно быть точно таким: на него ссылается
-`codemagic.yaml` в блоке `integrations`.
+Имя должно побуквенно совпадать с блоком `integrations` в `codemagic.yaml` —
+сейчас там `Codemagic Admin 2`. Если имена разойдутся, сборка упадёт с
+«No matching profiles found» ещё до первого шага: автоподпись молча не
+подключится.
 
 ## Шаг 5. Переменная с ID приложения
 
@@ -180,7 +182,7 @@ TestFlight на каждой сборке спрашивает про экспо
 | Симптом | Причина | Что делать |
 | --- | --- | --- |
 | `No matching profiles found` | Bundle ID не зарегистрирован или не совпал | сверить шаг 1 и `BUNDLE_ID` в `codemagic.yaml` |
-| `Integration teddytales_asc not found` | имя интеграции разошлось | шаг 4, имя точно `teddytales_asc` |
+| «No matching profiles found», лог пустой | имя интеграции в yaml не совпало с именем ключа в Codemagic | сверить `integrations.app_store_connect` с Manage keys |
 | `App not found` при публикации | не создано приложение или неверный `APP_STORE_APP_ID` | шаги 2 и 5 |
 | `Beta group not found` | нет группы или имя другое | шаг 6, имя точно `Internal testers` |
 | Падает на `flutter test` | сломаны тесты | чинить код, гейт стоит намеренно |
