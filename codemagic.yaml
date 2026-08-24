@@ -1,0 +1,121 @@
+# Сборка iOS и автоматическая отправка в TestFlight.
+#
+# Сборка запускается вручную кнопкой в Codemagic — это осознанно: пока
+# приложение в разработке, каждая сборка занимает минуты платного времени на
+# macOS-агенте. Всё, что после нажатия, идёт без рук: тесты, подпись, ipa,
+# загрузка в App Store Connect и раздача тестировщикам в TestFlight.
+#
+# Когда захотите собирать автоматически на каждый push — раскомментируйте
+# блок `triggering` ниже.
+#
+# Что должно быть настроено на стороне Codemagic до первого запуска:
+#   1. Интеграция App Store Connect с именем `teddytales_asc`
+#      (Teams → Integrations → Developer Portal → добавить ключ API).
+#   2. Группа переменных `appstore` с переменной APP_STORE_APP_ID —
+#      числовой ID приложения из App Store Connect.
+#   3. Группа тестировщиков `Internal testers` в TestFlight.
+# Подробный порядок — docs/release-ios.md.
+
+definitions:
+  # Версия Flutter закреплена намеренно. `stable` меняется под ногами, и
+  # сборка, которая шла вчера, завтра падает на чужом релизе.
+  flutter_version: &flutter_version 3.44.9
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    # triggering:
+    #   events:
+    #     - push
+    #   branch_patterns:
+    #     - pattern: main
+    #       include: true
+
+    integrations:
+      app_store_connect: teddytales_asc
+
+    environment:
+      flutter: *flutter_version
+      xcode: latest
+      cocoapods: default
+      groups:
+        - appstore
+      vars:
+        BUNDLE_ID: com.teddytales.app
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.teddytales.app
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $FCI_BUILD_DIR/ios/Pods
+
+    scripts:
+      - name: Зависимости
+        script: flutter pub get
+
+      - name: Анализ и тесты
+        # Гейт намеренно жёсткий: в TestFlight не должно уезжать то, что не
+        # проходит анализатор. Тестировщики — живые люди, их время дороже
+        # минуты сборки.
+        script: |
+          flutter analyze
+          flutter test
+
+      - name: Номер сборки
+        # TestFlight требует строго возрастающий номер внутри одной версии.
+        # Берём последний загруженный и прибавляем единицу — так номера не
+        # столкнутся, даже если сборку перезапустили или собирали с другой
+        # ветки. На самой первой сборке приложения ещё нет ни одного билда,
+        # поэтому откатываемся на счётчик Codemagic.
+        script: |
+          set -e
+          LATEST=$(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APP_ID" 2>/dev/null || echo "")
+          if [ -z "$LATEST" ]; then
+            BUILD_NUMBER=$PROJECT_BUILD_NUMBER
+            echo "Билдов в TestFlight ещё нет, берём счётчик Codemagic: $BUILD_NUMBER"
+          else
+            BUILD_NUMBER=$(($LATEST + 1))
+            echo "Последний в TestFlight: $LATEST, ставим: $BUILD_NUMBER"
+          fi
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+      - name: Профили подписи
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Сборка ipa
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal testers
+        # В App Store не подаём: это отдельное решение и отдельная проверка.
+        submit_to_app_store: false
+
+      email:
+        recipients:
+          - ru.life3@gmail.com
+        notify:
+          success: true
+          failure: true
