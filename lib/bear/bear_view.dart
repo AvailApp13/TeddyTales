@@ -193,16 +193,17 @@ class _BearPlaceholder extends StatelessWidget {
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 8),
-              Text(
-                '$error',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-                textAlign: TextAlign.center,
+            // Ошибка видна и в релизе намеренно: TestFlight-сборка — тоже
+            // отладочный стенд, и «риг не подключён» без причины на телефоне
+            // недиагностируем. Убрать в бою, когда bear_main.riv приедет.
+            const SizedBox(height: 8),
+            Text(
+              '$error',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
               ),
-            ],
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
