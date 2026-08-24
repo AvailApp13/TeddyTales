@@ -96,13 +96,22 @@ Codemagic → **Teams** → ваша команда → **Integrations** → **D
 
 Codemagic → приложение → **Environment variables**:
 
-| Поле | Значение |
-| --- | --- |
-| Name | `APP_STORE_APP_ID` |
-| Value | `6804642179` |
-| Group | **`appstore`** |
+| Name | Value | Group | Secret |
+| --- | --- | --- | --- |
+| `APP_STORE_APP_ID` | `6804642179` | `appstore` | не нужен |
+| `CERTIFICATE_PRIVATE_KEY` | RSA-ключ, см. ниже | `appstore` | **обязателен** |
 
-Отметить **Secure** не обязательно — это не секрет, но и не мешает.
+`CERTIFICATE_PRIVATE_KEY` — приватный RSA-ключ, которым Codemagic выпускает
+сертификат подписи у Apple. Генерируется один раз на Mac:
+
+```
+ssh-keygen -t rsa -b 2048 -m PEM -f ~/Desktop/codemagic_key -q -N ""
+cat ~/Desktop/codemagic_key | pbcopy
+```
+
+Вторая команда кладёт содержимое ключа в буфер обмена — остаётся вставить его
+в поле Value. Файл с Рабочего стола после этого можно убрать в надёжное место:
+если ключ потеряется, сертификат просто выпустят заново.
 
 Переменная нужна, чтобы сборка сама узнала номер последнего билда в TestFlight
 и поставила следующий. TestFlight требует строго возрастающий номер, а руками

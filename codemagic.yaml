@@ -49,9 +49,6 @@ workflows:
         - appstore
       vars:
         BUNDLE_ID: com.teddytales.app
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.teddytales.app
 
     cache:
       cache_paths:
@@ -90,8 +87,23 @@ workflows:
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
 
       - name: Профили подписи
+        # Подпись нарочно собрана скриптом, а не блоком `ios_signing`:
+        # автоматический режим трижды падал с «No matching profiles found»
+        # молча и до первого шага, хотя и Bundle ID, и профиль в портале
+        # существовали. Здесь каждая команда пишет в лог, что она нашла
+        # у Apple и что создала, — причину видно сразу.
+        #
+        # Требует секретную переменную CERTIFICATE_PRIVATE_KEY (группа
+        # appstore): RSA-ключ, которым выпускается сертификат подписи.
+        # Один раз сгенерировать и сохранить — см. docs/release-ios.md.
         script: |
+          set -e
           keychain initialize
+          echo "--- Что видит ключ API ---"
+          app-store-connect list-bundle-ids \
+            --bundle-id-identifier "$BUNDLE_ID" || true
+          app-store-connect list-certificates --type DISTRIBUTION || true
+          echo "--- Забираем или создаём файлы подписи ---"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE --create
           keychain add-certificates
