@@ -68,22 +68,24 @@ workflows:
           flutter test
 
       - name: Номер сборки
-        # TestFlight требует строго возрастающий номер внутри одной версии.
-        # Берём последний загруженный и прибавляем единицу — так номера не
-        # столкнутся, даже если сборку перезапустили или собирали с другой
-        # ветки. На самой первой сборке приложения ещё нет ни одного билда,
-        # поэтому откатываемся на счётчик Codemagic.
+        # TestFlight требует строго возрастающий номер. Схема «последний плюс
+        # один» разбилась о реальность: в TestFlight уже лежал номер-таймстамп
+        # 20260811051703 от прежних сборок, и арифметика столкнулась с ним.
+        # Теперь номер — текущие дата-время до секунды: он больше любого
+        # прежнего и растёт сам собой от сборки к сборке. Подстраховка: если
+        # у Apple вдруг лежит число ещё больше, берём его плюс один.
         script: |
           set -e
+          STAMP=$(date -u +%Y%m%d%H%M%S)
           LATEST=$(app-store-connect get-latest-testflight-build-number \
             "$APP_STORE_APP_ID" 2>/dev/null || echo "")
-          if [ -z "$LATEST" ]; then
-            BUILD_NUMBER=$PROJECT_BUILD_NUMBER
-            echo "Билдов в TestFlight ещё нет, берём счётчик Codemagic: $BUILD_NUMBER"
-          else
+          echo "Последний в TestFlight: ${LATEST:-<нет>}; таймстамп: $STAMP"
+          if [ -n "$LATEST" ] && [ "$LATEST" -ge "$STAMP" ] 2>/dev/null; then
             BUILD_NUMBER=$(($LATEST + 1))
-            echo "Последний в TestFlight: $LATEST, ставим: $BUILD_NUMBER"
+          else
+            BUILD_NUMBER=$STAMP
           fi
+          echo "Номер этой сборки: $BUILD_NUMBER"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
 
       - name: Профили подписи
