@@ -263,35 +263,16 @@ class _RoomScene extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Габаритная сборка комнаты: фон и предметы каталога в масштабе
-          // размерной сетки (room_layout.dart). Персонаж вписан в ту же сетку:
-          // его рост — 1 модуль, ноги на линии пола. Так сцена сама показывает
-          // размерный ряд каталога относительно героя.
+          // Габаритная сборка комнаты: фон и мебель каталога в масштабе
+          // размерной сетки (room_layout.dart) — мебель мельче героя, как
+          // задний план с перспективой на макете.
           Positioned.fill(child: RoomSceneBackdrop(placed: placed)),
+          // Герой — крупный, во всю сцену, как на макете. Его размер
+          // ФИКСИРОВАН решением заказчика: не вписывать в размерную сетку
+          // и не уменьшать. Размерный ряд для дизайнера показывает
+          // docs/interior-size-guide.png, а не главный экран.
           Positioned.fill(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final height = constraints.maxHeight;
-                final module = height * RoomSceneBackdrop.defaultBearModule;
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: height * (1 - RoomSceneBackdrop.floorLine),
-                  ),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      height: module,
-                      width: constraints.maxWidth,
-                      child: BearView(
-                        controller: controller,
-                        assetPath: riveAssetPath,
-                        alignment: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+            child: BearView(controller: controller, assetPath: riveAssetPath),
           ),
           Positioned(
             top: 12,
