@@ -49,21 +49,70 @@
 
 ### Запрос 1 — эталон (сначала утверждается внешность)
 
+Это НЕ задача «нарисуй красивого мишку». Это задача точного переноса:
+приложенная фотография — единственный источник правды по внешности,
+менять в ней можно только ракурс, позу, свет и фон. Любая «дизайнерская
+интерпретация» — брак.
+
 ```
-A cute plush teddy bear character based on the attached photo: cream-beige
-fur, wearing the same light blue hoodie with the hood UP over the head and
-the ears sticking out through the slits in the hood, and the same
-light-yellow shorts, exactly as in the photo. Soft 3D render, smooth plush
-texture. Full body, standing, strictly front view, orthographic,
-no perspective. A-pose: arms held slightly away from the body, legs apart.
-Big glossy dark eyes looking straight ahead, one small highlight per eye
-inside the pupil. Friendly neutral expression, mouth closed.
-Soft diffuse light from above-front, no cast shadows, no contact shadow.
-Flat mid-grey background #808080, no text, no watermark. Square, 2048px.
+TASK TYPE: photo-faithful character render for animation. NOT a redesign,
+NOT a stylization, NOT "inspired by". The attached photo is the single
+source of truth for the character's appearance. Treat this as carefully
+re-rendering THE SAME toy, not creating a similar one.
+
+COPY FROM THE PHOTO 1:1 — every point is mandatory:
+- head: wide rounded head, flat face, short muzzle, same proportions as
+  the toy in the photo;
+- muzzle and nose: small fluffy muzzle, small dark-brown nose, short
+  stitched line under the nose; mouth CLOSED, neutral slightly serious
+  expression exactly as in the photo — NO smile;
+- eyes: two SMALL round glossy black bead eyes, same size and spacing as
+  in the photo (not bigger, not cartoon-styled), one tiny highlight each;
+- ears: two round fluffy ears sticking OUT through the slits in the hood,
+  exactly as in the photo;
+- fur: cream-beige, short dense plush, slightly fluffy silhouette edges;
+- hoodie: light blue, hood UP with a soft pointed top, light inner lining
+  visible around the face opening, one pale-blue round button on the chest
+  placket, loose hem over the hips. NOTHING ELSE: no drawstrings, no
+  laces, no cuffs, no pockets, no zippers, no extra seams;
+- shorts: light yellow, loose, exactly as in the photo;
+- paws and feet: bare cream-beige fur, no shoes, no clothing on arms;
+- proportions: as the real toy — big head nearly as wide as the body,
+  short arms, short legs, overall height ≈ 2.5 head heights.
+
+CHANGE ONLY THIS (nothing else):
+- view: strictly frontal, orthographic, camera at chest height, both ears
+  and both feet fully visible, no perspective distortion;
+- pose: A-pose — standing upright, arms slightly away from the body,
+  legs slightly apart, head level, eyes straight ahead;
+- light: soft even diffuse light, NO cast shadows, NO contact shadow
+  under the feet, no rim light;
+- background: one flat uniform color #808080 across the whole frame —
+  zero gradient, zero vignette, zero floor line.
+
+FORBIDDEN: redesigning or "improving" the toy; adding clothing details
+absent from the photo; open mouth or smile; enlarged or stylized eyes;
+gradient or white background; any shadow; text, watermark, logo.
+
+OUTPUT: one square PNG, 2048×2048, character centered, ~10% margin
+around the silhouette.
+
+SELF-CHECK BEFORE SHOWING THE RESULT — verify every line; if any fails,
+regenerate silently and only then present:
+[ ] side-by-side with the photo it reads as THE SAME toy, not similar
+[ ] eyes are small black beads, not enlarged cartoon eyes
+[ ] mouth closed, expression matches the photo
+[ ] ears pass through the hood slits
+[ ] no drawstrings / laces / cuffs / pockets on the hoodie
+[ ] hood is UP with a pointed top; yellow shorts present
+[ ] background is one flat #808080, no gradient
+[ ] no shadow of any kind, including under the feet
 ```
 
-Перегенерировать, пока мишка не станет узнаваемо «тем самым» с фотографии.
-Дальше не начинать, пока эталон не утверждён.
+Если результат ушёл от фото — не описывать словами «что не так», а слать
+список номерами: «1) глаза меньше, как на фото; 2) убери шнурки; …» и
+требовать перегенерацию В ТОМ ЖЕ чате. Дальше не начинать, пока эталон
+не утверждён.
 
 ### Запрос 2 — крупные части (детали 1–5 из таблицы)
 
