@@ -123,7 +123,7 @@ def image_junk(blob: bytes) -> tuple[int, list[str]]:
     return total, found
 
 
-def lint(path: Path, repo: Path, report: Report) -> None:
+def lint(path: Path, repo: Path, report: Report, pilot: bool = False) -> None:
     data = path.read_bytes()
     generated = riv.find_runtime(None)
     fields, types = riv.load_registry(generated)
@@ -192,7 +192,12 @@ def lint(path: Path, repo: Path, report: Report) -> None:
 
     missing = sorted(want_inputs - set(got_inputs))
     extra = sorted(set(got_inputs) - want_inputs)
-    if missing:
+    if missing and pilot:
+        # Пилотный риг: полный набор входов не требуется, важно лишь
+        # знать, чего не хватает до продакшн-контракта.
+        report.warn(f'Пилот: до полного контракта не хватает входов '
+                    f'({len(missing)}): ' + ', '.join(missing))
+    elif missing:
         report.error(f'Нет входов State Machine ({len(missing)}): '
                      + ', '.join(missing))
     if extra:
@@ -369,10 +374,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('file', type=Path)
     ap.add_argument('--repo', type=Path, default=Path(__file__).resolve().parent.parent)
+    ap.add_argument('--pilot', action='store_true',
+                    help='пилотный риг: неполный набор входов — предупреждение,'
+                         ' не ошибка')
     args = ap.parse_args()
 
     report = Report()
-    lint(args.file, args.repo, report)
+    lint(args.file, args.repo, report, pilot=args.pilot)
     return report.print()
 
 
