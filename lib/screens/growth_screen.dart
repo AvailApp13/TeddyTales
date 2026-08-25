@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
 import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -66,7 +67,7 @@ class GrowthScreen extends StatelessWidget {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            context.l10n.growthNewStage(controller.state.stage.title),
+            context.l10n.growthNewStage(stageTitle(context.l10n, controller.state.stage)),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -203,7 +204,7 @@ class _StageRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  stage.title,
+                  stageTitle(context.l10n, stage),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

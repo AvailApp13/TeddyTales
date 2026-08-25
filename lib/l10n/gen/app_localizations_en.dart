@@ -925,6 +925,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSectionShop => 'Shop';
 
   @override
+  String get petDefaultName => 'My little one';
+
+  @override
   String get profileAgeLabel => 'Age';
 
   @override

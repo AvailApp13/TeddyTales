@@ -9,7 +9,13 @@ library;
 import '../bear/bear_rig_spec.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
+import '../game/pet_profile.dart';
 import 'l10n.dart';
+
+/// Имя питомца для показа: дефолтный сентинел [PetProfile.defaultName]
+/// переводится на язык интерфейса, имя от пользователя показывается как есть.
+String petDisplayName(AppLocalizations l10n, String name) =>
+    name == PetProfile.defaultName ? l10n.petDefaultName : name;
 
 /// Название раздела нижней навигации.
 String sectionTitle(AppLocalizations l10n, AppSection s) => switch (s) {

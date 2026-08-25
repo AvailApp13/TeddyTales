@@ -1618,6 +1618,12 @@ abstract class AppLocalizations {
   /// **'Магазин'**
   String get navSectionShop;
 
+  /// No description provided for @petDefaultName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мой малыш'**
+  String get petDefaultName;
+
   /// No description provided for @profileAgeLabel.
   ///
   /// In ru, this message translates to:

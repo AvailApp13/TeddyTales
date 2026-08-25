@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -122,15 +122,6 @@ class _DiaryRow extends StatelessWidget {
 
   final _DiaryEvent event;
 
-  /// Язык форматирования возраста — из текущей локали приложения: у экрана нет
-  /// параметра языка, а локаль и [BearLanguage] переключаются одним значением
-  /// из настроек (см. `l10n.dart`).
-  static BearLanguage _languageOf(BuildContext context) =>
-      switch (Localizations.localeOf(context).languageCode) {
-        'en' => BearLanguage.en,
-        'zh' => BearLanguage.zh,
-        _ => BearLanguage.ru,
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -177,9 +168,8 @@ class _DiaryRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  // Возраст склоняет [GameAge] на языке текущей локали — тот же
-                  // код, что и в шапке главного экрана.
-                  event.age.format(_languageOf(context)),
+                  // Возраст — теми же ICU-плюралами, что и шапка главного экрана.
+                  formatAge(context.l10n, event.age),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),

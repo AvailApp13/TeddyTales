@@ -541,6 +541,7 @@
   "navSectionProfile": "Профиль",
   "navSectionRoom": "Комната",
   "navSectionShop": "Магазин",
+  "petDefaultName": "Мой малыш",
   "profileAgeLabel": "Возраст",
   "profileBirthFur": "{hero} · мех {fur}",
   "profileFootnote": "Рост, вес и знак зодиака — заглушки: их определяет сервер при рождении (КП 2.2, 2.5), а таблицу склонностей по знакам даёт Заказчик.",

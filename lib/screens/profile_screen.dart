@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
 import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -100,7 +101,7 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _BirthCard(name: profile.name, skin: skin),
+                        _BirthCard(name: petDisplayName(l10n, profile.name), skin: skin),
 
                         _SectionTitle(l10n.profileSectionBirth),
                         _InfoRows(
@@ -111,7 +112,7 @@ class ProfileScreen extends StatelessWidget {
                                   ? l10n.profileSexGirl
                                   : l10n.profileSexBoy,
                             ),
-                            _InfoRow(l10n.profileAgeLabel, age.format(language)),
+                            _InfoRow(l10n.profileAgeLabel, formatAge(l10n, age)),
                             _InfoRow(
                               l10n.profileZodiacLabel,
                               // ДОПУЩЕНИЕ: пока сервера нет, показываем Льва —
@@ -145,7 +146,7 @@ class ProfileScreen extends StatelessWidget {
                           rows: [
                             _InfoRow(
                               l10n.profileTraitNowLabel,
-                              state.trait.title,
+                              traitTitle(l10n, state.trait),
                             ),
                             // КП 7.3: характер складывается из совокупности
                             // действий за период, а не из одного действия.
@@ -514,7 +515,7 @@ class _StageTimeline extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            stage.title,
+                            stageTitle(context.l10n, stage),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),

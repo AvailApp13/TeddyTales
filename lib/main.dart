@@ -65,7 +65,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   BearLanguage _language = BearLanguage.ru;
 
   late final PetProfile _profile = PetProfile(
-    name: 'Мой малыш',
+    name: PetProfile.defaultName,
     birthAt: DateTime.now().subtract(
       _calendar.realTimePerGameMonth * 3 + _calendar.realTimePerGameDay * 12,
     ),

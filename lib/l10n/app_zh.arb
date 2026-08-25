@@ -253,6 +253,7 @@
   "navSectionProfile": "我的",
   "navSectionRoom": "房间",
   "navSectionShop": "商店",
+  "petDefaultName": "我的宝贝",
   "profileAgeLabel": "年龄",
   "profileBirthFur": "{hero} · 毛色 {fur}",
   "profileFootnote": "身高、体重和星座目前是占位数据：出生时由服务器生成（КП 2.2、2.5），星座性格对照表由客户方提供。",

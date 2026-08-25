@@ -253,6 +253,7 @@
   "navSectionProfile": "Profile",
   "navSectionRoom": "Room",
   "navSectionShop": "Shop",
+  "petDefaultName": "My little one",
   "profileAgeLabel": "Age",
   "profileBirthFur": "{hero} · {fur} fur",
   "profileFootnote": "Height, weight and zodiac sign are stubs: the server assigns them at birth (КП 2.2, 2.5), and the zodiac traits table comes from the Client.",

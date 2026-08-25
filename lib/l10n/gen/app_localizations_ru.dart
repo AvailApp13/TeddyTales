@@ -934,6 +934,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navSectionShop => 'Магазин';
 
   @override
+  String get petDefaultName => 'Мой малыш';
+
+  @override
   String get profileAgeLabel => 'Возраст';
 
   @override

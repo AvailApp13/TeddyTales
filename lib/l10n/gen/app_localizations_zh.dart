@@ -858,6 +858,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSectionShop => '商店';
 
   @override
+  String get petDefaultName => '我的宝贝';
+
+  @override
   String get profileAgeLabel => '年龄';
 
   @override
