@@ -18,8 +18,9 @@
 ракурса, при одном свете, потому что потом они соединяются в одно тело.
 
 К этому сообщению приложена фотография: плюшевый мишка с бежевым мехом
-в голубой кофте с капюшоном. Это герой. Его внешность менять нельзя —
-это реальный продукт бренда.
+в голубой кофте с надетым капюшоном (уши торчат наружу через прорези в
+капюшоне) и в светло-жёлтых шортах. Это герой. Его внешность менять
+нельзя — это реальный продукт бренда.
 
 ## Какие части нужны — ровно 14
 
@@ -29,10 +30,10 @@
 
 | # | Часть | Что рисовать | Пропорция (ш×в, у эталона) |
 | --- | --- | --- | --- |
-| 1 | голова | голова целиком с мордой и носом, но БЕЗ глаз, бровей, рта и ушей — на их месте ровный мех | 264×291 — самая крупная деталь |
-| 2 | торс | туловище в голубой кофте, без рук и ног | 183×140 |
+| 1 | голова | голова в надетом голубом капюшоне, с мордой и носом, но БЕЗ глаз, бровей, рта и ушей; прорези капюшона для ушей пустые | 264×291 — самая крупная деталь; с капюшоном габарит выйдет больше табличного, это ожидаемо |
+| 2 | торс | туловище в голубой кофте БЕЗ капюшона (капюшон рисуется вместе с головой), без рук и ног | 183×140 |
 | 3 | руки | обе руки в спокойной позе, чуть отведены | 303×140 (обе вместе) |
-| 4 | ноги | обе ноги со ступнями | 184×82 |
+| 4 | ноги | обе ноги в жёлтых шортах, со ступнями | 184×82 |
 | 5 | уши | оба уха | 337×73 (оба вместе) |
 | 6 | белки глаз | два простых овала-белка | 184×73 |
 | 7 | радужки | две тёмные радужки со зрачком и одним бликом в каждой | 145×47 |
@@ -50,8 +51,10 @@
 
 ```
 A cute plush teddy bear character based on the attached photo: cream-beige
-fur, wearing the same light blue hoodie with the hood down, soft 3D render,
-smooth plush texture. Full body, standing, strictly front view, orthographic,
+fur, wearing the same light blue hoodie with the hood UP over the head and
+the ears sticking out through the slits in the hood, and the same
+light-yellow shorts, exactly as in the photo. Soft 3D render, smooth plush
+texture. Full body, standing, strictly front view, orthographic,
 no perspective. A-pose: arms held slightly away from the body, legs apart.
 Big glossy dark eyes looking straight ahead, one small highlight per eye
 inside the pupil. Friendly neutral expression, mouth closed.
@@ -70,10 +73,12 @@ on the same flat #808080 background like a toy assembly kit. Same colors,
 same lighting, same style, same relative scale as in the approved image.
 Parts must NOT touch or overlap, generous spacing.
 
-Draw exactly five parts: (1) the head with muzzle and nose but WITHOUT
-eyes, eyebrows, mouth and ears — smooth fur where they would be; (2) the
-torso in the blue hoodie, no arms or legs; (3) both arms in relaxed pose;
-(4) both legs with feet; (5) both ears.
+Draw exactly five parts: (1) the head wearing the blue hood, with muzzle
+and nose but WITHOUT eyes, eyebrows, mouth and ears — the ear slits in the
+hood stay empty; (2) the torso in the blue hoodie WITHOUT the hood (the
+hood belongs to the head part), no arms or legs; (3) both arms in relaxed
+pose; (4) both legs wearing the light-yellow shorts, with feet; (5) both
+ears.
 
 Every part must be complete, including areas that were hidden behind other
 parts in the full pose. No text, no labels, no numbers. Square, 2048px.
