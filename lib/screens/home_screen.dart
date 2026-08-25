@@ -11,6 +11,7 @@ import '../widgets/app_bottom_nav.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
+import '../widgets/room_scene_backdrop.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
 import 'diary_screen.dart';
@@ -185,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       language: widget.language,
                       onAcceptInitiative: _runAction,
                       riveAssetPath: widget.riveAssetPath,
+                      placed: widget.game.placed,
                       onOpenCare: () => _open(
                         CareScreen(
                           controller: widget.controller,
@@ -235,12 +237,16 @@ class _RoomScene extends StatelessWidget {
     required this.onAcceptInitiative,
     required this.riveAssetPath,
     required this.onOpenCare,
+    required this.placed,
   });
 
   final BearController controller;
   final BearLanguage language;
   final ValueChanged<BearAction> onAcceptInitiative;
   final String riveAssetPath;
+
+  /// Размещённые в комнате предметы — их рисует фон-сцена.
+  final Set<String> placed;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -253,17 +259,39 @@ class _RoomScene extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
         border: Border.all(color: AppColors.outline),
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.cream, AppColors.surfaceMuted],
-        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
+          // Габаритная сборка комнаты: фон и предметы каталога в масштабе
+          // размерной сетки (room_layout.dart). Персонаж вписан в ту же сетку:
+          // его рост — 1 модуль, ноги на линии пола. Так сцена сама показывает
+          // размерный ряд каталога относительно героя.
+          Positioned.fill(child: RoomSceneBackdrop(placed: placed)),
           Positioned.fill(
-            child: BearView(controller: controller, assetPath: riveAssetPath),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final height = constraints.maxHeight;
+                final module = height * RoomSceneBackdrop.defaultBearModule;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: height * (1 - RoomSceneBackdrop.floorLine),
+                  ),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      height: module,
+                      width: constraints.maxWidth,
+                      child: BearView(
+                        controller: controller,
+                        assetPath: riveAssetPath,
+                        alignment: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           Positioned(
             top: 12,

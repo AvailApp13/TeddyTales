@@ -25,7 +25,12 @@ class GameState extends ChangeNotifier {
     Set<String>? placed,
   }) : _profile = profile,
        _owned = owned ?? {..._startingItems},
-       _placed = placed ?? {'bed', 'rug', 'wall_rose', 'floor_wood'};
+       _placed =
+           placed ??
+           {
+             'bed', 'rug', 'lamp', 'basket', 'plant', 'pillow_heart',
+             'ball', 'duck', 'cubes', 'wall_rose', 'floor_wood',
+           };
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
