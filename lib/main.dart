@@ -106,7 +106,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         // демонстрационный файл — он подтверждает, что пайплайн загрузки,
         // выбора State Machine и рендера работает. Убрать, как только придёт
         // bear_main.riv.
-        riveAssetPath: BearRigSpec.demoAssetPath,
+        riveAssetPath: BearRigSpec.assetPath,
         // Дев-панель со всеми входами State Machine — только в отладке.
         onOpenDevPanel: kDebugMode
             ? (context) => Navigator.of(context).push(
