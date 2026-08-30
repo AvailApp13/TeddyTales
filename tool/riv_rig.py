@@ -38,6 +38,7 @@ TOC_FIELDS = {0: 'Uint', 1: 'String', 2: 'Double', 3: 'Color'}
 # заказчика, отдельные глаза/веки/рты не нужны — и швов на лице нет).
 # Уши за головой, лапы поверх кофты, кофта поверх ног.
 DRAW_ORDER = [
+    'mouth',
     'head',
     'ear_left',
     'ear_right',
@@ -61,16 +62,17 @@ BREATH_CYCLE = 180          # один вдох-выдох, три секунд�
 BREATH_SWELL = 1.04         # насколько раздувается кофта на вдохе
 BREATH_LIFT = 18.0          # на сколько поднимается голова, пикселей артборда
 TORSO_RISE = 6.0            # грудь приподнимается, а не только пухнет
-EAR_SWING = 0.0654          # качание ушей, радианы (около 3.7°)
+EAR_SWING = 0.095           # качание ушей, радианы (около 5.4°)
 PAW_SWING = 0.09            # мах лапами от плеча, радианы (около 5°)
 PAW_DRIFT = 6.0             # лапы расходятся в стороны вместе с кофтой
 PAW_LIFT = 4.0              # и приподнимаются вместе с грудью
+MOUTH_SWELL = (1.03, 1.05)  # улыбка тянется на вдохе: чуть вширь, больше ввысь
 
 # Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
 # дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
 # следом голова, лапы и уши догоняют. Синхронное движение читается как
 # механика, запаздывание — как живое.
-PEAK = {'torso': 70, 'head': 82, 'paw': 88, 'ear': 95}
+PEAK = {'torso': 70, 'head': 82, 'mouth': 84, 'paw': 88, 'ear': 95}
 
 # Полный idle — два вдоха подряд, и они нарочно разные: второй мельче и с
 # поздней вершиной. Подсмотрено у демо-дракона: там циклы разной длины
@@ -81,7 +83,7 @@ IDLE_DURATION = 2 * BREATH_CYCLE
 
 # Голова с ушами поднимается одним куском; лицо нарисовано на голове и
 # едет вместе с ней само.
-HEAD_GROUP = ['head', 'ear_left', 'ear_right']
+HEAD_GROUP = ['head', 'ear_left', 'ear_right', 'mouth']
 
 X, Y, SCALE_X, SCALE_Y, ROTATION, OPACITY = 13, 14, 16, 17, 15, 18
 
@@ -306,6 +308,7 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
 # Чистка всегда стартует с них, а не с картинок из файла — иначе каждая
 # правка пережимает WEBP ещё раз и деталь постепенно замыливается.
 PART_SOURCES = {
+    'mouth': 'mouth',
     'head': 'head', 'ear_left': 'ear_left', 'ear_right': 'ear_right',
     'paw_left': 'paw_left', 'paw_right': 'paw_right',
     'torso': 'torso', 'legs': 'legs',
@@ -480,6 +483,17 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
                      lambda k, b=base: b - BREATH_LIFT * k),
         })
 
+    # Улыбка дышит: накладка рта лежит на собственных пикселях головы,
+    # поэтому лёгкое растяжение читается как движение рта, а не как шов.
+    mouth = rig.objects[by_name['mouth']][1]
+    mouth_sx, mouth_sy = get(mouth, SCALE_X), get(mouth, SCALE_Y)
+    block += track(scene.local_id(by_name['mouth']), {
+        SCALE_X: waves(PEAK['mouth'],
+                       lambda k: mouth_sx * (1 + (MOUTH_SWELL[0] - 1) * k)),
+        SCALE_Y: waves(PEAK['mouth'],
+                       lambda k: mouth_sy * (1 + (MOUTH_SWELL[1] - 1) * k)),
+    })
+
     # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
     # собираем руками: центр картинки едет по дуге вокруг плеча, а сама она
     # доворачивается на тот же угол. Плечо — середина верхнего края лапы.
@@ -603,6 +617,42 @@ def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
         )[1].tobytes())
         print(f'  {name} -> {v4}: {nw}x{nh}, {len(get(props, 212))} Б')
         name = None
+
+    # Детали, которых в файле ещё нет (рот появился только в v4), создаются:
+    # пара ImageAsset+FileAssetContents в конец списка ассетов и узел Image
+    # следом за последним существующим. Ссылки по индексам это сдвигает, но
+    # дорожки анимаций всё равно переписываются командами breathe и fix.
+    reverse = {name: key for key, name in rig.types.items()}
+    present = {get(rig.objects[i][1], Scene.ASSET_NAME).decode()
+               for i in scene.assets}
+    created = [v4 for v4 in sorted(set(PART_SOURCES) - present)
+               if v4 in placements]
+    for v4 in created:
+        image = cv2.imread(str(root / f'{v4}.png'), cv2.IMREAD_UNCHANGED)
+        blob = cv2.imencode('.webp', image,
+                            [cv2.IMWRITE_WEBP_QUALITY, WEBP_QUALITY],
+                            )[1].tobytes()
+        nh, nw = image.shape[:2]
+        last_contents = max(i + 1 for i in scene.assets)
+        rig.objects[last_contents + 1:last_contents + 1] = [
+            (reverse['ImageAsset'],
+             [(Scene.ASSET_NAME, 'String', v4.encode()),
+              (204, 'Uint', 1), (207, 'Double', float(nw)),
+              (208, 'Double', float(nh))]),
+            (reverse['FileAssetContents'], [(212, 'Bytes', blob)]),
+        ]
+        target = placements[v4]
+        after_image = max(scene.images) + 2 + 1  # +2 за пару ассета выше
+        rig.objects[after_image:after_image] = [
+            (reverse['Image'],
+             [(5, 'Uint', 0),
+              (SCALE_X, 'Double', target['scale']),
+              (SCALE_Y, 'Double', target['scale']),
+              (X, 'Double', target['x']), (Y, 'Double', target['y']),
+              (Scene.ASSET_ID, 'Uint', len(scene.assets))]),
+        ]
+        print(f'  создана деталь {v4}: {nw}x{nh}, ассет #{len(scene.assets)}')
+        scene = Scene(rig, rig.types)
 
     # Позиции и масштаб узлов Image — по посадочной карте.
     assets = [get(rig.objects[i][1], Scene.ASSET_NAME).decode()
