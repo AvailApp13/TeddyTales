@@ -320,23 +320,45 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
-def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
-    """Срезает тёмную кайму по краю деталей — след края с фотографии.
+# Оригиналы деталей в репозитории: имя в риге -> файл набора parts-v2.
+# Чистка всегда стартует с них, а не с картинок из файла — иначе каждая
+# правка пережимает WEBP ещё раз и деталь постепенно замыливается.
+PART_SOURCES = {
+    'head': 'head-hood-clean', 'torso': 'torso-hoodie',
+    'legs_tummy_v2': 'legs-tummy-full',
+    'ear_left': 'ear-left', 'ear_right': 'ear-right',
+    'paw_left': 'paw-left', 'paw_right': 'paw-right',
+    'eye_left': 'eye-left', 'eye_right': 'eye-right',
+    'nose': 'nose', 'mouth_stitch': 'mouth-stitch',
+    'mouth_open_v2': 'mouth-open',
+    'eyelid_left_v2': 'eyelid-left', 'eyelid_right_v2': 'eyelid-right',
+}
 
-    Игрушку снимали на светлом фоне, и по контуру осталась узкая тень. При
-    вырезке она попала внутрь силуэта, а в приложении читается серой обводкой
-    вокруг капюшона. Меряем яркость колец вглубь от края: тень занимает ровно
-    два пикселя, дальше начинается мех. Подрезаем альфу на эти два пикселя и
-    смягчаем срез — деталь становится меньше на два пикселя с каждой стороны,
-    а её центр не двигается, поэтому посадка в артборде не меняется.
+
+def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
+    """Убирает след старого края: тёмную кромку и серую юбку растушёвки.
+
+    Игрушку снимали на светлом фоне, и по контуру осталась узкая тень — в
+    приложении она читалась серой обводкой вокруг капюшона. Два лечения:
+
+    1. Адаптивная подрезка: срезаем альфу по пикселю, пока кромка темнее
+       глубины меха, но не больше четырёх, и растушёвываем срез.
+    2. Перекраска юбки: у полупрозрачных пикселей после растушёвки остаётся
+       ЦВЕТ старого края, и тонкая серая линия лезет обратно. Каждый
+       неплотный пиксель берёт цвет ближайшего плотного — просвечивать
+       больше нечему.
+
+    Детали берутся из оригиналов набора parts-v2 (без повторного пережатия)
+    и кладутся обратно в WEBP: в PNG риг пухнет со 148 КБ до полутора
+    мегабайт.
     """
     import cv2  # noqa: PLC0415 — нужен только этой команде
     import numpy as np  # noqa: PLC0415
 
-    DEPTH, FEATHER, DARKER = 2, 0.8, 12
+    MAX_TRIM, DARKER, FEATHER = 4, 12, 0.8
+    root = Path(__file__).resolve().parent.parent / 'docs/reference/parts-v2'
 
     name = None
-    cleaned = 0
     for type_key, props in rig.objects:
         kind = rig.types.get(type_key)
         if kind == 'ImageAsset':
@@ -344,41 +366,58 @@ def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
             continue
         if kind != 'FileAssetContents' or name is None:
             continue
-
-        raw = np.frombuffer(get(props, 212), np.uint8)
-        image = cv2.imdecode(raw, cv2.IMREAD_UNCHANGED)
-        if image is None or image.shape[2] < 4:
-            name = None
-            continue
+        wanted, name = name, None
+        source = root / f'{PART_SOURCES[wanted]}.png'
+        image = cv2.imread(str(source), cv2.IMREAD_UNCHANGED)
+        embedded = cv2.imdecode(np.frombuffer(get(props, 212), np.uint8),
+                                cv2.IMREAD_UNCHANGED)
+        if image is None or image.shape[:2] != embedded.shape[:2]:
+            raise SystemExit(f'{wanted}: оригинал {source.name} не совпал')
 
         alpha = image[:, :, 3]
-        value = cv2.cvtColor(image[:, :, :3], cv2.COLOR_BGR2HSV)[:, :, 2]
+        value = cv2.cvtColor(image[:, :, :3],
+                             cv2.COLOR_BGR2HSV)[:, :, 2].astype(np.float32)
         solid = (alpha > 200).astype(np.uint8)
-        rim = (solid > 0) & (cv2.erode(solid, np.ones((3, 3), np.uint8)) == 0)
-        deep = cv2.erode(solid, np.ones((15, 15), np.uint8)) > 0
-        if not rim.any() or not deep.any():
-            name = None
-            continue
-        drop = float(np.median(value[deep])) - float(np.median(value[rim]))
-        if drop < DARKER:
-            print(f'  {name:18s} каймы нет ({drop:+.0f})')
-            name = None
-            continue
+        deep_mask = cv2.erode(solid, np.ones((15, 15), np.uint8)) > 0
 
-        size = 2 * DEPTH + 1
-        tight = cv2.erode(alpha, np.ones((size, size), np.uint8))
-        image[:, :, 3] = cv2.GaussianBlur(tight, (0, 0), FEATHER)
-        # Редактор кладёт детали в WEBP; в PNG тот же кадр весит в четырнадцать
-        # раз больше, и риг из 148 КБ распухает до полутора мегабайт.
+        trimmed = 0
+        if deep_mask.any():
+            deep = float(np.median(value[deep_mask]))
+            work = alpha.copy()
+            for _ in range(MAX_TRIM):
+                shell = (work > 200).astype(np.uint8)
+                rim = (shell > 0) & (cv2.erode(
+                    shell, np.ones((3, 3), np.uint8)) == 0)
+                if not rim.any():
+                    break
+                if deep - float(np.median(value[rim])) < DARKER:
+                    break
+                work = cv2.erode(work, np.ones((3, 3), np.uint8))
+                trimmed += 1
+            if trimmed:
+                alpha = cv2.GaussianBlur(work, (0, 0), FEATHER)
+                image[:, :, 3] = alpha
+
+        # Юбка: каждому неплотному пикселю — цвет ближайшего плотного.
+        shell = (alpha > 200).astype(np.uint8)
+        if shell.any() and (shell == 0).any():
+            _, labels = cv2.distanceTransformWithLabels(
+                1 - shell, cv2.DIST_L2, 3, labelType=cv2.DIST_LABEL_PIXEL)
+            ys, xs = np.nonzero(shell)
+            lut_y = np.zeros(int(labels.max()) + 1, np.int32)
+            lut_x = np.zeros_like(lut_y)
+            lut_y[labels[ys, xs]] = ys
+            lut_x[labels[ys, xs]] = xs
+            donor = image[lut_y[labels], lut_x[labels], :3]
+            image[:, :, :3] = np.where((shell == 0)[..., None],
+                                       donor, image[:, :, :3])
+
         put(props, 212, cv2.imencode(
             '.webp', image, [cv2.IMWRITE_WEBP_QUALITY, WEBP_QUALITY],
         )[1].tobytes())
-        print(f'  {name:18s} кайма темнее меха на {drop:.0f} — срезано {DEPTH} px')
-        cleaned += 1
-        name = None
+        print(f'  {wanted:18s} срез {trimmed} px, юбка перекрашена')
 
     path.write_bytes(rig.dumps())
-    print(f'Почищено деталей: {cleaned}')
     return 0
 
 

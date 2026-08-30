@@ -25,11 +25,10 @@ class GameState extends ChangeNotifier {
     Set<String>? placed,
   }) : _profile = profile,
        _owned = owned ?? {..._startingItems},
-       // Дефолт — опрятная комната как на макете: мебель без разбросанных
-       // игрушек. Игрушки покупаются и ставятся через раздел «Комната».
-       _placed =
-           placed ?? {'bed', 'rug', 'lamp', 'basket', 'plant',
-             'wall_rose', 'floor_wood'};
+       // Дефолт — ПУСТАЯ сцена: только стены и пол, без мебели. Решение
+       // заказчика: предметы не ставить заранее, герой один в кадре, а
+       // комнату каждый собирает сам через раздел «Комната».
+       _placed = placed ?? {'wall_rose', 'floor_wood'};
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
