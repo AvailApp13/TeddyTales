@@ -40,3 +40,6 @@ Thumbs.db
 
 # Упакованное в один файл приложение — собирается из build/
 teddytales-app*.html
+
+# Личные разрешения на инструменты, у каждого свои
+.claude/settings.local.json
