@@ -61,10 +61,17 @@ DROP = {'arm_root_left', 'arm_root_right'}
 # зрителю кажется, что мишка застыл. Размах считаем от экрана, а не от
 # артборда: артборд 1080 в ширину показывается примерно в 330 точках, то есть
 # один пиксель на экране — это три с лишним в файле.
-BREATH_FRAMES = (90, 180)   # вдох на середине цикла, 3 секунды на круг
+BREATH_CYCLE = 180          # три секунды на круг
 BREATH_SWELL = 1.04         # насколько раздувается кофта на вдохе
 BREATH_LIFT = 18.0          # на сколько поднимается голова, пикселей артборда
 EAR_SWING = 0.0654          # качание ушей, радианы (около 3.7°)
+PAW_SWING = 0.0436          # мах лапами от плеча, радианы (около 2.5°)
+
+# Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
+# дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
+# следом голова, лапы и уши догоняют. Синхронное движение читается как
+# механика, запаздывание — как живое.
+PEAK = {'torso': 70, 'head': 82, 'paw': 88, 'ear': 95}
 
 # Голова и всё, что на ней нарисовано, поднимается одним куском. Части лица
 # лежат в артборде рядом с головой, а не внутри неё, поэтому двигать их надо
@@ -75,6 +82,10 @@ HEAD_GROUP = [
 ]
 
 X, Y, SCALE_X, SCALE_Y, ROTATION = 13, 14, 16, 17, 15
+
+# Качество перепаковки деталей. Редактор кладёт их в WEBP примерно на этом же
+# уровне: выше — файл пухнет вдвое, ниже — на мехе проступает муар.
+WEBP_QUALITY = 90
 
 
 class Rig:
@@ -289,8 +300,145 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
+    """Срезает тёмную кайму по краю деталей — след края с фотографии.
+
+    Игрушку снимали на светлом фоне, и по контуру осталась узкая тень. При
+    вырезке она попала внутрь силуэта, а в приложении читается серой обводкой
+    вокруг капюшона. Меряем яркость колец вглубь от края: тень занимает ровно
+    два пикселя, дальше начинается мех. Подрезаем альфу на эти два пикселя и
+    смягчаем срез — деталь становится меньше на два пикселя с каждой стороны,
+    а её центр не двигается, поэтому посадка в артборде не меняется.
+    """
+    import cv2  # noqa: PLC0415 — нужен только этой команде
+    import numpy as np  # noqa: PLC0415
+
+    DEPTH, FEATHER, DARKER = 2, 0.8, 12
+
+    name = None
+    cleaned = 0
+    for type_key, props in rig.objects:
+        kind = rig.types.get(type_key)
+        if kind == 'ImageAsset':
+            name = get(props, Scene.ASSET_NAME).decode()
+            continue
+        if kind != 'FileAssetContents' or name is None:
+            continue
+
+        raw = np.frombuffer(get(props, 212), np.uint8)
+        image = cv2.imdecode(raw, cv2.IMREAD_UNCHANGED)
+        if image is None or image.shape[2] < 4:
+            name = None
+            continue
+
+        alpha = image[:, :, 3]
+        value = cv2.cvtColor(image[:, :, :3], cv2.COLOR_BGR2HSV)[:, :, 2]
+        solid = (alpha > 200).astype(np.uint8)
+        rim = (solid > 0) & (cv2.erode(solid, np.ones((3, 3), np.uint8)) == 0)
+        deep = cv2.erode(solid, np.ones((15, 15), np.uint8)) > 0
+        if not rim.any() or not deep.any():
+            name = None
+            continue
+        drop = float(np.median(value[deep])) - float(np.median(value[rim]))
+        if drop < DARKER:
+            print(f'  {name:18s} каймы нет ({drop:+.0f})')
+            name = None
+            continue
+
+        size = 2 * DEPTH + 1
+        tight = cv2.erode(alpha, np.ones((size, size), np.uint8))
+        image[:, :, 3] = cv2.GaussianBlur(tight, (0, 0), FEATHER)
+        # Редактор кладёт детали в WEBP; в PNG тот же кадр весит в четырнадцать
+        # раз больше, и риг из 148 КБ распухает до полутора мегабайт.
+        put(props, 212, cv2.imencode(
+            '.webp', image, [cv2.IMWRITE_WEBP_QUALITY, WEBP_QUALITY],
+        )[1].tobytes())
+        print(f'  {name:18s} кайма темнее меха на {drop:.0f} — срезано {DEPTH} px')
+        cleaned += 1
+        name = None
+
+    path.write_bytes(rig.dumps())
+    print(f'Почищено деталей: {cleaned}')
+    return 0
+
+
+def cmd_eyes(rig: Rig, scene: Scene, path: Path) -> int:
+    """Сажает веки точно на глаза — по центру самого века, а не картинки.
+
+    Кусок века вырезан с запасом меха вокруг, и закрытый глаз в нём лежит не
+    посередине: у левого он смещён влево, у правого вправо. Пока веко ставили
+    по центру картинки, закрытый глаз уезжал относительно открытого. Центр
+    века находим по тени вокруг него — это единственное тёмное пятно на куске.
+    """
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
+
+    blobs: dict[str, tuple[float, float]] = {}
+    name = None
+    for type_key, props in rig.objects:
+        kind = rig.types.get(type_key)
+        if kind == 'ImageAsset':
+            name = get(props, Scene.ASSET_NAME).decode()
+        elif kind == 'FileAssetContents' and name in (
+            'eyelid_left_v2', 'eyelid_right_v2'
+        ):
+            image = cv2.imdecode(np.frombuffer(get(props, 212), np.uint8),
+                                 cv2.IMREAD_UNCHANGED)
+            alpha = image[:, :, 3]
+            grey = cv2.cvtColor(image[:, :, :3], cv2.COLOR_BGR2GRAY)
+            level = float(np.median(grey[alpha > 128]))
+            dark = ((grey < level - 28) & (alpha > 128)).astype(np.uint8)
+            count, _, stats, centres = cv2.connectedComponentsWithStats(dark, 8)
+            biggest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+            centre = centres[biggest]
+            blobs[name] = (centre[0] - image.shape[1] / 2,
+                           centre[1] - image.shape[0] / 2)
+            name = None
+        else:
+            name = None
+
+    by_name = {scene.image_name(i): i for i in scene.images}
+    for lid, eye in (('eyelid_left_v2', 'eye_left'),
+                     ('eyelid_right_v2', 'eye_right')):
+        shift_x, shift_y = blobs[lid]
+        lid_props = rig.objects[by_name[lid]][1]
+        eye_props = rig.objects[by_name[eye]][1]
+        scale = get(lid_props, SCALE_X)
+        was = (get(lid_props, X), get(lid_props, Y))
+        put(lid_props, X, get(eye_props, X) - shift_x * scale)
+        put(lid_props, Y, get(eye_props, Y) - shift_y * scale)
+        print(f'  {lid}: веко в куске смещено на '
+              f'({shift_x:+.0f},{shift_y:+.0f}) px, '
+              f'посадка {was[0]:.1f},{was[1]:.1f} -> '
+              f'{get(lid_props, X):.1f},{get(lid_props, Y):.1f}')
+
+    path.write_bytes(rig.dumps())
+    return 0
+
+
+def image_size(rig: Rig, wanted: str) -> tuple[int, int]:
+    """Ширина и высота картинки детали в пикселях."""
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
+
+    name = None
+    for type_key, props in rig.objects:
+        kind = rig.types.get(type_key)
+        if kind == 'ImageAsset':
+            name = get(props, Scene.ASSET_NAME).decode()
+        elif kind == 'FileAssetContents' and name == wanted:
+            image = cv2.imdecode(np.frombuffer(get(props, 212), np.uint8),
+                                 cv2.IMREAD_UNCHANGED)
+            return image.shape[1], image.shape[0]
+        else:
+            name = None
+    raise SystemExit(f'Нет картинки {wanted}')
+
+
 def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
     """Переписывает дорожки анимации idle с заметным на глаз размахом."""
+    import numpy as np  # noqa: PLC0415 — нужен только этой команде
+
     reverse = {name: key for key, name in rig.types.items()}
     keyed_object = reverse['KeyedObject']
     keyed_property = reverse['KeyedProperty']
@@ -301,7 +449,7 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
         if rig.types.get(type_key) == 'CubicEaseInterpolator'
     )
     by_name = {scene.image_name(i): i for i in scene.images}
-    half, full = BREATH_FRAMES
+    full = BREATH_CYCLE
 
     def track(local: int, tracks: dict[int, list[tuple[int, float]]]) -> list:
         """Одна дорожка: объект, его свойства и ключи по кадрам."""
@@ -322,23 +470,45 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
 
     # Кофта дышит: раздувается от собственного центра и опадает обратно.
     torso = rig.objects[by_name['torso']][1]
+    peak = PEAK['torso']
     for axis in (SCALE_X, SCALE_Y):
         base = get(torso, axis)
         block += track(scene.local_id(by_name['torso']), {
-            axis: [(0, base), (half, base * BREATH_SWELL), (full, base)],
+            axis: [(0, base), (peak, base * BREATH_SWELL), (full, base)],
         })
 
     # Голова с лицом поднимается на вдохе — одним куском, синхронно.
+    peak = PEAK['head']
     for name in HEAD_GROUP:
         base = get(rig.objects[by_name[name]][1], Y)
         block += track(scene.local_id(by_name[name]), {
-            Y: [(0, base), (half, base - BREATH_LIFT), (full, base)],
+            Y: [(0, base), (peak, base - BREATH_LIFT), (full, base)],
+        })
+
+    # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
+    # собираем руками: центр картинки едет по дуге вокруг плеча, а сама она
+    # доворачивается на тот же угол. Плечо — середина верхнего края лапы.
+    peak = PEAK['paw']
+    for name, sign in (('paw_left', -1), ('paw_right', 1)):
+        props = rig.objects[by_name[name]][1]
+        centre = np.array([get(props, X), get(props, Y)])
+        half_height = image_size(rig, name)[1] * get(props, SCALE_Y) / 2
+        shoulder = np.array([centre[0], centre[1] - half_height])
+        angle = sign * PAW_SWING
+        turn = np.array([[np.cos(angle), -np.sin(angle)],
+                         [np.sin(angle), np.cos(angle)]])
+        swung = shoulder + turn @ (centre - shoulder)
+        block += track(scene.local_id(by_name[name]), {
+            ROTATION: [(0, 0.0), (peak, angle), (full, 0.0)],
+            X: [(0, centre[0]), (peak, swung[0]), (full, centre[0])],
+            Y: [(0, centre[1]), (peak, swung[1]), (full, centre[1])],
         })
 
     # Уши качаются в противофазе — от этого движение читается как живое.
+    peak = PEAK['ear']
     for name, sign in (('ear_left', 1), ('ear_right', -1)):
         block += track(scene.local_id(by_name[name]), {
-            ROTATION: [(0, 0.0), (half, sign * EAR_SWING), (full, 0.0)],
+            ROTATION: [(0, 0.0), (peak, sign * EAR_SWING), (full, 0.0)],
         })
 
     start = next(i for i, (type_key, props) in enumerate(rig.objects)
@@ -350,13 +520,17 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
     rig.objects = rig.objects[:start + 1] + block + rig.objects[end:]
 
     path.write_bytes(rig.dumps())
+    tracks = sum(1 for type_key, _ in block if type_key == keyed_object)
     print(f'Дыхание переписано: кофта +{(BREATH_SWELL - 1) * 100:.0f}%, '
-          f'голова на {BREATH_LIFT:.0f} px, дорожек {len(HEAD_GROUP) + 4}')
+          f'голова на {BREATH_LIFT:.0f} px, лапы от плеча, '
+          f'вершины вдоха {sorted(set(PEAK.values()))} из {full}, '
+          f'дорожек {tracks}')
     return 0
 
 
 def main() -> int:
-    if len(sys.argv) != 3 or sys.argv[1] not in ('inspect', 'fix', 'breathe'):
+    commands = ('inspect', 'fix', 'clean', 'eyes', 'breathe')
+    if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
     fields, types = load_registry(find_runtime(None))
@@ -368,11 +542,11 @@ def main() -> int:
         raise SystemExit('Round-trip не сошёлся: не рискую писать файл')
     scene = Scene(rig, types)
 
+    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'eyes': cmd_eyes,
+              'breathe': cmd_breathe, 'fix': cmd_fix}[command]
     if command == 'inspect':
-        return cmd_inspect(rig, scene)
-    if command == 'breathe':
-        return cmd_breathe(rig, scene, path)
-    return cmd_fix(rig, scene, path)
+        return runner(rig, scene)
+    return runner(rig, scene, path)
 
 
 if __name__ == '__main__':

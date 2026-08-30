@@ -279,10 +279,16 @@ class _RoomScene extends StatelessWidget {
             right: 12,
             child: _CareButton(onTap: onOpenCare),
           ),
+          // Пузырь висит НАД героем, а не под ним. Внизу он закрывал мишке
+          // ноги: на телефоне сцена ниже, чем на макете, и герой не помещался
+          // в полный рост. Опустить его под сцену нельзя — это отняло бы
+          // высоту у комнаты, а размер героя менять запрещено. Сверху же
+          // пустая стена: пузырь садится под кнопку ухода и никого не
+          // перекрывает.
           Positioned(
             left: 16,
             right: 16,
-            bottom: 16,
+            top: 54,
             child: PetSpeechBubble(
               mood: controller.state.mood,
               initiative: controller.initiative,
