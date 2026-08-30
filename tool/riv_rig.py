@@ -68,9 +68,18 @@ PAW_DRIFT = 3.0             # лапы расходятся в стороны в
 PAW_LIFT = 4.0              # и приподнимаются вместе с грудью
 MOUTH_SWELL = (1.05, 1.11)  # улыбка тянется на вдохе: чуть вширь, больше ввысь
 
+# Сетка деформации на кофте — тот самый приём, которым живёт демо-дракон:
+# на вдохе двигаются ВЕРШИНЫ сетки, и контур тела реально надувается, а не
+# картинка масштабируется. Сетка 5x4 в локальных координатах картинки торса;
+# вес ряда задаёт профиль: живот гуляет сильнее всего, плечи почти стоят.
+MESH_XS = (-477.5, -240.0, 0.0, 240.0, 477.5)
+MESH_YS = (-270.0, -90.0, 90.0, 270.0)
+MESH_ROW_WEIGHT = {-270.0: 0.25, -90.0: 0.9, 90.0: 1.0, 270.0: 0.55}
+MESH_SWELL_PX = 12.0
+
 # Анимация смеха по тапу (trg_pet): два подскока всем телом, кофта пружинит,
 # лапы взлетают, уши хлопают, улыбка распахивается. Длительность в кадрах.
-GIGGLE_DURATION = 78
+GIGGLE_DURATION = 150
 
 # Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
 # дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
@@ -466,18 +475,26 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
 
     block: list = []
 
-    # Кофта дышит и приподнимается: только раздувание читалось как «двигается
-    # одежда», подъём груди тянет весь силуэт.
+    # Кофта дышит контуром, а не масштабом: на вдохе вершины сетки уходят
+    # наружу по профилю (живот сильнее, плечи почти стоят) — силуэт реально
+    # надувается, как у дракона. Узел торса лишь приподнимается с грудью.
     torso = rig.objects[by_name['torso']][1]
-    scale_x, scale_y, torso_y = (get(torso, SCALE_X), get(torso, SCALE_Y),
-                                 get(torso, Y))
+    torso_y = get(torso, Y)
     block += track(scene.local_id(by_name['torso']), {
-        SCALE_X: waves(PEAK['torso'],
-                       lambda k: scale_x * (1 + (BREATH_SWELL - 1) * k)),
-        SCALE_Y: waves(PEAK['torso'],
-                       lambda k: scale_y * (1 + (BREATH_SWELL - 1) * k)),
         Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
     })
+    vertices = torso_mesh(rig, scene)
+    if not vertices:
+        raise SystemExit('Нет сетки на кофте — сначала команда mesh')
+    half_width = MESH_XS[-1]
+    for local, vx, vy in vertices:
+        weight = MESH_ROW_WEIGHT[vy]
+        out = (vx / half_width) * MESH_SWELL_PX * weight
+        sag = 3.0 * k_row if (k_row := max(0.0, vy / MESH_YS[-1])) else 0.0
+        block += track(local, {
+            24: waves(PEAK['torso'], lambda k, v=vx, o=out: v + o * k),
+            25: waves(PEAK['torso'], lambda k, v=vy, g=sag: v + g * k),
+        })
 
     # Голова с ушами поднимается на вдохе — одним куском, синхронно.
     for name in HEAD_GROUP:
@@ -684,6 +701,68 @@ def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_mesh(rig: Rig, scene: Scene, path: Path) -> int:
+    """Вешает на кофту сетку деформации 5x4.
+
+    Вершины сетки — обычные компоненты, их x/y анимируются кейфреймами так
+    же, как позиции картинок (дракон именно так надувает живот: 68 дорожек
+    двигают вершины). Индексы треугольников в файле — varuint'ы, не uint16:
+    на неверной кодировке рантайм молча получает вырожденные треугольники и
+    кофта исчезает.
+    """
+    if any(rig.types.get(tk) == 'Mesh' for tk, _ in rig.objects):
+        print('Сетка уже есть — пропускаю')
+        return 0
+    reverse = {name: key for key, name in rig.types.items()}
+    by_name = {scene.image_name(i): i for i in scene.images}
+    torso_at = by_name['torso']
+    torso_local = scene.local_id(torso_at)
+
+    columns, rows = len(MESH_XS), len(MESH_YS)
+    triangles: list[int] = []
+    for r in range(rows - 1):
+        for c in range(columns - 1):
+            a = r * columns + c
+            triangles += [a, a + 1, a + columns,
+                          a + 1, a + columns + 1, a + columns]
+    index_bytes = b''.join(varuint(i) for i in triangles)
+
+    objs = [(reverse['Mesh'],
+             [(5, 'Uint', torso_local), (223, 'Bytes', index_bytes)])]
+    mesh_local = torso_local + 1
+    width, height = MESH_XS[-1] - MESH_XS[0], MESH_YS[-1] - MESH_YS[0]
+    for y in MESH_YS:
+        for x in MESH_XS:
+            objs.append((reverse['MeshVertex'], [
+                (5, 'Uint', mesh_local),
+                (24, 'Double', x), (25, 'Double', y),
+                (215, 'Double', (x - MESH_XS[0]) / width),
+                (216, 'Double', (y - MESH_YS[0]) / height),
+            ]))
+    rig.objects[torso_at + 1:torso_at + 1] = objs
+    path.write_bytes(rig.dumps())
+    print(f'Сетка на кофте: {columns}x{rows} вершин, '
+          f'{len(triangles) // 3} треугольников. Дорожки анимаций теперь '
+          f'нужно переписать: breathe и giggle следом.')
+    return 0
+
+
+def torso_mesh(rig: Rig, scene: Scene) -> list[tuple[int, float, float]]:
+    """Вершины сетки кофты: (локальный id, x, y). Пусто, если сетки нет."""
+    by_name = {scene.image_name(i): i for i in scene.images}
+    torso_local = scene.local_id(by_name['torso'])
+    out = []
+    mesh_local = None
+    for i, (type_key, props) in enumerate(rig.objects):
+        kind = rig.types.get(type_key)
+        if kind == 'Mesh' and get(props, 5) == torso_local:
+            mesh_local = scene.local_id(i)
+        elif kind == 'MeshVertex' and mesh_local is not None \
+                and get(props, 5) == mesh_local:
+            out.append((scene.local_id(i), get(props, 24), get(props, 25)))
+    return out
+
+
 def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
     """Смех по тапу: мишка прыгает как ОДНО упругое тело, а не набор кусков.
 
@@ -730,17 +809,16 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
     # Присел -> вытянулся на взлёте -> завис -> смялся на приземлении ->
     # короткий второй подскок -> пружинит и успокаивается.
     SCORE = [
-        (0,  1.00,  0.0,  0.000),
-        (6,  0.90,  0.0,  0.000),
-        (12, 1.07, 30.0,  0.020),
-        (18, 1.03, 40.0, -0.018),
-        (24, 0.88,  0.0,  0.014),
-        (30, 1.05, 12.0, -0.012),
-        (36, 1.00, 16.0,  0.008),
-        (42, 0.93,  0.0, -0.006),
-        (50, 1.02,  0.0,  0.000),
-        (60, 1.00,  0.0,  0.000),
-        (GIGGLE_DURATION, 1.00, 0.0, 0.000),
+        (0,   1.000,  0.0,  0.000),
+        (16,  0.958,  0.0,  0.005),
+        (30,  1.040,  9.0, -0.009),
+        (46,  0.972,  0.0,  0.007),
+        (60,  1.022,  3.0, -0.006),
+        (76,  0.988,  0.0,  0.004),
+        (92,  1.008,  0.0, -0.002),
+        (112, 0.997,  0.0,  0.001),
+        (132, 1.000,  0.0,  0.000),
+        (GIGGLE_DURATION, 1.000, 0.0, 0.000),
     ]
 
     def posed(base_x, base_y, squash, jump, tilt):
@@ -773,15 +851,15 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
             sign = 1 if name == 'ear_left' else -1
             tracks[ROTATION] = [
                 (frame, tilt + sign * lag) for (frame, _, _, tilt), lag in
-                zip(SCORE, (0, 0.10, -0.12, 0.08, -0.10, 0.07, -0.05,
-                            0.04, -0.02, 0.0, 0.0))
+                zip(SCORE, (0, 0.06, -0.08, 0.06, -0.05, 0.04, -0.03,
+                            0.02, -0.01, 0.0))
             ]
         if name == 'mouth':
             # Улыбка распахивается в такт подскокам, якорь на верхней губе.
             mouth_h = image_size(rig, 'mouth')[1] * bsy
-            pulse = dict([(0, 1.0), (6, 1.04), (12, 1.22), (18, 1.18),
-                          (24, 1.02), (30, 1.15), (36, 1.1), (42, 1.0),
-                          (50, 1.0), (60, 1.0), (GIGGLE_DURATION, 1.0)])
+            pulse = dict([(0, 1.0), (16, 1.06), (30, 1.18), (46, 1.08),
+                          (60, 1.14), (76, 1.05), (92, 1.08), (112, 1.02),
+                          (132, 1.0), (GIGGLE_DURATION, 1.0)])
             tracks[SCALE_Y] = [(f, v * pulse[f]) for f, v in sys_]
             tracks[Y] = [(f, v + mouth_h * (pulse[f] - 1) / 2)
                          for f, v in ys]
@@ -830,8 +908,8 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
         (reverse['TransitionTriggerCondition'], [(155, 'Uint', 0)]),
         (reverse['AnimationState'], [(149, 'Uint', 3)]),
         (reverse['StateTransition'], [(151, 'Uint', 3), (152, 'Uint', 4),
-                                      (158, 'Uint', 250),
-                                      (160, 'Uint', 1100)]),
+                                      (158, 'Uint', 300),
+                                      (160, 'Uint', 2300)]),
     ]
     path.write_bytes(rig.dumps())
     print('Смех подключён: вход trg_pet, состояние giggle, переходы записаны')
@@ -839,7 +917,7 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
 
 
 def main() -> int:
-    commands = ('inspect', 'fix', 'clean', 'place', 'breathe', 'blink', 'giggle')
+    commands = ('inspect', 'fix', 'clean', 'place', 'mesh', 'breathe', 'blink', 'giggle')
     if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
@@ -852,7 +930,7 @@ def main() -> int:
         raise SystemExit('Round-trip не сошёлся: не рискую писать файл')
     scene = Scene(rig, types)
 
-    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink, 'giggle': cmd_giggle,
+    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink, 'giggle': cmd_giggle, 'mesh': cmd_mesh,
               'fix': cmd_fix}[command]
     if command == 'inspect':
         return runner(rig, scene)

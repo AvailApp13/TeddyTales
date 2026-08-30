@@ -68,8 +68,19 @@
 
     python3 tool/riv_rig.py blink   assets/rive/bear_main.riv   # моргание выкл.
     python3 tool/riv_rig.py place   assets/rive/bear_main.riv   # детали v4
-    python3 tool/riv_rig.py breathe assets/rive/bear_main.riv   # дыхание
     python3 tool/riv_rig.py fix     assets/rive/bear_main.riv   # порядок слоёв
+    python3 tool/riv_rig.py mesh    assets/rive/bear_main.riv   # сетка на кофте
+    python3 tool/riv_rig.py breathe assets/rive/bear_main.riv   # дыхание
+    python3 tool/riv_rig.py giggle  assets/rive/bear_main.riv   # смех по тапу
+
+Сетка (`mesh`) — деформация как у демо-дракона: на вдохе двигаются вершины
+сетки на кофте, и контур тела реально надувается, а не масштабируется
+картинка. Индексы треугольников в формате — varuint'ы, не uint16: на
+неверной кодировке треугольники вырождаются и деталь молча исчезает.
+`giggle` пишет анимацию смеха единым упругим телом (партитура: присел —
+вытянулся — смялся, с затуханием) и при первом запуске дописывает в
+стейт-машину вход trg_pet с переходами. После `mesh` дорожки обязаны быть
+переписаны (`breathe`, `giggle`) — вставка вершин сдвигает индексы.
 
 Риг v4 (текущий): семь деталей из одного нового эталонного фото
 (docs/reference/bear-source-v2.png, нарезка — tool/make_rig_v4.py). Лицо
