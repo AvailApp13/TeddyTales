@@ -34,28 +34,24 @@ BLOB_FIELDS = {'String', 'Bytes'}
 TOC_FIELDS = {0: 'Uint', 1: 'String', 2: 'Double', 3: 'Color'}
 
 # Порядок отрисовки сверху вниз: первый в списке рисуется поверх остальных.
-# Веки и открытый рот лежат над лицом (их включает анимация), лицо над головой,
-# уши за головой, лапы поверх кофты, ноги в самом низу.
+# Риг v4: лицо нарисовано прямо на голове (моргание убрано решением
+# заказчика, отдельные глаза/веки/рты не нужны — и швов на лице нет).
+# Уши за головой, лапы поверх кофты, кофта поверх ног.
 DRAW_ORDER = [
-    'eyelid_left_v2',
-    'eyelid_right_v2',
-    'mouth_open_v2',
-    'eye_left',
-    'eye_right',
-    'nose',
-    'mouth_stitch',
     'head',
     'ear_left',
     'ear_right',
     'paw_left',
     'paw_right',
     'torso',
-    'legs_tummy_v2',
+    'legs',
 ]
 
-# Куски первой волны (нарисованы нейросетью, а не сняты с игрушки). В наборе
-# деталей их уже нет — из рига и из файла ассетов они тоже уходят.
-DROP = {'arm_root_left', 'arm_root_right'}
+# Что выкидываем из файла вместе с картинками: куски первой волны от
+# нейросети и весь набор отдельных черт лица из v3 — в v4 лицо цельное.
+DROP = {'arm_root_left', 'arm_root_right',
+        'eye_left', 'eye_right', 'eyelid_left_v2', 'eyelid_right_v2',
+        'nose', 'mouth_stitch', 'mouth_open_v2'}
 
 # Дыхание. Сдача рига качала корпус на 1.5% — на экране это пара пикселей,
 # зрителю кажется, что мишка застыл. Размах считаем от экрана, а не от
@@ -65,7 +61,6 @@ BREATH_CYCLE = 180          # один вдох-выдох, три секунд�
 BREATH_SWELL = 1.04         # насколько раздувается кофта на вдохе
 BREATH_LIFT = 18.0          # на сколько поднимается голова, пикселей артборда
 TORSO_RISE = 6.0            # грудь приподнимается, а не только пухнет
-MUZZLE_EXTRA = 3.0          # нос и рот тянутся чуть дальше головы — «принюх»
 EAR_SWING = 0.0654          # качание ушей, радианы (около 3.7°)
 PAW_SWING = 0.09            # мах лапами от плеча, радианы (около 5°)
 PAW_DRIFT = 6.0             # лапы расходятся в стороны вместе с кофтой
@@ -75,7 +70,7 @@ PAW_LIFT = 4.0              # и приподнимаются вместе с г
 # дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
 # следом голова, лапы и уши догоняют. Синхронное движение читается как
 # механика, запаздывание — как живое.
-PEAK = {'torso': 70, 'head': 82, 'muzzle': 86, 'paw': 88, 'ear': 95}
+PEAK = {'torso': 70, 'head': 82, 'paw': 88, 'ear': 95}
 
 # Полный idle — два вдоха подряд, и они нарочно разные: второй мельче и с
 # поздней вершиной. Подсмотрено у демо-дракона: там циклы разной длины
@@ -84,22 +79,9 @@ PEAK = {'torso': 70, 'head': 82, 'muzzle': 86, 'paw': 88, 'ear': 95}
 BREATH_CYCLES = ((0, 1.0, 0), (BREATH_CYCLE, 0.85, 6))
 IDLE_DURATION = 2 * BREATH_CYCLE
 
-# Моргание — тоже узор, а не метроном: одиночное, пауза, двойное. У дракона
-# blink живёт в цикле на 600 кадров с неровными интервалами — потому и не
-# выглядит заведённым. Смыкание почти мгновенное (2 кадра): кросс-фейд с
-# полупрозрачным веком читался как призрак, настоящее веко так не умеет.
-BLINK_DURATION = 240        # четыре секунды на узор
-BLINK_PATTERN = [(0, 0.0), (2, 1.0), (10, 1.0), (16, 0.0),
-                 (150, 0.0), (152, 1.0), (157, 1.0), (161, 0.0),
-                 (165, 0.0), (167, 1.0), (173, 1.0), (180, 0.0)]
-
-# Голова и всё, что на ней нарисовано, поднимается одним куском. Части лица
-# лежат в артборде рядом с головой, а не внутри неё, поэтому двигать их надо
-# синхронно — иначе на вдохе глаза и нос съедут с морды.
-HEAD_GROUP = [
-    'head', 'ear_left', 'ear_right', 'eye_left', 'eye_right', 'nose',
-    'mouth_stitch', 'mouth_open_v2', 'eyelid_left_v2', 'eyelid_right_v2',
-]
+# Голова с ушами поднимается одним куском; лицо нарисовано на голове и
+# едет вместе с ней само.
+HEAD_GROUP = ['head', 'ear_left', 'ear_right']
 
 X, Y, SCALE_X, SCALE_Y, ROTATION, OPACITY = 13, 14, 16, 17, 15, 18
 
@@ -320,19 +302,15 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
-# Оригиналы деталей в репозитории: имя в риге -> файл набора parts-v2.
+# Оригиналы деталей в репозитории: имя в риге -> файл набора parts-v4.
 # Чистка всегда стартует с них, а не с картинок из файла — иначе каждая
 # правка пережимает WEBP ещё раз и деталь постепенно замыливается.
 PART_SOURCES = {
-    'head': 'head-hood-clean', 'torso': 'torso-hoodie',
-    'legs_tummy_v2': 'legs-tummy-full',
-    'ear_left': 'ear-left', 'ear_right': 'ear-right',
-    'paw_left': 'paw-left', 'paw_right': 'paw-right',
-    'eye_left': 'eye-left', 'eye_right': 'eye-right',
-    'nose': 'nose', 'mouth_stitch': 'mouth-stitch',
-    'mouth_open_v2': 'mouth-open',
-    'eyelid_left_v2': 'eyelid-left', 'eyelid_right_v2': 'eyelid-right',
+    'head': 'head', 'ear_left': 'ear_left', 'ear_right': 'ear_right',
+    'paw_left': 'paw_left', 'paw_right': 'paw_right',
+    'torso': 'torso', 'legs': 'legs',
 }
+PARTS_DIR = 'docs/reference/parts-v4'
 
 
 def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
@@ -356,7 +334,7 @@ def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
     import numpy as np  # noqa: PLC0415
 
     MAX_TRIM, DARKER, FEATHER = 4, 12, 0.8
-    root = Path(__file__).resolve().parent.parent / 'docs/reference/parts-v2'
+    root = Path(__file__).resolve().parent.parent / PARTS_DIR
 
     name = None
     for type_key, props in rig.objects:
@@ -416,60 +394,6 @@ def cmd_clean(rig: Rig, scene: Scene, path: Path) -> int:
             '.webp', image, [cv2.IMWRITE_WEBP_QUALITY, WEBP_QUALITY],
         )[1].tobytes())
         print(f'  {wanted:18s} срез {trimmed} px, юбка перекрашена')
-
-    path.write_bytes(rig.dumps())
-    return 0
-
-
-def cmd_eyes(rig: Rig, scene: Scene, path: Path) -> int:
-    """Сажает веки точно на глаза — по центру самого века, а не картинки.
-
-    Кусок века вырезан с запасом меха вокруг, и закрытый глаз в нём лежит не
-    посередине: у левого он смещён влево, у правого вправо. Пока веко ставили
-    по центру картинки, закрытый глаз уезжал относительно открытого. Центр
-    века находим по тени вокруг него — это единственное тёмное пятно на куске.
-    """
-    import cv2  # noqa: PLC0415
-    import numpy as np  # noqa: PLC0415
-
-    blobs: dict[str, tuple[float, float]] = {}
-    name = None
-    for type_key, props in rig.objects:
-        kind = rig.types.get(type_key)
-        if kind == 'ImageAsset':
-            name = get(props, Scene.ASSET_NAME).decode()
-        elif kind == 'FileAssetContents' and name in (
-            'eyelid_left_v2', 'eyelid_right_v2'
-        ):
-            image = cv2.imdecode(np.frombuffer(get(props, 212), np.uint8),
-                                 cv2.IMREAD_UNCHANGED)
-            alpha = image[:, :, 3]
-            grey = cv2.cvtColor(image[:, :, :3], cv2.COLOR_BGR2GRAY)
-            level = float(np.median(grey[alpha > 128]))
-            dark = ((grey < level - 28) & (alpha > 128)).astype(np.uint8)
-            count, _, stats, centres = cv2.connectedComponentsWithStats(dark, 8)
-            biggest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-            centre = centres[biggest]
-            blobs[name] = (centre[0] - image.shape[1] / 2,
-                           centre[1] - image.shape[0] / 2)
-            name = None
-        else:
-            name = None
-
-    by_name = {scene.image_name(i): i for i in scene.images}
-    for lid, eye in (('eyelid_left_v2', 'eye_left'),
-                     ('eyelid_right_v2', 'eye_right')):
-        shift_x, shift_y = blobs[lid]
-        lid_props = rig.objects[by_name[lid]][1]
-        eye_props = rig.objects[by_name[eye]][1]
-        scale = get(lid_props, SCALE_X)
-        was = (get(lid_props, X), get(lid_props, Y))
-        put(lid_props, X, get(eye_props, X) - shift_x * scale)
-        put(lid_props, Y, get(eye_props, Y) - shift_y * scale)
-        print(f'  {lid}: веко в куске смещено на '
-              f'({shift_x:+.0f},{shift_y:+.0f}) px, '
-              f'посадка {was[0]:.1f},{was[1]:.1f} -> '
-              f'{get(lid_props, X):.1f},{get(lid_props, Y):.1f}')
 
     path.write_bytes(rig.dumps())
     return 0
@@ -548,15 +472,12 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
         Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
     })
 
-    # Голова с лицом поднимается на вдохе — одним куском, синхронно. Нос и
-    # рот тянутся на пару пикселей дальше и чуть позже — мордочка «принюхивается».
-    muzzle = {'nose', 'mouth_stitch', 'mouth_open_v2'}
+    # Голова с ушами поднимается на вдохе — одним куском, синхронно.
     for name in HEAD_GROUP:
         base = get(rig.objects[by_name[name]][1], Y)
-        lift = BREATH_LIFT + (MUZZLE_EXTRA if name in muzzle else 0.0)
-        peak = PEAK['muzzle'] if name in muzzle else PEAK['head']
         block += track(scene.local_id(by_name[name]), {
-            Y: waves(peak, lambda k, b=base, l=lift: b - l * k),
+            Y: waves(PEAK['head'],
+                     lambda k, b=base: b - BREATH_LIFT * k),
         })
 
     # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
@@ -611,66 +532,99 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
 
 
 def cmd_blink(rig: Rig, scene: Scene, path: Path) -> int:
-    """Переписывает моргание: мгновенное смыкание и неровный узор.
+    """Отключает моргание: у анимации blink не остаётся ни одной дорожки.
 
-    Старый blink растворял веко прозрачностью пять кадров — пока оно
-    полупрозрачное, под ним просвечивает глаз, и кадр читается как призрак.
-    Настоящее веко смыкается почти мгновенно: два кадра вниз, подержать,
-    отпустить. И моргаем не по метроному: одиночное, пауза, двойное —
-    у демо-дракона моргание живёт в длинном цикле с неровными интервалами,
-    поэтому не выглядит заведённым.
+    Решение заказчика: лицо v4 цельное, век в риге нет, глаза всегда
+    открыты. Пустая анимация оставлена на месте, чтобы не трогать стейт-
+    машину: состояние blink проигрывает тишину и возвращается в eyes_open.
     """
-    reverse = {name: key for key, name in rig.types.items()}
-    keyed_object = reverse['KeyedObject']
-    keyed_property = reverse['KeyedProperty']
-    keyframe = reverse['KeyFrameDouble']
-    interpolator = next(
-        scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
-        if rig.types.get(type_key) == 'CubicEaseInterpolator'
-    )
-    by_name = {scene.image_name(i): i for i in scene.images}
-
-    block: list = []
-    for lid in ('eyelid_left_v2', 'eyelid_right_v2'):
-        block.append((keyed_object,
-                      [(Scene.OBJECT_ID, 'Uint',
-                        scene.local_id(by_name[lid]))]))
-        block.append((keyed_property, [(53, 'Uint', OPACITY)]))
-        for frame, value in BLINK_PATTERN:
-            props = []
-            if frame:
-                props.append((67, 'Uint', frame))
-            props += [(68, 'Uint', 2),
-                      (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
-                      (70, 'Double', value)]
-            block.append((keyframe, props))
-
     start = next(i for i, (type_key, props) in enumerate(rig.objects)
                  if rig.types.get(type_key) == 'LinearAnimation'
                  and get(props, 55) == b'blink')
-    put(rig.objects[start][1], 57, BLINK_DURATION)
     end = next(i for i in range(start + 1, len(rig.objects))
                if rig.types.get(rig.objects[i][0])
                in ('LinearAnimation', 'StateMachine'))
-    rig.objects = rig.objects[:start + 1] + block + rig.objects[end:]
+    removed = end - start - 1
+    rig.objects = rig.objects[:start + 1] + rig.objects[end:]
+    path.write_bytes(rig.dumps())
+    print(f'Моргание отключено: удалено {removed} объектов дорожек blink')
+    return 0
 
-    # Выход из состояния blink в стейт-машине — по концу нового узора.
-    # Время выхода в миллисекундах: старые 18 кадров при 60 fps дали 300.
-    exit_ms = BLINK_DURATION * 1000 // 60
+
+def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
+    """Сажает детали набора parts-v4 в риг: контент, размеры и позиции.
+
+    Замена мишки целиком: картинки берутся из нарезки нового эталонного
+    фото, посадка — из placements.json (там координаты артборда, посчитанные
+    от габарита прежнего героя: размер на экране не меняется).
+    """
+    import json  # noqa: PLC0415
+    import cv2  # noqa: PLC0415
+    import numpy as np  # noqa: PLC0415
+
+    root = Path(__file__).resolve().parent.parent / PARTS_DIR
+    placements = json.loads((root / 'placements.json').read_text())
+    # Имя ассета в риге -> имя куска v4 (низ в старом риге звался иначе).
+    to_v4 = dict(PART_SOURCES)
+    to_v4.setdefault('legs_tummy_v2', 'legs')
+
+    name = None
+    asset_props = None
     for type_key, props in rig.objects:
-        if (rig.types.get(type_key) == 'StateTransition'
-                and get(props, 160) == 300):
-            put(props, 160, exit_ms)
-            print(f'  выход из blink: 300 мс -> {exit_ms} мс')
+        kind = rig.types.get(type_key)
+        if kind == 'ImageAsset':
+            name = get(props, Scene.ASSET_NAME).decode()
+            asset_props = props
+            continue
+        if kind != 'FileAssetContents' or name not in to_v4:
+            name = None
+            continue
+        v4 = to_v4[name]
+        image = cv2.imread(str(root / f'{v4}.png'), cv2.IMREAD_UNCHANGED)
+        old = cv2.imdecode(np.frombuffer(get(props, 212), np.uint8),
+                           cv2.IMREAD_UNCHANGED)
+        # У пары свойств 207/208 порядок «ширина-высота» в файлах гуляет —
+        # определяем его по старой картинке этого же ассета.
+        oh, ow = old.shape[:2]
+        nh, nw = image.shape[:2]
+        first, second = get(asset_props, 207), get(asset_props, 208)
+        if (first, second) == (ow, oh):
+            put(asset_props, 207, float(nw))
+            put(asset_props, 208, float(nh))
+        elif (first, second) == (oh, ow):
+            put(asset_props, 207, float(nh))
+            put(asset_props, 208, float(nw))
+        else:
+            raise SystemExit(f'{name}: не понял порядок размеров '
+                             f'{first}x{second} при картинке {ow}x{oh}')
+        put(asset_props, Scene.ASSET_NAME, v4.encode())
+        put(props, 212, cv2.imencode(
+            '.webp', image, [cv2.IMWRITE_WEBP_QUALITY, WEBP_QUALITY],
+        )[1].tobytes())
+        print(f'  {name} -> {v4}: {nw}x{nh}, {len(get(props, 212))} Б')
+        name = None
+
+    # Позиции и масштаб узлов Image — по посадочной карте.
+    assets = [get(rig.objects[i][1], Scene.ASSET_NAME).decode()
+              for i in scene.assets]
+    for index in scene.images:
+        props = rig.objects[index][1]
+        asset_name = assets[get(props, Scene.ASSET_ID)]
+        if asset_name not in placements:
+            continue
+        target = placements[asset_name]
+        put(props, X, target['x'])
+        put(props, Y, target['y'])
+        put(props, SCALE_X, target['scale'])
+        put(props, SCALE_Y, target['scale'])
 
     path.write_bytes(rig.dumps())
-    print(f'Моргание: узор {len(BLINK_PATTERN)} ключей на веко, '
-          f'{BLINK_DURATION} кадров, смыкание за 2 кадра')
+    print('Посадка v4 записана')
     return 0
 
 
 def main() -> int:
-    commands = ('inspect', 'fix', 'clean', 'eyes', 'breathe', 'blink')
+    commands = ('inspect', 'fix', 'clean', 'place', 'breathe', 'blink')
     if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
@@ -683,8 +637,7 @@ def main() -> int:
         raise SystemExit('Round-trip не сошёлся: не рискую писать файл')
     scene = Scene(rig, types)
 
-    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'eyes': cmd_eyes,
-              'breathe': cmd_breathe, 'blink': cmd_blink,
+    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink,
               'fix': cmd_fix}[command]
     if command == 'inspect':
         return runner(rig, scene)
