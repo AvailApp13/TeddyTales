@@ -68,31 +68,39 @@ PAW_DRIFT = 3.0             # лапы расходятся в стороны в
 PAW_LIFT = 4.0              # и приподнимаются вместе с грудью
 MOUTH_SWELL = (1.05, 1.11)  # улыбка тянется на вдохе: чуть вширь, больше ввысь
 
-# Сетка деформации на кофте — тот самый приём, которым живёт демо-дракон:
-# на вдохе двигаются ВЕРШИНЫ сетки, и контур тела реально надувается, а не
-# картинка масштабируется. Сетка 5x4 в локальных координатах картинки торса;
-# вес ряда задаёт профиль: живот гуляет сильнее всего, плечи почти стоят.
-MESH_XS = (-477.5, -240.0, 0.0, 240.0, 477.5)
-MESH_YS = (-270.0, -90.0, 90.0, 270.0)
-MESH_ROW_WEIGHT = {-270.0: 0.25, -90.0: 0.9, 90.0: 1.0, 270.0: 0.55}
-MESH_SWELL_PX = 12.0
+# Сетки деформации — тот самый приём, которым живёт демо-дракон: анимируются
+# ВЕРШИНЫ сетки, и контур тела реально гнётся, а не картинка масштабируется.
+# На каждую крупную деталь — своя сетка (колонки x ряды) и свой профиль
+# дыхания: вес колонки режет движение к центру (лицо на голове обязано
+# стоять неподвижно — на нём лежит накладка рта), вес ряда задаёт, где
+# деталь мягкая. Значения весов — по рядам сверху вниз.
+MESHES = {
+    # Кофта: живот гуляет сильнее всего, плечи почти стоят, подол провисает.
+    'torso': {'grid': (5, 4), 'rows': (0.25, 0.9, 1.0, 0.55),
+              'swell': 12.0, 'centre_dead': 0.0, 'sag': 3.0},
+    # Голова: дышат щёки и край капюшона, центральная треть (лицо) мертва.
+    'head': {'grid': (5, 5), 'rows': (0.2, 0.3, 0.55, 1.0, 0.6),
+             'swell': 6.0, 'centre_dead': 0.35, 'sag': 0.0},
+    # Ноги: бёдра дышат чуть-чуть, ступни приколочены к полу.
+    'legs': {'grid': (5, 3), 'rows': (0.8, 0.45, 0.0),
+             'swell': 4.0, 'centre_dead': 0.0, 'sag': 0.0},
+}
 
-# Анимация смеха по тапу (trg_pet): два подскока всем телом, кофта пружинит,
-# лапы взлетают, уши хлопают, улыбка распахивается. Длительность в кадрах.
-GIGGLE_DURATION = 150
+# Желе в смехе: ряды сетки отстают от тела, нижние сильнее. Задержка на ряд
+# в кадрах и общий размах виляния.
+JELLY_LAG = 3.0
+JELLY_AMP = 220.0
 
-# Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
-# дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
-# следом голова, лапы и уши догоняют. Синхронное движение читается как
-# механика, запаздывание — как живое.
+# Вершина вдоха у каждой части своя: сначала грудь, следом голова, рот,
+# лапы и уши догоняют — синхронное движение читается как механика.
 PEAK = {'torso': 70, 'head': 82, 'mouth': 84, 'paw': 88, 'ear': 95}
 
-# Полный idle — два вдоха подряд, и они нарочно разные: второй мельче и с
-# поздней вершиной. Подсмотрено у демо-дракона: там циклы разной длины
-# наложены друг на друга, и повторяемость не читается. Одинаковые вдохи по
-# метроному глаз ловит за пару циклов.
+# Полный idle — два вдоха подряд, нарочно разные: второй мельче и позже.
 BREATH_CYCLES = ((0, 1.0, 0), (BREATH_CYCLE, 0.85, 6))
 IDLE_DURATION = 2 * BREATH_CYCLE
+
+# Смех по тапу: медленное пружинистое хихиканье с затуханием, 2.5 секунды.
+GIGGLE_DURATION = 150
 
 # Голова с ушами поднимается одним куском; лицо нарисовано на голове и
 # едет вместе с ней само.
@@ -483,18 +491,24 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
     block += track(scene.local_id(by_name['torso']), {
         Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
     })
-    vertices = torso_mesh(rig, scene)
-    if not vertices:
-        raise SystemExit('Нет сетки на кофте — сначала команда mesh')
-    half_width = MESH_XS[-1]
-    for local, vx, vy in vertices:
-        weight = MESH_ROW_WEIGHT[vy]
-        out = (vx / half_width) * MESH_SWELL_PX * weight
-        sag = 3.0 * k_row if (k_row := max(0.0, vy / MESH_YS[-1])) else 0.0
-        block += track(local, {
-            24: waves(PEAK['torso'], lambda k, v=vx, o=out: v + o * k),
-            25: waves(PEAK['torso'], lambda k, v=vy, g=sag: v + g * k),
-        })
+    for piece, spec in MESHES.items():
+        vertices = mesh_vertices(rig, scene, piece)
+        if not vertices:
+            raise SystemExit(f'Нет сетки на {piece} — сначала команда mesh')
+        size = image_size(rig, piece)
+        for local, vx, vy in vertices:
+            weight = vertex_profile(piece, vx, vy, size)
+            out = (1 if vx >= 0 else -1) * spec['swell'] * weight
+            sag = spec['sag'] * max(0.0, vy / (size[1] / 2))
+            tracks = {}
+            if abs(out) > 0.3:
+                tracks[24] = waves(PEAK['torso'],
+                                   lambda k, v=vx, o=out: v + o * k)
+            if sag > 0.3:
+                tracks[25] = waves(PEAK['torso'],
+                                   lambda k, v=vy, g=sag: v + g * k)
+            if tracks:
+                block += track(local, tracks)
 
     # Голова с ушами поднимается на вдохе — одним куском, синхронно.
     for name in HEAD_GROUP:
@@ -702,65 +716,96 @@ def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
 
 
 def cmd_mesh(rig: Rig, scene: Scene, path: Path) -> int:
-    """Вешает на кофту сетку деформации 5x4.
+    """Вешает сетки деформации на детали из MESHES.
 
-    Вершины сетки — обычные компоненты, их x/y анимируются кейфреймами так
-    же, как позиции картинок (дракон именно так надувает живот: 68 дорожек
-    двигают вершины). Индексы треугольников в файле — varuint'ы, не uint16:
-    на неверной кодировке рантайм молча получает вырожденные треугольники и
-    кофта исчезает.
+    Индексы треугольников в файле — varuint'ы, не uint16: на неверной
+    кодировке рантайм молча получает вырожденные треугольники и деталь
+    исчезает. Деталь, у которой сетка уже есть, пропускается.
     """
-    if any(rig.types.get(tk) == 'Mesh' for tk, _ in rig.objects):
-        print('Сетка уже есть — пропускаю')
-        return 0
     reverse = {name: key for key, name in rig.types.items()}
-    by_name = {scene.image_name(i): i for i in scene.images}
-    torso_at = by_name['torso']
-    torso_local = scene.local_id(torso_at)
-
-    columns, rows = len(MESH_XS), len(MESH_YS)
-    triangles: list[int] = []
-    for r in range(rows - 1):
-        for c in range(columns - 1):
-            a = r * columns + c
-            triangles += [a, a + 1, a + columns,
-                          a + 1, a + columns + 1, a + columns]
-    index_bytes = b''.join(varuint(i) for i in triangles)
-
-    objs = [(reverse['Mesh'],
-             [(5, 'Uint', torso_local), (223, 'Bytes', index_bytes)])]
-    mesh_local = torso_local + 1
-    width, height = MESH_XS[-1] - MESH_XS[0], MESH_YS[-1] - MESH_YS[0]
-    for y in MESH_YS:
-        for x in MESH_XS:
-            objs.append((reverse['MeshVertex'], [
-                (5, 'Uint', mesh_local),
-                (24, 'Double', x), (25, 'Double', y),
-                (215, 'Double', (x - MESH_XS[0]) / width),
-                (216, 'Double', (y - MESH_YS[0]) / height),
-            ]))
-    rig.objects[torso_at + 1:torso_at + 1] = objs
+    meshed = {get(rig.objects[i][1], 5)
+              for i, (tk, _) in enumerate(rig.objects)
+              if rig.types.get(tk) == 'Mesh'}
+    created = 0
+    for name, spec in MESHES.items():
+        scene = Scene(rig, rig.types)
+        by_name = {scene.image_name(i): i for i in scene.images}
+        image_at = by_name[name]
+        image_local = scene.local_id(image_at)
+        if image_local in meshed:
+            print(f'  {name}: сетка уже есть')
+            continue
+        width, height = image_size(rig, name)
+        columns, rows = spec['grid']
+        xs = [width * (c / (columns - 1) - 0.5) for c in range(columns)]
+        ys = [height * (r / (rows - 1) - 0.5) for r in range(rows)]
+        triangles: list[int] = []
+        for r in range(rows - 1):
+            for c in range(columns - 1):
+                a = r * columns + c
+                triangles += [a, a + 1, a + columns,
+                              a + 1, a + columns + 1, a + columns]
+        objs = [(reverse['Mesh'],
+                 [(5, 'Uint', image_local),
+                  (223, 'Bytes', b''.join(varuint(i) for i in triangles))])]
+        mesh_local = image_local + 1
+        for y in ys:
+            for x in xs:
+                objs.append((reverse['MeshVertex'], [
+                    (5, 'Uint', mesh_local),
+                    (24, 'Double', x), (25, 'Double', y),
+                    (215, 'Double', x / width + 0.5),
+                    (216, 'Double', y / height + 0.5),
+                ]))
+        # Вставка сдвигает локальные номера всех, кто дальше по потоку:
+        # у уже существующих сеток ссылки на родителей обязаны сдвинуться
+        # на столько же, иначе чужая сетка отвязывается от своей картинки
+        # и файл перестаёт импортироваться.
+        insert_local = image_local + 1
+        for type_key, props in rig.objects:
+            if rig.types.get(type_key) in ('Mesh', 'MeshVertex'):
+                parent = get(props, 5)
+                if parent >= insert_local:
+                    put(props, 5, parent + len(objs))
+        rig.objects[image_at + 1:image_at + 1] = objs
+        created += 1
+        print(f'  {name}: сетка {columns}x{rows}, '
+              f'{len(triangles) // 3} треугольников')
     path.write_bytes(rig.dumps())
-    print(f'Сетка на кофте: {columns}x{rows} вершин, '
-          f'{len(triangles) // 3} треугольников. Дорожки анимаций теперь '
-          f'нужно переписать: breathe и giggle следом.')
+    print(f'Сеток добавлено: {created}. Дорожки переписать: breathe, giggle.')
     return 0
 
 
-def torso_mesh(rig: Rig, scene: Scene) -> list[tuple[int, float, float]]:
-    """Вершины сетки кофты: (локальный id, x, y). Пусто, если сетки нет."""
+def mesh_vertices(rig: Rig, scene: Scene,
+                  piece: str) -> list[tuple[int, float, float]]:
+    """Вершины сетки детали: (локальный id, x, y). Пусто, если сетки нет."""
     by_name = {scene.image_name(i): i for i in scene.images}
-    torso_local = scene.local_id(by_name['torso'])
+    image_local = scene.local_id(by_name[piece])
     out = []
     mesh_local = None
     for i, (type_key, props) in enumerate(rig.objects):
         kind = rig.types.get(type_key)
-        if kind == 'Mesh' and get(props, 5) == torso_local:
+        if kind == 'Mesh' and get(props, 5) == image_local:
             mesh_local = scene.local_id(i)
         elif kind == 'MeshVertex' and mesh_local is not None \
                 and get(props, 5) == mesh_local:
             out.append((scene.local_id(i), get(props, 24), get(props, 25)))
     return out
+
+
+def vertex_profile(piece: str, vx: float, vy: float,
+                   size: tuple[int, int]) -> float:
+    """Вес дыхания вершины: колонка (с мёртвой зоной в центре) на ряд."""
+    spec = MESHES[piece]
+    half_width, half_height = size[0] / 2, size[1] / 2
+    column = abs(vx) / half_width
+    dead = spec['centre_dead']
+    column = 0.0 if column <= dead else (column - dead) / (1 - dead)
+    rows = spec['rows']
+    row_pos = (vy / half_height + 1) / 2 * (len(rows) - 1)
+    lo = min(int(row_pos), len(rows) - 2)
+    row = rows[lo] + (rows[lo + 1] - rows[lo]) * (row_pos - lo)
+    return column * row
 
 
 def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
@@ -864,6 +909,29 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
             tracks[Y] = [(f, v + mouth_h * (pulse[f] - 1) / 2)
                          for f, v in ys]
         block += track(scene.local_id(index), tracks)
+
+    # Желе: при подскоках ряды сетки отстают от тела, нижние сильнее —
+    # ткань дрожит и доигрывает после остановки. Голову не трогаем: на ней
+    # лежит накладка рта, и желе развело бы их.
+    def squash_at(frame: float) -> float:
+        for (f0, s0, *_), (f1, s1, *_) in zip(SCORE, SCORE[1:]):
+            if f0 <= frame <= f1:
+                return s0 if f1 == f0 else \
+                    s0 + (s1 - s0) * (frame - f0) / (f1 - f0)
+        return 1.0
+
+    for piece in ('torso', 'legs'):
+        size = image_size(rig, piece)
+        for local, vx, vy in mesh_vertices(rig, scene, piece):
+            depth = (vy / (size[1] / 2) + 1) / 2   # 0 — верх, 1 — низ
+            if depth < 0.2:
+                continue
+            lag = JELLY_LAG * (1 + 2 * depth)
+            keys = [(frame,
+                     vy + (squash_at(max(0.0, frame - lag)) - squash)
+                     * JELLY_AMP * depth)
+                    for frame, squash, _, _ in SCORE]
+            block += track(local, {25: keys})
 
     # --- анимация в файл: заменить существующую или вставить перед SM.
     anim_type = reverse['LinearAnimation']
