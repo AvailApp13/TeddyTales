@@ -1,0 +1,85 @@
+name: teddy_tales
+description: "TeddyTales — анимированный персонаж-медведь (Rive + Flutter)."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # Генерация AppLocalizations из ARB (`flutter gen-l10n`).
+  intl: any
+
+  # Источник времени для decay-таймера. Нужен именно он, а не DateTime.now():
+  # fakeAsync подменяет `clock`, и таймер можно прокручивать в тестах.
+  clock: ^1.1.2
+
+  # Официальный рантайм rive-app/rive-flutter (НЕ rive-flutter-legacy).
+  # Версии >= 0.14 тянут за собой rive_native — нативные библиотеки
+  # скачиваются автоматически на `flutter run` / `flutter build`.
+  rive: ^0.14.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # Нужен, чтобы гонять decay-таймер без ожидания реального времени.
+  # Начиная с 1.3.0 подменяет и Stopwatch, а не только Timer.
+  fake_async: ^1.3.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/rive/
+    - assets/images/
+
+  fonts:
+    # Семейство обязано называться буквально «Roboto».
+    #
+    # Веб-движок Flutter сверяет имена семейств в FontManifest.json со строкой
+    # 'Roboto' (lib/web_ui/.../canvaskit/fonts.dart) и, не найдя её, безусловно
+    # качает woff2 с fonts.gstatic.com — независимо от того, какой fontFamily
+    # стоит в теме. Без сети шрифт не приходит, и приложение рисуется вообще
+    # без текста: экран есть, букв нет.
+    #
+    # Файлы взяты из кэша самого Flutter — это тот же дизайн, который движок и
+    # собирался скачать, поэтому метрики и вёрстка не меняются. Лицензия
+    # Apache 2.0 лежит рядом, её нужно сохранять при распространении.
+    #
+    # Кириллицу покрывают полностью, китайского в них нет — для локали zh
+    # (КП 16.1) нужен отдельный CJK-шрифт, см. docs/fonts.md.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Roboto-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+
+    # Эмодзи. В Roboto их нет вообще, а веб-движок за недостающими глифами
+    # ходит на fonts.gstatic.com — без сети вместо иконок получаются квадраты.
+    #
+    # Это сабсет Noto Color Emoji ровно под те 108 символов, что встречаются
+    # в коде: 206 КБ вместо 10,7 МБ полного шрифта. Пересобрать после добавления
+    # новых эмодзи: tool/subset_emoji.py.
+    #
+    # ЗАГЛУШКА: эмодзи стоят на месте иллюстраций предметов. По КП 10.4 состав
+    # утверждается Заказчиком до отрисовки — когда придут картинки, шрифт
+    # останется нужен только для реплик.
+    # Иероглифы для локали zh: сабсет под реально используемые символы,
+    # пересборка — tool/subset_cjk.py. Полный CJK-шрифт весил бы десятки МБ.
+    - family: CJK
+      fonts:
+        - asset: assets/fonts/CJK-Subset.ttf
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji-Subset.ttf
