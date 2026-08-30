@@ -66,7 +66,11 @@ EAR_SWING = 0.095           # качание ушей, радианы (окол�
 PAW_SWING = 0.09            # мах лапами от плеча, радианы (около 5°)
 PAW_DRIFT = 6.0             # лапы расходятся в стороны вместе с кофтой
 PAW_LIFT = 4.0              # и приподнимаются вместе с грудью
-MOUTH_SWELL = (1.03, 1.05)  # улыбка тянется на вдохе: чуть вширь, больше ввысь
+MOUTH_SWELL = (1.05, 1.11)  # улыбка тянется на вдохе: чуть вширь, больше ввысь
+
+# Анимация смеха по тапу (trg_pet): два подскока всем телом, кофта пружинит,
+# лапы взлетают, уши хлопают, улыбка распахивается. Длительность в кадрах.
+GIGGLE_DURATION = 78
 
 # Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
 # дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
@@ -83,7 +87,7 @@ IDLE_DURATION = 2 * BREATH_CYCLE
 
 # Голова с ушами поднимается одним куском; лицо нарисовано на голове и
 # едет вместе с ней само.
-HEAD_GROUP = ['head', 'ear_left', 'ear_right', 'mouth']
+HEAD_GROUP = ['head', 'ear_left', 'ear_right']
 
 X, Y, SCALE_X, SCALE_Y, ROTATION, OPACITY = 13, 14, 16, 17, 15, 18
 
@@ -484,14 +488,21 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
         })
 
     # Улыбка дышит: накладка рта лежит на собственных пикселях головы,
-    # поэтому лёгкое растяжение читается как движение рта, а не как шов.
+    # поэтому растяжение читается как движение рта, а не как шов. Якорь —
+    # верхняя губа: при растяжении центр съезжает вниз на половину прироста,
+    # и открывается «челюсть», а не вся улыбка враспор. Y пишем здесь же:
+    # это подъём головы плюс ход челюсти, одной дорожкой.
     mouth = rig.objects[by_name['mouth']][1]
     mouth_sx, mouth_sy = get(mouth, SCALE_X), get(mouth, SCALE_Y)
+    mouth_y = get(mouth, Y)
+    jaw = image_size(rig, 'mouth')[1] * mouth_sy * (MOUTH_SWELL[1] - 1) / 2
     block += track(scene.local_id(by_name['mouth']), {
         SCALE_X: waves(PEAK['mouth'],
                        lambda k: mouth_sx * (1 + (MOUTH_SWELL[0] - 1) * k)),
         SCALE_Y: waves(PEAK['mouth'],
                        lambda k: mouth_sy * (1 + (MOUTH_SWELL[1] - 1) * k)),
+        Y: waves(PEAK['mouth'],
+                 lambda k: mouth_y - BREATH_LIFT * k + jaw * k),
     })
 
     # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
@@ -673,8 +684,188 @@ def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
+    """Смех по тапу: анимация giggle и вход trg_pet в стейт-машине.
+
+    Приложение уже стреляет trg_pet при поглаживании (BearController.petBear),
+    в риге до сих пор не было ни входа, ни анимации. Смех собран из того, что
+    умеют восемь кусков без костей: два подскока всем телом, кофта пружинит
+    противоходом (сквош-стретч), лапы взлетают дугой от плеча, уши хлопают,
+    улыбка распахивается. В стейт-машину дописывается вход-триггер, состояние
+    giggle в слое body и пара переходов: idle -> giggle по триггеру,
+    giggle -> idle по концу анимации.
+    """
+    import numpy as np  # noqa: PLC0415
+
+    reverse = {name: key for key, name in rig.types.items()}
+    keyed_object = reverse['KeyedObject']
+    keyed_property = reverse['KeyedProperty']
+    keyframe = reverse['KeyFrameDouble']
+    interpolator = next(
+        scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
+        if rig.types.get(type_key) == 'CubicEaseInterpolator'
+    )
+    by_name = {scene.image_name(i): i for i in scene.images}
+
+    def track(local, tracks):
+        out = [(keyed_object, [(Scene.OBJECT_ID, 'Uint', local)])]
+        for property_key, frames in tracks.items():
+            out.append((keyed_property, [(53, 'Uint', property_key)]))
+            for frame, value in frames:
+                props = []
+                if frame:
+                    props.append((67, 'Uint', int(frame)))
+                props += [(68, 'Uint', 2),
+                          (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
+                          (70, 'Double', float(value))]
+                out.append((keyframe, props))
+        return out
+
+    # Два подскока: высокий и потише. Земля — на нулях, ступни отрываются.
+    HOP = [(0, 0.0), (10, -26.0), (22, 0.0), (32, -14.0), (42, 0.0),
+           (GIGGLE_DURATION, 0.0)]
+
+    def hopped(base, extra=None):
+        keys = [(f, base + off) for f, off in HOP]
+        if extra:
+            merged = dict(keys)
+            for f, off in extra:
+                near = min(merged, key=lambda x: abs(x - f))
+                merged[f] = (merged.get(f, base + dict(HOP).get(f, 0.0))
+                             if f in merged else base) + off
+            keys = sorted(merged.items())
+        return keys
+
+    block: list = []
+
+    # Кофта пружинит противоходом: сжалась перед прыжком, вытянулась в полёте.
+    torso = rig.objects[by_name['torso']][1]
+    sx, sy, ty = get(torso, SCALE_X), get(torso, SCALE_Y), get(torso, Y)
+    squash = [(0, 1.0), (6, 0.95), (12, 1.06), (22, 0.97), (32, 1.04),
+              (42, 0.98), (54, 1.0), (GIGGLE_DURATION, 1.0)]
+    block += track(scene.local_id(by_name['torso']), {
+        SCALE_Y: [(f, sy * k) for f, k in squash],
+        SCALE_X: [(f, sx * (2.0 - k)) for f, k in squash],
+        Y: hopped(ty),
+    })
+
+    # Голова и уши прыгают вместе; уши вдобавок хлопают.
+    for name in ('head', 'ear_left', 'ear_right'):
+        base = get(rig.objects[by_name[name]][1], Y)
+        tracks = {Y: hopped(base)}
+        if name != 'head':
+            sign = 1 if name == 'ear_left' else -1
+            tracks[ROTATION] = [(0, 0.0), (8, sign * 0.22), (18, -sign * 0.16),
+                                (28, sign * 0.18), (40, -sign * 0.1),
+                                (52, 0.0), (GIGGLE_DURATION, 0.0)]
+        block += track(scene.local_id(by_name[name]), tracks)
+
+    # Улыбка распахивается дважды — в такт подскокам, якорь на верхней губе.
+    mouth = rig.objects[by_name['mouth']][1]
+    msx, msy, my = get(mouth, SCALE_X), get(mouth, SCALE_Y), get(mouth, Y)
+    mouth_h = image_size(rig, 'mouth')[1] * msy
+    pulse = [(0, 1.0), (10, 1.2), (22, 1.06), (32, 1.16), (46, 1.0),
+             (GIGGLE_DURATION, 1.0)]
+    block += track(scene.local_id(by_name['mouth']), {
+        SCALE_Y: [(f, msy * k) for f, k in pulse],
+        SCALE_X: [(f, msx * (1 + (k - 1) * 0.5)) for f, k in pulse],
+        Y: [(f, my + dict(HOP).get(f, _hop_at(f)) + mouth_h * (k - 1) / 2)
+            for f, k in pulse],
+    })
+
+    # Лапы взлетают дугой от плеча — и прыгают со всеми.
+    for name, sign in (('paw_left', 1), ('paw_right', -1)):
+        props = rig.objects[by_name[name]][1]
+        centre = np.array([get(props, X), get(props, Y)])
+        half = image_size(rig, name)[1] * get(props, SCALE_Y) / 2
+        shoulder = np.array([centre[0], centre[1] - half])
+        lift = [(0, 0.0), (8, 0.45), (18, 0.2), (30, 0.5), (44, 0.15),
+                (56, 0.0), (GIGGLE_DURATION, 0.0)]
+        rot, xs, ys = [], [], []
+        for f, k in lift:
+            angle = sign * 0.32 * k
+            turn = np.array([[np.cos(angle), -np.sin(angle)],
+                             [np.sin(angle), np.cos(angle)]])
+            px, py = shoulder + turn @ (centre - shoulder)
+            rot.append((f, angle))
+            xs.append((f, px - sign * 6.0 * k))
+            ys.append((f, py - 10.0 * k + _hop_at(f)))
+        block += track(scene.local_id(by_name[name]),
+                       {ROTATION: rot, X: xs, Y: ys})
+
+    # Ноги прыгают тоже — мишка отрывается от пола целиком.
+    legs = rig.objects[by_name['legs']][1]
+    block += track(scene.local_id(by_name['legs']), {Y: hopped(get(legs, Y))})
+
+    # --- анимация в файл: заменить существующую или вставить перед SM.
+    anim_type = reverse['LinearAnimation']
+    sm_at = next(i for i, (tk, _) in enumerate(rig.objects)
+                 if rig.types.get(tk) == 'StateMachine')
+    existing = [i for i, (tk, props) in enumerate(rig.objects)
+                if rig.types.get(tk) == 'LinearAnimation'
+                and get(props, 55) == b'giggle']
+    if existing:
+        start = existing[0]
+        end = next(i for i in range(start + 1, len(rig.objects))
+                   if rig.types.get(rig.objects[i][0])
+                   in ('LinearAnimation', 'StateMachine'))
+        rig.objects[start:end] = [rig.objects[start]] + block
+        put(rig.objects[start][1], 57, GIGGLE_DURATION)
+        print('  анимация giggle заменена')
+    else:
+        head = (anim_type, [(55, 'String', b'giggle'),
+                            (57, 'Uint', GIGGLE_DURATION)])
+        rig.objects[sm_at:sm_at] = [head] + block
+        print('  анимация giggle добавлена (номер 3)')
+
+    # --- стейт-машина: вход и состояние, если их ещё нет.
+    if any(rig.types.get(tk) == 'StateMachineTrigger'
+           for tk, _ in rig.objects):
+        path.write_bytes(rig.dumps())
+        print('Вход trg_pet уже есть — стейт-машина не тронута')
+        return 0
+
+    sm_at = next(i for i, (tk, _) in enumerate(rig.objects)
+                 if rig.types.get(tk) == 'StateMachine')
+    rig.objects[sm_at + 1:sm_at + 1] = [
+        (reverse['StateMachineTrigger'], [(138, 'String', b'trg_pet')]),
+    ]
+    # Слой body: состояние giggle после idle, переходы туда и обратно.
+    idle_state = next(
+        i for i in range(sm_at, len(rig.objects))
+        if rig.types.get(rig.objects[i][0]) == 'AnimationState'
+        and get(rig.objects[i][1], 149) == 2)
+    insert = idle_state + 1
+    rig.objects[insert:insert] = [
+        # idle -> giggle по триггеру, короткий подхват.
+        (reverse['StateTransition'], [(151, 'Uint', 4), (158, 'Uint', 120)]),
+        (reverse['TransitionTriggerCondition'], [(155, 'Uint', 0)]),
+        # Само состояние смеха.
+        (reverse['AnimationState'], [(149, 'Uint', 3)]),
+        # giggle -> idle к концу анимации, с плавным сведением.
+        (reverse['StateTransition'], [(151, 'Uint', 3), (152, 'Uint', 4),
+                                      (158, 'Uint', 250),
+                                      (160, 'Uint', 1100)]),
+    ]
+    path.write_bytes(rig.dumps())
+    print('Смех подключён: вход trg_pet, состояние giggle, переходы записаны')
+    return 0
+
+
+def _hop_at(frame: int) -> float:
+    """Высота подскока на кадре — линейная интерполяция по узлам HOP."""
+    hop = [(0, 0.0), (10, -26.0), (22, 0.0), (32, -14.0), (42, 0.0),
+           (GIGGLE_DURATION, 0.0)]
+    for (f0, v0), (f1, v1) in zip(hop, hop[1:]):
+        if f0 <= frame <= f1:
+            if f1 == f0:
+                return v0
+            return v0 + (v1 - v0) * (frame - f0) / (f1 - f0)
+    return 0.0
+
+
 def main() -> int:
-    commands = ('inspect', 'fix', 'clean', 'place', 'breathe', 'blink')
+    commands = ('inspect', 'fix', 'clean', 'place', 'breathe', 'blink', 'giggle')
     if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
@@ -687,7 +878,7 @@ def main() -> int:
         raise SystemExit('Round-trip не сошёлся: не рискую писать файл')
     scene = Scene(rig, types)
 
-    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink,
+    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink, 'giggle': cmd_giggle,
               'fix': cmd_fix}[command]
     if command == 'inspect':
         return runner(rig, scene)

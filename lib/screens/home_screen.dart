@@ -272,7 +272,16 @@ class _RoomScene extends StatelessWidget {
           // и не уменьшать. Размерный ряд для дизайнера показывает
           // docs/interior-size-guide.png, а не главный экран.
           Positioned.fill(
-            child: BearView(controller: controller, assetPath: riveAssetPath),
+            // Тап по мишке — погладить: контроллер стреляет trg_pet, риг
+            // проигрывает смех с подскоком (КП 7.6: смех по касанию).
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: controller.petBear,
+              child: BearView(
+                controller: controller,
+                assetPath: riveAssetPath,
+              ),
+            ),
           ),
           Positioned(
             top: 12,

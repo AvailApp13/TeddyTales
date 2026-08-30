@@ -89,7 +89,9 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble> {
               ? null
               : () => widget.onTap!(initiative.action),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            // Компактный: живёт в верхнем углу рядом с капюшоном, крупный
+            // текст в две строки дотягивался до макушки героя.
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppDimens.radiusPill),
@@ -98,12 +100,12 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.favorite, size: 16, color: AppColors.heart),
-                const SizedBox(width: 8),
+                const Icon(Icons.favorite, size: 13, color: AppColors.heart),
+                const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     phrase.text(widget.language),
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
               ],
