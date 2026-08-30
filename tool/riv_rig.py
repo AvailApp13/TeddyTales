@@ -57,6 +57,25 @@ DRAW_ORDER = [
 # деталей их уже нет — из рига и из файла ассетов они тоже уходят.
 DROP = {'arm_root_left', 'arm_root_right'}
 
+# Дыхание. Сдача рига качала корпус на 1.5% — на экране это пара пикселей,
+# зрителю кажется, что мишка застыл. Размах считаем от экрана, а не от
+# артборда: артборд 1080 в ширину показывается примерно в 330 точках, то есть
+# один пиксель на экране — это три с лишним в файле.
+BREATH_FRAMES = (90, 180)   # вдох на середине цикла, 3 секунды на круг
+BREATH_SWELL = 1.04         # насколько раздувается кофта на вдохе
+BREATH_LIFT = 18.0          # на сколько поднимается голова, пикселей артборда
+EAR_SWING = 0.0654          # качание ушей, радианы (около 3.7°)
+
+# Голова и всё, что на ней нарисовано, поднимается одним куском. Части лица
+# лежат в артборде рядом с головой, а не внутри неё, поэтому двигать их надо
+# синхронно — иначе на вдохе глаза и нос съедут с морды.
+HEAD_GROUP = [
+    'head', 'ear_left', 'ear_right', 'eye_left', 'eye_right', 'nose',
+    'mouth_stitch', 'mouth_open_v2', 'eyelid_left_v2', 'eyelid_right_v2',
+]
+
+X, Y, SCALE_X, SCALE_Y, ROTATION = 13, 14, 16, 17, 15
+
 
 class Rig:
     """Разобранный `.riv`: заголовок и поток объектов со значениями свойств."""
@@ -270,8 +289,74 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
+    """Переписывает дорожки анимации idle с заметным на глаз размахом."""
+    reverse = {name: key for key, name in rig.types.items()}
+    keyed_object = reverse['KeyedObject']
+    keyed_property = reverse['KeyedProperty']
+    keyframe = reverse['KeyFrameDouble']
+
+    interpolator = next(
+        scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
+        if rig.types.get(type_key) == 'CubicEaseInterpolator'
+    )
+    by_name = {scene.image_name(i): i for i in scene.images}
+    half, full = BREATH_FRAMES
+
+    def track(local: int, tracks: dict[int, list[tuple[int, float]]]) -> list:
+        """Одна дорожка: объект, его свойства и ключи по кадрам."""
+        out = [(keyed_object, [(Scene.OBJECT_ID, 'Uint', local)])]
+        for property_key, frames in tracks.items():
+            out.append((keyed_property, [(53, 'Uint', property_key)]))
+            for frame, value in frames:
+                props = []
+                if frame:
+                    props.append((67, 'Uint', frame))
+                props += [(68, 'Uint', 2),
+                          (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
+                          (70, 'Double', value)]
+                out.append((keyframe, props))
+        return out
+
+    block: list = []
+
+    # Кофта дышит: раздувается от собственного центра и опадает обратно.
+    torso = rig.objects[by_name['torso']][1]
+    for axis in (SCALE_X, SCALE_Y):
+        base = get(torso, axis)
+        block += track(scene.local_id(by_name['torso']), {
+            axis: [(0, base), (half, base * BREATH_SWELL), (full, base)],
+        })
+
+    # Голова с лицом поднимается на вдохе — одним куском, синхронно.
+    for name in HEAD_GROUP:
+        base = get(rig.objects[by_name[name]][1], Y)
+        block += track(scene.local_id(by_name[name]), {
+            Y: [(0, base), (half, base - BREATH_LIFT), (full, base)],
+        })
+
+    # Уши качаются в противофазе — от этого движение читается как живое.
+    for name, sign in (('ear_left', 1), ('ear_right', -1)):
+        block += track(scene.local_id(by_name[name]), {
+            ROTATION: [(0, 0.0), (half, sign * EAR_SWING), (full, 0.0)],
+        })
+
+    start = next(i for i, (type_key, props) in enumerate(rig.objects)
+                 if rig.types.get(type_key) == 'LinearAnimation'
+                 and get(props, 55) == b'idle')
+    end = next(i for i in range(start + 1, len(rig.objects))
+               if rig.types.get(rig.objects[i][0])
+               in ('LinearAnimation', 'StateMachine'))
+    rig.objects = rig.objects[:start + 1] + block + rig.objects[end:]
+
+    path.write_bytes(rig.dumps())
+    print(f'Дыхание переписано: кофта +{(BREATH_SWELL - 1) * 100:.0f}%, '
+          f'голова на {BREATH_LIFT:.0f} px, дорожек {len(HEAD_GROUP) + 4}')
+    return 0
+
+
 def main() -> int:
-    if len(sys.argv) != 3 or sys.argv[1] not in ('inspect', 'fix'):
+    if len(sys.argv) != 3 or sys.argv[1] not in ('inspect', 'fix', 'breathe'):
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
     fields, types = load_registry(find_runtime(None))
@@ -285,6 +370,8 @@ def main() -> int:
 
     if command == 'inspect':
         return cmd_inspect(rig, scene)
+    if command == 'breathe':
+        return cmd_breathe(rig, scene, path)
     return cmd_fix(rig, scene, path)
 
 
