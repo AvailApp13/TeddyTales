@@ -61,17 +61,37 @@ DROP = {'arm_root_left', 'arm_root_right'}
 # зрителю кажется, что мишка застыл. Размах считаем от экрана, а не от
 # артборда: артборд 1080 в ширину показывается примерно в 330 точках, то есть
 # один пиксель на экране — это три с лишним в файле.
-BREATH_CYCLE = 180          # три секунды на круг
+BREATH_CYCLE = 180          # один вдох-выдох, три секунды
 BREATH_SWELL = 1.04         # насколько раздувается кофта на вдохе
 BREATH_LIFT = 18.0          # на сколько поднимается голова, пикселей артборда
+TORSO_RISE = 6.0            # грудь приподнимается, а не только пухнет
+MUZZLE_EXTRA = 3.0          # нос и рот тянутся чуть дальше головы — «принюх»
 EAR_SWING = 0.0654          # качание ушей, радианы (около 3.7°)
-PAW_SWING = 0.0436          # мах лапами от плеча, радианы (около 2.5°)
+PAW_SWING = 0.09            # мах лапами от плеча, радианы (около 5°)
+PAW_DRIFT = 6.0             # лапы расходятся в стороны вместе с кофтой
+PAW_LIFT = 4.0              # и приподнимаются вместе с грудью
 
 # Вершина вдоха у каждой части своя. Во-первых, вдох короче выдоха — живое
 # дыхание несимметрично. Во-вторых, части трогаются не разом: сначала грудь,
 # следом голова, лапы и уши догоняют. Синхронное движение читается как
 # механика, запаздывание — как живое.
-PEAK = {'torso': 70, 'head': 82, 'paw': 88, 'ear': 95}
+PEAK = {'torso': 70, 'head': 82, 'muzzle': 86, 'paw': 88, 'ear': 95}
+
+# Полный idle — два вдоха подряд, и они нарочно разные: второй мельче и с
+# поздней вершиной. Подсмотрено у демо-дракона: там циклы разной длины
+# наложены друг на друга, и повторяемость не читается. Одинаковые вдохи по
+# метроному глаз ловит за пару циклов.
+BREATH_CYCLES = ((0, 1.0, 0), (BREATH_CYCLE, 0.85, 6))
+IDLE_DURATION = 2 * BREATH_CYCLE
+
+# Моргание — тоже узор, а не метроном: одиночное, пауза, двойное. У дракона
+# blink живёт в цикле на 600 кадров с неровными интервалами — потому и не
+# выглядит заведённым. Смыкание почти мгновенное (2 кадра): кросс-фейд с
+# полупрозрачным веком читался как призрак, настоящее веко так не умеет.
+BLINK_DURATION = 240        # четыре секунды на узор
+BLINK_PATTERN = [(0, 0.0), (2, 1.0), (10, 1.0), (16, 0.0),
+                 (150, 0.0), (152, 1.0), (157, 1.0), (161, 0.0),
+                 (165, 0.0), (167, 1.0), (173, 1.0), (180, 0.0)]
 
 # Голова и всё, что на ней нарисовано, поднимается одним куском. Части лица
 # лежат в артборде рядом с головой, а не внутри неё, поэтому двигать их надо
@@ -81,7 +101,7 @@ HEAD_GROUP = [
     'mouth_stitch', 'mouth_open_v2', 'eyelid_left_v2', 'eyelid_right_v2',
 ]
 
-X, Y, SCALE_X, SCALE_Y, ROTATION = 13, 14, 16, 17, 15
+X, Y, SCALE_X, SCALE_Y, ROTATION, OPACITY = 13, 14, 16, 17, 15, 18
 
 # Качество перепаковки деталей. Редактор кладёт их в WEBP примерно на этом же
 # уровне: выше — файл пухнет вдвое, ниже — на мехе проступает муар.
@@ -466,54 +486,77 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
                 out.append((keyframe, props))
         return out
 
+    def waves(peak: int, value_at) -> list[tuple[int, float]]:
+        """Ключи двух вдохов: покой, вершина первого, покой, вершина второго."""
+        keys = [(0, float(value_at(0.0)))]
+        for start, amp, shift in BREATH_CYCLES:
+            keys.append((start + peak + shift, float(value_at(amp))))
+            keys.append((start + BREATH_CYCLE, float(value_at(0.0))))
+        return keys
+
     block: list = []
 
-    # Кофта дышит: раздувается от собственного центра и опадает обратно.
+    # Кофта дышит и приподнимается: только раздувание читалось как «двигается
+    # одежда», подъём груди тянет весь силуэт.
     torso = rig.objects[by_name['torso']][1]
-    peak = PEAK['torso']
-    for axis in (SCALE_X, SCALE_Y):
-        base = get(torso, axis)
-        block += track(scene.local_id(by_name['torso']), {
-            axis: [(0, base), (peak, base * BREATH_SWELL), (full, base)],
-        })
+    scale_x, scale_y, torso_y = (get(torso, SCALE_X), get(torso, SCALE_Y),
+                                 get(torso, Y))
+    block += track(scene.local_id(by_name['torso']), {
+        SCALE_X: waves(PEAK['torso'],
+                       lambda k: scale_x * (1 + (BREATH_SWELL - 1) * k)),
+        SCALE_Y: waves(PEAK['torso'],
+                       lambda k: scale_y * (1 + (BREATH_SWELL - 1) * k)),
+        Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
+    })
 
-    # Голова с лицом поднимается на вдохе — одним куском, синхронно.
-    peak = PEAK['head']
+    # Голова с лицом поднимается на вдохе — одним куском, синхронно. Нос и
+    # рот тянутся на пару пикселей дальше и чуть позже — мордочка «принюхивается».
+    muzzle = {'nose', 'mouth_stitch', 'mouth_open_v2'}
     for name in HEAD_GROUP:
         base = get(rig.objects[by_name[name]][1], Y)
+        lift = BREATH_LIFT + (MUZZLE_EXTRA if name in muzzle else 0.0)
+        peak = PEAK['muzzle'] if name in muzzle else PEAK['head']
         block += track(scene.local_id(by_name[name]), {
-            Y: [(0, base), (peak, base - BREATH_LIFT), (full, base)],
+            Y: waves(peak, lambda k, b=base, l=lift: b - l * k),
         })
 
     # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
     # собираем руками: центр картинки едет по дуге вокруг плеча, а сама она
     # доворачивается на тот же угол. Плечо — середина верхнего края лапы.
-    peak = PEAK['paw']
+    # Вдобавок лапы расходятся вслед за кофтой и приподнимаются с грудью.
     for name, sign in (('paw_left', -1), ('paw_right', 1)):
         props = rig.objects[by_name[name]][1]
         centre = np.array([get(props, X), get(props, Y)])
         half_height = image_size(rig, name)[1] * get(props, SCALE_Y) / 2
         shoulder = np.array([centre[0], centre[1] - half_height])
-        angle = sign * PAW_SWING
-        turn = np.array([[np.cos(angle), -np.sin(angle)],
-                         [np.sin(angle), np.cos(angle)]])
-        swung = shoulder + turn @ (centre - shoulder)
+
+        def pose(k, sign=sign, centre=centre, shoulder=shoulder):
+            # Знак поворота противоположен сдвигу: ось y смотрит вниз, и
+            # положительный угол в Rive крутит по часовой. С одинаковыми
+            # знаками дуга от поворота и разъезд лап гасят друг друга —
+            # лапа стоит на месте, что и было видно на экране.
+            angle = -sign * PAW_SWING * k
+            turn = np.array([[np.cos(angle), -np.sin(angle)],
+                             [np.sin(angle), np.cos(angle)]])
+            x, y = shoulder + turn @ (centre - shoulder)
+            return angle, x + sign * PAW_DRIFT * k, y - PAW_LIFT * k
+
         block += track(scene.local_id(by_name[name]), {
-            ROTATION: [(0, 0.0), (peak, angle), (full, 0.0)],
-            X: [(0, centre[0]), (peak, swung[0]), (full, centre[0])],
-            Y: [(0, centre[1]), (peak, swung[1]), (full, centre[1])],
+            ROTATION: waves(PEAK['paw'], lambda k: pose(k)[0]),
+            X: waves(PEAK['paw'], lambda k: pose(k)[1]),
+            Y: waves(PEAK['paw'], lambda k: pose(k)[2]),
         })
 
     # Уши качаются в противофазе — от этого движение читается как живое.
-    peak = PEAK['ear']
     for name, sign in (('ear_left', 1), ('ear_right', -1)):
         block += track(scene.local_id(by_name[name]), {
-            ROTATION: [(0, 0.0), (peak, sign * EAR_SWING), (full, 0.0)],
+            ROTATION: waves(PEAK['ear'], lambda k, s=sign: s * EAR_SWING * k),
         })
 
     start = next(i for i, (type_key, props) in enumerate(rig.objects)
                  if rig.types.get(type_key) == 'LinearAnimation'
                  and get(props, 55) == b'idle')
+    put(rig.objects[start][1], 57, IDLE_DURATION)
     end = next(i for i in range(start + 1, len(rig.objects))
                if rig.types.get(rig.objects[i][0])
                in ('LinearAnimation', 'StateMachine'))
@@ -528,8 +571,67 @@ def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_blink(rig: Rig, scene: Scene, path: Path) -> int:
+    """Переписывает моргание: мгновенное смыкание и неровный узор.
+
+    Старый blink растворял веко прозрачностью пять кадров — пока оно
+    полупрозрачное, под ним просвечивает глаз, и кадр читается как призрак.
+    Настоящее веко смыкается почти мгновенно: два кадра вниз, подержать,
+    отпустить. И моргаем не по метроному: одиночное, пауза, двойное —
+    у демо-дракона моргание живёт в длинном цикле с неровными интервалами,
+    поэтому не выглядит заведённым.
+    """
+    reverse = {name: key for key, name in rig.types.items()}
+    keyed_object = reverse['KeyedObject']
+    keyed_property = reverse['KeyedProperty']
+    keyframe = reverse['KeyFrameDouble']
+    interpolator = next(
+        scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
+        if rig.types.get(type_key) == 'CubicEaseInterpolator'
+    )
+    by_name = {scene.image_name(i): i for i in scene.images}
+
+    block: list = []
+    for lid in ('eyelid_left_v2', 'eyelid_right_v2'):
+        block.append((keyed_object,
+                      [(Scene.OBJECT_ID, 'Uint',
+                        scene.local_id(by_name[lid]))]))
+        block.append((keyed_property, [(53, 'Uint', OPACITY)]))
+        for frame, value in BLINK_PATTERN:
+            props = []
+            if frame:
+                props.append((67, 'Uint', frame))
+            props += [(68, 'Uint', 2),
+                      (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
+                      (70, 'Double', value)]
+            block.append((keyframe, props))
+
+    start = next(i for i, (type_key, props) in enumerate(rig.objects)
+                 if rig.types.get(type_key) == 'LinearAnimation'
+                 and get(props, 55) == b'blink')
+    put(rig.objects[start][1], 57, BLINK_DURATION)
+    end = next(i for i in range(start + 1, len(rig.objects))
+               if rig.types.get(rig.objects[i][0])
+               in ('LinearAnimation', 'StateMachine'))
+    rig.objects = rig.objects[:start + 1] + block + rig.objects[end:]
+
+    # Выход из состояния blink в стейт-машине — по концу нового узора.
+    # Время выхода в миллисекундах: старые 18 кадров при 60 fps дали 300.
+    exit_ms = BLINK_DURATION * 1000 // 60
+    for type_key, props in rig.objects:
+        if (rig.types.get(type_key) == 'StateTransition'
+                and get(props, 160) == 300):
+            put(props, 160, exit_ms)
+            print(f'  выход из blink: 300 мс -> {exit_ms} мс')
+
+    path.write_bytes(rig.dumps())
+    print(f'Моргание: узор {len(BLINK_PATTERN)} ключей на веко, '
+          f'{BLINK_DURATION} кадров, смыкание за 2 кадра')
+    return 0
+
+
 def main() -> int:
-    commands = ('inspect', 'fix', 'clean', 'eyes', 'breathe')
+    commands = ('inspect', 'fix', 'clean', 'eyes', 'breathe', 'blink')
     if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
@@ -543,7 +645,8 @@ def main() -> int:
     scene = Scene(rig, types)
 
     runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'eyes': cmd_eyes,
-              'breathe': cmd_breathe, 'fix': cmd_fix}[command]
+              'breathe': cmd_breathe, 'blink': cmd_blink,
+              'fix': cmd_fix}[command]
     if command == 'inspect':
         return runner(rig, scene)
     return runner(rig, scene, path)
