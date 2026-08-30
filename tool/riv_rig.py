@@ -38,6 +38,9 @@ TOC_FIELDS = {0: 'Uint', 1: 'String', 2: 'Double', 3: 'Color'}
 # заказчика, отдельные глаза/веки/рты не нужны — и швов на лице нет).
 # Уши за головой, лапы поверх кофты, кофта поверх ног.
 DRAW_ORDER = [
+    'hearts',
+    'eye_left',
+    'eye_right',
     'mouth',
     'head',
     'ear_left',
@@ -50,8 +53,10 @@ DRAW_ORDER = [
 
 # Что выкидываем из файла вместе с картинками: куски первой волны от
 # нейросети и весь набор отдельных черт лица из v3 — в v4 лицо цельное.
+# ВНИМАНИЕ: новые накладки глаз зовутся eye_left/eye_right, как старые
+# отдельные глаза v3, — старых имён в этом списке быть не должно.
 DROP = {'arm_root_left', 'arm_root_right',
-        'eye_left', 'eye_right', 'eyelid_left_v2', 'eyelid_right_v2',
+        'eyelid_left_v2', 'eyelid_right_v2',
         'nose', 'mouth_stitch', 'mouth_open_v2'}
 
 # Дыхание. Сдача рига качала корпус на 1.5% — на экране это пара пикселей,
@@ -101,6 +106,18 @@ IDLE_DURATION = 2 * BREATH_CYCLE
 
 # Смех по тапу: медленное пружинистое хихиканье с затуханием, 2.5 секунды.
 GIGGLE_DURATION = 150
+
+# Три состояния покоя (ТЗ 7.1), вход mood: 0 normal, 1 happy, 2 sad.
+# Отличия читаются позой и темпом: happy — бодрый цикл, приподнятые уши,
+# улыбка шире; sad — медленный цикл, опущенные голова и уши, взгляд вниз.
+MOODS = {
+    'idle': {'cycle': 180, 'amp': 1.0, 'ear': 0.0, 'head_dy': 0.0,
+             'mouth': 1.0, 'eye': (0.0, 0.0), 'glance': True},
+    'idle_happy': {'cycle': 132, 'amp': 1.15, 'ear': 0.09, 'head_dy': -6.0,
+                   'mouth': 1.07, 'eye': (0.0, -1.5), 'glance': False},
+    'idle_sad': {'cycle': 230, 'amp': 0.7, 'ear': -0.17, 'head_dy': 16.0,
+                 'mouth': 0.96, 'eye': (0.0, 4.0), 'glance': False},
+}
 
 # Голова с ушами поднимается одним куском; лицо нарисовано на голове и
 # едет вместе с ней само.
@@ -290,13 +307,27 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
         if name in by_name:
             drop_objects.add(by_name[name])
 
-    # 2. Новые локальные номера компонентов: порядок картинок задаёт DRAW_ORDER,
-    #    всё остальное внутри артборда остаётся на своих местах.
-    ordered = [by_name[name] for name in DRAW_ORDER]
+    # 2. Новые локальные номера компонентов: порядок картинок задаёт
+    # DRAW_ORDER, каждая картинка тащит за собой свою сетку с вершинами —
+    # они лежат в потоке сразу за ней и обязаны переехать вместе, иначе
+    # вершины выпадают из перестановки и дорожки анимаций рвутся.
+    def unit(image_index: int) -> list[int]:
+        out = [image_index]
+        j = image_index + 1
+        while j < len(rig.objects) and rig.types.get(
+                rig.objects[j][0]) in ('Mesh', 'MeshVertex'):
+            out.append(j)
+            j += 1
+        return out
+
+    ordered: list[int] = []
+    for name in DRAW_ORDER:
+        ordered += unit(by_name[name])
     head = [i for i in range(scene.artboard, min(scene.images))
             if i not in drop_objects]
-    tail = [i for i in range(max(scene.images) + 1, len(rig.objects))
-            if i not in drop_objects]
+    accounted = set(head) | set(ordered) | drop_objects
+    tail = [i for i in range(scene.artboard, len(rig.objects))
+            if i not in accounted]
     before = [i for i in range(scene.artboard) if i not in drop_objects]
     new_indices = before + head + ordered + tail
     local_map = {scene.local_id(old): position
@@ -309,6 +340,11 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
         name = rig.types.get(type_key)
         if name == 'Image':
             put(props, Scene.ASSET_ID, asset_map[get(props, Scene.ASSET_ID)])
+        elif name in ('Mesh', 'MeshVertex'):
+            old = get(props, 5)
+            if old not in local_map:
+                raise SystemExit(f'Сетка ссылается на удалённого родителя {old}')
+            put(props, 5, local_map[old])
         elif name == 'KeyedObject':
             old = get(props, Scene.OBJECT_ID)
             if old not in local_map:
@@ -329,6 +365,8 @@ def cmd_fix(rig: Rig, scene: Scene, path: Path) -> int:
 # Чистка всегда стартует с них, а не с картинок из файла — иначе каждая
 # правка пережимает WEBP ещё раз и деталь постепенно замыливается.
 PART_SOURCES = {
+    'hearts': 'hearts',
+    'eye_left': 'eye_left', 'eye_right': 'eye_right',
     'mouth': 'mouth',
     'head': 'head', 'ear_left': 'ear_left', 'ear_right': 'ear_right',
     'paw_left': 'paw_left', 'paw_right': 'paw_right',
@@ -443,147 +481,177 @@ def image_size(rig: Rig, wanted: str) -> tuple[int, int]:
 
 
 def cmd_breathe(rig: Rig, scene: Scene, path: Path) -> int:
-    """Переписывает дорожки анимации idle с заметным на глаз размахом."""
-    import numpy as np  # noqa: PLC0415 — нужен только этой команде
+    """Пишет три состояния покоя: idle, idle_happy, idle_sad (ТЗ 7.1).
+
+    Один генератор, три набора параметров (MOODS): темп цикла, размах,
+    базовый наклон ушей, посадка головы, ширина улыбки, взгляд. Дыхание —
+    вершинами сеток (живот, щёки, бёдра), два неодинаковых вдоха на цикл.
+    """
+    import numpy as np  # noqa: PLC0415
 
     reverse = {name: key for key, name in rig.types.items()}
     keyed_object = reverse['KeyedObject']
     keyed_property = reverse['KeyedProperty']
     keyframe = reverse['KeyFrameDouble']
-
     interpolator = next(
         scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
         if rig.types.get(type_key) == 'CubicEaseInterpolator'
     )
     by_name = {scene.image_name(i): i for i in scene.images}
-    full = BREATH_CYCLE
 
-    def track(local: int, tracks: dict[int, list[tuple[int, float]]]) -> list:
-        """Одна дорожка: объект, его свойства и ключи по кадрам."""
+    def track(local, tracks):
         out = [(keyed_object, [(Scene.OBJECT_ID, 'Uint', local)])]
         for property_key, frames in tracks.items():
             out.append((keyed_property, [(53, 'Uint', property_key)]))
             for frame, value in frames:
                 props = []
                 if frame:
-                    props.append((67, 'Uint', frame))
+                    props.append((67, 'Uint', int(round(frame))))
                 props += [(68, 'Uint', 2),
                           (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
-                          (70, 'Double', value)]
+                          (70, 'Double', float(value))]
                 out.append((keyframe, props))
         return out
 
-    def waves(peak: int, value_at) -> list[tuple[int, float]]:
-        """Ключи двух вдохов: покой, вершина первого, покой, вершина второго."""
-        keys = [(0, float(value_at(0.0)))]
-        for start, amp, shift in BREATH_CYCLES:
-            keys.append((start + peak + shift, float(value_at(amp))))
-            keys.append((start + BREATH_CYCLE, float(value_at(0.0))))
-        return keys
+    def build(mood: dict) -> tuple[list, int]:
+        cycle = mood['cycle']
+        duration = 2 * cycle
+        scale_t = cycle / BREATH_CYCLE
+        cycles = ((0, 1.0, 0), (cycle, 0.85, round(6 * scale_t)))
 
-    block: list = []
+        def waves(peak, value_at):
+            peak = round(peak * scale_t)
+            keys = [(0, float(value_at(0.0)))]
+            for start_f, amp, shift in cycles:
+                keys.append((start_f + peak + shift,
+                             float(value_at(amp * mood['amp']))))
+                keys.append((start_f + cycle, float(value_at(0.0))))
+            return keys
 
-    # Кофта дышит контуром, а не масштабом: на вдохе вершины сетки уходят
-    # наружу по профилю (живот сильнее, плечи почти стоят) — силуэт реально
-    # надувается, как у дракона. Узел торса лишь приподнимается с грудью.
-    torso = rig.objects[by_name['torso']][1]
-    torso_y = get(torso, Y)
-    block += track(scene.local_id(by_name['torso']), {
-        Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
-    })
-    for piece, spec in MESHES.items():
-        vertices = mesh_vertices(rig, scene, piece)
-        if not vertices:
-            raise SystemExit(f'Нет сетки на {piece} — сначала команда mesh')
-        size = image_size(rig, piece)
-        for local, vx, vy in vertices:
-            weight = vertex_profile(piece, vx, vy, size)
-            out = (1 if vx >= 0 else -1) * spec['swell'] * weight
-            sag = spec['sag'] * max(0.0, vy / (size[1] / 2))
-            tracks = {}
-            if abs(out) > 0.3:
-                tracks[24] = waves(PEAK['torso'],
-                                   lambda k, v=vx, o=out: v + o * k)
-            if sag > 0.3:
-                tracks[25] = waves(PEAK['torso'],
-                                   lambda k, v=vy, g=sag: v + g * k)
-            if tracks:
-                block += track(local, tracks)
+        block: list = []
 
-    # Голова с ушами поднимается на вдохе — одним куском, синхронно.
-    for name in HEAD_GROUP:
-        base = get(rig.objects[by_name[name]][1], Y)
-        block += track(scene.local_id(by_name[name]), {
-            Y: waves(PEAK['head'],
-                     lambda k, b=base: b - BREATH_LIFT * k),
+        # Кофта: узел приподнимается, контур дышит вершинами сеток.
+        torso = rig.objects[by_name['torso']][1]
+        torso_y = get(torso, Y)
+        block += track(scene.local_id(by_name['torso']), {
+            Y: waves(PEAK['torso'], lambda k: torso_y - TORSO_RISE * k),
+        })
+        for piece, spec in MESHES.items():
+            size = image_size(rig, piece)
+            for local, vx, vy in mesh_vertices(rig, scene, piece):
+                weight = vertex_profile(piece, vx, vy, size)
+                out = (1 if vx >= 0 else -1) * spec['swell'] * weight
+                sag = spec['sag'] * max(0.0, vy / (size[1] / 2))
+                tracks = {}
+                if abs(out) > 0.3:
+                    tracks[24] = waves(PEAK['torso'],
+                                       lambda k, v=vx, o=out: v + o * k)
+                if sag > 0.3:
+                    tracks[25] = waves(PEAK['torso'],
+                                       lambda k, v=vy, g=sag: v + g * k)
+                if tracks:
+                    block += track(local, tracks)
+
+        # Голова и уши: подъём на вдохе, у настроения — своя посадка.
+        for name in HEAD_GROUP:
+            base = get(rig.objects[by_name[name]][1], Y) + mood['head_dy']
+            block += track(scene.local_id(by_name[name]), {
+                Y: waves(PEAK['head'],
+                         lambda k, b=base: b - BREATH_LIFT * k),
+            })
+
+        # Глаза едут с головой; у настроения — свой взгляд, у обычного
+        # покоя — редкий косой взгляд в сторону во втором цикле.
+        eye_dx, eye_dy = mood['eye']
+        for name in ('eye_left', 'eye_right'):
+            props = rig.objects[by_name[name]][1]
+            base_x = get(props, X) + eye_dx
+            base_y = get(props, Y) + mood['head_dy'] + eye_dy
+            x_keys = None
+            if mood['glance']:
+                g = cycle
+                x_keys = [(0, base_x), (g + 30, base_x),
+                          (g + 44, base_x + 5.0), (g + 100, base_x + 5.0),
+                          (g + 118, base_x), (duration, base_x)]
+            tracks = {Y: waves(PEAK['head'],
+                               lambda k, b=base_y: b - BREATH_LIFT * k)}
+            if x_keys:
+                tracks[X] = x_keys
+            block += track(scene.local_id(by_name[name]), tracks)
+
+        # Улыбка: базовая ширина настроения плюс дыхание с якорем на губе.
+        mouth = rig.objects[by_name['mouth']][1]
+        msx = get(mouth, SCALE_X) * mood['mouth']
+        msy = get(mouth, SCALE_Y) * mood['mouth']
+        mouth_y = get(mouth, Y) + mood['head_dy']
+        jaw = image_size(rig, 'mouth')[1] * msy * (MOUTH_SWELL[1] - 1) / 2
+        block += track(scene.local_id(by_name['mouth']), {
+            SCALE_X: waves(PEAK['mouth'],
+                           lambda k: msx * (1 + (MOUTH_SWELL[0] - 1) * k)),
+            SCALE_Y: waves(PEAK['mouth'],
+                           lambda k: msy * (1 + (MOUTH_SWELL[1] - 1) * k)),
+            Y: waves(PEAK['mouth'],
+                     lambda k: mouth_y - BREATH_LIFT * k + jaw * k),
         })
 
-    # Улыбка дышит: накладка рта лежит на собственных пикселях головы,
-    # поэтому растяжение читается как движение рта, а не как шов. Якорь —
-    # верхняя губа: при растяжении центр съезжает вниз на половину прироста,
-    # и открывается «челюсть», а не вся улыбка враспор. Y пишем здесь же:
-    # это подъём головы плюс ход челюсти, одной дорожкой.
-    mouth = rig.objects[by_name['mouth']][1]
-    mouth_sx, mouth_sy = get(mouth, SCALE_X), get(mouth, SCALE_Y)
-    mouth_y = get(mouth, Y)
-    jaw = image_size(rig, 'mouth')[1] * mouth_sy * (MOUTH_SWELL[1] - 1) / 2
-    block += track(scene.local_id(by_name['mouth']), {
-        SCALE_X: waves(PEAK['mouth'],
-                       lambda k: mouth_sx * (1 + (MOUTH_SWELL[0] - 1) * k)),
-        SCALE_Y: waves(PEAK['mouth'],
-                       lambda k: mouth_sy * (1 + (MOUTH_SWELL[1] - 1) * k)),
-        Y: waves(PEAK['mouth'],
-                 lambda k: mouth_y - BREATH_LIFT * k + jaw * k),
-    })
+        # Лапы качаются от плеча, держась близко к телу.
+        for name, sign in (('paw_left', -1), ('paw_right', 1)):
+            props = rig.objects[by_name[name]][1]
+            centre = np.array([get(props, X), get(props, Y)])
+            half = image_size(rig, name)[1] * get(props, SCALE_Y) / 2
+            shoulder = np.array([centre[0], centre[1] - half])
 
-    # Лапы качаются от плеча. Костей нет, поэтому поворот вокруг чужой точки
-    # собираем руками: центр картинки едет по дуге вокруг плеча, а сама она
-    # доворачивается на тот же угол. Плечо — середина верхнего края лапы.
-    # Вдобавок лапы расходятся вслед за кофтой и приподнимаются с грудью.
-    for name, sign in (('paw_left', -1), ('paw_right', 1)):
-        props = rig.objects[by_name[name]][1]
-        centre = np.array([get(props, X), get(props, Y)])
-        half_height = image_size(rig, name)[1] * get(props, SCALE_Y) / 2
-        shoulder = np.array([centre[0], centre[1] - half_height])
+            def pose(k, sign=sign, centre=centre, shoulder=shoulder):
+                angle = -sign * PAW_SWING * k
+                turn = np.array([[np.cos(angle), -np.sin(angle)],
+                                 [np.sin(angle), np.cos(angle)]])
+                x, y = shoulder + turn @ (centre - shoulder)
+                return angle, x + sign * PAW_DRIFT * k, y - PAW_LIFT * k
 
-        def pose(k, sign=sign, centre=centre, shoulder=shoulder):
-            # Знак поворота противоположен сдвигу: ось y смотрит вниз, и
-            # положительный угол в Rive крутит по часовой. С одинаковыми
-            # знаками дуга от поворота и разъезд лап гасят друг друга —
-            # лапа стоит на месте, что и было видно на экране.
-            angle = -sign * PAW_SWING * k
-            turn = np.array([[np.cos(angle), -np.sin(angle)],
-                             [np.sin(angle), np.cos(angle)]])
-            x, y = shoulder + turn @ (centre - shoulder)
-            return angle, x + sign * PAW_DRIFT * k, y - PAW_LIFT * k
+            block += track(scene.local_id(by_name[name]), {
+                ROTATION: waves(PEAK['paw'], lambda k: pose(k)[0]),
+                X: waves(PEAK['paw'], lambda k: pose(k)[1]),
+                Y: waves(PEAK['paw'], lambda k: pose(k)[2]),
+            })
 
-        block += track(scene.local_id(by_name[name]), {
-            ROTATION: waves(PEAK['paw'], lambda k: pose(k)[0]),
-            X: waves(PEAK['paw'], lambda k: pose(k)[1]),
-            Y: waves(PEAK['paw'], lambda k: pose(k)[2]),
-        })
+        # Уши: базовый наклон настроения плюс качание в противофазе.
+        for name, sign in (('ear_left', 1), ('ear_right', -1)):
+            block += track(scene.local_id(by_name[name]), {
+                ROTATION: waves(PEAK['ear'],
+                                lambda k, s=sign: s * (mood['ear']
+                                                       + EAR_SWING * k)),
+            })
+        return block, duration
 
-    # Уши качаются в противофазе — от этого движение читается как живое.
-    for name, sign in (('ear_left', 1), ('ear_right', -1)):
-        block += track(scene.local_id(by_name[name]), {
-            ROTATION: waves(PEAK['ear'], lambda k, s=sign: s * EAR_SWING * k),
-        })
-
-    start = next(i for i, (type_key, props) in enumerate(rig.objects)
-                 if rig.types.get(type_key) == 'LinearAnimation'
-                 and get(props, 55) == b'idle')
-    put(rig.objects[start][1], 57, IDLE_DURATION)
-    end = next(i for i in range(start + 1, len(rig.objects))
-               if rig.types.get(rig.objects[i][0])
-               in ('LinearAnimation', 'StateMachine'))
-    rig.objects = rig.objects[:start + 1] + block + rig.objects[end:]
+    # Пишем/заменяем анимации в порядке словаря — номера в стейт-машине
+    # завязаны на порядок: idle=2, idle_happy=3, idle_sad=4.
+    anim_type = reverse['LinearAnimation']
+    written = []
+    for name, mood in MOODS.items():
+        block, duration = build(mood)
+        existing = [i for i, (tk, props) in enumerate(rig.objects)
+                    if rig.types.get(tk) == 'LinearAnimation'
+                    and get(props, 55) == name.encode()]
+        if existing:
+            start = existing[0]
+            end = next(i for i in range(start + 1, len(rig.objects))
+                       if rig.types.get(rig.objects[i][0])
+                       in ('LinearAnimation', 'StateMachine'))
+            rig.objects[start:end] = [rig.objects[start]] + block
+            put(rig.objects[start][1], 57, duration)
+            header = rig.objects[start][1]
+            if get(header, 59) is None:
+                header.append((59, 'Uint', 1))
+        else:
+            sm_at = next(i for i, (tk, _) in enumerate(rig.objects)
+                         if rig.types.get(tk) == 'StateMachine')
+            head = (anim_type, [(55, 'String', name.encode()),
+                                (57, 'Uint', duration), (59, 'Uint', 1)])
+            rig.objects[sm_at:sm_at] = [head] + block
+        written.append(f'{name} ({duration} кадров)')
 
     path.write_bytes(rig.dumps())
-    tracks = sum(1 for type_key, _ in block if type_key == keyed_object)
-    print(f'Дыхание переписано: кофта +{(BREATH_SWELL - 1) * 100:.0f}%, '
-          f'голова на {BREATH_LIFT:.0f} px, лапы от плеча, '
-          f'вершины вдоха {sorted(set(PEAK.values()))} из {full}, '
-          f'дорожек {tracks}')
+    print('Настроения записаны: ' + ', '.join(written))
     return 0
 
 
@@ -683,17 +751,31 @@ def cmd_place(rig: Rig, scene: Scene, path: Path) -> int:
               (208, 'Double', float(nh))]),
             (reverse['FileAssetContents'], [(212, 'Bytes', blob)]),
         ]
+        scene = Scene(rig, rig.types)
+        # Узел Image — после последнего юнита картинок. У картинки может
+        # быть сетка с вершинами сразу за ней: втыкать новый узел в середину
+        # чужой сетки нельзя, а ссылки сеток дальше по потоку сдвигаются.
+        at = max(scene.images) + 1
+        while at < len(rig.objects) and rig.types.get(
+                rig.objects[at][0]) in ('Mesh', 'MeshVertex'):
+            at += 1
+        insert_local = scene.local_id(at)
+        for type_key, props in rig.objects:
+            if rig.types.get(type_key) in ('Mesh', 'MeshVertex'):
+                parent = get(props, 5)
+                if parent >= insert_local:
+                    put(props, 5, parent + 1)
         target = placements[v4]
-        after_image = max(scene.images) + 2 + 1  # +2 за пару ассета выше
-        rig.objects[after_image:after_image] = [
+        rig.objects[at:at] = [
             (reverse['Image'],
              [(5, 'Uint', 0),
               (SCALE_X, 'Double', target['scale']),
               (SCALE_Y, 'Double', target['scale']),
               (X, 'Double', target['x']), (Y, 'Double', target['y']),
-              (Scene.ASSET_ID, 'Uint', len(scene.assets))]),
+              (Scene.ASSET_ID, 'Uint', len(scene.assets) - 1)]),
         ]
-        print(f'  создана деталь {v4}: {nw}x{nh}, ассет #{len(scene.assets)}')
+        print(f'  создана деталь {v4}: {nw}x{nh}, '
+              f'ассет #{len(scene.assets) - 1}')
         scene = Scene(rig, rig.types)
 
     # Позиции и масштаб узлов Image — по посадочной карте.
@@ -984,8 +1066,120 @@ def cmd_giggle(rig: Rig, scene: Scene, path: Path) -> int:
     return 0
 
 
+def cmd_moods(rig: Rig, scene: Scene, path: Path) -> int:
+    """Стейт-машина настроений и эмо-акцент с сердечками (ТЗ 7.1, 7.7).
+
+    Вход mood (0 normal, 1 happy, 2 sad) переключает три idle в слое body с
+    мягким сведением. Вход trg_emo_love в отдельном слое запускает
+    emo_love — сердечки всплывают над головой и тают; кусок hearts стоит
+    поверх всего с нулевой прозрачностью и оживает только в этой анимации.
+    """
+    reverse = {name: key for key, name in rig.types.items()}
+    if any(rig.types.get(tk) == 'StateMachineNumber'
+           for tk, _ in rig.objects):
+        print('Вход mood уже есть — стейт-машина не тронута')
+        return 0
+
+    # --- анимация emo_love: сердечки всплывают и тают. Номер 5 в списке.
+    interpolator = next(
+        scene.local_id(i) for i, (type_key, _) in enumerate(rig.objects)
+        if rig.types.get(type_key) == 'CubicEaseInterpolator'
+    )
+    by_name = {scene.image_name(i): i for i in scene.images}
+    hearts = rig.objects[by_name['hearts']][1]
+    hx, hy = get(hearts, X), get(hearts, Y)
+    # Вне анимации сердечки невидимы: статическая прозрачность ноль, иначе
+    # они висят на экране всегда — слой emo в покое играет пустой клип.
+    if get(hearts, OPACITY) is None:
+        hearts.append((OPACITY, 'Double', 0.0))
+    else:
+        put(hearts, OPACITY, 0.0)
+
+    def keyframes(prop_key, keys):
+        out = [(reverse['KeyedProperty'], [(53, 'Uint', prop_key)])]
+        for frame, value in keys:
+            props = []
+            if frame:
+                props.append((67, 'Uint', int(frame)))
+            props += [(68, 'Uint', 2),
+                      (Scene.INTERPOLATOR_ID, 'Uint', interpolator),
+                      (70, 'Double', float(value))]
+            out.append((reverse['KeyFrameDouble'], props))
+        return out
+
+    block = [(reverse['KeyedObject'],
+              [(Scene.OBJECT_ID, 'Uint',
+                scene.local_id(by_name['hearts']))])]
+    block += keyframes(OPACITY, [(0, 0.0), (10, 1.0), (85, 1.0), (115, 0.0),
+                                 (120, 0.0)])
+    block += keyframes(Y, [(0, hy), (120, hy - 240.0)])
+    block += keyframes(X, [(0, hx), (32, hx + 12.0), (64, hx - 10.0),
+                           (96, hx + 8.0), (120, hx)])
+    block += keyframes(SCALE_X, [(0, 0.75), (25, 1.05), (120, 1.0)])
+    block += keyframes(SCALE_Y, [(0, 0.75), (25, 1.05), (120, 1.0)])
+
+    sm_at = next(i for i, (tk, _) in enumerate(rig.objects)
+                 if rig.types.get(tk) == 'StateMachine')
+    head = (reverse['LinearAnimation'],
+            [(55, 'String', b'emo_love'), (57, 'Uint', 120)])
+    rig.objects[sm_at:sm_at] = [head] + block
+
+    # --- входы: mood (номер 0) и trg_emo_love (номер 1).
+    sm_at = next(i for i, (tk, _) in enumerate(rig.objects)
+                 if rig.types.get(tk) == 'StateMachine')
+    rig.objects[sm_at + 1:sm_at + 1] = [
+        (reverse['StateMachineNumber'],
+         [(138, 'String', b'mood'), (140, 'Double', 0.0)]),
+        (reverse['StateMachineTrigger'], [(138, 'String', b'trg_emo_love')]),
+    ]
+
+    # --- слой body: happy и sad после idle, шесть переходов по mood.
+    def transition(to_state, mood_value):
+        return [
+            (reverse['StateTransition'],
+             [(151, 'Uint', to_state), (158, 'Uint', 350)]),
+            (reverse['TransitionNumberCondition'],
+             [(155, 'Uint', 0), (156, 'Uint', 0),
+              (157, 'Double', float(mood_value))]),
+        ]
+
+    idle_state = next(
+        i for i in range(sm_at, len(rig.objects))
+        if rig.types.get(rig.objects[i][0]) == 'AnimationState'
+        and get(rig.objects[i][1], 149) == 2)
+    insert = idle_state + 1
+    rig.objects[insert:insert] = (
+        transition(4, 1) + transition(5, 2)
+        + [(reverse['AnimationState'], [(149, 'Uint', 3)])]
+        + transition(3, 0) + transition(5, 2)
+        + [(reverse['AnimationState'], [(149, 'Uint', 4)])]
+        + transition(3, 0) + transition(4, 1)
+    )
+
+    # --- слой emo: покой (пустая eyes_open) -> сердечки по триггеру.
+    # Раскладка строго как у редактора: сначала рабочие состояния, потом
+    # Entry/Any/Exit — без этой тройки импортёр молча роняет весь файл.
+    rig.objects.extend([
+        (reverse['StateMachineLayer'], [(138, 'String', b'emo')]),
+        (reverse['AnimationState'], [(149, 'Uint', 0)]),          # 0 покой
+        (reverse['StateTransition'], [(151, 'Uint', 1), (158, 'Uint', 80)]),
+        (reverse['TransitionTriggerCondition'], [(155, 'Uint', 1)]),
+        (reverse['AnimationState'], [(149, 'Uint', 5)]),          # 1 сердца
+        (reverse['StateTransition'], [(151, 'Uint', 0), (152, 'Uint', 4),
+                                      (158, 'Uint', 200),
+                                      (160, 'Uint', 1900)]),
+        (reverse['EntryState'], []),                              # 2
+        (reverse['StateTransition'], [(151, 'Uint', 0)]),
+        (reverse['AnyState'], []),                                # 3
+        (reverse['ExitState'], []),                               # 4
+    ])
+    path.write_bytes(rig.dumps())
+    print('Стейт-машина: mood с тремя idle, trg_emo_love с сердечками')
+    return 0
+
+
 def main() -> int:
-    commands = ('inspect', 'fix', 'clean', 'place', 'mesh', 'breathe', 'blink', 'giggle')
+    commands = ('inspect', 'fix', 'clean', 'place', 'mesh', 'breathe', 'blink', 'giggle', 'moods')
     if len(sys.argv) != 3 or sys.argv[1] not in commands:
         raise SystemExit(__doc__)
     command, path = sys.argv[1], Path(sys.argv[2])
@@ -998,7 +1192,7 @@ def main() -> int:
         raise SystemExit('Round-trip не сошёлся: не рискую писать файл')
     scene = Scene(rig, types)
 
-    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink, 'giggle': cmd_giggle, 'mesh': cmd_mesh,
+    runner = {'inspect': cmd_inspect, 'clean': cmd_clean, 'place': cmd_place, 'breathe': cmd_breathe, 'blink': cmd_blink, 'giggle': cmd_giggle, 'mesh': cmd_mesh, 'moods': cmd_moods,
               'fix': cmd_fix}[command]
     if command == 'inspect':
         return runner(rig, scene)

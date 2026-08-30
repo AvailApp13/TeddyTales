@@ -60,6 +60,10 @@ REGIONS = {
     # «дышать ртом». Нос в кусок не входит нарочно: пульсирующий нос
     # выглядит мультяшно.
     'mouth':     (445, 580, 525, 605),
+    # Глаза-пуговицы — накладки поверх головы на её же пиксели, как рот:
+    # сдвиг на пару пикселей даёт взгляд по сторонам, шва нет в принципе.
+    'eye_left':  (432, 494, 438, 502),
+    'eye_right': (528, 590, 440, 502),
 }
 
 # Ярлычок на правом бедре шорт торчит за контур — заказчик читает его как
@@ -80,6 +84,8 @@ FILTERS = {
     'torso': 'blue',
     'legs': 'warm',
     'mouth': None,
+    'eye_left': None,
+    'eye_right': None,
 }
 
 FEATHER_CUT = 6.0     # растушёвка внутренних (прямых) срезов
@@ -255,6 +261,32 @@ def main() -> int:
         }
         print(f'  {name:10s} {piece.shape[1]}x{piece.shape[0]} '
               f'-> артборд ({placements[name]["x"]}, {placements[name]["y"]})')
+
+    # Сердечки для эмо-акцента: три штуки разного размера одним куском,
+    # розовые с белым бликом. Рисуются программно — это не часть игрушки.
+    hearts = np.zeros((300, 300, 4), np.uint8)
+
+    def heart(cx, cy, size, colour):
+        pts = []
+        for t in np.linspace(0, 2 * np.pi, 80):
+            hx = 16 * np.sin(t) ** 3
+            hy = -(13 * np.cos(t) - 5 * np.cos(2 * t)
+                   - 2 * np.cos(3 * t) - np.cos(4 * t))
+            pts.append((cx + hx * size, cy + hy * size))
+        poly = np.array(pts, np.int32)
+        overlay = hearts.copy()
+        cv2.fillPoly(overlay, [poly], (*colour, 255), lineType=cv2.LINE_AA)
+        alpha_h = overlay[:, :, 3:4].astype(np.float32) / 255.0
+        hearts[:] = (overlay * alpha_h + hearts * (1 - alpha_h)).astype(np.uint8)
+
+    heart(150, 150, 4.6, (150, 105, 245))   # большое, BGR розовый
+    heart(70, 90, 2.6, (170, 130, 250))
+    heart(235, 75, 2.0, (185, 150, 252))
+    hearts[:, :, :3] = cv2.GaussianBlur(hearts[:, :, :3], (0, 0), 0.6)
+    cv2.imwrite(str(OUT / 'hearts.png'), hearts)
+    placements['hearts'] = {'x': 540.0, 'y': 330.0, 'scale': 1.0,
+                            'w': 300, 'h': 300}
+    print('  hearts     300x300 -> артборд (540.0, 520.0)')
 
     (OUT / 'placements.json').write_text(
         json.dumps(placements, ensure_ascii=False, indent=2))
