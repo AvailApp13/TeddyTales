@@ -77,7 +77,10 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble> {
     final initiative = widget.initiative;
     final theme = Theme.of(context);
 
-    return Center(
+    // Прижат к левому краю: пузырь живёт в левом верхнем углу сцены,
+    // зеркально кнопке «Что будем делать?» — по центру он утыкался в капюшон.
+    return Align(
+      alignment: Alignment.centerLeft,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
