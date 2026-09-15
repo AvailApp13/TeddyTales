@@ -1,8 +1,14 @@
 {
   "_": "Что принести из облака Higgsfield через раннер GitHub. Ключ — имя файла в ветке claude/media-cache. Для видео можно задать frames: сколько кадров в секунду выдёргивать, чтобы посмотреть ролик покадрово.",
   "items": {
-    "a2-arms-up": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224320_05e86567-13d7-4c68-8d53-5a37d9026b2b.png",
-    "a3-legs-wide": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224319_e317b3cf-294b-4815-8e25-0bc2610afcfa.png",
-    "b1-head": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224320_c42ea1cb-894e-4c97-a11b-504455ef2969.png"
+    "b2-ears": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_e404e7c9-100d-4b26-be25-4ff903c15f99.png",
+    "b3-eyes-half": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_13ac07ee-e89a-4fb7-baa3-c07a38ba9872.png",
+    "b4-eyes-shut": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_01764ba7-99f9-4320-93bf-e54c88281abd.png",
+    "b5-happy": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_41b7d5ef-2afc-40b1-8c97-87ced902bca0.png",
+    "b6-sad": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225157_c1ce96d4-23f2-440d-97a7-78b08cb1399e.png",
+    "b7-chew": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225157_cc9393aa-44ae-4ac0-9076-e4b93a9b0672.png",
+    "b8-surprise": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_b637df54-c625-49d0-8dd5-efa5ac2dac72.png",
+    "c1-paws": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225156_f85786b9-41b4-4043-adf1-20c6d3a48714.png",
+    "c2-feet": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_225157_1b3689bb-0fe9-4a9d-816e-aa1924111283.png"
   }
 }
