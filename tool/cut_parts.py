@@ -38,14 +38,17 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 OVERLAP = 220
 """Запас перекрытия между деталями в пикселях холста."""
 
 PARTS: dict[str, tuple[int, int, int, int]] = {
-    # Капюшон, уши и морда. Низ уходит ниже шеи (1600) на запас перекрытия.
-    'head': (560, 80, 1930, 1760),
+    # Капюшон, уши и морда. Низ уходит ниже шеи (1600) на запас перекрытия,
+    # но обязан остаться ВЫШЕ белой пуговицы: она начинается на y≈1660.
+    # Пуговица, попав и на голову, и на кофту, при подъёме головы
+    # раздваивалась — на экране это выглядело как брак склейки.
+    'head': (560, 80, 1930, 1645),
     # Кофта с рукавами и лапами. Верх заходит выше шеи, низ — ниже кофты.
     'torso': (430, 1540, 2050, 2520),
     # Шорты и ноги.
@@ -66,10 +69,37 @@ HEAD_FROM = ('0calm', '1happy', '2sad', '3sleep', '4chew', '8gazeL', '9gazeR')
 WEBP_QUALITY = 92
 """Детали внутри .riv лежат в WEBP; 92 — предел, за которым растёт только вес."""
 
+FEATHER = 150
+"""Высота растушёвки нижнего края головы, пиксели холста.
 
-def cut(image: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
+Голова лежит поверх кофты, и в зоне перекрытия обе детали показывают одно
+и то же — плечи и ворот. Пока голова стоит, это незаметно: её непрозрачные
+пиксели просто закрывают такие же под ними. Стоит голове подняться на
+вдохе, и нижняя кромка съезжает: видно ступеньку между «плечами с головы» и
+«плечами с кофты».
+
+Лечится не запретом двигаться, а тем, что у головы нет резкого низа:
+последние полтораста пикселей она плавно растворяется в кофте, и
+расхождение размазывается вместе с кромкой.
+"""
+
+
+def feather_bottom(part: Image.Image, height: int) -> Image.Image:
+    """Гасит альфу к нижнему краю детали по линейному градиенту."""
+    ramp = Image.linear_gradient('L').resize((part.width, height))
+    fade = Image.new('L', part.size, 255)
+    fade.paste(ramp.transpose(Image.FLIP_TOP_BOTTOM),
+               (0, part.height - height))
+    part.putalpha(ImageChops.multiply(part.getchannel('A'), fade))
+    return part
+
+
+def cut(image: Image.Image, box: tuple[int, int, int, int],
+        feather: int = 0) -> Image.Image:
     """Вырезает деталь и обрезает пустые поля, сохраняя смещение."""
     part = image.crop(box)
+    if feather:
+        part = feather_bottom(part, feather)
     tight = part.getbbox()
     if tight is None:
         raise SystemExit(f'Рамка {box} попала в пустоту — проверь координаты')
@@ -91,9 +121,10 @@ def main(argv: list[str]) -> int:
 
     placements: dict[str, dict] = {}
 
-    def emit(name: str, source: str, box: tuple[int, int, int, int]) -> None:
+    def emit(name: str, source: str, box: tuple[int, int, int, int],
+             feather: int = 0) -> None:
         image = Image.open(frames[source]).convert('RGBA')
-        part, (x, y) = cut(image, box)
+        part, (x, y) = cut(image, box, feather)
         part.save(out_dir / f'{name}.webp', 'WEBP',
                   quality=WEBP_QUALITY, method=6)
         placements[name] = {
@@ -106,7 +137,7 @@ def main(argv: list[str]) -> int:
     emit('torso', BODY_FROM, PARTS['torso'])
     emit('legs', BODY_FROM, PARTS['legs'])
     for source in HEAD_FROM:
-        emit(f'head_{source[1:]}', source, PARTS['head'])
+        emit(f'head_{source[1:]}', source, PARTS['head'], FEATHER)
 
     (out_dir / 'placements.json').write_text(
         json.dumps(placements, ensure_ascii=False, indent=2) + '\n',
