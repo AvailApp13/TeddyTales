@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 SHEET = 2880
 """Сторона листа в пикселях."""
@@ -100,6 +100,57 @@ SPRITES = {
 
 MOUTH_WIDE = (1230, 2020, 1690, 2330)
 """Расширенная рамка рта: открытый рот и «о» не влезают в рамку вышивки."""
+
+ERASE = ('eye_left', 'eye_right', 'mouth')
+"""Что стирается с детали `head`.
+
+Голова вырезается целиком, вместе с лицом. Но глаза и рот кладутся сверху
+отдельными деталями — чтобы зрачки могли ездить, а рот меняться. Если
+оставить их ещё и на голове, поверх нарисованных глаз лягут настоящие, и
+при первом же движении взгляда мишка станет четырёхглазым.
+
+Нос не стирается: он никуда не двигается, и отдельной деталью он нужен
+только как якорь совмещения листов.
+"""
+
+ERASE_FEATHER = 45
+"""Растушёвка заплатки. Резкий край заплатки виден на мехе даже под
+глазом."""
+
+
+def erase(part: Image.Image, origin: tuple[int, int]) -> Image.Image:
+    """Закрашивает лицо мехом, взятым рядом.
+
+    Заплатка берётся строго над стираемым местом: там та же шерсть, то же
+    направление ворса и тот же свет. Брать её сбоку нельзя — на скуле ворс
+    лежит иначе, и заплатка читается пятном.
+    """
+    left, top = origin
+    for name in ERASE:
+        box = MOUTH_WIDE if name == 'mouth' else HEAD[name]['box']
+        x0, y0, x1, y1 = (box[0] - left, box[1] - top,
+                          box[2] - left, box[3] - top)
+        height = y1 - y0
+        # Откуда брать заплатку. Для глаз — со лба, он прямо над ними и
+        # там та же шерсть. Для рта — с подбородка снизу: сверху у рта
+        # нос, и заплатка с него сажает на морду тёмное пятно.
+        if name == 'mouth':
+            donor = part.crop((x0, y1 + 30, x1, y1 + 30 + height))
+        else:
+            donor = part.crop((x0, max(0, y0 - height - 60),
+                               x1, max(height, y0 - 60)))
+        if donor.size != (x1 - x0, height):
+            donor = donor.resize((x1 - x0, height))
+        mask = Image.new('L', (x1 - x0, height), 255)
+        mask = mask.filter(ImageFilter.GaussianBlur(0))
+        patch = Image.new('L', (x1 - x0, height), 0)
+        draw = ImageDraw.Draw(patch)
+        draw.rectangle((ERASE_FEATHER, ERASE_FEATHER,
+                        x1 - x0 - ERASE_FEATHER, height - ERASE_FEATHER),
+                       fill=255)
+        patch = patch.filter(ImageFilter.GaussianBlur(ERASE_FEATHER / 2))
+        part.paste(donor, (x0, y0), patch)
+    return part
 
 
 SPLIT = 1455
@@ -181,7 +232,10 @@ def main(argv: list[str]) -> int:
 
     head = Image.open(sheets / 'b1-head.png').convert('RGBA')
     for name, spec in HEAD.items():
-        emit(name, 'b1-head', head, spec)
+        image = head
+        if name == 'head':
+            image = erase(head.copy(), (0, 0))
+        emit(name, 'b1-head', image, spec)
 
     for name, (sheet_name, frame) in SPRITES.items():
         box = MOUTH_WIDE if frame == 'mouth_wide' else HEAD[frame]['box']
