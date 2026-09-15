@@ -132,11 +132,12 @@ GIGGLE_DURATION = 150
 # пикселей — и по плечу идёт белёсая засветка: в переходе смешиваются плечо
 # со смещённым мехом. Дышит тело, голова только следует за ним.
 MOODS = {
-    'idle': {'cycle': 180, 'amp': 1.0, 'head_dy': 0.0,
+    'idle': {'cycle': 180, 'amp': 1.0, 'head_dy': 0.0, 'tilt': 0.0,
              'face': 'calm', 'glance': True},
-    'idle_happy': {'cycle': 132, 'amp': 1.15, 'head_dy': -3.0,
+    # head_dy — сдвиг головы по экрану: плюс вниз, минус вверх.
+    'idle_happy': {'cycle': 132, 'amp': 1.15, 'head_dy': -4.0, 'tilt': -0.018,
                    'face': 'happy', 'glance': False},
-    'idle_sad': {'cycle': 230, 'amp': 0.7, 'head_dy': 7.0,
+    'idle_sad': {'cycle': 230, 'amp': 0.7, 'head_dy': 9.0, 'tilt': 0.04,
                  'face': 'sad', 'glance': False},
 }
 
