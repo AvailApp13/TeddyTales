@@ -1,8 +1,8 @@
 {
   "_": "Что принести из облака Higgsfield через раннер GitHub. Ключ — имя файла в ветке claude/media-cache. Для видео можно задать frames: сколько кадров в секунду выдёргивать, чтобы посмотреть ролик покадрово.",
   "items": {
-    "a1-1": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_192245_413f4f69-62b5-4341-9a19-4f1d6f110afa.png",
-    "a1-2": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_192245_3326775f-d4ab-47d9-b30e-7b203a443447.png",
-    "a1-3": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_192245_fab76dd5-37e9-4e26-b9d1-00d1be385de3.png"
+    "a2-arms-up": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224320_05e86567-13d7-4c68-8d53-5a37d9026b2b.png",
+    "a3-legs-wide": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224319_e317b3cf-294b-4815-8e25-0bc2610afcfa.png",
+    "b1-head": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_224320_c42ea1cb-894e-4c97-a11b-504455ef2969.png"
   }
 }
