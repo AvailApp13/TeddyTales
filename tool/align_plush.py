@@ -21,6 +21,7 @@
 песочнице Higgsfield, где кроме PIL ничего нет.
 
     python3 tool/align_plush.py out/ raw/*.png
+    python3 tool/align_plush.py --grid=v6 out/ raw/*.png
 """
 
 from __future__ import annotations
@@ -36,6 +37,30 @@ CANVAS = (1024, 1365)
 BODY_HEIGHT = 1180.0
 BASELINE_Y = 1300.0
 CENTRE_X = 512.0
+
+GRIDS = {
+    # Набор v5: генерации 2k, холст под них.
+    'v5': {'canvas': (1024, 1365), 'body': 1180.0,
+           'baseline': 1300.0, 'centre': 512.0},
+    # Набор v6: генерации 2480 × 3312 в максимальном качестве. Холст почти
+    # равен исходнику, коэффициенты масштаба выходят 1,01–1,07 — кадры не
+    # пересэмплируются, и оплаченное разрешение остаётся в деталях.
+    'v6': {'canvas': (2480, 3307), 'body': 3150.0,
+           'baseline': 3250.0, 'centre': 1240.0},
+}
+"""Готовые сетки под наборы кадров: подставляются ключом --grid."""
+
+
+def use_grid(name: str) -> None:
+    """Переключает холст на заданный набор."""
+    if name not in GRIDS:
+        raise SystemExit(f'Нет сетки {name}. Есть: {", ".join(GRIDS)}')
+    grid = GRIDS[name]
+    global CANVAS, BODY_HEIGHT, BASELINE_Y, CENTRE_X
+    CANVAS = grid['canvas']
+    BODY_HEIGHT = grid['body']
+    BASELINE_Y = grid['baseline']
+    CENTRE_X = grid['centre']
 
 ALPHA_MIN = 16
 """Ниже этого альфа — это шум по краю пушистого контура, не тело."""
@@ -140,6 +165,9 @@ def align(image: Image.Image, anchors: Anchors) -> Image.Image:
 
 
 def main(argv: list[str]) -> int:
+    argv = list(argv)
+    if len(argv) > 1 and argv[1].startswith('--grid='):
+        use_grid(argv.pop(1).split('=', 1)[1])
     if len(argv) < 3:
         print(__doc__)
         return 2
