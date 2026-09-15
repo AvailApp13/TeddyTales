@@ -65,6 +65,43 @@ BODY = {
     'foot_right':      {'box': (1420, 2460, 1900, 2780), 'fade': {'t': 70}},
 }
 
+
+# Голова и лицо с листа b1-head. Рамки сняты по координатной сетке того же
+# листа. Уши лежат ПОД головой: на фронтальном ракурсе они выходят из-за
+# черепа, и если положить их сверху, при подрагивании они поедут по лбу.
+HEAD = {
+    'head':      {'box': (330, 450, 2570, 2640), 'fade': {}},
+    'ear_left':  {'box': (80, 260, 860, 1290), 'fade': {}},
+    'ear_right': {'box': (1940, 260, 2760, 1290), 'fade': {}},
+    'muzzle':    {'box': (1060, 1740, 1860, 2400), 'fade': {}},
+    'nose':      {'box': (1300, 1820, 1610, 2080), 'fade': {}},
+    'eye_left':  {'box': (975, 1585, 1200, 1820), 'fade': {}},
+    'eye_right': {'box': (1730, 1585, 1955, 1820), 'fade': {}},
+    'mouth':     {'box': (1320, 2070, 1590, 2260), 'fade': {}},
+}
+
+# Спрайты состояний: та же рамка, но с другого листа. Подменяются целиком,
+# поэтому обязаны совпадать по рамке до пикселя — иначе при смене выражения
+# глаз прыгнет.
+SPRITES = {
+    'eye_left_half':  ('b3-eyes-half', 'eye_left'),
+    'eye_right_half': ('b3-eyes-half', 'eye_right'),
+    'eye_left_shut':  ('b4-eyes-shut', 'eye_left'),
+    'eye_right_shut': ('b4-eyes-shut', 'eye_right'),
+    'eye_left_happy': ('b5-happy', 'eye_left'),
+    'eye_right_happy': ('b5-happy', 'eye_right'),
+    'eye_left_sad':   ('b6-sad', 'eye_left'),
+    'eye_right_sad':  ('b6-sad', 'eye_right'),
+    'mouth_smile':    ('b5-happy', 'mouth_wide'),
+    'mouth_sad':      ('b6-sad', 'mouth'),
+    'mouth_open':     ('b7-chew', 'mouth_wide'),
+    'mouth_o':        ('b8-surprise', 'mouth_wide'),
+}
+
+MOUTH_WIDE = (1230, 2020, 1690, 2330)
+"""Расширенная рамка рта: открытый рот и «о» не влезают в рамку вышивки."""
+
+
 SPLIT = 1455
 """Где проходит вертикальный раздел между ногами.
 
@@ -134,6 +171,23 @@ def main(argv: list[str]) -> int:
     body = Image.open(sheets / 'a1-body.png').convert('RGBA')
     placements: dict[str, dict] = {}
 
+    def emit(name: str, sheet_name: str, image: Image.Image, spec: dict,
+             split: str | None = None) -> None:
+        part, (x, y) = cut(image, spec, split)
+        part.save(out_dir / f'{name}.webp', 'WEBP', quality=92, method=6)
+        placements[name] = {'sheet': sheet_name, 'x': x, 'y': y,
+                            'w': part.width, 'h': part.height}
+        print(f'{name:18s} {part.width:4d}x{part.height:<4d} @ {x},{y}')
+
+    head = Image.open(sheets / 'b1-head.png').convert('RGBA')
+    for name, spec in HEAD.items():
+        emit(name, 'b1-head', head, spec)
+
+    for name, (sheet_name, frame) in SPRITES.items():
+        box = MOUTH_WIDE if frame == 'mouth_wide' else HEAD[frame]['box']
+        image = Image.open(sheets / f'{sheet_name}.png').convert('RGBA')
+        emit(name, sheet_name, image, {'box': box, 'fade': {}})
+
     for name, spec in BODY.items():
         split = None
         if name.startswith('leg_left') or name.startswith('foot_left'):
@@ -141,11 +195,7 @@ def main(argv: list[str]) -> int:
         elif name.startswith('leg_right') or name.startswith('foot_right'):
             split = 'right'
 
-        part, (x, y) = cut(body, spec, split)
-        part.save(out_dir / f'{name}.webp', 'WEBP', quality=92, method=6)
-        placements[name] = {'sheet': 'a1-body', 'x': x, 'y': y,
-                            'w': part.width, 'h': part.height}
-        print(f'{name:18s} {part.width:4d}x{part.height:<4d} @ {x},{y}')
+        emit(name, 'a1-body', body, spec, split)
 
     (out_dir / 'placements.json').write_text(
         json.dumps(placements, ensure_ascii=False, indent=2) + '\n',
