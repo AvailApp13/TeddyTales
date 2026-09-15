@@ -1,0 +1,93 @@
+{
+  "torso": {
+    "sheet": "a1-body",
+    "x": 1000,
+    "y": 940,
+    "w": 890,
+    "h": 1075
+  },
+  "arm_left_upper": {
+    "sheet": "a1-body",
+    "x": 625,
+    "y": 1080,
+    "w": 465,
+    "h": 360
+  },
+  "arm_left_lower": {
+    "sheet": "a1-body",
+    "x": 590,
+    "y": 1355,
+    "w": 500,
+    "h": 325
+  },
+  "paw_left": {
+    "sheet": "a1-body",
+    "x": 591,
+    "y": 1604,
+    "w": 499,
+    "h": 186
+  },
+  "arm_right_upper": {
+    "sheet": "a1-body",
+    "x": 1790,
+    "y": 1080,
+    "w": 424,
+    "h": 360
+  },
+  "arm_right_lower": {
+    "sheet": "a1-body",
+    "x": 1790,
+    "y": 1355,
+    "w": 488,
+    "h": 325
+  },
+  "paw_right": {
+    "sheet": "a1-body",
+    "x": 1790,
+    "y": 1604,
+    "w": 478,
+    "h": 186
+  },
+  "leg_left_upper": {
+    "sheet": "a1-body",
+    "x": 1000,
+    "y": 1860,
+    "w": 478,
+    "h": 420
+  },
+  "leg_left_lower": {
+    "sheet": "a1-body",
+    "x": 1000,
+    "y": 2195,
+    "w": 362,
+    "h": 345
+  },
+  "foot_left": {
+    "sheet": "a1-body",
+    "x": 1000,
+    "y": 2464,
+    "w": 365,
+    "h": 273
+  },
+  "leg_right_upper": {
+    "sheet": "a1-body",
+    "x": 1422,
+    "y": 1860,
+    "w": 478,
+    "h": 420
+  },
+  "leg_right_lower": {
+    "sheet": "a1-body",
+    "x": 1496,
+    "y": 2195,
+    "w": 404,
+    "h": 345
+  },
+  "foot_right": {
+    "sheet": "a1-body",
+    "x": 1492,
+    "y": 2464,
+    "w": 408,
+    "h": 271
+  }
+}
