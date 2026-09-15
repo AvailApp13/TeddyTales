@@ -1,0 +1,65 @@
+{
+  "torso": {
+    "source": "0calm",
+    "x": 430,
+    "y": 1540,
+    "w": 1620,
+    "h": 980
+  },
+  "legs": {
+    "source": "0calm",
+    "x": 660,
+    "y": 2330,
+    "w": 1200,
+    "h": 930
+  },
+  "head_calm": {
+    "source": "0calm",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  },
+  "head_happy": {
+    "source": "1happy",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  },
+  "head_sad": {
+    "source": "2sad",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  },
+  "head_sleep": {
+    "source": "3sleep",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  },
+  "head_chew": {
+    "source": "4chew",
+    "x": 560,
+    "y": 80,
+    "w": 1369,
+    "h": 1564
+  },
+  "head_gazeL": {
+    "source": "8gazeL",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  },
+  "head_gazeR": {
+    "source": "9gazeR",
+    "x": 560,
+    "y": 80,
+    "w": 1370,
+    "h": 1564
+  }
+}
