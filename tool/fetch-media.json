@@ -1,0 +1,9 @@
+{
+  "_": "Что принести из облака Higgsfield через раннер GitHub. Ключ — имя папки/файла в ветке claude/media-cache. Для видео можно задать frames: сколько кадров в секунду выдёргивать, чтобы посмотреть ролик покадрово.",
+  "items": {
+    "breath-test": {
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260915_163947_be4323eb-beb1-4449-88fd-97835691bbf6.mp4",
+      "frames": 4
+    }
+  }
+}
