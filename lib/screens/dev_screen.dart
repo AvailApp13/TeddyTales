@@ -60,10 +60,8 @@ class _BearDevScreenState extends State<BearDevScreen> {
                   top: 12,
                   child: AnimatedBuilder(
                     animation: _bear,
-                    builder: (context, _) => _SpeechBubble(
-                      controller: _bear,
-                      language: _language,
-                    ),
+                    builder: (context, _) =>
+                        _SpeechBubble(controller: _bear, language: _language),
                   ),
                 ),
               ],
@@ -77,8 +75,7 @@ class _BearDevScreenState extends State<BearDevScreen> {
               builder: (context, _) => _DevPanel(
                 controller: _bear,
                 language: _language,
-                onLanguageChanged: (value) =>
-                    setState(() => _language = value),
+                onLanguageChanged: (value) => setState(() => _language = value),
               ),
             ),
           ),

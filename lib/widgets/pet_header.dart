@@ -13,11 +13,7 @@ import '../theme/app_theme.dart';
 /// На макете правее монет есть счётчик сердец и полоса уровня — обе механики
 /// в КП отсутствуют и отложены во вторую версию, поэтому здесь их нет.
 class PetHeader extends StatelessWidget {
-  const PetHeader({
-    super.key,
-    required this.profile,
-    required this.age,
-  });
+  const PetHeader({super.key, required this.profile, required this.age});
 
   final PetProfile profile;
   final GameAge age;
@@ -118,9 +114,9 @@ class _CoinBalance extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '$coins',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),

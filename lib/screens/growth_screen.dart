@@ -67,7 +67,9 @@ class GrowthScreen extends StatelessWidget {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            context.l10n.growthNewStage(stageTitle(context.l10n, controller.state.stage)),
+            context.l10n.growthNewStage(
+              stageTitle(context.l10n, controller.state.stage),
+            ),
           ),
           behavior: SnackBarBehavior.floating,
         ),

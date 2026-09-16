@@ -31,8 +31,7 @@ class Board2048 {
 
   int score = 0;
 
-  int get maxTile =>
-      cells.expand((row) => row).reduce((a, b) => a > b ? a : b);
+  int get maxTile => cells.expand((row) => row).reduce((a, b) => a > b ? a : b);
 
   /// Сдвиг всей доски. Возвращает `true`, если хоть что-то сдвинулось или
   /// слилось, — только тогда появляется новая плитка.
@@ -98,9 +97,7 @@ class Board2048 {
       for (var c = size - 1; c >= 0; c--) cells[index][c],
     ],
     MoveDirection.up => [for (var r = 0; r < size; r++) cells[r][index]],
-    MoveDirection.down => [
-      for (var r = size - 1; r >= 0; r--) cells[r][index],
-    ],
+    MoveDirection.down => [for (var r = size - 1; r >= 0; r--) cells[r][index]],
   };
 
   void _writeLine(MoveDirection d, int index, List<int> line) {

@@ -101,7 +101,10 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _BirthCard(name: petDisplayName(l10n, profile.name), skin: skin),
+                        _BirthCard(
+                          name: petDisplayName(l10n, profile.name),
+                          skin: skin,
+                        ),
 
                         _SectionTitle(l10n.profileSectionBirth),
                         _InfoRows(
@@ -112,12 +115,18 @@ class ProfileScreen extends StatelessWidget {
                                   ? l10n.profileSexGirl
                                   : l10n.profileSexBoy,
                             ),
-                            _InfoRow(l10n.profileAgeLabel, formatAge(l10n, age)),
+                            _InfoRow(
+                              l10n.profileAgeLabel,
+                              formatAge(l10n, age),
+                            ),
                             _InfoRow(
                               l10n.profileZodiacLabel,
                               // ДОПУЩЕНИЕ: пока сервера нет, показываем Льва —
                               // ровно как в прототипе, чтобы строка не пустовала.
-                              zodiacTitle(context.l10n, profile.zodiac ?? BearZodiac.leo),
+                              zodiacTitle(
+                                context.l10n,
+                                profile.zodiac ?? BearZodiac.leo,
+                              ),
                               // Пометка стоит только здесь: остальные две
                               // заглушки объяснены подписью внизу экрана, и три
                               // одинаковых ярлыка подряд превратили бы карточку

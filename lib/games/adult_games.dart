@@ -200,9 +200,7 @@ class _Game2048ScreenState extends State<Game2048Screen> {
           : l10n.game2048Hint(_target, _board.score),
       onRestart: _board.isStuck
           ? () => setState(() {
-              _board = Board2048(
-                seed: DateTime.now().millisecondsSinceEpoch,
-              );
+              _board = Board2048(seed: DateTime.now().millisecondsSinceEpoch);
             })
           : null,
       child: GestureDetector(
@@ -300,7 +298,18 @@ class PairsScreen extends StatefulWidget {
 class _PairsScreenState extends State<PairsScreen> {
   /// Символы пар — предметы из мира мишки, не детские «где красный».
   static const List<String> _symbols = [
-    '🧸', '🧶', '🍯', '🫖', '🧺', '🌻', '🍪', '🎁', '🧦', '🕯️', '🌙', '☕',
+    '🧸',
+    '🧶',
+    '🍯',
+    '🫖',
+    '🧺',
+    '🌻',
+    '🍪',
+    '🎁',
+    '🧦',
+    '🕯️',
+    '🌙',
+    '☕',
   ];
 
   late PairsBoard _board;

@@ -113,14 +113,18 @@ class BearRigBinding implements BearRigSink {
     // поэтому выставляется до триггера.
     if (variant != null) _setNumber(BearRigSpec.variant, variant);
 
-    final trigger =
-        _triggers[name] ??= _TriggerChannel.resolve(name, _stateMachine);
+    final trigger = _triggers[name] ??= _TriggerChannel.resolve(
+      name,
+      _stateMachine,
+    );
     trigger.fire();
   }
 
   void _setNumber(String name, int value) {
-    final channel =
-        _numbers[name] ??= _NumberChannel.resolve(name, _stateMachine);
+    final channel = _numbers[name] ??= _NumberChannel.resolve(
+      name,
+      _stateMachine,
+    );
     channel.value = value.toDouble();
   }
 
@@ -153,8 +157,10 @@ ViewModelInstance? _tryDataBind(RiveWidgetController controller) {
     return controller.dataBind(DataBind.auto());
   } on RiveException catch (error) {
     if (kDebugMode) {
-      debugPrint('[TeddyTales] View model не привязан ($error) — это нормально, '
-          'если риг работает только на входах State Machine.');
+      debugPrint(
+        '[TeddyTales] View model не привязан ($error) — это нормально, '
+        'если риг работает только на входах State Machine.',
+      );
     }
     return null;
   }

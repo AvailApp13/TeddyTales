@@ -129,14 +129,8 @@ class BearOutfit {
       other.accessoryId == accessoryId;
 
   @override
-  int get hashCode => Object.hash(
-    outfitId,
-    topId,
-    bottomId,
-    headwearId,
-    shoesId,
-    accessoryId,
-  );
+  int get hashCode =>
+      Object.hash(outfitId, topId, bottomId, headwearId, shoesId, accessoryId);
 
   @override
   String toString() =>

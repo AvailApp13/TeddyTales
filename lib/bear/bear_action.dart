@@ -54,14 +54,14 @@ extension BearActionAvailability on BearAction {
     BearAction.sleep ||
     BearAction.wake ||
     BearAction.pet => BearStage.newborn,
-    BearAction.wash || BearAction.play || BearAction.dressUp =>
-      BearStage.crawling,
+    BearAction.wash ||
+    BearAction.play ||
+    BearAction.dressUp => BearStage.crawling,
     BearAction.decorate => BearStage.firstSteps,
     BearAction.learn => BearStage.growing,
   };
 
-  bool isAvailableOn(BearStage stage) =>
-      stage.riveValue >= minStage.riveValue;
+  bool isAvailableOn(BearStage stage) => stage.riveValue >= minStage.riveValue;
 }
 
 /// Действие с отметкой времени — единица истории, по которой считается

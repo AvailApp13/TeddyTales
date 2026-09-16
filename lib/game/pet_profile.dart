@@ -44,8 +44,7 @@ class PetProfile {
   /// стоп-словарь и очередь спорных живут в панели управления (КП 15.6).
   static bool isNameLengthValid(String name) {
     final trimmed = name.trim();
-    return trimmed.length >= minNameLength &&
-        trimmed.length <= maxNameLength;
+    return trimmed.length >= minNameLength && trimmed.length <= maxNameLength;
   }
 
   PetProfile copyWith({

@@ -95,8 +95,7 @@ class CareStatsPanel extends StatelessWidget {
           Expanded(
             child: _StatTile(
               stat: tile,
-              enabled:
-                  onAction != null && tile.action.isAvailableOn(stage),
+              enabled: onAction != null && tile.action.isAvailableOn(stage),
               onTap: () => onAction?.call(tile.action),
             ),
           ),

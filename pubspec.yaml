@@ -25,6 +25,7 @@ dependencies:
   rive: ^0.14.11
   font_awesome_flutter: ^11.0.0
   supabase_flutter: ^2.17.2
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

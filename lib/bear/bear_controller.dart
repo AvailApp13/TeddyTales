@@ -47,6 +47,15 @@ class BearController extends ChangeNotifier {
   /// результат.
   final bool autoTrait;
 
+  /// Кому сообщать о совершённом действии.
+  ///
+  /// Через него прогресс уезжает на сервер (КП 1.4). Точка выбрана не
+  /// случайно: действия зовут из четырёх мест — с главного экрана, тапом по
+  /// мишке, из панели отладки и из игровой логики, — а [recordAction]
+  /// проходят все до единого. Подписка на контроллер ловит их разом, тогда
+  /// как обвешивать вызовы по одному значит однажды забыть вызов.
+  void Function(BearAction action)? onAction;
+
   BearState _state;
   BearDecayConfig _decay;
   BearRigSink? _rig;
@@ -76,8 +85,7 @@ class BearController extends ChangeNotifier {
   BearInitiative? get initiative => initiativePolicy.propose(_state);
 
   /// Пауза между пузырями инициативы — зависит от характера (КП 7.4).
-  Duration get initiativeCooldown =>
-      initiativePolicy.cooldownFor(_state.trait);
+  Duration get initiativeCooldown => initiativePolicy.cooldownFor(_state.trait);
 
   // --- Связь с ригом ------------------------------------------------------
 
@@ -206,6 +214,8 @@ class BearController extends ChangeNotifier {
   /// достаточно данных.
   void recordAction(BearAction action, {DateTime? at}) {
     traitTracker.record(action, at: at);
+    onAction?.call(action);
+
     if (!autoTrait) return;
 
     final resolved = traitTracker.resolve();
@@ -263,6 +273,7 @@ class BearController extends ChangeNotifier {
   void dispose() {
     stopDecay();
     _rig = null;
+    onAction = null;
     super.dispose();
   }
 }

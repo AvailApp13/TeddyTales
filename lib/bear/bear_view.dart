@@ -99,9 +99,7 @@ class _BearViewState extends State<BearView> {
       return RiveWidgetController(
         file,
         artboardSelector: const ArtboardNamed(BearRigSpec.artboard),
-        stateMachineSelector: const StateMachineNamed(
-          BearRigSpec.stateMachine,
-        ),
+        stateMachineSelector: const StateMachineNamed(BearRigSpec.stateMachine),
       );
     } on RiveException catch (error) {
       if (kDebugMode) {

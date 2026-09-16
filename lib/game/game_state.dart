@@ -32,13 +32,39 @@ class GameState extends ChangeNotifier {
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
-    'bed', 'rug', 'lamp', 'basket',
-    'wall_rose', 'floor_wood', 'pillow_heart', 'plant',
-    'ball', 'duck', 'cubes',
+    'bed',
+    'rug',
+    'lamp',
+    'basket',
+    'wall_rose',
+    'floor_wood',
+    'pillow_heart',
+    'plant',
+    'ball',
+    'duck',
+    'cubes',
     'out_yellow',
   };
 
   final BearController bear;
+
+  // --- Точки подключения к серверу (КП 1.4) --------------------------------
+  //
+  // Не ссылка на хранилище, а колбэки, потому что порядок создания обратный:
+  // сначала состояние игры, потом мост к серверу, который на него
+  // подписывается. Со ссылкой получилось бы кольцо.
+  //
+  // Пока они не заданы — игра работает сама по себе, как работала до
+  // появления сервера. Это и есть поведение в офлайне.
+
+  /// Покупка предмета. Возвращает `false`, если сервер отказал.
+  Future<bool> Function(String itemId)? onBuy;
+
+  /// Пройденный уровень обучения.
+  void Function(String categoryId, int level)? onLevelDone;
+
+  /// Предмет поставлен в комнату или убран.
+  void Function(String itemId, {required bool placed})? onPlace;
 
   PetProfile _profile;
   final Set<String> _owned;
@@ -142,11 +168,27 @@ class GameState extends ChangeNotifier {
   }
 
   /// Разовая покупка предмета мимо корзины.
+  ///
+  /// Списание идёт локально сразу, чтобы кнопка отвечала без задержки, а
+  /// сервер подтверждает следом и присылает настоящий баланс. Цену он берёт
+  /// свою (КП 11.1): присланная клиентом — это предложение купить слона за
+  /// рубль.
   bool buy(String id) {
     final item = ItemCatalog.byId(id);
     if (isOwned(id) || !spend(item.price)) return false;
     _owned.add(id);
     notifyListeners();
+
+    final ask = onBuy;
+    if (ask != null) {
+      ask(id).then((ok) {
+        if (ok) return;
+        // Сервер отказал: возвращаем как было, иначе игрок унесёт предмет,
+        // которого у него нет, и увидит откат при следующем запуске.
+        _owned.remove(id);
+        earn(item.price);
+      });
+    }
     return true;
   }
 
@@ -166,6 +208,7 @@ class GameState extends ChangeNotifier {
     }
 
     bear.recordAction(BearAction.decorate);
+    onPlace?.call(id, placed: _placed.contains(id));
     notifyListeners();
   }
 
@@ -209,6 +252,9 @@ class GameState extends ChangeNotifier {
     earn(reward);
     bear.showHappy();
     bear.recordAction(BearAction.learn);
+    // Награду на сервере считает своя функция — по таблице наград, а не по
+    // числу, присланному отсюда (КП 9.5, 15.4).
+    onLevelDone?.call(categoryId, level);
     notifyListeners();
   }
 

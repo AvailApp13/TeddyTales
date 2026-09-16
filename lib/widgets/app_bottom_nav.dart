@@ -76,7 +76,10 @@ class _Icon extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Icon(section.icon, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+        Icon(
+          section.icon,
+          color: AppColors.textSecondary.withValues(alpha: 0.5),
+        ),
         const Positioned(
           right: -4,
           bottom: -2,

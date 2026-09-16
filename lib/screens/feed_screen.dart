@@ -249,9 +249,7 @@ class _FeedScreenState extends State<FeedScreen> {
         _HintBar(emoji: '🧸', text: _foodHint(l10n, trait)),
         const SizedBox(height: 10),
         Expanded(
-          child: _tab == _FeedTab.ready
-              ? _buildDishes(trait)
-              : _buildRecipes(),
+          child: _tab == _FeedTab.ready ? _buildDishes(trait) : _buildRecipes(),
         ),
       ],
     );
@@ -421,9 +419,9 @@ class _SheetHead extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           _CoinPill(coins: coins),
@@ -481,9 +479,9 @@ class _CoinPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             '$coins',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -606,10 +604,7 @@ class _HintBar extends StatelessWidget {
             Text(emoji, style: const TextStyle(fontSize: 14)),
             const SizedBox(width: 7),
             Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              child: Text(text, style: Theme.of(context).textTheme.bodySmall),
             ),
           ],
         ),

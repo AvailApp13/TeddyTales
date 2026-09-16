@@ -5,6 +5,7 @@ import 'package:rive/rive.dart' show RiveNative;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'backend/bootstrap.dart';
+import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
 import 'game/game_state.dart';
@@ -86,6 +87,18 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         : widget.boot.snapshot.placed,
   );
 
+  /// Мост к серверу: отправляет действия и применяет ответы (КП 1.4).
+  ///
+  /// Создаётся после мишки и состояния игры, потому что подписывается на
+  /// оба. Работает и в офлайне: там хранилище в памяти, действия копятся в
+  /// очереди и уходят, когда связь вернётся.
+  late final ProgressSync _sync = ProgressSync(
+    store: widget.boot.store,
+    bear: _bear,
+    game: _game,
+    onSnapshot: (snapshot) => widget.boot.cache?.save(snapshot),
+  );
+
   BearLanguage _language = BearLanguage.ru;
 
   /// Прошёл ли пользователь экран входа.
@@ -111,8 +124,25 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
           coins: 1250,
         );
 
+  /// Наблюдатель хранится полем, а не создаётся на лету: снять его можно
+  /// только по той же ссылке, а неснятый переживёт экран и продолжит
+  /// дёргать уничтоженный мост.
+  late final _Resumed _resumed = _Resumed(_sync);
+
+  @override
+  void initState() {
+    super.initState();
+    // Обращение к полю поднимает `late final` и включает подписку на
+    // действия. Без этой строки мост создался бы только при первом
+    // обращении из разметки, то есть никогда.
+    _sync.retry();
+    WidgetsBinding.instance.addObserver(_resumed);
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(_resumed);
+    _sync.dispose();
     _game.dispose();
     _bear.dispose();
     super.dispose();
@@ -161,5 +191,21 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
             )
           : null,
     );
+  }
+}
+
+/// Досылает накопленное, когда приложение вернулось на экран.
+///
+/// Момент выбран не случайно: телефон, пролежавший в кармане без связи,
+/// почти всегда находит её в первые секунды после разблокировки. Без этого
+/// очередь ждала бы следующего действия игрока, а он мог бы и не прийти.
+class _Resumed extends WidgetsBindingObserver {
+  _Resumed(this.sync);
+
+  final ProgressSync sync;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) sync.retry();
   }
 }

@@ -122,7 +122,6 @@ class _DiaryRow extends StatelessWidget {
 
   final _DiaryEvent event;
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

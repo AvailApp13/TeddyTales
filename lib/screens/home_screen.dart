@@ -100,9 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Открывает экран поверх главного и возвращает вкладку на «Главную»:
   /// у разделов свои полноэкранные виды с кнопкой «назад», как на макете.
   Future<void> _open(Widget screen) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => screen),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => screen));
     if (mounted) setState(() => _section = AppSection.home);
   }
 
@@ -277,17 +277,10 @@ class _RoomScene extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: controller.petBear,
-              child: BearView(
-                controller: controller,
-                assetPath: riveAssetPath,
-              ),
+              child: BearView(controller: controller, assetPath: riveAssetPath),
             ),
           ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: _CareButton(onTap: onOpenCare),
-          ),
+          Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
           // Пузырь — в левом верхнем углу, зеркально кнопке «Что будем
           // делать?» справа (решение заказчика). Внизу он закрывал мишке
           // ноги, по центру сверху — упирался в капюшон. Правая граница
@@ -331,9 +324,9 @@ class _CareButton extends StatelessWidget {
           ),
           child: Text(
             context.l10n.homeCareButton,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ),

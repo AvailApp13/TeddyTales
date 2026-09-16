@@ -182,7 +182,10 @@ class _RoomPainter extends CustomPainter {
     // Облако-намёк.
     canvas.drawOval(
       Rect.fromCenter(
-        center: window.center.translate(-window.width * 0.15, -window.height * 0.2),
+        center: window.center.translate(
+          -window.width * 0.15,
+          -window.height * 0.2,
+        ),
         width: window.width * 0.5,
         height: window.height * 0.16,
       ),

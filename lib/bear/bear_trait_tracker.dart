@@ -192,8 +192,7 @@ class BearTraitTracker {
         scores(now: at).entries
             .where(
               (e) =>
-                  e.key != BearTrait.independent &&
-                  e.key != BearTrait.reserved,
+                  e.key != BearTrait.independent && e.key != BearTrait.reserved,
             )
             .toList()
           ..sort((a, b) => b.value.compareTo(a.value));

@@ -32,8 +32,7 @@ enum AppSection {
   /// Каталог открыт с первого дня — так требует КП 12.1.
   final BearStage minStage;
 
-  bool isUnlockedAt(BearStage stage) =>
-      stage.riveValue >= minStage.riveValue;
+  bool isUnlockedAt(BearStage stage) => stage.riveValue >= minStage.riveValue;
 
   /// Пояснение к замку — только для дев-целей. UI обязан брать текст из
   /// `lib/l10n/sections_l10n.dart::sectionLockReason`.
