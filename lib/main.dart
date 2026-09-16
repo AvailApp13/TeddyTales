@@ -11,6 +11,7 @@ import 'game/game_calendar.dart';
 import 'game/game_state.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
+import 'notifications/notification_service.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
@@ -38,14 +39,20 @@ Future<void> main() async {
   // офлайн (КП 1.1), приложение открывается в любом случае.
   final boot = await Bootstrap.start();
 
-  runApp(TeddyTalesApp(boot: boot));
+  // Напоминания не обязательны для игры: не поднялись — она работает молча.
+  final notifications = await NotificationService.create();
+
+  runApp(TeddyTalesApp(boot: boot, notifications: notifications));
 }
 
 class TeddyTalesApp extends StatefulWidget {
-  const TeddyTalesApp({super.key, required this.boot});
+  const TeddyTalesApp({super.key, required this.boot, this.notifications});
 
   /// С чем запустились: хранилище прогресса и состояние на момент старта.
   final BootResult boot;
+
+  /// Напоминания об уходе. `null` — механизм не поднялся.
+  final NotificationService? notifications;
 
   @override
   State<TeddyTalesApp> createState() => _TeddyTalesAppState();
@@ -127,7 +134,36 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// Наблюдатель хранится полем, а не создаётся на лету: снять его можно
   /// только по той же ссылке, а неснятый переживёт экран и продолжит
   /// дёргать уничтоженный мост.
-  late final _Resumed _resumed = _Resumed(_sync);
+  late final _Lifecycle _lifecycle = _Lifecycle(
+    onPaused: _planReminders,
+    onResumed: () {
+      _sync.retry();
+      // Игрок открыл приложение — напоминания ему больше не нужны, он уже
+      // здесь. Оставить их значит показать «малыш проголодался» человеку,
+      // который в эту секунду его кормит.
+      widget.notifications?.cancelAll();
+    },
+  );
+
+  /// Строит расписание напоминаний от текущих показателей (КП 13.1).
+  ///
+  /// Момент выбран — уход в фон. Планировать на каждое действие значит
+  /// перестраивать расписание десятки раз за сессию впустую: пока
+  /// приложение открыто, напоминания всё равно не показываются.
+  void _planReminders() {
+    final service = widget.notifications;
+    if (service == null) return;
+
+    service.enabled = {
+      for (final kind in NotificationKind.values)
+        if (_game.isNotificationOn(kind.id)) kind.id,
+    };
+    service.reschedule(
+      stats: _bear.stats,
+      decay: _bear.decay,
+      language: _language,
+    );
+  }
 
   @override
   void initState() {
@@ -136,12 +172,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // действия. Без этой строки мост создался бы только при первом
     // обращении из разметки, то есть никогда.
     _sync.retry();
-    WidgetsBinding.instance.addObserver(_resumed);
+    WidgetsBinding.instance.addObserver(_lifecycle);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(_resumed);
+    WidgetsBinding.instance.removeObserver(_lifecycle);
     _sync.dispose();
     _game.dispose();
     _bear.dispose();
@@ -194,18 +230,32 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   }
 }
 
-/// Досылает накопленное, когда приложение вернулось на экран.
+/// Две точки, где приложение переключается между «на экране» и «в кармане».
 ///
-/// Момент выбран не случайно: телефон, пролежавший в кармане без связи,
-/// почти всегда находит её в первые секунды после разблокировки. Без этого
-/// очередь ждала бы следующего действия игрока, а он мог бы и не прийти.
-class _Resumed extends WidgetsBindingObserver {
-  _Resumed(this.sync);
+/// Уход в фон — момент, когда имеет смысл строить расписание напоминаний:
+/// показатели актуальны, а показывать уведомления станет кому.
+///
+/// Возвращение — момент, когда стоит дослать накопленное: телефон,
+/// пролежавший без связи, почти всегда находит её в первые секунды после
+/// разблокировки. Без этого очередь ждала бы следующего действия игрока, а
+/// он мог бы и не прийти.
+class _Lifecycle extends WidgetsBindingObserver {
+  _Lifecycle({required this.onPaused, required this.onResumed});
 
-  final ProgressSync sync;
+  final VoidCallback onPaused;
+  final VoidCallback onResumed;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) sync.retry();
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        onPaused();
+      case AppLifecycleState.resumed:
+        onResumed();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        break;
+    }
   }
 }
