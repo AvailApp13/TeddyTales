@@ -577,16 +577,22 @@ def skeleton_objects(builder: Builder, items: list) -> None:
         continues = bones.length_of(parent_end, start) <= BRANCH_GAP
 
         if continues:
-            props = [(PARENT, 'Uint', parent_local)]
+            # Продолжение цепочки: сидит в конце родителя, угол — от него.
+            props = [(PARENT, 'Uint', parent_local),
+                     (ROTATION, 'Double', bones.local_rotation(name))]
             kind = 'Bone'
         else:
-            # Ветка: корневая кость задаёт положение сама.
+            # Ветка. Корневая кость не наследует трансформ родителя: и
+            # положение, и угол задаются в мировых величинах. Проверено
+            # дорогой ценой — от относительного угла ветки разлетались, а
+            # у зрачков это долго не замечалось, потому что круглый глаз
+            # выглядит одинаково под любым поворотом.
             props = [(PARENT, 'Uint', parent_local),
-                     (ROOT_X, 'Double', start[0]), (ROOT_Y, 'Double', start[1])]
+                     (ROOT_X, 'Double', start[0]), (ROOT_Y, 'Double', start[1]),
+                     (ROTATION, 'Double', bones.angle_of(start, end))]
             kind = 'RootBone'
 
-        props += [(ROTATION, 'Double', bones.local_rotation(name)),
-                  (SCALE_X, 'Double', 1.0), (SCALE_Y, 'Double', 1.0),
+        props += [(SCALE_X, 'Double', 1.0), (SCALE_Y, 'Double', 1.0),
                   (BONE_LENGTH, 'Double', bones.length_of(start, end))]
         items.append((builder.by_name[kind], props))
 
@@ -651,6 +657,10 @@ def build(path: Path) -> int:
     scene = Scene(rig, types)
 
     parts = load_parts()
+    # Скелет выводится из фактических габаритов деталей — единственный
+    # способ гарантировать, что кость проходит внутри той детали, которую
+    # несёт.
+    bones.adopt(bones.from_parts(parts))
     parts['hearts'] = carry_hearts(rig, scene)
 
     draw_order = ['hearts'] + list(SPRITES) + list(MOUNT)

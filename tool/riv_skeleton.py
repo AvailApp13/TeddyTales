@@ -89,6 +89,100 @@ CHAIN: dict[str, tuple[str | None, tuple[float, float], tuple[float, float]]] = 
 NAMES = list(CHAIN)
 
 
+def span(part, inset: float = 0.12) -> tuple[tuple[float, float],
+                                             tuple[float, float]]:
+    """Отрезок вдоль детали: сверху вниз по её середине.
+
+    Втягивание внутрь нужно, чтобы кость не доходила до самого края: сустав
+    сидит в мясе детали, а не на её границе, иначе сгиб идёт по краю и
+    выглядит переломом.
+    """
+    height = part.height * part.scale
+    return ((part.x, part.y - height * (0.5 - inset)),
+            (part.x, part.y + height * (0.5 - inset)))
+
+
+def from_parts(parts: dict) -> dict:
+    """Строит скелет по фактическим габаритам деталей.
+
+    Раньше координаты костей были проставлены на глаз, и это единственное
+    место в проекте, где числа брались из головы. Кончилось предсказуемо:
+    кости рук и ног оказались не там, где сами руки и ноги. Теперь каждая
+    кость выводится из детали, которую она несёт, — и разъехаться им негде.
+
+    Цепочка сшивается по стыкам: конец предыдущего звена и начало
+    следующего сводятся в одну точку посередине между ними. Это и есть
+    сустав.
+    """
+    def joint(lower, upper) -> tuple[float, float]:
+        return ((lower[0] + upper[0]) / 2, (lower[1] + upper[1]) / 2)
+
+    torso_top, torso_bottom = span(parts['torso'], inset=0.05)
+    head_top, head_bottom = span(parts['head'], inset=0.10)
+
+    chain: dict = {}
+    chain['b_root'] = (None, (STAGE_CENTRE, STAGE_BASELINE),
+                       (STAGE_CENTRE, torso_bottom[1] + 40))
+    chain['b_hip'] = ('b_root', (STAGE_CENTRE, torso_bottom[1] + 40),
+                      (STAGE_CENTRE, torso_bottom[1] - 30))
+    chain['b_spine'] = ('b_hip', (STAGE_CENTRE, torso_bottom[1] - 30),
+                        (STAGE_CENTRE, torso_top[1] + 20))
+    chain['b_neck'] = ('b_spine', (STAGE_CENTRE, torso_top[1] + 20),
+                       (STAGE_CENTRE, head_bottom[1] - 20))
+    chain['b_head'] = ('b_neck', (STAGE_CENTRE, head_bottom[1] - 20),
+                       (STAGE_CENTRE, head_top[1]))
+
+    # Уши растут из висков и смотрят наружу и вверх.
+    for side in ('left', 'right'):
+        ear = parts[f'ear_{side}']
+        width = ear.width * ear.scale
+        direction = -1.0 if side == 'left' else 1.0
+        base = (ear.x - direction * width * 0.25,
+                ear.y + ear.height * ear.scale * 0.35)
+        tip = (ear.x + direction * width * 0.25,
+               ear.y - ear.height * ear.scale * 0.25)
+        chain[f'b_ear_{side}'] = ('b_head', base, tip)
+
+    # Зрачки: короткая кость в самом глазу, ею и ведут взгляд.
+    for side in ('left', 'right'):
+        eye = parts[f'eye_{side}']
+        chain[f'b_pupil_{side}'] = ('b_head', (eye.x, eye.y + 12.0),
+                                    (eye.x, eye.y - 12.0))
+
+    mouth = parts['mouth']
+    chain['b_jaw'] = ('b_head', (mouth.x, mouth.y - 30.0),
+                      (mouth.x, mouth.y + 25.0))
+
+    # Руки и ноги: три звена, сустав между соседними деталями.
+    for side in ('left', 'right'):
+        limbs = (
+            ('arm', 'b_spine', (f'arm_{side}_upper', f'arm_{side}_lower',
+                                f'paw_{side}'),
+             (f'b_arm_{side}_upper', f'b_arm_{side}_lower', f'b_paw_{side}')),
+            ('leg', 'b_hip', (f'leg_{side}_upper', f'leg_{side}_lower',
+                              f'foot_{side}'),
+             (f'b_leg_{side}_upper', f'b_leg_{side}_lower', f'b_foot_{side}')),
+        )
+        for _, root, part_names, bone_names in limbs:
+            spans = [span(parts[name]) for name in part_names]
+            points = [spans[0][0]]
+            for lower, upper in zip(spans, spans[1:]):
+                points.append(joint(lower[1], upper[0]))
+            points.append(spans[-1][1])
+            parent = root
+            for index, bone in enumerate(bone_names):
+                chain[bone] = (parent, points[index], points[index + 1])
+                parent = bone
+    return chain
+
+
+def adopt(chain: dict) -> None:
+    """Подменяет скелет вычисленным."""
+    CHAIN.clear()
+    CHAIN.update(chain)
+    NAMES[:] = list(CHAIN)
+
+
 def angle_of(start: tuple[float, float], end: tuple[float, float]) -> float:
     return math.atan2(end[1] - start[1], end[0] - start[0])
 
