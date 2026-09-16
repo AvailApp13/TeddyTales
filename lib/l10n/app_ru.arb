@@ -472,6 +472,17 @@
   "learnTaskCountApples": "Сколько яблок? 🍎🍎🍎",
   "learnTaskCountBigger": "Что больше?",
   "learnTaskCountNext": "Что дальше? 1, 2, 3…",
+  "learnTaskProgress": "Задание {current} из {total}",
+  "@learnTaskProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "learnTaskWorldApples": "Где растут яблоки?",
   "learnTaskWorldDay": "Что светит днём?",
   "learnTaskWorldWater": "Кто живёт в воде?",

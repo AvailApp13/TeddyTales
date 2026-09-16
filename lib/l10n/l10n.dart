@@ -25,4 +25,17 @@ extension BearLanguageLocale on BearLanguage {
 extension L10nContext on BuildContext {
   /// Короткий доступ к строкам: `context.l10n.commonBack`.
   AppLocalizations get l10n => AppLocalizations.of(this);
+
+  /// Текущий язык приложения.
+  ///
+  /// Нужен там, где текст приходит не из ARB, а из данных, — например
+  /// задания обучения (КП 9.4: контент даёт Заказчик, а не разработчик).
+  /// Берётся из локали, а не из параметра: иначе язык пришлось бы
+  /// протаскивать через каждый экран, который до контента добирается.
+  BearLanguage get language =>
+      switch (Localizations.localeOf(this).languageCode) {
+        'en' => BearLanguage.en,
+        'zh' => BearLanguage.zh,
+        _ => BearLanguage.ru,
+      };
 }

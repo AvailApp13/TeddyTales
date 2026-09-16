@@ -805,6 +805,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get learnTaskCountNext => '接下来是什么？1、2、3……';
 
   @override
+  String learnTaskProgress(int current, int total) {
+    return '第 $current 题，共 $total 题';
+  }
+
+  @override
   String get learnTaskWorldApples => '苹果长在哪里？';
 
   @override

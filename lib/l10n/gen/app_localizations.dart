@@ -1516,6 +1516,12 @@ abstract class AppLocalizations {
   /// **'Что дальше? 1, 2, 3…'**
   String get learnTaskCountNext;
 
+  /// No description provided for @learnTaskProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание {current} из {total}'**
+  String learnTaskProgress(int current, int total);
+
   /// No description provided for @learnTaskWorldApples.
   ///
   /// In ru, this message translates to:

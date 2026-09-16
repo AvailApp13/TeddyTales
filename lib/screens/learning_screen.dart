@@ -3,130 +3,61 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../game/audience.dart';
+import '../game/learning_content.dart';
 import '../game/game_state.dart';
 import '../games/adult_games.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Задание: вопрос и четыре варианта ответа, один из которых верный.
-///
-/// Варианты — эмодзи или короткие строки, как в принятом прототипе: до чтения
-/// малыш ещё не дорос, ответ выбирается по картинке.
-class _EduTask {
-  const _EduTask({
-    required this.question,
-    required this.options,
-    required this.correct,
-  });
-
-  final String question;
-  final List<String> options;
-
-  /// Индекс верного варианта в [options].
-  final int correct;
-}
-
 /// Категория обучения: три штуки, названия из КП 9.1.
+///
+/// Задания лежат не здесь, а в `learning_content.dart`: по КП 9.4 контент
+/// даёт Заказчик через панель управления, и держать его рядом с разметкой
+/// экрана значило бы намертво связать текст задания с версией приложения.
 class _EduCategory {
   const _EduCategory({
     required this.id,
     required this.emoji,
     required this.title,
-    required this.tasks,
+    required this.levels,
   });
 
-  /// Ключ прогресса в [GameState.eduProgress] — тот же, что в прототипе.
+  /// Ключ прогресса в [GameState.eduProgress].
   final String id;
 
   final String emoji;
   final String title;
-  final List<_EduTask> tasks;
+
+  /// Десять уровней по десять заданий (КП 9.2, 9.4).
+  final List<List<EduTask>> levels;
 }
 
-/// Контент обучения — ЗАГЛУШКА на девять заданий.
-///
-/// По КП 9.4 движок рассчитан на 300 заданий, а сам контент даёт Заказчик через
-/// панель управления. То есть этот список — не финальные данные, а образец
-/// формата: когда появится API контента (КП 15.4), список уезжает на сервер, а
-/// экран остаётся прежним. Пока заданий меньше, чем уровней, они повторяются по
-/// кругу — ровно как в прототипе, который заказчик принял.
-///
-/// Тексты вопросов и наборы вариантов перенесены из прототипа дословно,
-/// переформулировок нет. Строится из локализации, поэтому это функция, а не
-/// const-список: язык может смениться на лету.
+/// Три категории КП 9.1. Названия переводятся, задания приходят из контента.
 List<_EduCategory> _categories(AppLocalizations l10n) => [
   _EduCategory(
     id: 'colors',
     emoji: '🎨',
     title: l10n.learnCatColorsTitle,
-    tasks: [
-      _EduTask(
-        question: l10n.learnTaskColorsRed,
-        options: const ['🔴', '🟢', '🔵', '🟡'],
-        correct: 0,
-      ),
-      _EduTask(
-        question: l10n.learnTaskColorsCircle,
-        options: const ['🔺', '⬛️', '🔵', '⬜️'],
-        correct: 2,
-      ),
-      _EduTask(
-        question: l10n.learnTaskColorsGreen,
-        options: const ['🟣', '🟢', '🟠', '⚫️'],
-        correct: 1,
-      ),
-    ],
+    levels: eduContent['colors']!,
   ),
   _EduCategory(
     id: 'count',
     emoji: '🔢',
     title: l10n.learnCatCountTitle,
-    tasks: [
-      _EduTask(
-        question: l10n.learnTaskCountApples,
-        options: const ['2', '3', '4', '5'],
-        correct: 1,
-      ),
-      _EduTask(
-        question: l10n.learnTaskCountBigger,
-        options: const ['🐘', '🐭', '🐜', '🐝'],
-        correct: 0,
-      ),
-      _EduTask(
-        question: l10n.learnTaskCountNext,
-        options: const ['5', '4', '7', '9'],
-        correct: 1,
-      ),
-    ],
+    levels: eduContent['count']!,
   ),
   _EduCategory(
     id: 'world',
     emoji: '🌍',
     title: l10n.learnCatWorldTitle,
-    tasks: [
-      _EduTask(
-        question: l10n.learnTaskWorldWater,
-        options: const ['🐟', '🐈', '🐦', '🐴'],
-        correct: 0,
-      ),
-      _EduTask(
-        question: l10n.learnTaskWorldDay,
-        options: const ['🌙', '⭐️', '☀️', '💡'],
-        correct: 2,
-      ),
-      _EduTask(
-        question: l10n.learnTaskWorldApples,
-        options: const ['🌳', '🌊', '🏔', '🏠'],
-        correct: 0,
-      ),
-    ],
+    levels: eduContent['world']!,
   ),
 ];
 
 /// Уровней в каждой категории (КП 9.2). Три категории по десять — те самые
 /// 30 уровней из заголовка раздела 9 КП.
-const int _levelsPerCategory = 10;
+const int _levelsPerCategory = eduLevelsPerCategory;
 
 /// Взрослая категория: та же строка списка, но вместо квиза открывается
 /// собственный экран игры.
@@ -215,6 +146,10 @@ class _LearningScreenState extends State<LearningScreen> {
   /// Открытый уровень внутри категории. `null` — показываем сетку уровней.
   int? _level;
 
+  /// Какое задание уровня идёт сейчас, 0…9. Уровень засчитывается, когда
+  /// пройдены все десять (КП 9.4).
+  int _taskIndex = 0;
+
   /// Вариант, по которому только что тапнули. `null` — ещё не отвечали.
   int? _answered;
 
@@ -245,6 +180,7 @@ class _LearningScreenState extends State<LearningScreen> {
     _closeTimer?.cancel();
     setState(() {
       _level = level;
+      _taskIndex = 0;
       _answered = null;
       _solved = false;
     });
@@ -254,6 +190,7 @@ class _LearningScreenState extends State<LearningScreen> {
     _closeTimer?.cancel();
     setState(() {
       _level = null;
+      _taskIndex = 0;
       _answered = null;
       _solved = false;
     });
@@ -261,7 +198,7 @@ class _LearningScreenState extends State<LearningScreen> {
 
   // --- Задание (КП 9.3) ----------------------------------------------------
 
-  void _answer(_EduCategory category, _EduTask task, int index) {
+  void _answer(_EduCategory category, EduTask task, int index) {
     if (_solved) return;
 
     setState(() => _answered = index);
@@ -272,6 +209,22 @@ class _LearningScreenState extends State<LearningScreen> {
 
     final level = _level;
     if (level == null) return;
+
+    // Уровень — это десять заданий подряд (КП 9.4). Пока они не кончились,
+    // верный ответ ведёт к следующему, а не закрывает уровень.
+    final isLast = _taskIndex >= eduTasksPerLevel - 1;
+    if (!isLast) {
+      _solved = true;
+      _closeTimer = Timer(const Duration(milliseconds: 520), () {
+        if (!mounted) return;
+        setState(() {
+          _taskIndex += 1;
+          _answered = null;
+          _solved = false;
+        });
+      });
+      return;
+    }
 
     widget.game.completeLevel(category.id, level, reward: _levelReward);
     _solved = true;
@@ -609,10 +562,7 @@ class _LearningScreenState extends State<LearningScreen> {
 
   /// Само задание с вариантами ответа (КП 9.3).
   Widget _buildQuiz(BuildContext context, _EduCategory category, int level) {
-    // Заданий пока меньше, чем уровней, поэтому крутим их по кругу — так же,
-    // как в прототипе. С приходом контента из панели (КП 9.4) остаток исчезнет
-    // сам: заданий станет столько же, сколько уровней.
-    final task = category.tasks[level % category.tasks.length];
+    final task = category.levels[level][_taskIndex];
     final answered = _answered;
     final isWrong = answered != null && answered != task.correct;
 
@@ -632,10 +582,46 @@ class _LearningScreenState extends State<LearningScreen> {
               AppDimens.pagePadding,
             ),
             children: [
+              // Сколько заданий уровня пройдено. Без этой полоски уровень
+              // из десяти вопросов выглядит бесконечным: ответил верно, а
+              // экран будто не изменился.
               Padding(
-                padding: const EdgeInsets.fromLTRB(0, 6, 0, 14),
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 12),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < eduTasksPerLevel; i++) ...[
+                      Expanded(
+                        child: Container(
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: i < _taskIndex
+                                ? AppColors.sage
+                                : i == _taskIndex
+                                ? AppColors.sageSoft
+                                : AppColors.outline,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      if (i < eduTasksPerLevel - 1) const SizedBox(width: 4),
+                    ],
+                  ],
+                ),
+              ),
+              Text(
+                context.l10n.learnTaskProgress(
+                  _taskIndex + 1,
+                  eduTasksPerLevel,
+                ),
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 14),
                 child: Text(
-                  task.question,
+                  task.question(context.language),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,

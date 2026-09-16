@@ -236,6 +236,7 @@
   "learnTaskCountApples": "How many apples? 🍎🍎🍎",
   "learnTaskCountBigger": "Which one is bigger?",
   "learnTaskCountNext": "What comes next? 1, 2, 3…",
+  "learnTaskProgress": "Question {current} of {total}",
   "learnTaskWorldApples": "Where do apples grow?",
   "learnTaskWorldDay": "What shines in the daytime?",
   "learnTaskWorldWater": "Who lives in water?",

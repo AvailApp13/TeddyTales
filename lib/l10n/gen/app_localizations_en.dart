@@ -872,6 +872,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learnTaskCountNext => 'What comes next? 1, 2, 3…';
 
   @override
+  String learnTaskProgress(int current, int total) {
+    return 'Question $current of $total';
+  }
+
+  @override
   String get learnTaskWorldApples => 'Where do apples grow?';
 
   @override

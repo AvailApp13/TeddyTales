@@ -236,6 +236,7 @@
   "learnTaskCountApples": "有几个苹果？🍎🍎🍎",
   "learnTaskCountBigger": "哪个更大？",
   "learnTaskCountNext": "接下来是什么？1、2、3……",
+  "learnTaskProgress": "第 {current} 题，共 {total} 题",
   "learnTaskWorldApples": "苹果长在哪里？",
   "learnTaskWorldDay": "白天什么在发光？",
   "learnTaskWorldWater": "谁住在水里？",
