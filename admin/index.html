@@ -196,8 +196,15 @@ async function boot() {
 }
 
 async function enter() {
-  const { data, error } = await db.from('staff').select('role').maybeSingle();
-  if (error || !data) {
+  let data = null;
+  let error = null;
+  try {
+    ({ data, error } = await db.from('staff').select('role').maybeSingle());
+  } catch (thrown) {
+    return say('gate-msg', 'bad', explain(thrown));
+  }
+  if (error) return say('gate-msg', 'bad', explain(error));
+  if (!data) {
     // Учётная запись есть, а роли нет — значит адрес не приглашали.
     // Выходим сразу: панель без роли всё равно покажет пустые экраны,
     // и человек будет гадать, что сломалось.
@@ -218,22 +225,48 @@ function say(target, kind, text) {
   $(target).innerHTML = `<div class="${kind}">${esc(text)}</div>`;
 }
 
+/// Объясняет сбой связи по-человечески.
+///
+/// Нужна потому, что самая частая причина здесь — не ошибка входа, а
+/// страница, открытая там, где браузеру запрещено ходить наружу: в
+/// предпросмотре, в артефакте, во встроенном окне мессенджера. Библиотека
+/// в этом случае говорит «Load failed» или молчит вовсе, и человек
+/// добросовестно ищет ошибку в пароле.
+function explain(error) {
+  const text = String(error?.message || error || '');
+  const isNetwork = /load failed|failed to fetch|networkerror|network request/i.test(text);
+  if (!isNetwork) return text;
+  return 'Нет связи с сервером. Чаще всего это значит, что страница открыта '
+    + 'в предпросмотре, которому запрещено обращаться наружу. Откройте её '
+    + 'по обычному адресу — с GitHub Pages или файлом с диска.';
+}
+
 $('btn-signin').onclick = async () => {
-  const { error } = await db.auth.signInWithPassword({
-    email: $('email').value.trim(),
-    password: $('password').value,
-  });
-  if (error) return say('gate-msg', 'bad', error.message);
-  await enter();
+  say('gate-msg', 'ok', 'Вхожу…');
+  try {
+    const { error } = await db.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value,
+    });
+    if (error) return say('gate-msg', 'bad', explain(error));
+    await enter();
+  } catch (error) {
+    say('gate-msg', 'bad', explain(error));
+  }
 };
 
 $('btn-signup').onclick = async () => {
-  const { error } = await db.auth.signUp({
-    email: $('email').value.trim(),
-    password: $('password').value,
-  });
-  if (error) return say('gate-msg', 'bad', error.message);
-  say('gate-msg', 'ok', 'Доступ создан. Если почта подтверждается — проверьте письмо, затем войдите.');
+  say('gate-msg', 'ok', 'Создаю доступ…');
+  try {
+    const { error } = await db.auth.signUp({
+      email: $('email').value.trim(),
+      password: $('password').value,
+    });
+    if (error) return say('gate-msg', 'bad', explain(error));
+    say('gate-msg', 'ok', 'Доступ создан. Если почта требует подтверждения — проверьте письмо. Затем нажмите «Войти».');
+  } catch (error) {
+    say('gate-msg', 'bad', explain(error));
+  }
 };
 
 $('btn-signout').onclick = async () => {
