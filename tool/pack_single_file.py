@@ -205,6 +205,20 @@ def build(build_dir: Path, out: Path, title: str, fragment: bool = False) -> Non
         assets[rel] = {'b64': read_b64(rig), 'mime': MIME['.riv']}
         print(f'  {rel} — {rig.stat().st_size} Б')
 
+    # Фирменные знаки способов входа (Apple, Google, WeChat, Alipay, QQ) —
+    # это шрифт, а не картинки. Берём по шаблону: в имени файла стоит версия
+    # Font Awesome, и при обновлении пакета жёсткий путь молча перестал бы
+    # находиться, а знаки на кнопках превратились бы в квадраты.
+    #
+    # Только Brands: наборы Regular и Solid в приложении не используются, а
+    # весят под мегабайт. Лишние семейства уйдут из манифеста сами —
+    # `_trim_font_manifest` выбрасывает то, чего нет в упаковке.
+    fonts_dir = build_dir / 'assets' / 'packages' / 'font_awesome_flutter'
+    for font in sorted(fonts_dir.rglob('*Brands*.otf')):
+        rel = str(font.relative_to(build_dir))
+        assets[rel] = {'b64': read_b64(font), 'mime': 'font/otf'}
+        print(f'  {rel} — {font.stat().st_size} Б')
+
     # Картинки приложения (фото героя для пазла и всё, что появится рядом).
     images_dir = build_dir / 'assets' / 'assets' / 'images'
     if images_dir.exists():

@@ -11,6 +11,7 @@ import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/sign_in_screen.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -64,6 +65,14 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   BearLanguage _language = BearLanguage.ru;
 
+  /// Прошёл ли пользователь экран входа.
+  ///
+  /// Настоящей сессии за этим пока нет: ни один способ входа не подключён,
+  /// и любая кнопка просто пускает внутрь. Флаг живёт в памяти намеренно —
+  /// когда появится Supabase, его место займёт состояние сессии, и менять
+  /// придётся одну строку, а не разметку экранов.
+  bool _signedIn = false;
+
   late final PetProfile _profile = PetProfile(
     name: PetProfile.defaultName,
     birthAt: DateTime.now().subtract(
@@ -96,26 +105,32 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: HomeScreen(
-        controller: _bear,
-        game: _game,
-        calendar: _calendar,
-        language: _language,
-        onLanguageChanged: (value) => setState(() => _language = value),
-        // ВРЕМЕННО: настоящего рига ещё нет, поэтому показываем сторонний
-        // демонстрационный файл — он подтверждает, что пайплайн загрузки,
-        // выбора State Machine и рендера работает. Убрать, как только придёт
-        // bear_main.riv.
-        riveAssetPath: BearRigSpec.assetPath,
-        // Дев-панель со всеми входами State Machine — только в отладке.
-        onOpenDevPanel: kDebugMode
-            ? (context) => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => BearDevScreen(controller: _bear),
-                ),
-              )
-            : null,
-      ),
+      home: _signedIn
+          ? _home()
+          : SignInScreen(onSignedIn: () => setState(() => _signedIn = true)),
+    );
+  }
+
+  Widget _home() {
+    return HomeScreen(
+      controller: _bear,
+      game: _game,
+      calendar: _calendar,
+      language: _language,
+      onLanguageChanged: (value) => setState(() => _language = value),
+      // ВРЕМЕННО: настоящего рига ещё нет, поэтому показываем сторонний
+      // демонстрационный файл — он подтверждает, что пайплайн загрузки,
+      // выбора State Machine и рендера работает. Убрать, как только придёт
+      // bear_main.riv.
+      riveAssetPath: BearRigSpec.assetPath,
+      // Дев-панель со всеми входами State Machine — только в отладке.
+      onOpenDevPanel: kDebugMode
+          ? (context) => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => BearDevScreen(controller: _bear),
+              ),
+            )
+          : null,
     );
   }
 }

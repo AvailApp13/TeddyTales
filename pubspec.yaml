@@ -23,6 +23,7 @@ dependencies:
   # Версии >= 0.14 тянут за собой rive_native — нативные библиотеки
   # скачиваются автоматически на `flutter run` / `flutter build`.
   rive: ^0.14.11
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:

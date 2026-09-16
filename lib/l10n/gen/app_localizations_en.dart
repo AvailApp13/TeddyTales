@@ -378,6 +378,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedNotEnoughCoins => 'Not enough coins';
 
   @override
+  String get feedRecipesNote =>
+      'Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.';
+
+  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -387,10 +391,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote =>
-      'Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -1144,6 +1144,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopTitle => 'Shop';
+
+  @override
+  String get signInAlipay => 'Sign in with Alipay';
+
+  @override
+  String get signInApple => 'Sign in with Apple';
+
+  @override
+  String get signInGoogle => 'Sign in with Google';
+
+  @override
+  String get signInLegal =>
+      'By continuing you accept the terms of use and the privacy policy';
+
+  @override
+  String get signInPrompt => 'Choose how to sign in';
+
+  @override
+  String get signInQq => 'Sign in with QQ';
+
+  @override
+  String get signInSkip => 'Skip and explore the app';
+
+  @override
+  String signInSoonBody(String method) {
+    return 'Signing in with $method is not wired up yet. Letting you through.';
+  }
+
+  @override
+  String get signInSoonTitle => 'Under construction';
+
+  @override
+  String get signInTagline => 'A plush little one who grows up with you';
+
+  @override
+  String get signInWeChat => 'Sign in with WeChat';
 
   @override
   String get skinJoy => 'JOY';

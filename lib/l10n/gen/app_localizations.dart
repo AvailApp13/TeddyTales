@@ -688,17 +688,17 @@ abstract class AppLocalizations {
   /// **'Не хватает монет'**
   String get feedNotEnoughCoins;
 
-  /// No description provided for @feedRecipeSteps.
-  ///
-  /// In ru, this message translates to:
-  /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
-  String feedRecipeSteps(int count);
-
   /// No description provided for @feedRecipesNote.
   ///
   /// In ru, this message translates to:
   /// **'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.'**
   String get feedRecipesNote;
+
+  /// No description provided for @feedRecipeSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
+  String feedRecipeSteps(int count);
 
   /// No description provided for @feedStepProgress.
   ///
@@ -2013,6 +2013,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Магазин'**
   String get shopTitle;
+
+  /// No description provided for @signInAlipay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Alipay'**
+  String get signInAlipay;
+
+  /// No description provided for @signInApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Apple'**
+  String get signInApple;
+
+  /// No description provided for @signInGoogle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Google'**
+  String get signInGoogle;
+
+  /// No description provided for @signInLegal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжая, вы принимаете условия использования и политику конфиденциальности'**
+  String get signInLegal;
+
+  /// No description provided for @signInPrompt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите способ входа'**
+  String get signInPrompt;
+
+  /// No description provided for @signInQq.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через QQ'**
+  String get signInQq;
+
+  /// No description provided for @signInSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить и посмотреть приложение'**
+  String get signInSkip;
+
+  /// No description provided for @signInSoonBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход через {method} ещё не подключён. Пропускаем в приложение.'**
+  String signInSoonBody(String method);
+
+  /// No description provided for @signInSoonTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раздел в разработке'**
+  String get signInSoonTitle;
+
+  /// No description provided for @signInTagline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плюшевый малыш, который растёт вместе с тобой'**
+  String get signInTagline;
+
+  /// No description provided for @signInWeChat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через WeChat'**
+  String get signInWeChat;
 
   /// No description provided for @skinJoy.
   ///

@@ -330,6 +330,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedNotEnoughCoins => '金币不够';
 
   @override
+  String get feedRecipesNote => '按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。';
+
+  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -338,9 +341,6 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote => '按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -1075,6 +1075,41 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shopTitle => '商店';
+
+  @override
+  String get signInAlipay => '通过支付宝登录';
+
+  @override
+  String get signInApple => '通过 Apple 登录';
+
+  @override
+  String get signInGoogle => '通过 Google 登录';
+
+  @override
+  String get signInLegal => '继续即表示您接受使用条款和隐私政策';
+
+  @override
+  String get signInPrompt => '请选择登录方式';
+
+  @override
+  String get signInQq => '通过 QQ 登录';
+
+  @override
+  String get signInSkip => '跳过，先看看应用';
+
+  @override
+  String signInSoonBody(String method) {
+    return '$method 登录尚未接入，先带你进入应用。';
+  }
+
+  @override
+  String get signInSoonTitle => '功能开发中';
+
+  @override
+  String get signInTagline => '陪你一起长大的毛绒宝宝';
+
+  @override
+  String get signInWeChat => '通过微信登录';
 
   @override
   String get skinJoy => 'JOY';

@@ -384,6 +384,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get feedNotEnoughCoins => 'Не хватает монет';
 
   @override
+  String get feedRecipesNote =>
+      'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.';
+
+  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -394,10 +398,6 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote =>
-      'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -1153,6 +1153,42 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shopTitle => 'Магазин';
+
+  @override
+  String get signInAlipay => 'Войти через Alipay';
+
+  @override
+  String get signInApple => 'Войти через Apple';
+
+  @override
+  String get signInGoogle => 'Войти через Google';
+
+  @override
+  String get signInLegal =>
+      'Продолжая, вы принимаете условия использования и политику конфиденциальности';
+
+  @override
+  String get signInPrompt => 'Выберите способ входа';
+
+  @override
+  String get signInQq => 'Войти через QQ';
+
+  @override
+  String get signInSkip => 'Пропустить и посмотреть приложение';
+
+  @override
+  String signInSoonBody(String method) {
+    return 'Вход через $method ещё не подключён. Пропускаем в приложение.';
+  }
+
+  @override
+  String get signInSoonTitle => 'Раздел в разработке';
+
+  @override
+  String get signInTagline => 'Плюшевый малыш, который растёт вместе с тобой';
+
+  @override
+  String get signInWeChat => 'Войти через WeChat';
 
   @override
   String get skinJoy => 'JOY';

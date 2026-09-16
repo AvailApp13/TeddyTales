@@ -7,6 +7,7 @@
       }
     }
   },
+  "ageDays": "{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}",
   "@ageMonths": {
     "placeholders": {
       "count": {
@@ -14,6 +15,7 @@
       }
     }
   },
+  "ageMonths": "{count, plural, one{{count} месяц} few{{count} месяца} other{{count} месяцев}}",
   "@ageMonthsDays": {
     "placeholders": {
       "months": {
@@ -24,6 +26,7 @@
       }
     }
   },
+  "ageMonthsDays": "{months, plural, one{{months} месяц} few{{months} месяца} other{{months} месяцев}} {days, plural, one{{days} день} few{{days} дня} other{{days} дней}}",
   "@ageYears": {
     "placeholders": {
       "count": {
@@ -31,6 +34,8 @@
       }
     }
   },
+  "ageYears": "{count, plural, one{{count} год} few{{count} года} other{{count} лет}}",
+  "appTitle": "TeddyTales",
   "@bearRigMissingHint": {
     "placeholders": {
       "path": {
@@ -38,261 +43,6 @@
       }
     }
   },
-  "@careLockedUntilStage": {
-    "placeholders": {
-      "stage": {
-        "type": "int"
-      }
-    }
-  },
-  "@catalogFootnote": {
-    "placeholders": {
-      "shoes": {
-        "type": "String"
-      },
-      "price": {
-        "type": "String"
-      }
-    }
-  },
-  "@catalogSizeCm": {
-    "placeholders": {
-      "size": {
-        "type": "int"
-      }
-    }
-  },
-  "@commonCoins": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedCookResult": {
-    "placeholders": {
-      "recipe": {
-        "type": "String"
-      },
-      "reward": {
-        "type": "int"
-      },
-      "gain": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedEatResult": {
-    "placeholders": {
-      "dish": {
-        "type": "String"
-      },
-      "gain": {
-        "type": "int"
-      },
-      "price": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedFoodGain": {
-    "placeholders": {
-      "gain": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedRecipeSteps": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedStepProgress": {
-    "placeholders": {
-      "step": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      },
-      "reward": {
-        "type": "int"
-      },
-      "gain": {
-        "type": "int"
-      }
-    }
-  },
-  "@feedWrongStep": {
-    "placeholders": {
-      "ingredient": {
-        "type": "String"
-      }
-    }
-  },
-  "@game2048Hint": {
-    "placeholders": {
-      "target": {
-        "type": "int"
-      },
-      "score": {
-        "type": "int"
-      }
-    }
-  },
-  "@game2048Title": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@game2048WonHint": {
-    "placeholders": {
-      "target": {
-        "type": "int"
-      }
-    }
-  },
-  "@gamePairsHint": {
-    "placeholders": {
-      "moves": {
-        "type": "int"
-      }
-    }
-  },
-  "@gamePairsSolvedHint": {
-    "placeholders": {
-      "moves": {
-        "type": "int"
-      }
-    }
-  },
-  "@gamePairsTitle": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@gamePuzzleTitle": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@growthNewStage": {
-    "placeholders": {
-      "stage": {
-        "type": "String"
-      }
-    }
-  },
-  "@homeScreenNotReady": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "@learnAgeChildTitle": {
-    "placeholders": {
-      "age": {
-        "type": "int"
-      }
-    }
-  },
-  "@learnCorrectToast": {
-    "placeholders": {
-      "coins": {
-        "type": "int"
-      }
-    }
-  },
-  "@learnLevelDoneToast": {
-    "placeholders": {
-      "coins": {
-        "type": "int"
-      }
-    }
-  },
-  "@learnLevelsCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "@learnQuizTitle": {
-    "placeholders": {
-      "category": {
-        "type": "String"
-      },
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "@navLockReason": {
-    "placeholders": {
-      "stage": {
-        "type": "String"
-      }
-    }
-  },
-  "@profileBirthFur": {
-    "placeholders": {
-      "hero": {
-        "type": "String"
-      },
-      "fur": {
-        "type": "String"
-      }
-    }
-  },
-  "@roomItemBought": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "@roomItemPlaced": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "@roomItemRemoved": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "@shopBuyFor": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "@shopCheckoutDone": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "ageDays": "{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}",
-  "ageMonths": "{count, plural, one{{count} месяц} few{{count} месяца} other{{count} месяцев}}",
-  "ageMonthsDays": "{months, plural, one{{months} месяц} few{{months} месяца} other{{months} месяцев}} {days, plural, one{{days} день} few{{days} дня} other{{days} дней}}",
-  "ageYears": "{count, plural, one{{count} год} few{{count} года} other{{count} лет}}",
-  "appTitle": "TeddyTales",
   "bearRigMissingHint": "Положите {path}",
   "bearRigMissingTitle": "Риг ещё не подключён",
   "birthCueAwakening": "Малыш открывает глаза и осматривается.",
@@ -306,6 +56,13 @@
   "careFeedSubtitle": "Вкусная еда для малыша",
   "careFeedTitle": "Покормить",
   "careFootnote": "Поглаживания в списке нет: по разделу 8.1 ТЗ это касание экрана — тапните по мишке на главной.",
+  "@careLockedUntilStage": {
+    "placeholders": {
+      "stage": {
+        "type": "int"
+      }
+    }
+  },
   "careLockedUntilStage": "Откроется на стадии {stage}",
   "carePlaySubtitle": "Весёлые игры вместе",
   "carePlayTitle": "Играть",
@@ -328,6 +85,16 @@
   "catalogFieldNameHint": "Как в документах",
   "catalogFieldPhone": "Телефон",
   "catalogFieldPostcode": "Индекс",
+  "@catalogFootnote": {
+    "placeholders": {
+      "shoes": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "catalogFootnote": "Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.",
   "catalogGrownSubtitle": "и готов отправиться к тебе домой",
   "catalogGrownTitle": "Твой малыш вырос",
@@ -339,6 +106,13 @@
   "catalogPayPalNote": " — и картой без аккаунта",
   "catalogPaySection": "Оплата · КП 12.4",
   "catalogPayStub": "Оплата подключается на этапе интеграции",
+  "@catalogSizeCm": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
   "catalogSizeCm": "{size} см",
   "catalogSummaryItem": "Товар",
   "catalogSummaryPrice": "Цена",
@@ -356,6 +130,13 @@
   "categoryToy": "Игрушки",
   "categoryWallpaper": "Обои",
   "commonBack": "Назад",
+  "@commonCoins": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "commonCoins": "{count} монет",
   "diaryEventFavoriteToy": "Любимая игрушка",
   "diaryEventFirstBath": "Первое купание",
@@ -374,10 +155,43 @@
   "dishSoup": "Суп",
   "dishYogurt": "Йогурт",
   "feedCookHint": "Добавляй продукты по порядку. Ошибёшься — просто попробуем ещё раз.",
+  "@feedCookResult": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      },
+      "reward": {
+        "type": "int"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
   "feedCookResult": "Готово! {recipe} · +{reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}}, еда +{gain}",
   "feedDishesNote": "Ровно 10 блюд по КП 8.2. Цены и прибавки — плейсхолдеры, по КП 10.9 они утверждаются отдельно и настраиваются с сервера.",
+  "@feedEatResult": {
+    "placeholders": {
+      "dish": {
+        "type": "String"
+      },
+      "gain": {
+        "type": "int"
+      },
+      "price": {
+        "type": "int"
+      }
+    }
+  },
   "feedEatResult": "{dish} · еда +{gain}, −{price, plural, one{{price} монета} few{{price} монеты} other{{price} монет}}",
   "feedFavourite": "Любимое",
+  "@feedFoodGain": {
+    "placeholders": {
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
   "feedFoodGain": "еда +{gain}",
   "feedHintActive": "Я сегодня носился как заводной — давай посытнее!",
   "feedHintAffectionate": "Хочу что-нибудь сладкое… и чтобы ты рядом.",
@@ -386,22 +200,104 @@
   "feedHintIndependent": "Я бы и сам справился. Ну, почти.",
   "feedHintReserved": "Можно просто фрукты?",
   "feedNotEnoughCoins": "Не хватает монет",
-  "feedRecipeSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
   "feedRecipesNote": "Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.",
+  "@feedRecipeSteps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feedRecipeSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
+  "@feedStepProgress": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "reward": {
+        "type": "int"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
   "feedStepProgress": "Шаг {step} из {total}. Награда: {reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}} и еда +{gain}.",
   "feedTabCook": "Приготовить",
   "feedTabReady": "Готовые блюда",
   "feedTitle": "Чем покормим?",
+  "@feedWrongStep": {
+    "placeholders": {
+      "ingredient": {
+        "type": "String"
+      }
+    }
+  },
   "feedWrongStep": "Не то. Сейчас нужно: {ingredient}. Попробуй ещё раз — штрафа нет.",
+  "@game2048Hint": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "score": {
+        "type": "int"
+      }
+    }
+  },
   "game2048Hint": "Свайпайте: равные плитки сливаются. Цель — {target}. Счёт: {score}",
   "game2048StuckHint": "Ходов не осталось — начните заново кнопкой ниже.",
+  "@game2048Title": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "game2048Title": "2048 · уровень {level}",
+  "@game2048WonHint": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
   "game2048WonHint": "Есть {target}! Забирайте награду 🎉",
+  "@gamePairsHint": {
+    "placeholders": {
+      "moves": {
+        "type": "int"
+      }
+    }
+  },
   "gamePairsHint": "Откройте две одинаковые карточки. Ходы: {moves}",
+  "@gamePairsSolvedHint": {
+    "placeholders": {
+      "moves": {
+        "type": "int"
+      }
+    }
+  },
   "gamePairsSolvedHint": "{moves, plural, one{Все пары найдены за {moves} ход 🎉} few{Все пары найдены за {moves} хода 🎉} other{Все пары найдены за {moves} ходов 🎉}}",
+  "@gamePairsTitle": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "gamePairsTitle": "Память · уровень {level}",
   "gamePuzzleHint": "Двигайте плитки тапом — соберите фото.",
   "gamePuzzleSolvedHint": "Собрано! Забирайте награду 🎉",
+  "@gamePuzzleTitle": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "gamePuzzleTitle": "Пазл · уровень {level}",
   "gameRestart": "Заново",
   "growthAlreadyAdult": "Мишка уже взрослый",
@@ -414,10 +310,24 @@
   "growthGrowUp": "Повзрослеть",
   "growthMarkNow": "сейчас",
   "growthMarkPassed": "пройдено",
+  "@growthNewStage": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
   "growthNewStage": "Новая стадия: {stage}",
   "growthTitle": "Рост и развитие",
   "homeCareButton": "Что будем делать?",
   "homeDevPanelTooltip": "Дев-панель рига",
+  "@homeScreenNotReady": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "homeScreenNotReady": "Экран для «{name}» ещё не собран",
   "ingredientApple": "Яблоко",
   "ingredientBanana": "Банан",
@@ -504,18 +414,56 @@
   "learnAgeAdultSubtitle": "Пазлы с мишками, 2048, память",
   "learnAgeAdultTitle": "Взрослый",
   "learnAgeChildSubtitle": "Цвета и формы, счёт, окружающий мир",
+  "@learnAgeChildTitle": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
   "learnAgeChildTitle": "Ребёнок до {age}",
   "learnAgeGateSubtitle": "От возраста зависит набор игр. Поменять можно в любой момент.",
   "learnAgeGateTitle": "Кто будет играть?",
   "learnCatColorsTitle": "Цвета и формы",
   "learnCatCountTitle": "Счёт и простая логика",
   "learnCatWorldTitle": "Окружающий мир",
+  "@learnCorrectToast": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "learnCorrectToast": "{coins, plural, one{Верно! +{coins} монета} few{Верно! +{coins} монеты} other{Верно! +{coins} монет}}",
   "learnGamesTitle": "Игры",
+  "@learnLevelDoneToast": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "learnLevelDoneToast": "{coins, plural, one{Уровень пройден! +{coins} монета} few{Уровень пройден! +{coins} монеты} other{Уровень пройден! +{coins} монет}}",
+  "@learnLevelsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "learnLevelsCount": "{count, plural, one{{count} уровень} few{{count} уровня} other{{count} уровней}}",
   "learnLevelsNote": "По 10 уровней в каждой категории (КП 9.2). Движок рассчитан на 300 заданий, контент даёт Заказчик через панель (КП 9.4) — здесь по три задания на категорию для примера.",
   "learnQuizHintNote": "Верный ответ — анимация радости и награда.",
+  "@learnQuizTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "learnQuizTitle": "{category} · уровень {level}",
   "learnQuizWrongNote": "Не угадали. Попробуйте ещё раз — штрафа нет (КП 9.3).",
   "learnTaskColorsCircle": "Где круг?",
@@ -534,6 +482,13 @@
   "moodNormal": "Спокойный",
   "moodSad": "Грустный",
   "moodSleepy": "Сонный",
+  "@navLockReason": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
   "navLockReason": "Откроется на стадии «{stage}»",
   "navSectionCatalog": "Мишки",
   "navSectionHome": "Главная",
@@ -543,6 +498,16 @@
   "navSectionShop": "Магазин",
   "petDefaultName": "Мой малыш",
   "profileAgeLabel": "Возраст",
+  "@profileBirthFur": {
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "fur": {
+        "type": "String"
+      }
+    }
+  },
   "profileBirthFur": "{hero} · мех {fur}",
   "profileFootnote": "Рост, вес и знак зодиака — заглушки: их определяет сервер при рождении (КП 2.2, 2.5), а таблицу склонностей по знакам даёт Заказчик.",
   "profileHeightLabel": "Рост",
@@ -576,8 +541,29 @@
   "recipeSandwich": "Сэндвич",
   "recipeVeggie": "Овощное блюдо",
   "roomFooterNote": "52 предмета по КП 10: мебель 10, декор 16, игрушки 10, одежда 16. Сетка мест и предпросмотр — следующий шаг, сейчас предмет просто ставится или убирается.",
+  "@roomItemBought": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "roomItemBought": "{name} куплено",
+  "@roomItemPlaced": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "roomItemPlaced": "{name} поставлено",
+  "@roomItemRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "roomItemRemoved": "{name} убрано",
   "roomNotEnoughCoins": "Не хватает монет",
   "roomOwnedLabel": "Куплено",
@@ -596,9 +582,23 @@
   "settingsSectionLanguage": "Язык · КП 16.1",
   "settingsSectionNotifications": "Уведомления · КП 13.1, 13.2",
   "settingsTitle": "Настройки",
+  "@shopBuyFor": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "shopBuyFor": "Купить за {total}",
   "shopCartDisclaimer": "Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).",
   "shopCartEmpty": "Корзина пуста",
+  "@shopCheckoutDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "shopCheckoutDone": "{count, plural, one{Куплен {count} предмет} few{Куплено {count} предмета} other{Куплено {count} предметов}}",
   "shopNotEnoughCoins": "Не хватает монет",
   "shopOwnedLabel": "Куплено",
@@ -607,6 +607,24 @@
   "shopTabFurniture": "Мебель",
   "shopTabToys": "Игрушки",
   "shopTitle": "Магазин",
+  "signInAlipay": "Войти через Alipay",
+  "signInApple": "Войти через Apple",
+  "signInGoogle": "Войти через Google",
+  "signInLegal": "Продолжая, вы принимаете условия использования и политику конфиденциальности",
+  "signInPrompt": "Выберите способ входа",
+  "signInQq": "Войти через QQ",
+  "signInSkip": "Пропустить и посмотреть приложение",
+  "signInSoonBody": "Вход через {method} ещё не подключён. Пропускаем в приложение.",
+  "@signInSoonBody": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "signInSoonTitle": "Раздел в разработке",
+  "signInTagline": "Плюшевый малыш, который растёт вместе с тобой",
+  "signInWeChat": "Войти через WeChat",
   "skinJoy": "JOY",
   "skinSlow": "SLOW",
   "stageAdult": "Взрослый",
