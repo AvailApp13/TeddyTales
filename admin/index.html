@@ -248,6 +248,7 @@ function sections() {
     { id: 'dash', title: 'Дашборд', admin: false, render: renderDash },
     { id: 'economy', title: 'Экономика', admin: true, render: renderEconomy },
     { id: 'prices', title: 'Каталог и цены', admin: true, render: renderPrices },
+    { id: 'content', title: 'Реплики и уведомления', admin: true, render: renderContent },
     { id: 'names', title: 'Модерация имён', admin: true, render: renderNames },
     { id: 'history', title: 'История правок', admin: true, render: renderHistory },
     { id: 'staff', title: 'Доступы', admin: true, render: renderStaff },
@@ -429,6 +430,135 @@ async function renderPrices() {
     const { error } = await db.from('game_config').update({ value }).eq('key', 'item_prices');
     $('prices-msg').textContent = error ? `Не сохранилось: ${error.message}` : 'Сохранено';
     $('prices-msg').style.color = error ? 'var(--warn)' : 'var(--accent)';
+  };
+}
+
+// --- Контент: реплики и уведомления (КП 15.5) ------------------------------
+
+const PHRASE_CONTEXTS = {
+  greeting: 'Приветствие', idle: 'В покое', happy: 'Радость', sad: 'Грусть',
+  hungry: 'Голод', sleepy: 'Сонливость', dirty: 'Испачкался',
+  afterFeed: 'После кормления', afterWash: 'После умывания',
+  afterPlay: 'После игры', afterPet: 'После поглаживания',
+  afterWake: 'После пробуждения', invitePlay: 'Зовёт играть',
+  inviteLearn: 'Зовёт учиться', stageUp: 'Подрос',
+};
+
+const LANGS = [['ru', 'Русский'], ['en', 'English'], ['zh', '中文']];
+
+let contentLang = 'ru';
+
+async function renderContent() {
+  const [{ data: phrases, error: e1 }, { data: notes, error: e2 }] = await Promise.all([
+    db.from('phrases').select('*').order('context').order('id'),
+    db.from('notification_texts').select('*').order('kind'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const byContext = {};
+  for (const row of phrases) (byContext[row.context] ??= []).push(row);
+
+  $('view').innerHTML = `
+    <h1>Реплики и уведомления</h1>
+    <p class="lede">
+      Тексты приложения правятся здесь, без новой сборки. В приложении
+      остаётся такой же набор — на случай, когда сети нет.
+    </p>
+
+    <div class="row" style="margin-bottom:18px">
+      ${LANGS.map(([code, title]) => `
+        <button class="action ${code === contentLang ? '' : 'ghost'}"
+                data-lang="${code}">${esc(title)}</button>`).join('')}
+    </div>
+
+    <h2>Реплики питомца · ${phrases.length}</h2>
+    ${Object.entries(byContext).map(([context, rows]) => `
+      <div class="card">
+        <h2 style="margin-top:0;font-size:15px">${esc(PHRASE_CONTEXTS[context] || context)}</h2>
+        ${rows.map((row) => `
+          <label for="ph-${esc(row.id)}">${esc(row.id)}</label>
+          <input id="ph-${esc(row.id)}" type="text" data-phrase="${esc(row.id)}"
+                 value="${esc(row[contentLang])}">`).join('')}
+      </div>`).join('')}
+
+    <h2>Уведомления · ${notes.length}</h2>
+    <div class="card">
+      ${notes.map((row) => `
+        <label>${esc(row.kind)} · заголовок</label>
+        <input type="text" data-note-title="${esc(row.kind)}"
+               value="${esc(row['title_' + contentLang])}">
+        <label>${esc(row.kind)} · текст</label>
+        <input type="text" data-note-body="${esc(row.kind)}"
+               value="${esc(row['body_' + contentLang])}">`).join('')}
+    </div>
+
+    <div class="row" style="margin-top:6px">
+      <button class="action" id="save-content">Сохранить всё</button>
+      <span class="note" id="content-msg"></span>
+    </div>`;
+
+  $('view').querySelectorAll('[data-lang]').forEach((b) => {
+    b.onclick = () => { contentLang = b.dataset.lang; open('content'); };
+  });
+
+  $('save-content').onclick = async () => {
+    const msg = $('content-msg');
+    msg.textContent = 'Сохраняю…';
+    msg.style.color = 'var(--muted)';
+
+    // Пишем только изменённое: отправлять три десятка строк целиком ради
+    // одной правки — лишний трафик и лишний шум в поле `updated_at`.
+    const phraseEdits = [];
+    $('view').querySelectorAll('[data-phrase]').forEach((input) => {
+      const row = phrases.find((p) => p.id === input.dataset.phrase);
+      if (row && row[contentLang] !== input.value) {
+        phraseEdits.push({ id: row.id, value: input.value });
+      }
+    });
+
+    const noteEdits = new Map();
+    $('view').querySelectorAll('[data-note-title]').forEach((input) => {
+      const row = notes.find((n) => n.kind === input.dataset.noteTitle);
+      if (row && row['title_' + contentLang] !== input.value) {
+        noteEdits.set(row.kind, { ...(noteEdits.get(row.kind) || {}),
+          ['title_' + contentLang]: input.value });
+      }
+    });
+    $('view').querySelectorAll('[data-note-body]').forEach((input) => {
+      const row = notes.find((n) => n.kind === input.dataset.noteBody);
+      if (row && row['body_' + contentLang] !== input.value) {
+        noteEdits.set(row.kind, { ...(noteEdits.get(row.kind) || {}),
+          ['body_' + contentLang]: input.value });
+      }
+    });
+
+    if (phraseEdits.length === 0 && noteEdits.size === 0) {
+      msg.textContent = 'Нечего сохранять';
+      return;
+    }
+
+    const problems = [];
+    for (const edit of phraseEdits) {
+      const { error } = await db.from('phrases')
+        .update({ [contentLang]: edit.value, updated_at: new Date().toISOString() })
+        .eq('id', edit.id);
+      if (error) problems.push(`${edit.id}: ${error.message}`);
+    }
+    for (const [kind, fields] of noteEdits) {
+      const { error } = await db.from('notification_texts')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('kind', kind);
+      if (error) problems.push(`${kind}: ${error.message}`);
+    }
+
+    if (problems.length) {
+      msg.textContent = `Не сохранилось: ${problems[0]}`;
+      msg.style.color = 'var(--warn)';
+    } else {
+      msg.textContent = `Сохранено: ${phraseEdits.length + noteEdits.size}`;
+      msg.style.color = 'var(--accent)';
+    }
   };
 }
 
