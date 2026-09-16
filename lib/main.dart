@@ -4,6 +4,7 @@ import 'package:rive/rive.dart' show RiveNative;
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'backend/bootstrap.dart';
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
 import 'game/game_state.dart';
@@ -30,11 +31,20 @@ Future<void> main() async {
     debugPrint('[TeddyTales] Rive runtime не инициализировался: $error');
   }
 
-  runApp(const TeddyTalesApp());
+  // Прогресс поднимается до первого кадра: показать демонстрационные
+  // значения, а через секунду подменить их настоящими — значит мигнуть
+  // пользователю чужими цифрами. Не вышло достучаться до сервера — идём
+  // офлайн (КП 1.1), приложение открывается в любом случае.
+  final boot = await Bootstrap.start();
+
+  runApp(TeddyTalesApp(boot: boot));
 }
 
 class TeddyTalesApp extends StatefulWidget {
-  const TeddyTalesApp({super.key});
+  const TeddyTalesApp({super.key, required this.boot});
+
+  /// С чем запустились: хранилище прогресса и состояние на момент старта.
+  final BootResult boot;
 
   @override
   State<TeddyTalesApp> createState() => _TeddyTalesAppState();
@@ -43,25 +53,38 @@ class TeddyTalesApp extends StatefulWidget {
 class _TeddyTalesAppState extends State<TeddyTalesApp> {
   static const GameCalendar _calendar = GameCalendar();
 
+  /// Локальное затухание работает и при живом сервере — но только ради
+  /// плавности: между действиями показатели должны сползать на глазах, а не
+  /// прыгать раз в запрос. Истина всё равно приходит с сервера, который
+  /// пересчитывает их по своим часам (КП 1.5) и присылает при каждом
+  /// действии.
   late final BearController _bear = BearController(
-    initialState: const BearState(
-      stage: BearStage.growing,
-      stats: BearCareStats(
-        food: 60,
-        hygiene: 80,
-        sleep: 70,
-        play: 90,
-        love: 100,
-      ),
-    ),
+    initialState: widget.boot.isOnline
+        ? widget.boot.snapshot.state
+        : const BearState(
+            stage: BearStage.growing,
+            stats: BearCareStats(
+              food: 60,
+              hygiene: 80,
+              sleep: 70,
+              play: 90,
+              love: 100,
+            ),
+          ),
   )..startDecay();
 
-  /// Демонстрационная карточка питомца.
-  ///
-  /// Значения повторяют шапку макета: имя «Мой малыш», возраст «3 месяца
-  /// 12 дней», 1250 монет. В бою профиль приезжает с сервера вместе с
-  /// прогрессом (КП 1.4, 2.2).
-  late final GameState _game = GameState(bear: _bear, profile: _profile);
+  late final GameState _game = GameState(
+    bear: _bear,
+    profile: _profile,
+    // Пустые наборы означают, что сервера не было: тогда GameState сам
+    // выдаст стартовый набор из двенадцати предметов (КП 10.8).
+    owned: widget.boot.snapshot.inventory.isEmpty
+        ? null
+        : widget.boot.snapshot.inventory,
+    placed: widget.boot.snapshot.placed.isEmpty
+        ? null
+        : widget.boot.snapshot.placed,
+  );
 
   BearLanguage _language = BearLanguage.ru;
 
@@ -73,14 +96,20 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// придётся одну строку, а не разметку экранов.
   bool _signedIn = false;
 
-  late final PetProfile _profile = PetProfile(
-    name: PetProfile.defaultName,
-    birthAt: DateTime.now().subtract(
-      _calendar.realTimePerGameMonth * 3 + _calendar.realTimePerGameDay * 12,
-    ),
-    skin: BearSkin.boy,
-    coins: 1250,
-  );
+  /// Карточка питомца. С сервера, если он ответил; иначе — прежние
+  /// демонстрационные значения из макета, чтобы офлайн не выглядел пустым
+  /// экраном.
+  late final PetProfile _profile = widget.boot.isOnline
+      ? widget.boot.snapshot.profile
+      : PetProfile(
+          name: PetProfile.defaultName,
+          birthAt: DateTime.now().subtract(
+            _calendar.realTimePerGameMonth * 3 +
+                _calendar.realTimePerGameDay * 12,
+          ),
+          skin: BearSkin.boy,
+          coins: 1250,
+        );
 
   @override
   void dispose() {
