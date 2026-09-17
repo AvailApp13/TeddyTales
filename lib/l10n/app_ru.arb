@@ -130,6 +130,7 @@
   "categoryToy": "Игрушки",
   "categoryWallpaper": "Обои",
   "commonBack": "Назад",
+  "commonCancel": "Отмена",
   "@commonCoins": {
     "placeholders": {
       "count": {
@@ -590,9 +591,15 @@
   "settingsNotifStage": "Новая стадия",
   "settingsNotifTask": "Задание",
   "settingsQuietHours": "Тихие часы 22:00 — 8:00",
+  "settingsSectionAccount": "Аккаунт",
   "settingsSectionLanguage": "Язык · КП 16.1",
   "settingsSectionNotifications": "Уведомления · КП 13.1, 13.2",
+  "settingsSignOut": "Выйти",
+  "settingsSignOutConfirmBody": "Прогресс останется на сервере и вернётся при следующем входе.",
+  "settingsSignOutConfirmTitle": "Выйти из аккаунта?",
+  "settingsSignOutHint": "Вернёт к выбору способа входа",
   "settingsTitle": "Настройки",
+  "settingsVersion": "Версия",
   "@shopBuyFor": {
     "placeholders": {
       "total": {

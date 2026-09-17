@@ -267,6 +267,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonBack => 'Назад';
 
   @override
+  String get commonCancel => 'Отмена';
+
+  @override
   String commonCoins(int count) {
     return '$count монет';
   }
@@ -1106,13 +1109,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsQuietHours => 'Тихие часы 22:00 — 8:00';
 
   @override
+  String get settingsSectionAccount => 'Аккаунт';
+
+  @override
   String get settingsSectionLanguage => 'Язык · КП 16.1';
 
   @override
   String get settingsSectionNotifications => 'Уведомления · КП 13.1, 13.2';
 
   @override
+  String get settingsSignOut => 'Выйти';
+
+  @override
+  String get settingsSignOutConfirmBody =>
+      'Прогресс останется на сервере и вернётся при следующем входе.';
+
+  @override
+  String get settingsSignOutConfirmTitle => 'Выйти из аккаунта?';
+
+  @override
+  String get settingsSignOutHint => 'Вернёт к выбору способа входа';
+
+  @override
   String get settingsTitle => 'Настройки';
+
+  @override
+  String get settingsVersion => 'Версия';
 
   @override
   String shopBuyFor(int total) {

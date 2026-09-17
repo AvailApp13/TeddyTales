@@ -206,6 +206,20 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     );
   }
 
+  /// Выход из аккаунта (КП 14.2).
+  ///
+  /// Пока за флагом нет настоящей сессии, выход — это возврат на экран
+  /// входа. Когда появится Supabase, сюда добавится `signOut()` хранилища, а
+  /// разметка экранов не изменится: они знают только про обратный вызов.
+  ///
+  /// Напоминания снимаем обязательно. Они запланированы на часы вперёд и
+  /// говорят от лица питомца — «малыш проголодался» человеку, который из
+  /// аккаунта вышел, выглядит как чужое уведомление на своём телефоне.
+  void _signOut() {
+    widget.notifications?.cancelAll();
+    setState(() => _signedIn = false);
+  }
+
   Widget _home() {
     return HomeScreen(
       controller: _bear,
@@ -218,6 +232,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       // выбора State Machine и рендера работает. Убрать, как только придёт
       // bear_main.riv.
       riveAssetPath: BearRigSpec.assetPath,
+      onSignOut: _signOut,
       // Дев-панель со всеми входами State Machine — только в отладке.
       onOpenDevPanel: kDebugMode
           ? (context) => Navigator.of(context).push(

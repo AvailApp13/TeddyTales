@@ -263,6 +263,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonBack => 'Back';
 
   @override
+  String get commonCancel => 'Cancel';
+
+  @override
   String commonCoins(int count) {
     return '$count coins';
   }
@@ -1098,13 +1101,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsQuietHours => 'Quiet hours 22:00 — 8:00';
 
   @override
+  String get settingsSectionAccount => 'Account';
+
+  @override
   String get settingsSectionLanguage => 'Language · КП 16.1';
 
   @override
   String get settingsSectionNotifications => 'Notifications · КП 13.1, 13.2';
 
   @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsSignOutConfirmBody =>
+      'Your progress stays on the server and comes back next time you sign in.';
+
+  @override
+  String get settingsSignOutConfirmTitle => 'Sign out?';
+
+  @override
+  String get settingsSignOutHint => 'Takes you back to the sign-in options';
+
+  @override
   String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsVersion => 'Version';
 
   @override
   String shopBuyFor(int total) {

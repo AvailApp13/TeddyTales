@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../l10n/notifications_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sign_out_dialog.dart';
 
 /// Настройки (КП 14.2): язык интерфейса и уведомления.
 ///
@@ -27,12 +28,16 @@ class SettingsScreen extends StatelessWidget {
     required this.game,
     required this.language,
     required this.onLanguageChanged,
+    this.onSignOut,
   });
 
   /// Переключатели уведомлений и тихие часы хранятся в [GameState]
   /// (`isNotificationOn` / `toggleNotification`, `quietHours` /
   /// `setQuietHours`). Экран на него подписан, своей копии состояния не держит.
   final GameState game;
+
+  /// Выход из аккаунта (КП 14.2). `null` — пункт не показывается.
+  final VoidCallback? onSignOut;
 
   /// Текущий язык интерфейса (КП 16.1).
   ///
@@ -102,6 +107,42 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+
+                        if (onSignOut != null) ...[
+                          const SizedBox(height: 18),
+                          _SectionTitle(l10n.settingsSectionAccount),
+                          const SizedBox(height: 6),
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  title: Text(l10n.settingsVersion),
+                                  trailing: const Text(
+                                    _appVersion,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                const Divider(height: 1),
+                                ListTile(
+                                  title: Text(
+                                    l10n.settingsSignOut,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Text(l10n.settingsSignOutHint),
+                                  trailing: const Icon(Icons.logout, size: 20),
+                                  onTap: () =>
+                                      confirmSignOut(context, onSignOut),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
 
                         const SizedBox(height: 10),
                         // Текст подписи — дословно из прототипа. Он объясняет
@@ -191,6 +232,11 @@ class _SheetHeader extends StatelessWidget {
 }
 
 /// Подзаголовок раздела: капслок, разрядка, приглушённый цвет.
+/// Версия приложения. Держится строкой, а не читается из пакета: ради
+/// одной подписи тянуть зависимость и асинхронную загрузку незачем.
+/// Значение то же, что в `pubspec.yaml`.
+const String _appVersion = '0.1.0';
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
 

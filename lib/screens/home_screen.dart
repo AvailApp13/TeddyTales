@@ -40,6 +40,7 @@ class HomeScreen extends StatefulWidget {
     required this.onLanguageChanged,
     this.calendar = const GameCalendar(),
     this.onOpenDevPanel,
+    this.onSignOut,
     this.riveAssetPath = BearRigSpec.assetPath,
   });
 
@@ -58,6 +59,10 @@ class HomeScreen extends StatefulWidget {
   /// Открыть дев-панель со всеми входами State Machine. `null` в релизе —
   /// кнопки просто нет.
   final void Function(BuildContext context)? onOpenDevPanel;
+
+  /// Выход из аккаунта (КП 14.2). `null` — пункта выхода нет ни в профиле,
+  /// ни в настройках.
+  final VoidCallback? onSignOut;
 
   /// Какой `.riv` показывать. Пока настоящий риг не собран, сюда можно
   /// подставить [BearRigSpec.demoAssetPath] и убедиться, что пайплайн живой.
@@ -139,14 +144,28 @@ class _HomeScreenState extends State<HomeScreen> {
     language: widget.language,
     onOpenGrowth: () => _open(GrowthScreen(controller: widget.controller)),
     onOpenDiary: () => _open(const DiaryScreen()),
+    onSignOut: widget.onSignOut == null ? null : _signOut,
     onOpenSettings: () => _open(
       SettingsScreen(
         game: widget.game,
         language: widget.language,
         onLanguageChanged: widget.onLanguageChanged,
+        onSignOut: widget.onSignOut == null ? null : _signOut,
       ),
     ),
   );
+
+  /// Выход: сначала закрываем всё, что открыто поверх главного экрана, и
+  /// только потом сообщаем наверх.
+  ///
+  /// Порядок здесь не косметический. Приложение по этому вызову подменяет
+  /// корневой экран на вход, но профиль и настройки лежат в стеке **над**
+  /// ним и сами никуда не денутся — вышедший человек остался бы смотреть на
+  /// свой же профиль, а под ним висел бы экран входа.
+  void _signOut() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    widget.onSignOut?.call();
+  }
 
   void _notImplemented(BearAction action) {
     ScaffoldMessenger.of(context)

@@ -230,6 +230,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonBack => '返回';
 
   @override
+  String get commonCancel => '取消';
+
+  @override
   String commonCoins(int count) {
     return '$count 金币';
   }
@@ -1030,13 +1033,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsQuietHours => '免打扰时段 22:00 — 8:00';
 
   @override
+  String get settingsSectionAccount => '账号';
+
+  @override
   String get settingsSectionLanguage => '语言 · КП 16.1';
 
   @override
   String get settingsSectionNotifications => '通知 · КП 13.1、13.2';
 
   @override
+  String get settingsSignOut => '退出登录';
+
+  @override
+  String get settingsSignOutConfirmBody => '进度保存在服务器，下次登录会恢复。';
+
+  @override
+  String get settingsSignOutConfirmTitle => '确定退出登录？';
+
+  @override
+  String get settingsSignOutHint => '返回登录方式选择';
+
+  @override
   String get settingsTitle => '设置';
+
+  @override
+  String get settingsVersion => '版本';
 
   @override
   String shopBuyFor(int total) {

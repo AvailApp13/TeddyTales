@@ -508,6 +508,12 @@ abstract class AppLocalizations {
   /// **'Назад'**
   String get commonBack;
 
+  /// No description provided for @commonCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get commonCancel;
+
   /// No description provided for @commonCoins.
   ///
   /// In ru, this message translates to:
@@ -1936,6 +1942,12 @@ abstract class AppLocalizations {
   /// **'Тихие часы 22:00 — 8:00'**
   String get settingsQuietHours;
 
+  /// No description provided for @settingsSectionAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт'**
+  String get settingsSectionAccount;
+
   /// No description provided for @settingsSectionLanguage.
   ///
   /// In ru, this message translates to:
@@ -1948,11 +1960,41 @@ abstract class AppLocalizations {
   /// **'Уведомления · КП 13.1, 13.2'**
   String get settingsSectionNotifications;
 
+  /// No description provided for @settingsSignOut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get settingsSignOut;
+
+  /// No description provided for @settingsSignOutConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс останется на сервере и вернётся при следующем входе.'**
+  String get settingsSignOutConfirmBody;
+
+  /// No description provided for @settingsSignOutConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из аккаунта?'**
+  String get settingsSignOutConfirmTitle;
+
+  /// No description provided for @settingsSignOutHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернёт к выбору способа входа'**
+  String get settingsSignOutHint;
+
   /// No description provided for @settingsTitle.
   ///
   /// In ru, this message translates to:
   /// **'Настройки'**
   String get settingsTitle;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия'**
+  String get settingsVersion;
 
   /// No description provided for @shopBuyFor.
   ///

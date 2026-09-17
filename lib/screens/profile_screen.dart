@@ -8,6 +8,7 @@ import '../l10n/sections_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sign_out_dialog.dart';
 
 /// Профиль питомца (КП 14.1): карточка рождения, характер, история стадий.
 ///
@@ -32,6 +33,7 @@ class ProfileScreen extends StatelessWidget {
     required this.onOpenGrowth,
     required this.onOpenDiary,
     required this.onOpenSettings,
+    this.onSignOut,
     this.calendar = const GameCalendar(),
     this.language = BearLanguage.ru,
   });
@@ -50,6 +52,9 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback onOpenGrowth;
   final VoidCallback onOpenDiary;
   final VoidCallback onOpenSettings;
+
+  /// Выход из аккаунта (КП 14.2). `null` — кнопка не показывается.
+  final VoidCallback? onSignOut;
 
   /// Перевод реального времени в игровой возраст. По КП 1.5 и 15.4 календарь
   /// настраиваемый и должен приезжать с сервера — поэтому он параметр, а не
@@ -193,6 +198,32 @@ class ProfileScreen extends StatelessWidget {
                           subtitle: l10n.profileLinkSettingsSubtitle,
                           onTap: onOpenSettings,
                         ),
+
+                        if (onSignOut != null) ...[
+                          const SizedBox(height: 22),
+                          // Выход стоит здесь, а не только в настройках:
+                          // профиль — то место, куда человек идёт, когда
+                          // хочет разобраться со своей учётной записью, и
+                          // искать выход на два экрана вглубь он не станет.
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  confirmSignOut(context, onSignOut),
+                              icon: const Icon(Icons.logout, size: 19),
+                              label: Text(l10n.settingsSignOut),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.textSecondary,
+                                side: const BorderSide(
+                                  color: AppColors.outline,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
 
                         const SizedBox(height: 10),
                         Text(
