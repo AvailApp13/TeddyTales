@@ -1063,6 +1063,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get roomSheetOwned => 'owned';
+
+  @override
+  String get roomSheetRemove => 'Remove from the room';
+
+  @override
+  String get roomSheetReplace => 'Replace with';
+
+  @override
   String get roomNotEnoughCoins => 'Not enough coins';
 
   @override

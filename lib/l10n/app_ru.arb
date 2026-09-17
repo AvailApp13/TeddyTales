@@ -585,6 +585,9 @@
     }
   },
   "roomItemRemoved": "{name} убрано",
+  "roomSheetOwned": "уже есть",
+  "roomSheetRemove": "Убрать из комнаты",
+  "roomSheetReplace": "Заменить на",
   "roomNotEnoughCoins": "Не хватает монет",
   "roomOwnedLabel": "Куплено",
   "roomSelectedLabel": "Выбрано",

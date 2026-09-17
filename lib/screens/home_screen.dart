@@ -14,6 +14,8 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
 import '../widgets/room_hint_layer.dart';
+import '../widgets/room_item_sheet.dart';
+import '../widgets/room_items_layer.dart';
 import '../widgets/room_scene_backdrop.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
@@ -217,6 +219,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
   }
 
+  /// Тап по вещи, которая уже стоит в комнате.
+  ///
+  /// Замечание заказчика: поставленную кроватку нельзя было тронуть прямо
+  /// со сцены. Теперь она открывает лист с двумя действиями — убрать и
+  /// заменить, — и замена заодно работает витриной: рядом со своими вещами
+  /// лежат покупные того же вида.
+  void _openItemSheet(String itemId) {
+    showRoomItemSheet(context: context, game: widget.game, itemId: itemId);
+  }
+
   void _notImplemented(BearAction action) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -262,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         stage: state.stage,
                       ),
                       onHintTap: _useHint,
+                      onItemTap: _openItemSheet,
                       heroHeight: _heroHeight,
                       furnitureModule: _furnitureModule,
                       onOpenCare: () => _open(
@@ -317,6 +330,7 @@ class _RoomScene extends StatelessWidget {
     required this.placed,
     required this.hints,
     required this.onHintTap,
+    required this.onItemTap,
     this.heroHeight = RoomSceneBackdrop.defaultBearModule,
     this.furnitureModule = RoomSceneBackdrop.defaultBearModule,
   });
@@ -338,6 +352,9 @@ class _RoomScene extends StatelessWidget {
   /// Пустые места, которые стоит подсветить.
   final List<RoomHint> hints;
   final ValueChanged<RoomHint> onHintTap;
+
+  /// Тап по уже стоящей вещи.
+  final ValueChanged<String> onItemTap;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -405,6 +422,15 @@ class _RoomScene extends StatelessWidget {
                   ],
                 );
               },
+            ),
+          ),
+          // Стоящие вещи нажимаются: тап открывает «убрать или заменить».
+          // Слой тоже поверх мишки и по той же причине, что и подсказки.
+          Positioned.fill(
+            child: RoomItemsLayer(
+              placed: placed,
+              bearModule: furnitureModule,
+              onTap: onItemTap,
             ),
           ),
           // Подсказки лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по

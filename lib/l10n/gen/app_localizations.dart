@@ -1864,6 +1864,24 @@ abstract class AppLocalizations {
   /// **'{name} убрано'**
   String roomItemRemoved(String name);
 
+  /// No description provided for @roomSheetOwned.
+  ///
+  /// In ru, this message translates to:
+  /// **'уже есть'**
+  String get roomSheetOwned;
+
+  /// No description provided for @roomSheetRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из комнаты'**
+  String get roomSheetRemove;
+
+  /// No description provided for @roomSheetReplace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заменить на'**
+  String get roomSheetReplace;
+
   /// No description provided for @roomNotEnoughCoins.
   ///
   /// In ru, this message translates to:

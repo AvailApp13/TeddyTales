@@ -995,6 +995,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get roomSheetOwned => '已拥有';
+
+  @override
+  String get roomSheetRemove => '从房间移除';
+
+  @override
+  String get roomSheetReplace => '换成';
+
+  @override
   String get roomNotEnoughCoins => '金币不够';
 
   @override

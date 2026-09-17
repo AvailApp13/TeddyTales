@@ -1071,6 +1071,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get roomSheetOwned => 'уже есть';
+
+  @override
+  String get roomSheetRemove => 'Убрать из комнаты';
+
+  @override
+  String get roomSheetReplace => 'Заменить на';
+
+  @override
   String get roomNotEnoughCoins => 'Не хватает монет';
 
   @override

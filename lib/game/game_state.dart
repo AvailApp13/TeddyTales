@@ -212,6 +212,30 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Меняет одну вещь на другую на том же месте.
+  ///
+  /// Не то же самое, что «убрать» и следом «поставить». Во-первых, комната
+  /// не должна мигнуть пустым местом посередине: для игрока это одно
+  /// действие. Во-вторых, если новая вещь ещё не куплена и денег не хватает,
+  /// старая обязана остаться на месте — иначе человек теряет то, что у него
+  /// было, за попытку посмотреть другое.
+  ///
+  /// Возвращает `false`, если замена не состоялась.
+  bool replacePlaced(String oldId, String newId) {
+    if (oldId == newId) return false;
+    if (!isOwned(newId) && !buy(newId)) return false;
+
+    _placed
+      ..remove(oldId)
+      ..add(newId);
+
+    bear.recordAction(BearAction.decorate);
+    onPlace?.call(oldId, placed: false);
+    onPlace?.call(newId, placed: true);
+    notifyListeners();
+    return true;
+  }
+
   // --- Гардероб (КП 10.6) --------------------------------------------------
 
   /// Надевает или снимает вещь. Правило взаимного исключения комплекта и
