@@ -221,6 +221,14 @@
   "learnAgeGateSubtitle": "游戏内容因年龄而异，随时可以更改。",
   "learnAgeGateTitle": "谁来玩？",
   "learnCatColorsTitle": "颜色与形状",
+  "@learnCatLocked": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "learnCatLocked": "到「{stage}」阶段开放",
   "learnCatCountTitle": "数数与简单逻辑",
   "learnCatWorldTitle": "认识世界",
   "learnCorrectToast": "{coins, plural, other{答对了！+{coins}金币}}",

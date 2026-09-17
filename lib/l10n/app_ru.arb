@@ -426,6 +426,14 @@
   "learnAgeGateSubtitle": "От возраста зависит набор игр. Поменять можно в любой момент.",
   "learnAgeGateTitle": "Кто будет играть?",
   "learnCatColorsTitle": "Цвета и формы",
+  "@learnCatLocked": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "learnCatLocked": "Откроется на стадии «{stage}»",
   "learnCatCountTitle": "Счёт и простая логика",
   "learnCatWorldTitle": "Окружающий мир",
   "@learnCorrectToast": {

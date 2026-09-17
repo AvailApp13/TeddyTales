@@ -736,6 +736,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get learnCatColorsTitle => '颜色与形状';
 
   @override
+  String learnCatLocked(String stage) {
+    return '到「$stage」阶段开放';
+  }
+
+  @override
   String get learnCatCountTitle => '数数与简单逻辑';
 
   @override

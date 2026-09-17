@@ -221,6 +221,14 @@
   "learnAgeGateSubtitle": "The set of games depends on age. You can change it anytime.",
   "learnAgeGateTitle": "Who's playing?",
   "learnCatColorsTitle": "Colors and Shapes",
+  "@learnCatLocked": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "learnCatLocked": "Opens at the «{stage}» stage",
   "learnCatCountTitle": "Counting and Simple Logic",
   "learnCatWorldTitle": "The World Around",
   "learnCorrectToast": "{coins, plural, one{Correct! +{coins} coin} other{Correct! +{coins} coins}}",

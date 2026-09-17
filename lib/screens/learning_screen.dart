@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../bear/bear_rig_spec.dart';
 import '../game/audience.dart';
 import '../game/learning_content.dart';
 import '../game/game_state.dart';
 import '../games/adult_games.dart';
 import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -21,6 +23,7 @@ class _EduCategory {
     required this.emoji,
     required this.title,
     required this.levels,
+    required this.minStage,
   });
 
   /// Ключ прогресса в [GameState.eduProgress].
@@ -31,27 +34,49 @@ class _EduCategory {
 
   /// Десять уровней по десять заданий (КП 9.2, 9.4).
   final List<List<EduTask>> levels;
+
+  /// С какой стадии категория открыта.
+  final BearStage minStage;
+
+  bool isUnlockedAt(BearStage stage) => stage.riveValue >= minStage.riveValue;
 }
 
 /// Три категории КП 9.1. Названия переводятся, задания приходят из контента.
+///
+/// ## Почему категории открываются не разом
+///
+/// Раздел обучения доступен с первого дня (решение заказчика 17.09: иначе у
+/// игрока нет ни занятия, ни источника монет). Но давать новорождённому
+/// «счёт и простую логику» — значит сломать то, ради чего игра и делается:
+/// мишка растёт по-настоящему.
+///
+/// «Цвета и формы» работают с самого начала, и это не уступка, а правда:
+/// контрастные карточки — то, с чего начинают с настоящими младенцами.
+/// Счёт приходит, когда малыш пополз, окружающий мир — когда пошёл.
+///
+/// Закрытая категория не прячется, а показывается с замком: видно, что
+/// впереди, и ради чего мишку растить.
 List<_EduCategory> _categories(AppLocalizations l10n) => [
   _EduCategory(
     id: 'colors',
     emoji: '🎨',
     title: l10n.learnCatColorsTitle,
     levels: eduContent['colors']!,
+    minStage: BearStage.newborn,
   ),
   _EduCategory(
     id: 'count',
     emoji: '🔢',
     title: l10n.learnCatCountTitle,
     levels: eduContent['count']!,
+    minStage: BearStage.crawling,
   ),
   _EduCategory(
     id: 'world',
     emoji: '🌍',
     title: l10n.learnCatWorldTitle,
     levels: eduContent['world']!,
+    minStage: BearStage.firstSteps,
   ),
 ];
 
@@ -248,9 +273,11 @@ class _LearningScreenState extends State<LearningScreen> {
   @override
   Widget build(BuildContext context) {
     // Перерисовываемся на кошелёк и на прогресс обучения: и то и другое меняет
-    // completeLevel, а не сам экран.
+    // completeLevel, а не сам экран. Мишку слушаем ради стадии: от неё зависит,
+    // какие категории открыты, и переход может случиться прямо на этом экране —
+    // тогда «Счёт» должен разблокироваться на глазах, а не после перезахода.
     return AnimatedBuilder(
-      animation: widget.game,
+      animation: Listenable.merge([widget.game, widget.game.bear]),
       builder: (context, _) {
         final age = widget.game.playerAge;
         final category = _category;
@@ -496,6 +523,7 @@ class _LearningScreenState extends State<LearningScreen> {
                 _CategoryTile(
                   category: category,
                   done: widget.game.eduProgress(category.id),
+                  stage: widget.game.bear.state.stage,
                   onTap: () => _openCategory(category),
                 ),
                 const SizedBox(height: 8),
@@ -781,22 +809,32 @@ class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.category,
     required this.done,
+    required this.stage,
     required this.onTap,
   });
 
   final _EduCategory category;
   final int done;
+
+  /// Стадия питомца: от неё зависит, открыта ли категория.
+  final BearStage stage;
+
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final unlocked = category.isUnlockedAt(stage);
 
     return Material(
-      color: AppColors.surface,
+      color: unlocked ? AppColors.surface : AppColors.surfaceMuted,
       borderRadius: BorderRadius.circular(AppDimens.radiusCard),
       child: InkWell(
-        onTap: onTap,
+        // Закрытая категория всё равно нажимается — и объясняет, когда
+        // откроется. Плитка, которая молча не реагирует, читается как
+        // поломка, а не как «пока рано».
+        onTap: unlocked ? onTap : () => _explainLock(context),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -806,7 +844,13 @@ class _CategoryTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(category.emoji, style: const TextStyle(fontSize: 24)),
+              Opacity(
+                opacity: unlocked ? 1 : 0.45,
+                child: Text(
+                  category.emoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -817,11 +861,18 @@ class _CategoryTile extends StatelessWidget {
                       category.title,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: unlocked
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      context.l10n.learnLevelsCount(_levelsPerCategory),
+                      unlocked
+                          ? l10n.learnLevelsCount(_levelsPerCategory)
+                          : l10n.learnCatLocked(
+                              stageTitle(l10n, category.minStage),
+                            ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -830,18 +881,39 @@ class _CategoryTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '$done/$_levelsPerCategory',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.sageDark,
+              if (unlocked)
+                Text(
+                  '$done/$_levelsPerCategory',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.sageDark,
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: AppColors.textSecondary,
                 ),
-              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _explainLock(BuildContext context) {
+    final l10n = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.learnCatLocked(stageTitle(l10n, category.minStage)),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 }
 

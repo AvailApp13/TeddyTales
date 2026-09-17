@@ -805,6 +805,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get learnCatColorsTitle => 'Цвета и формы';
 
   @override
+  String learnCatLocked(String stage) {
+    return 'Откроется на стадии «$stage»';
+  }
+
+  @override
   String get learnCatCountTitle => 'Счёт и простая логика';
 
   @override

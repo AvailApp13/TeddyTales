@@ -1426,6 +1426,12 @@ abstract class AppLocalizations {
   /// **'Цвета и формы'**
   String get learnCatColorsTitle;
 
+  /// No description provided for @learnCatLocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откроется на стадии «{stage}»'**
+  String learnCatLocked(String stage);
+
   /// No description provided for @learnCatCountTitle.
   ///
   /// In ru, this message translates to:
