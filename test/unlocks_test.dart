@@ -220,6 +220,19 @@ void main() {
       expect(hints.length, lessThanOrEqualTo(maxRoomHints));
     });
 
+    test('подсказка не накрывает стоящую вещь', () {
+      // Ковёр шире половины комнаты. Пока кроватка стоит, место под ковёр
+      // не подсвечивается: его рамка легла бы поверх кроватки и забрала
+      // себе тап, которым её меняют.
+      final hints = roomHints(
+        placed: {...bare, 'bed'},
+        owned: {'bed', 'rug'},
+        stage: BearStage.adult,
+      );
+
+      expect(hints.map((h) => h.id), isNot(contains('rug')));
+    });
+
     test('обставленная комната молчит', () {
       final all = {for (final p in roomLayout) p.id};
       final hints = roomHints(placed: all, owned: all, stage: BearStage.adult);

@@ -126,10 +126,21 @@ List<RoomHint> roomHints({
     return ItemCatalog.byId(a.id).price.compareTo(ItemCatalog.byId(b.id).price);
   });
 
+  // Места уже стоящих вещей: подсказка не должна их накрывать. Ковёр шире
+  // половины комнаты, и его рамка ложилась поверх кроватки — та переставала
+  // нажиматься, потому что тап доставался подсказке. Стоящая вещь важнее
+  // приглашения: по ней человек меняет обстановку.
+  final taken = [
+    for (final p in roomLayout)
+      if (placed.contains(p.id)) p,
+  ];
+
   final chosen = <RoomHint>[];
   for (final hint in candidates) {
     if (chosen.length >= limit) break;
-    final clashes = chosen.any((c) => _overlap(c.placement, hint.placement));
+    final clashes =
+        chosen.any((c) => _overlap(c.placement, hint.placement)) ||
+        taken.any((t) => _overlap(t, hint.placement));
     if (clashes) continue;
     chosen.add(hint);
   }
