@@ -325,6 +325,8 @@
   "settingsTitle": "设置",
   "settingsVersion": "版本",
   "shopBuyFor": "花 {total} 购买",
+  "shopGroupLater": "长大后会用到",
+  "shopGroupNow": "现在适合宝宝",
   "shopCartDisclaimer": "购物车不在需求文档里——它来自设计稿，属于第二版内容，这里先做出来是为了展示购买流程。价格为占位数据（需求 10.9）。",
   "shopCartEmpty": "购物车是空的",
   "shopCheckoutDone": "{count, plural, other{已购买{count}件物品}}",

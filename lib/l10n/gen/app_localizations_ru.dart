@@ -1147,6 +1147,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get shopGroupLater => 'Пригодится, когда подрастёт';
+
+  @override
+  String get shopGroupNow => 'Малышу сейчас';
+
+  @override
   String get shopCartDisclaimer =>
       'Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).';
 

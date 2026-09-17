@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/app_section.dart';
 import 'package:teddy_tales/game/game_state.dart';
+import 'package:teddy_tales/game/shop_items.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/l10n/l10n.dart';
 import 'package:teddy_tales/screens/learning_screen.dart';
@@ -105,10 +106,48 @@ void main() {
       // категории в шапке, а его быть не должно.
       expect(find.text('Цвета и формы'), findsOneWidget);
       // Зато сказали, когда придёт очередь.
-      expect(
-        find.text('Откроется на стадии «Ползающий малыш»'),
-        findsWidgets,
-      );
+      expect(find.text('Откроется на стадии «Ползающий малыш»'), findsWidgets);
+    });
+  });
+
+  group('Витрина магазина', () {
+    test('новорождённому подходит обстановка, а не письменный стол', () {
+      const stage = BearStage.newborn;
+
+      // Кроватка, светильник, ковёр и корзина — то, с чего начинается
+      // комната малыша, и они же входят в бесплатный набор КП 10.8.
+      for (final id in ['bed', 'lamp', 'rug', 'basket']) {
+        expect(
+          ItemCatalog.byId(id).suitsAt(stage),
+          isTrue,
+          reason: '$id нужен в первый же день',
+        );
+      }
+
+      // А эти вещи ребёнку, который ещё не сидит, не нужны.
+      for (final id in ['table', 'chair', 'wardrobe', 'puzzle']) {
+        expect(ItemCatalog.byId(id).suitsAt(stage), isFalse, reason: id);
+      }
+    });
+
+    test('к взрослой стадии подходит весь каталог', () {
+      for (final item in ItemCatalog.all) {
+        expect(
+          item.suitsAt(BearStage.adult),
+          isTrue,
+          reason: '${item.id} не должен оставаться «на потом» навсегда',
+        );
+      }
+    });
+
+    test('одежда появляется с третьей стадии', () {
+      // ТЗ аниматора v2: одежда доступна с 3-й стадии — на младенце её
+      // просто нет в риге. Витрина обязана совпадать с тем, что умеет
+      // показать мишка.
+      for (final item in ItemCatalog.clothes) {
+        expect(item.suitsAt(BearStage.crawling), isFalse, reason: item.id);
+        expect(item.suitsAt(BearStage.firstSteps), isTrue, reason: item.id);
+      }
     });
   });
 }

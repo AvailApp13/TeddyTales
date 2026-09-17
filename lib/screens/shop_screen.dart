@@ -70,11 +70,27 @@ class _ShopScreenState extends State<ShopScreen> {
       // должна расходиться с системным индикатором жестов.
       body: SafeArea(
         child: AnimatedBuilder(
-          animation: widget.game,
+          // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
+          // переход может случиться прямо на этом экране.
+          animation: Listenable.merge([widget.game, widget.game.bear]),
           builder: (context, _) {
             final game = widget.game;
-            final items = _tab.items;
+            final stage = game.bear.state.stage;
             final total = game.cartTotal;
+
+            // Витрина делится надвое: сначала то, что малышу нужно сейчас,
+            // ниже — то, что пригодится потом. Замков здесь нет и быть не
+            // должно (КП 11.2 не знает никаких ограничений на покупку) —
+            // купить можно всё, но человеку с новорождённым первым должен
+            // попадаться ночник, а не письменный стол.
+            final now = [
+              for (final i in _tab.items)
+                if (i.suitsAt(stage)) i,
+            ];
+            final later = [
+              for (final i in _tab.items)
+                if (!i.suitsAt(stage)) i,
+            ];
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,34 +111,20 @@ class _ShopScreenState extends State<ShopScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                // Три колонки: в магазине важнее охватить
-                                // взглядом весь раздел (16 вещей в одежде и
-                                // декоре), чем разглядеть отдельную карточку.
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                // Фиксированная высота вместо пропорции: иначе
-                                // на планшете карточка растёт вслед за шириной
-                                // и превращается в пустое поле.
-                                mainAxisExtent: 108,
-                              ),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-
-                            return _ItemTile(
-                              item: item,
-                              owned: game.isOwned(item.id),
-                              inCart: game.isInCart(item.id),
-                              onTap: () => game.toggleCart(item.id),
-                            );
-                          },
-                        ),
+                        // Заголовки появляются только когда есть что
+                        // разделять: на взрослой стадии подходит всё, и
+                        // подпись «малышу сейчас» над единственной сеткой
+                        // читалась бы как насмешка.
+                        if (later.isNotEmpty && now.isNotEmpty) ...[
+                          _GroupTitle(context.l10n.shopGroupNow),
+                          _ItemGrid(items: now, game: game),
+                          _GroupTitle(context.l10n.shopGroupLater),
+                          _ItemGrid(items: later, game: game),
+                        ] else
+                          _ItemGrid(
+                            items: now.isEmpty ? later : now,
+                            game: game,
+                          ),
                         const SizedBox(height: 10),
                         Text(
                           context.l10n.shopCartDisclaimer,
@@ -151,6 +153,67 @@ class _ShopScreenState extends State<ShopScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Подпись над группой витрины: капслок, разрядка, приглушённый цвет — как
+/// подзаголовки разделов в профиле и настройках.
+class _GroupTitle extends StatelessWidget {
+  const _GroupTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 8),
+      child: Text(
+        text.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+/// Сетка карточек товара.
+class _ItemGrid extends StatelessWidget {
+  const _ItemGrid({required this.items, required this.game});
+
+  final List<ShopItem> items;
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        // Три колонки: в магазине важнее охватить взглядом весь раздел
+        // (16 вещей в одежде и декоре), чем разглядеть отдельную карточку.
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        // Фиксированная высота вместо пропорции: иначе на планшете карточка
+        // растёт вслед за шириной и превращается в пустое поле.
+        mainAxisExtent: 108,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        return _ItemTile(
+          item: item,
+          owned: game.isOwned(item.id),
+          inCart: game.isInCart(item.id),
+          onTap: () => game.toggleCart(item.id),
+        );
+      },
     );
   }
 }

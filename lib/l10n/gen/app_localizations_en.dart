@@ -1139,6 +1139,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shopGroupLater => 'For when they grow up';
+
+  @override
+  String get shopGroupNow => 'For your little one now';
+
+  @override
   String get shopCartDisclaimer =>
       'The cart isn\'t in the brief — it comes from the mockup and belongs to version two, but it\'s built here so the flow is visible. Prices are placeholders (brief 10.9).';
 

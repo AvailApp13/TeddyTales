@@ -1070,6 +1070,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get shopGroupLater => '长大后会用到';
+
+  @override
+  String get shopGroupNow => '现在适合宝宝';
+
+  @override
   String get shopCartDisclaimer =>
       '购物车不在需求文档里——它来自设计稿，属于第二版内容，这里先做出来是为了展示购买流程。价格为占位数据（需求 10.9）。';
 

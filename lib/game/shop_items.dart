@@ -2,6 +2,7 @@
 
 library;
 
+import '../bear/bear_rig_spec.dart';
 import '../bear/bear_state.dart';
 
 /// Куда предмет попадает в магазине и в комнате.
@@ -43,6 +44,7 @@ class ShopItem {
     required this.price,
     required this.kind,
     this.slotValue,
+    this.suitsFrom = BearStage.newborn,
   });
 
   final String id;
@@ -62,6 +64,16 @@ class ShopItem {
   /// Сопоставление «товар → id в риге» живёт здесь, потому что это свойство
   /// каталога, а не персонажа: `BearOutfit` знает только числа.
   final int? slotValue;
+
+  /// С какой стадии предмет уместен малышу.
+  ///
+  /// **Это не замок.** Купить можно всё и в любой момент: закрытая витрина
+  /// злит, а «пока рано» — продаёт. Значение управляет только порядком:
+  /// подходящее возрасту стоит первым, остальное ниже, под отдельной
+  /// подписью. Кроватка и ночник нужны в первый день, шкаф и пазл — нет.
+  final BearStage suitsFrom;
+
+  bool suitsAt(BearStage stage) => stage.riveValue >= suitsFrom.riveValue;
 
   /// Применяет предмет к образу мишки.
   BearOutfit applyTo(BearOutfit outfit) {
@@ -113,6 +125,7 @@ abstract final class ItemCatalog {
       title: 'Шкаф',
       price: 140,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
     ),
     ShopItem(
       id: 'table',
@@ -120,6 +133,7 @@ abstract final class ItemCatalog {
       title: 'Стол',
       price: 90,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'chair',
@@ -127,6 +141,7 @@ abstract final class ItemCatalog {
       title: 'Стул',
       price: 70,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'shelf',
@@ -134,6 +149,7 @@ abstract final class ItemCatalog {
       title: 'Книжная полка',
       price: 110,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
     ),
     ShopItem(
       id: 'dresser',
@@ -141,6 +157,7 @@ abstract final class ItemCatalog {
       title: 'Комод',
       price: 150,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
     ),
     ShopItem(
       id: 'armchair',
@@ -148,6 +165,7 @@ abstract final class ItemCatalog {
       title: 'Кресло',
       price: 130,
       kind: ItemKind.furniture,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'rug',
@@ -223,6 +241,7 @@ abstract final class ItemCatalog {
       title: 'Картина мишка',
       price: 55,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'pic_forest',
@@ -230,6 +249,7 @@ abstract final class ItemCatalog {
       title: 'Картина лес',
       price: 55,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'pic_moon',
@@ -251,6 +271,7 @@ abstract final class ItemCatalog {
       title: 'Подушка звезда',
       price: 30,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'plant',
@@ -258,6 +279,7 @@ abstract final class ItemCatalog {
       title: 'Растение',
       price: 45,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'cactus',
@@ -265,6 +287,7 @@ abstract final class ItemCatalog {
       title: 'Кактус',
       price: 45,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'garland',
@@ -279,6 +302,7 @@ abstract final class ItemCatalog {
       title: 'Часы',
       price: 70,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'poster',
@@ -286,6 +310,7 @@ abstract final class ItemCatalog {
       title: 'Постер',
       price: 50,
       kind: ItemKind.decor,
+      suitsFrom: BearStage.growing,
     ),
   ];
 
@@ -298,6 +323,7 @@ abstract final class ItemCatalog {
       title: 'Мячик',
       price: 40,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'teddy',
@@ -312,6 +338,7 @@ abstract final class ItemCatalog {
       title: 'Кубики',
       price: 60,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'car',
@@ -319,6 +346,7 @@ abstract final class ItemCatalog {
       title: 'Машинка',
       price: 70,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'duck',
@@ -333,6 +361,7 @@ abstract final class ItemCatalog {
       title: 'Барабан',
       price: 80,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.crawling,
     ),
     ShopItem(
       id: 'puzzle',
@@ -340,6 +369,7 @@ abstract final class ItemCatalog {
       title: 'Пазл',
       price: 65,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
     ),
     ShopItem(
       id: 'train',
@@ -347,6 +377,7 @@ abstract final class ItemCatalog {
       title: 'Паровозик',
       price: 95,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'kite',
@@ -354,6 +385,7 @@ abstract final class ItemCatalog {
       title: 'Воздушный змей',
       price: 55,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
     ),
     ShopItem(
       id: 'rocket',
@@ -361,6 +393,7 @@ abstract final class ItemCatalog {
       title: 'Ракета',
       price: 85,
       kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
     ),
   ];
 
@@ -378,6 +411,7 @@ abstract final class ItemCatalog {
       price: 160,
       kind: ItemKind.outfit,
       slotValue: 1,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_sailor',
@@ -386,6 +420,7 @@ abstract final class ItemCatalog {
       price: 180,
       kind: ItemKind.outfit,
       slotValue: 2,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_bear',
@@ -394,6 +429,7 @@ abstract final class ItemCatalog {
       price: 200,
       kind: ItemKind.outfit,
       slotValue: 3,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_berry',
@@ -402,6 +438,7 @@ abstract final class ItemCatalog {
       price: 220,
       kind: ItemKind.outfit,
       slotValue: 4,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_bee',
@@ -410,6 +447,7 @@ abstract final class ItemCatalog {
       price: 240,
       kind: ItemKind.outfit,
       slotValue: 5,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_glasses',
@@ -418,6 +456,7 @@ abstract final class ItemCatalog {
       price: 100,
       kind: ItemKind.outfit,
       slotValue: 6,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_winter',
@@ -426,6 +465,7 @@ abstract final class ItemCatalog {
       price: 190,
       kind: ItemKind.outfit,
       slotValue: 7,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'out_sport',
@@ -434,6 +474,7 @@ abstract final class ItemCatalog {
       price: 150,
       kind: ItemKind.outfit,
       slotValue: 8,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'top_rose',
@@ -442,6 +483,7 @@ abstract final class ItemCatalog {
       price: 120,
       kind: ItemKind.top,
       slotValue: 1,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'top_sage',
@@ -450,6 +492,7 @@ abstract final class ItemCatalog {
       price: 130,
       kind: ItemKind.top,
       slotValue: 2,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'top_blue',
@@ -458,6 +501,7 @@ abstract final class ItemCatalog {
       price: 140,
       kind: ItemKind.top,
       slotValue: 3,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'bot_yellow',
@@ -466,6 +510,7 @@ abstract final class ItemCatalog {
       price: 110,
       kind: ItemKind.bottom,
       slotValue: 1,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'bot_blue',
@@ -474,6 +519,7 @@ abstract final class ItemCatalog {
       price: 120,
       kind: ItemKind.bottom,
       slotValue: 2,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'bot_skirt',
@@ -482,6 +528,7 @@ abstract final class ItemCatalog {
       price: 125,
       kind: ItemKind.bottom,
       slotValue: 3,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'hat_cap',
@@ -490,6 +537,7 @@ abstract final class ItemCatalog {
       price: 90,
       kind: ItemKind.headwear,
       slotValue: 1,
+      suitsFrom: BearStage.firstSteps,
     ),
     ShopItem(
       id: 'acc_bow',
@@ -498,6 +546,7 @@ abstract final class ItemCatalog {
       price: 60,
       kind: ItemKind.accessory,
       slotValue: 1,
+      suitsFrom: BearStage.firstSteps,
     ),
   ];
 

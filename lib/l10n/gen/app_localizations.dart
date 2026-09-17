@@ -2008,6 +2008,18 @@ abstract class AppLocalizations {
   /// **'Купить за {total}'**
   String shopBuyFor(int total);
 
+  /// No description provided for @shopGroupLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пригодится, когда подрастёт'**
+  String get shopGroupLater;
+
+  /// No description provided for @shopGroupNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малышу сейчас'**
+  String get shopGroupNow;
+
   /// No description provided for @shopCartDisclaimer.
   ///
   /// In ru, this message translates to:
