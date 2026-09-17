@@ -4,6 +4,8 @@ import '../bear/bear.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../game/room_hints.dart';
+import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -11,6 +13,7 @@ import '../widgets/app_bottom_nav.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
+import '../widgets/room_hint_layer.dart';
 import '../widgets/room_scene_backdrop.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
@@ -167,6 +170,31 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onSignOut?.call();
   }
 
+  /// Тап по подсвеченному месту в комнате.
+  ///
+  /// Своё ставим молча и сразу — это бесплатно, обратимо и должно
+  /// чувствоваться как один жест, а не как покупка. За остальным идём в
+  /// магазин, открытый на нужной вкладке: человек уже показал, что ему
+  /// нужно, искать это заново он не должен.
+  void _useHint(RoomHint hint) {
+    if (!hint.owned) {
+      _open(ShopScreen(game: widget.game, focusItemId: hint.id));
+      return;
+    }
+
+    widget.game.togglePlaced(hint.id);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.roomItemPlaced(shopItemName(context.l10n, hint.id)),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   void _notImplemented(BearAction action) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -206,6 +234,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       onAcceptInitiative: _runAction,
                       riveAssetPath: widget.riveAssetPath,
                       placed: widget.game.placed,
+                      hints: roomHints(
+                        placed: widget.game.placed,
+                        owned: widget.game.owned,
+                        stage: state.stage,
+                      ),
+                      onHintTap: _useHint,
                       onOpenCare: () => _open(
                         CareScreen(
                           controller: widget.controller,
@@ -257,6 +291,8 @@ class _RoomScene extends StatelessWidget {
     required this.riveAssetPath,
     required this.onOpenCare,
     required this.placed,
+    required this.hints,
+    required this.onHintTap,
   });
 
   final BearController controller;
@@ -266,6 +302,10 @@ class _RoomScene extends StatelessWidget {
 
   /// Размещённые в комнате предметы — их рисует фон-сцена.
   final Set<String> placed;
+
+  /// Пустые места, которые стоит подсветить.
+  final List<RoomHint> hints;
+  final ValueChanged<RoomHint> onHintTap;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -298,6 +338,13 @@ class _RoomScene extends StatelessWidget {
               onTap: controller.petBear,
               child: BearView(controller: controller, assetPath: riveAssetPath),
             ),
+          ),
+          // Подсказки лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по
+          // ним: на главном экране он растянут во всю сцену. Сам слой
+          // занимает только рамки, остальное пространство прозрачно для
+          // касаний — погладить мишку по-прежнему можно где угодно.
+          Positioned.fill(
+            child: RoomHintLayer(hints: hints, onTap: onHintTap),
           ),
           Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
           // Пузырь — в левом верхнем углу, зеркально кнопке «Что будем

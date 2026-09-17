@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/app_section.dart';
 import 'package:teddy_tales/game/game_state.dart';
+import 'package:teddy_tales/game/room_hints.dart';
+import 'package:teddy_tales/game/room_layout.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/l10n/l10n.dart';
@@ -148,6 +150,81 @@ void main() {
         expect(item.suitsAt(BearStage.crawling), isFalse, reason: item.id);
         expect(item.suitsAt(BearStage.firstSteps), isTrue, reason: item.id);
       }
+    });
+  });
+
+  group('Подсказки мест в комнате', () {
+    // Стартовая комната по умолчанию: только обои и пол, ничего не стоит.
+    const bare = {'wall_rose', 'floor_wood'};
+
+    test('своё предлагается раньше покупного', () {
+      final hints = roomHints(
+        placed: bare,
+        owned: {'bed', 'lamp'},
+        stage: BearStage.newborn,
+      );
+
+      expect(hints.first.owned, isTrue);
+      // Двенадцать бесплатных предметов КП 10.8 не должны лежать в инвентаре
+      // мёртвым грузом — с них и начинается обстановка.
+      expect(hints.take(2).map((h) => h.id), containsAll(['bed', 'lamp']));
+    });
+
+    test('поставленное больше не подсвечивается', () {
+      final hints = roomHints(
+        placed: {...bare, 'bed'},
+        owned: {'bed'},
+        stage: BearStage.newborn,
+      );
+
+      expect(hints.map((h) => h.id), isNot(contains('bed')));
+    });
+
+    test('не по возрасту не предлагается', () {
+      final hints = roomHints(
+        placed: bare,
+        owned: const {},
+        stage: BearStage.newborn,
+      );
+
+      for (final hint in hints) {
+        expect(
+          ItemCatalog.byId(hint.id).suitsAt(BearStage.newborn),
+          isTrue,
+          reason: '${hint.id} рано предлагать новорождённому',
+        );
+      }
+    });
+
+    test('обои и полы местами не бывают', () {
+      final hints = roomHints(
+        placed: const {},
+        owned: const {},
+        stage: BearStage.adult,
+      );
+
+      for (final hint in hints) {
+        final kind = ItemCatalog.byId(hint.id).kind;
+        expect(kind, isNot(ItemKind.wallpaper));
+        expect(kind, isNot(ItemKind.floor));
+      }
+    });
+
+    test('подсказок не больше трёх', () {
+      final hints = roomHints(
+        placed: const {},
+        owned: const {},
+        stage: BearStage.adult,
+      );
+
+      expect(hints.length, lessThanOrEqualTo(maxRoomHints));
+    });
+
+    test('обставленная комната молчит', () {
+      final all = {for (final p in roomLayout) p.id};
+      final hints = roomHints(placed: all, owned: all, stage: BearStage.adult);
+
+      expect(hints, isEmpty, reason: 'подсказка без места — это шум');
     });
   });
 }

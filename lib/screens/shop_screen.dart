@@ -25,11 +25,18 @@ import '../theme/app_theme.dart';
 /// границу договорённостей. Разовая покупка мимо корзины живёт на экране
 /// комнаты и опирается на тот же `GameState`.
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key, required this.game});
+  const ShopScreen({super.key, required this.game, this.focusItemId});
 
   /// Кошелёк, инвентарь и корзина — один источник правды на все экраны:
   /// купленное здесь должно тут же появиться в комнате и в гардеробе.
   final GameState game;
+
+  /// Открыть магазин на вкладке этого предмета.
+  ///
+  /// Нужен для подсказок в комнате: человек тапнул по пустому месту под
+  /// кроватку и должен увидеть кроватку, а не одежду. Высыпать его в
+  /// магазин «куда-то» — значит заставить искать то, на что он уже показал.
+  final String? focusItemId;
 
   @override
   State<ShopScreen> createState() => _ShopScreenState();
@@ -37,8 +44,19 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   /// Первой открывается одежда — так же, как в прототипе: это самый крупный и
-  /// самый понятный ребёнку раздел каталога.
-  _ShopTab _tab = _ShopTab.clothes;
+  /// самый понятный ребёнку раздел каталога. Если пришли за конкретной
+  /// вещью, открывается её вкладка.
+  late _ShopTab _tab = _tabOf(widget.focusItemId) ?? _ShopTab.clothes;
+
+  /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
+  /// продаётся в магазине.
+  static _ShopTab? _tabOf(String? itemId) {
+    if (itemId == null) return null;
+    for (final tab in _ShopTab.values) {
+      if (tab.items.any((item) => item.id == itemId)) return tab;
+    }
+    return null;
+  }
 
   void _checkout() {
     // Количество запоминаем до оплаты: `checkout` очищает корзину.
