@@ -45,12 +45,42 @@ class RoomHint {
 /// списком дел.
 const int maxRoomHints = 3;
 
+/// Ширина места в долях ширины сцены.
+///
+/// Размерная сетка меряет предметы в модулях (модуль — рост мишки), а модуль
+/// задан долей ВЫСОТЫ сцены. Чтобы понять, налезают ли две рамки друг на
+/// друга, нужна доля ШИРИНЫ — отсюда деление на пропорции сцены.
+///
+/// Пропорции взяты приблизительно: сцена на главном экране примерно вдвое
+/// выше своей ширины. Точность здесь и не нужна — от неё зависит только то,
+/// сочтём ли мы две рамки соседями, а запас в четверть модуля спокойно
+/// покрывает разницу между телефоном и планшетом.
+const double _sceneAspect = 0.5;
+const double _bearModule = 0.22;
+
+double _widthFraction(RoomPlacement p) => p.w * _bearModule / _sceneAspect;
+
+/// Пересекаются ли места по горизонтали.
+///
+/// Настенное и напольное не спорят: одно висит, другое стоит на полу.
+bool _overlap(RoomPlacement a, RoomPlacement b) {
+  if (a.onWall != b.onWall) return false;
+
+  final ha = _widthFraction(a) / 2;
+  final hb = _widthFraction(b) / 2;
+  return (a.fx - b.fx).abs() < ha + hb;
+}
+
 /// Какие места подсветить при текущем состоянии комнаты.
 ///
 /// Порядок осмысленный, а не случайный:
 /// 1. Сначала то, что уже куплено, — это бесплатно и работает сразу.
-/// 2. Потом покупное, от дешёвого к дорогому: первый шаг должен быть
-///    посильным, а 1250 стартовых монет хватает на многое.
+/// 2. Потом крупное вперёд мелкого. Комнату делает кроватка, а не уточка:
+///    подсветить три мелочи у плинтуса — значит показать, что обставлять
+///    нечем. Сортировка по цене, к которой напрашивается рука, даёт ровно
+///    это: самое дешёвое в каталоге — самое мелкое.
+/// 3. Рамки, налезающие на уже выбранные, пропускаются: две подписи одна
+///    поверх другой не читаются ни как приглашение, ни как что-либо ещё.
 ///
 /// Обои и полы сюда не попадают: они не «стоят на месте», а всегда покрывают
 /// комнату целиком, и пустого места под них не бывает.
@@ -78,10 +108,22 @@ List<RoomHint> roomHints({
     );
   }
 
+  double area(RoomHint h) => h.placement.w * h.placement.h;
+
   candidates.sort((a, b) {
     if (a.owned != b.owned) return a.owned ? -1 : 1;
+    final byArea = area(b).compareTo(area(a));
+    if (byArea != 0) return byArea;
     return ItemCatalog.byId(a.id).price.compareTo(ItemCatalog.byId(b.id).price);
   });
 
-  return candidates.take(limit).toList();
+  final chosen = <RoomHint>[];
+  for (final hint in candidates) {
+    if (chosen.length >= limit) break;
+    final clashes = chosen.any((c) => _overlap(c.placement, hint.placement));
+    if (clashes) continue;
+    chosen.add(hint);
+  }
+
+  return chosen;
 }
