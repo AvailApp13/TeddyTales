@@ -31,6 +31,16 @@ class RoomHintLayer extends StatelessWidget {
 
   final double bearModule;
 
+  /// Ширина рамки, но не шире самой сцены: ковёр занимает две трети комнаты
+  /// и в узком окне вылезал бы с обеих сторон разом.
+  static double _spotWidth(RoomHint hint, double module) =>
+      hint.placement.w * module;
+
+  static double _clampLeft(double left, double spot, double width) {
+    if (spot >= width) return 0;
+    return left.clamp(0, width - spot);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (hints.isEmpty) return const SizedBox.shrink();
@@ -45,13 +55,22 @@ class RoomHintLayer extends StatelessWidget {
           children: [
             for (final hint in hints)
               Positioned(
-                left: hint.placement.fx * width - hint.placement.w * module / 2,
+                // Рамка прижимается внутрь сцены. Предмет у самой стены
+                // (торшер стоит на 0.93 ширины) своим габаритом заезжает за
+                // край — сам он там и стоит, ничего страшного, но у рамки
+                // снаружи остаётся подпись, и её срезает. Сдвиг на пару
+                // пикселей незаметен, обрезанное слово — нет.
+                left: _clampLeft(
+                  hint.placement.fx * width - _spotWidth(hint, module) / 2,
+                  _spotWidth(hint, module),
+                  width,
+                ),
                 top: hint.placement.onWall
                     ? hint.placement.wallFy! * height -
                           hint.placement.h * module / 2
                     : RoomSceneBackdrop.floorLine * height -
                           hint.placement.h * module,
-                width: hint.placement.w * module,
+                width: _spotWidth(hint, module),
                 height: hint.placement.h * module,
                 child: _HintSpot(hint: hint, onTap: () => onTap(hint)),
               ),
