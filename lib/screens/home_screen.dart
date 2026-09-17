@@ -76,6 +76,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// Рост мишки в долях высоты сцены.
+  ///
+  /// 45% — решение заказчика от 17.09 взамен прежнего «во весь экран».
+  /// Ориентир — My Talking Tom: там герой занимает примерно треть кадра, а
+  /// остальное отдано комнате, которую и продают.
+  static const double _heroHeight = 0.45;
+
+  /// Модуль, в котором меряется мебель.
+  ///
+  /// ВРЕМЕННО меньше роста героя. По размерной сетке модуль обязан
+  /// равняться росту мишки: шкаф в 1.9 роста должен быть заметно выше него.
+  /// Но комната пока плоская — один план, без глубины, — и в честном
+  /// масштабе кроватка (1.7 роста) занимает три четверти кадра, а ковёр
+  /// (2.4) не помещается вовсе.
+  ///
+  /// Правильное решение описано в `docs/room-design-v1.md`: три плана
+  /// глубины со своими масштабами, мебель уезжает вглубь. До утверждения
+  /// планировки мебель просто мельче героя — так кадр читается, хотя
+  /// размерный ряд и неправдив. Размерный ряд для дизайнера показывает
+  /// `docs/interior-size-guide.md`, а не главный экран.
+  static const double _furnitureModule = 0.3;
+
   AppSection _section = AppSection.home;
 
   void _runAction(BearAction action) {
@@ -240,6 +262,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         stage: state.stage,
                       ),
                       onHintTap: _useHint,
+                      heroHeight: _heroHeight,
+                      furnitureModule: _furnitureModule,
                       onOpenCare: () => _open(
                         CareScreen(
                           controller: widget.controller,
@@ -293,6 +317,8 @@ class _RoomScene extends StatelessWidget {
     required this.placed,
     required this.hints,
     required this.onHintTap,
+    this.heroHeight = RoomSceneBackdrop.defaultBearModule,
+    this.furnitureModule = RoomSceneBackdrop.defaultBearModule,
   });
 
   final BearController controller;
@@ -302,6 +328,12 @@ class _RoomScene extends StatelessWidget {
 
   /// Размещённые в комнате предметы — их рисует фон-сцена.
   final Set<String> placed;
+
+  /// Рост героя в долях высоты сцены.
+  final double heroHeight;
+
+  /// Модуль мебели: в нём меряются габариты из размерной сетки.
+  final double furnitureModule;
 
   /// Пустые места, которые стоит подсветить.
   final List<RoomHint> hints;
@@ -325,18 +357,54 @@ class _RoomScene extends StatelessWidget {
           // Габаритная сборка комнаты: фон и мебель каталога в масштабе
           // размерной сетки (room_layout.dart) — мебель мельче героя, как
           // задний план с перспективой на макете.
-          Positioned.fill(child: RoomSceneBackdrop(placed: placed)),
-          // Герой — крупный, во всю сцену, как на макете. Его размер
-          // ФИКСИРОВАН решением заказчика: не вписывать в размерную сетку
-          // и не уменьшать. Размерный ряд для дизайнера показывает
-          // docs/interior-size-guide.png, а не главный экран.
           Positioned.fill(
-            // Тап по мишке — погладить: контроллер стреляет trg_pet, риг
-            // проигрывает смех с подскоком (КП 7.6: смех по касанию).
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: controller.petBear,
-              child: BearView(controller: controller, assetPath: riveAssetPath),
+            child: RoomSceneBackdrop(
+              placed: placed,
+              bearModule: furnitureModule,
+            ),
+          ),
+          // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
+          //
+          // Раньше он был растянут во всю сцену — так требовало прежнее
+          // решение заказчика («не уменьшать»). Решение отменено 17.09:
+          // мишка во весь экран не оставлял места комнате, мебель рядом с
+          // ним была неразличима, а покупать неразличимое незачем. Ссылка —
+          // My Talking Tom, где герой занимает примерно треть кадра, а
+          // остальное отдано обстановке, которую и продают.
+          //
+          // Тот же размер — модуль всей размерной сетки: мебель меряется в
+          // ростах мишки, и пока он был во весь экран, шкаф рядом с ним был
+          // втрое ниже, чем должен.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            top: 0,
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final heroPx = c.maxHeight * heroHeight;
+                return Stack(
+                  children: [
+                    Positioned(
+                      // Ноги на линии пола — той же, на которой стоит мебель.
+                      bottom: c.maxHeight * (1 - RoomSceneBackdrop.floorLine),
+                      left: 0,
+                      right: 0,
+                      height: heroPx,
+                      // Тап по мишке — погладить: контроллер стреляет trg_pet,
+                      // риг проигрывает смех с подскоком (КП 7.6).
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: controller.petBear,
+                        child: BearView(
+                          controller: controller,
+                          assetPath: riveAssetPath,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           // Подсказки лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по
@@ -344,7 +412,11 @@ class _RoomScene extends StatelessWidget {
           // занимает только рамки, остальное пространство прозрачно для
           // касаний — погладить мишку по-прежнему можно где угодно.
           Positioned.fill(
-            child: RoomHintLayer(hints: hints, onTap: onHintTap),
+            child: RoomHintLayer(
+              hints: hints,
+              onTap: onHintTap,
+              bearModule: furnitureModule,
+            ),
           ),
           Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
           // Пузырь — в левом верхнем углу, зеркально кнопке «Что будем
