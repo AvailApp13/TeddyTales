@@ -58,6 +58,10 @@ const int maxRoomHints = 3;
 const double _sceneAspect = 0.5;
 const double _bearModule = 0.22;
 
+/// Верхняя полоса сцены, куда подсказки не ставятся: там пузырь с репликой
+/// и кнопка ухода.
+const double _topReserved = 0.2;
+
 double _widthFraction(RoomPlacement p) => p.w * _bearModule / _sceneAspect;
 
 /// Пересекаются ли места по горизонтали.
@@ -99,6 +103,11 @@ List<RoomHint> roomHints({
     if (item.kind == ItemKind.wallpaper || item.kind == ItemKind.floor) {
       continue;
     }
+    // Верх сцены занят: слева пузырь с репликой питомца (КП 3.4), справа
+    // кнопка «Что будем делать?». Гирлянда висит как раз там, и её рамка
+    // перечёркивала и то и другое. Место под самым потолком подсветить
+    // некуда — предложим его, когда под ним встанет что-то ещё.
+    if (placement.onWall && placement.wallFy! < _topReserved) continue;
     // Не предлагаем малышу то, что ему пока не по возрасту: письменный стол
     // новорождённому — такая же нелепость в комнате, как и в витрине.
     if (!item.suitsAt(stage)) continue;

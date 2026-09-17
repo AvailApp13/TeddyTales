@@ -69,12 +69,19 @@ class _HintSpot extends StatelessWidget {
   final RoomHint hint;
   final VoidCallback onTap;
 
-  /// Ниже этой ширины подпись не ставится.
+  /// Влезает ли подпись в рамку такого размера.
   ///
   /// Название, втиснутое в рамку уточки, превращается в серую полоску: слов
   /// не разобрать, а рамка теряет вид пустого места. Значок «плюс» понятен и
   /// без подписи — что именно встанет, человек узнает, тапнув.
-  static const double _labelFrom = 78;
+  ///
+  /// Условий два, потому что мест два вида. Широкие и низкие (кроватка,
+  /// ковёр) держат подпись в строку. Узкие и высокие (торшер, шкаф) в строку
+  /// её не берут, но двух строк по восемь букв им хватает — а без подписи
+  /// высокий прямоугольник у стены вообще не читается как место под вещь.
+  static bool _fitsLabel(BoxConstraints c) =>
+      (c.maxWidth >= 78 && c.maxHeight >= 46) ||
+      (c.maxWidth >= 44 && c.maxHeight >= 110);
 
   @override
   Widget build(BuildContext context) {
@@ -96,9 +103,7 @@ class _HintSpot extends StatelessWidget {
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final withLabel =
-                  constraints.maxWidth >= _labelFrom &&
-                  constraints.maxHeight >= 46;
+              final withLabel = _fitsLabel(constraints);
 
               return Center(
                 child: Padding(
