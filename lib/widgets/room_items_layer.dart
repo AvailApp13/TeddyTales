@@ -47,15 +47,15 @@ class RoomItemsLayer extends StatelessWidget {
           children: [
             for (final p in items)
               Positioned(
-                left: (p.fx * width - p.w * module / 2).clamp(
+                left: (p.fx * width - p.w * module * p.scale / 2).clamp(
                   0.0,
-                  (width - p.w * module).clamp(0.0, double.infinity),
+                  (width - p.w * module * p.scale).clamp(0.0, double.infinity),
                 ),
                 top: p.onWall
-                    ? p.wallFy! * height - p.h * module / 2
-                    : RoomSceneBackdrop.floorLine * height - p.h * module,
-                width: p.w * module,
-                height: p.h * module,
+                    ? p.wallFy! * height - p.h * module * p.scale / 2
+                    : p.plane.floorLine * height - p.h * module * p.scale,
+                width: p.w * module * p.scale,
+                height: p.h * module * p.scale,
                 child: Semantics(
                   button: true,
                   label: shopItemName(context.l10n, p.id),

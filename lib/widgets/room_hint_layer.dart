@@ -31,10 +31,10 @@ class RoomHintLayer extends StatelessWidget {
 
   final double bearModule;
 
-  /// Ширина рамки, но не шире самой сцены: ковёр занимает две трети комнаты
-  /// и в узком окне вылезал бы с обеих сторон разом.
+  /// Ширина рамки. Модуль умножается на масштаб плана: место под шкафом у
+  /// задней стены мельче места под кроваткой, потому что шкаф дальше.
   static double _spotWidth(RoomHint hint, double module) =>
-      hint.placement.w * module;
+      hint.placement.w * module * hint.placement.scale;
 
   static double _clampLeft(double left, double spot, double width) {
     if (spot >= width) return 0;
@@ -67,11 +67,11 @@ class RoomHintLayer extends StatelessWidget {
                 ),
                 top: hint.placement.onWall
                     ? hint.placement.wallFy! * height -
-                          hint.placement.h * module / 2
-                    : RoomSceneBackdrop.floorLine * height -
-                          hint.placement.h * module,
+                          hint.placement.h * module * hint.placement.scale / 2
+                    : hint.placement.plane.floorLine * height -
+                          hint.placement.h * module * hint.placement.scale,
                 width: _spotWidth(hint, module),
-                height: hint.placement.h * module,
+                height: hint.placement.h * module * hint.placement.scale,
                 child: _HintSpot(hint: hint, onTap: () => onTap(hint)),
               ),
           ],

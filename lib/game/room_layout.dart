@@ -11,9 +11,45 @@
 /// дизайнера: 1.0 модуля = 15 см. Все ширины и высоты ниже — в модулях.
 ///
 /// Координаты — доли сцены: fx — центр предмета по горизонтали (0..1),
-/// напольные предметы стоят на линии пола, настенные висят на высоте
-/// [RoomPlacement.wallFy] (доля высоты сцены до ЦЕНТРА предмета).
+/// напольные предметы стоят на линии пола своего плана, настенные висят на
+/// высоте [RoomPlacement.wallFy] (доля высоты сцены до ЦЕНТРА предмета).
+///
+/// ## Три плана глубины
+///
+/// Раскладка переписана 18.09 по `docs/room-design-v1.md`. До этого все
+/// предметы стояли в одной плоскости, и это не работало арифметически: при
+/// герое в 45 % высоты кадра вся ширина комнаты — 1.95 роста мишки, а одна
+/// только напольная мебель каталога занимает 14.6. Кроватка съедала 87 %
+/// ширины, ковёр не помещался вовсе, рядом не вставало ничего.
+///
+/// Теперь у комнаты три плана со своим масштабом и своей линией пола —
+/// дальний, средний и передний. Это не украшение, а единственный способ
+/// вместить в кадр собственный каталог.
 library;
+
+/// План глубины: насколько предмет уменьшен и на какой линии стоит.
+///
+/// Масштабы подобраны под самый высокий предмет каталога: шкаф в 1.9 роста
+/// на дальнем плане становится 1.18 — заметно выше мишки, но не упирается в
+/// потолок.
+enum RoomPlane {
+  /// Задняя стена: шкаф, книжная полка, комод. Ширина плана — 3.15 роста.
+  far(0.62, 0.58),
+
+  /// Основная мебель: кроватка, стол, стул, кресло. Ширина — 2.44 роста.
+  mid(0.80, 0.70),
+
+  /// Ковёр, игрушки и сам мишка. Ширина — 1.95 роста.
+  near(1.0, 0.86);
+
+  const RoomPlane(this.scale, this.floorLine);
+
+  /// Во сколько раз предметы этого плана мельче своего размера в модулях.
+  final double scale;
+
+  /// Линия пола плана — доля высоты сцены, на которой стоят его предметы.
+  final double floorLine;
+}
 
 /// Один предмет в комнате.
 class RoomPlacement {
@@ -22,6 +58,7 @@ class RoomPlacement {
     this.fx, {
     required this.w,
     required this.h,
+    required this.plane,
     this.wallFy,
     this.z = 0,
   });
@@ -35,6 +72,9 @@ class RoomPlacement {
   final double w;
   final double h;
 
+  /// На каком плане глубины стоит предмет.
+  final RoomPlane plane;
+
   /// Для настенных предметов — высота центра, доля высоты сцены.
   /// `null` — предмет стоит на полу.
   final double? wallFy;
@@ -44,52 +84,124 @@ class RoomPlacement {
   final int z;
 
   bool get onWall => wallFy != null;
+
+  /// Множитель размера с учётом плана.
+  double get scale => plane.scale;
 }
 
 /// Раскладка всех предметов каталога, которые могут стоять в комнате.
 ///
-/// Габариты подобраны под макет (кроватка чуть длиннее мишки, шкаф почти
-/// в два роста) и здравый смысл кукольной комнаты; утверждаются дизайнером —
-/// правится ровно этот список, сцена и гайд пересобираются сами.
+/// Координаты — из раздела 6 `docs/room-design-v1.md`, где они разложены по
+/// трём зонам КП 10.1: сон слева, еда справа, игра в центре и на переднем
+/// плане. Габариты подобраны под макет и утверждаются дизайнером; правится
+/// ровно этот список, сцена и гайд пересобираются сами.
 const List<RoomPlacement> roomLayout = [
-  // --- Мебель, задний план ---
-  RoomPlacement('wardrobe', 0.08, w: 1.15, h: 1.9),
-  RoomPlacement('shelf', 0.20, w: 0.95, h: 1.75),
-  RoomPlacement('bed', 0.13, w: 1.7, h: 1.0),
-  RoomPlacement('dresser', 0.66, w: 1.0, h: 1.05),
-  RoomPlacement('table', 0.33, w: 1.1, h: 0.85),
-  RoomPlacement('chair', 0.44, w: 0.6, h: 0.95),
-  RoomPlacement('armchair', 0.13, w: 1.05, h: 1.05, z: 1),
-  RoomPlacement('lamp', 0.93, w: 0.5, h: 1.5),
-  RoomPlacement('basket', 0.68, w: 0.65, h: 0.55, z: 1),
+  // --- Дальний план: задняя стена -----------------------------------------
+  RoomPlacement('wardrobe', 0.20, w: 1.15, h: 1.9, plane: RoomPlane.far),
+  RoomPlacement('shelf', 0.36, w: 0.95, h: 1.75, plane: RoomPlane.far),
+  RoomPlacement('dresser', 0.72, w: 1.0, h: 1.05, plane: RoomPlane.far),
+
+  // --- Средний план --------------------------------------------------------
+  // Зона сна: кроватка вдоль левой стены, торшер у изголовья.
+  RoomPlacement('bed', 0.22, w: 1.7, h: 1.0, plane: RoomPlane.mid),
+  RoomPlacement('lamp', 0.06, w: 0.5, h: 1.5, plane: RoomPlane.mid),
+  // Зона еды: стол со стулом у задней стены справа.
+  RoomPlacement('table', 0.62, w: 1.1, h: 0.85, plane: RoomPlane.mid),
+  RoomPlacement('chair', 0.76, w: 0.6, h: 0.95, plane: RoomPlane.mid),
+  RoomPlacement('armchair', 0.88, w: 1.05, h: 1.05, plane: RoomPlane.mid, z: 1),
+  // Зелень разделяет зоны.
+  RoomPlacement('plant', 0.50, w: 0.55, h: 0.85, plane: RoomPlane.mid, z: 1),
+  RoomPlacement('cactus', 0.68, w: 0.35, h: 0.5, plane: RoomPlane.mid, z: 1),
+
+  // --- Передний план: зона игры -------------------------------------------
   // Ковёр лежит под мишкой — рисуется первым.
-  RoomPlacement('rug', 0.5, w: 2.4, h: 0.45, z: -1),
+  RoomPlacement('rug', 0.50, w: 2.4, h: 0.45, plane: RoomPlane.near, z: -1),
+  RoomPlacement('basket', 0.90, w: 0.65, h: 0.55, plane: RoomPlane.near, z: 1),
+  RoomPlacement(
+    'pillow_heart',
+    0.12,
+    w: 0.45,
+    h: 0.35,
+    plane: RoomPlane.near,
+    z: 2,
+  ),
+  RoomPlacement(
+    'pillow_star',
+    0.80,
+    w: 0.45,
+    h: 0.35,
+    plane: RoomPlane.near,
+    z: 2,
+  ),
+  RoomPlacement('teddy', 0.06, w: 0.42, h: 0.5, plane: RoomPlane.near, z: 10),
+  RoomPlacement('rocket', 0.16, w: 0.38, h: 0.6, plane: RoomPlane.near, z: 10),
+  RoomPlacement('ball', 0.24, w: 0.35, h: 0.35, plane: RoomPlane.near, z: 10),
+  RoomPlacement('cubes', 0.34, w: 0.5, h: 0.36, plane: RoomPlane.near, z: 10),
+  RoomPlacement('duck', 0.42, w: 0.3, h: 0.3, plane: RoomPlane.near, z: 10),
+  RoomPlacement('drum', 0.60, w: 0.45, h: 0.36, plane: RoomPlane.near, z: 10),
+  RoomPlacement('car', 0.70, w: 0.5, h: 0.3, plane: RoomPlane.near, z: 10),
+  RoomPlacement('train', 0.82, w: 0.7, h: 0.32, plane: RoomPlane.near, z: 10),
+  RoomPlacement('puzzle', 0.92, w: 0.5, h: 0.14, plane: RoomPlane.near, z: 10),
 
-  // --- Декор: стены ---
-  RoomPlacement('pic_bear', 0.83, w: 0.55, h: 0.55, wallFy: 0.26),
-  RoomPlacement('pic_forest', 0.63, w: 0.55, h: 0.55, wallFy: 0.22),
-  RoomPlacement('pic_moon', 0.72, w: 0.5, h: 0.5, wallFy: 0.33),
-  RoomPlacement('clock', 0.5, w: 0.42, h: 0.42, wallFy: 0.16),
-  RoomPlacement('poster', 0.06, w: 0.52, h: 0.72, wallFy: 0.27),
-  RoomPlacement('garland', 0.5, w: 2.2, h: 0.22, wallFy: 0.07),
-
-  // --- Декор: пол и поверхности ---
-  RoomPlacement('plant', 0.80, w: 0.55, h: 0.85, z: 1),
-  RoomPlacement('cactus', 0.70, w: 0.35, h: 0.5, z: 1),
-  RoomPlacement('pillow_heart', 0.10, w: 0.45, h: 0.35, z: 2),
-  RoomPlacement('pillow_star', 0.92, w: 0.45, h: 0.35, z: 2),
-
-  // --- Игрушки: передний план, мельче мишки ---
-  RoomPlacement('teddy', 0.075, w: 0.42, h: 0.5, z: 10),
-  RoomPlacement('ball', 0.20, w: 0.35, h: 0.35, z: 10),
-  RoomPlacement('cubes', 0.29, w: 0.5, h: 0.36, z: 10),
-  RoomPlacement('duck', 0.375, w: 0.3, h: 0.3, z: 10),
-  RoomPlacement('drum', 0.63, w: 0.45, h: 0.36, z: 10),
-  RoomPlacement('car', 0.72, w: 0.5, h: 0.3, z: 10),
-  RoomPlacement('train', 0.84, w: 0.7, h: 0.32, z: 10),
-  RoomPlacement('puzzle', 0.94, w: 0.5, h: 0.14, z: 10),
-  RoomPlacement('rocket', 0.55, w: 0.38, h: 0.6, z: 10),
-  RoomPlacement('kite', 0.93, w: 0.6, h: 0.7, wallFy: 0.12),
+  // --- Стены ---------------------------------------------------------------
+  // Настенное живёт на дальнем плане: оно висит за всей мебелью.
+  RoomPlacement(
+    'garland',
+    0.60,
+    w: 2.2,
+    h: 0.22,
+    plane: RoomPlane.far,
+    wallFy: 0.10,
+  ),
+  RoomPlacement(
+    'kite',
+    0.92,
+    w: 0.6,
+    h: 0.7,
+    plane: RoomPlane.far,
+    wallFy: 0.16,
+  ),
+  RoomPlacement(
+    'clock',
+    0.66,
+    w: 0.42,
+    h: 0.42,
+    plane: RoomPlane.far,
+    wallFy: 0.26,
+  ),
+  RoomPlacement(
+    'pic_forest',
+    0.44,
+    w: 0.55,
+    h: 0.55,
+    plane: RoomPlane.far,
+    wallFy: 0.28,
+  ),
+  RoomPlacement(
+    'pic_bear',
+    0.80,
+    w: 0.55,
+    h: 0.55,
+    plane: RoomPlane.far,
+    wallFy: 0.30,
+  ),
+  // Левая стена: над кроваткой и у самого угла.
+  RoomPlacement(
+    'pic_moon',
+    0.10,
+    w: 0.5,
+    h: 0.5,
+    plane: RoomPlane.far,
+    wallFy: 0.30,
+  ),
+  RoomPlacement(
+    'poster',
+    0.03,
+    w: 0.52,
+    h: 0.72,
+    plane: RoomPlane.far,
+    wallFy: 0.42,
+  ),
 ];
 
 RoomPlacement? placementOf(String id) {

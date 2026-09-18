@@ -85,20 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
   /// остальное отдано комнате, которую и продают.
   static const double _heroHeight = 0.45;
 
-  /// Модуль, в котором меряется мебель.
+  /// Модуль мебели равен росту героя — как и должно быть по размерной сетке.
   ///
-  /// ВРЕМЕННО меньше роста героя. По размерной сетке модуль обязан
-  /// равняться росту мишки: шкаф в 1.9 роста должен быть заметно выше него.
-  /// Но комната пока плоская — один план, без глубины, — и в честном
-  /// масштабе кроватка (1.7 роста) занимает три четверти кадра, а ковёр
-  /// (2.4) не помещается вовсе.
-  ///
-  /// Правильное решение описано в `docs/room-design-v1.md`: три плана
-  /// глубины со своими масштабами, мебель уезжает вглубь. До утверждения
-  /// планировки мебель просто мельче героя — так кадр читается, хотя
-  /// размерный ряд и неправдив. Размерный ряд для дизайнера показывает
-  /// `docs/interior-size-guide.md`, а не главный экран.
-  static const double _furnitureModule = 0.3;
+  /// Костыль «мебель мельче героя» больше не нужен: глубину теперь даёт не
+  /// заниженный модуль, а план, на котором стоит предмет
+  /// (`docs/room-design-v1.md`). Шкаф у задней стены мельче кроватки не
+  /// потому, что мы его уменьшили, а потому, что он дальше.
 
   AppSection _section = AppSection.home;
 
@@ -276,7 +268,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       onHintTap: _useHint,
                       onItemTap: _openItemSheet,
                       heroHeight: _heroHeight,
-                      furnitureModule: _furnitureModule,
                       onOpenCare: () => _open(
                         CareScreen(
                           controller: widget.controller,
@@ -332,7 +323,6 @@ class _RoomScene extends StatelessWidget {
     required this.onHintTap,
     required this.onItemTap,
     this.heroHeight = RoomSceneBackdrop.defaultBearModule,
-    this.furnitureModule = RoomSceneBackdrop.defaultBearModule,
   });
 
   final BearController controller;
@@ -345,9 +335,6 @@ class _RoomScene extends StatelessWidget {
 
   /// Рост героя в долях высоты сцены.
   final double heroHeight;
-
-  /// Модуль мебели: в нём меряются габариты из размерной сетки.
-  final double furnitureModule;
 
   /// Пустые места, которые стоит подсветить.
   final List<RoomHint> hints;
@@ -375,10 +362,7 @@ class _RoomScene extends StatelessWidget {
           // размерной сетки (room_layout.dart) — мебель мельче героя, как
           // задний план с перспективой на макете.
           Positioned.fill(
-            child: RoomSceneBackdrop(
-              placed: placed,
-              bearModule: furnitureModule,
-            ),
+            child: RoomSceneBackdrop(placed: placed, bearModule: heroHeight),
           ),
           // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
           //
@@ -429,7 +413,7 @@ class _RoomScene extends StatelessWidget {
           Positioned.fill(
             child: RoomItemsLayer(
               placed: placed,
-              bearModule: furnitureModule,
+              bearModule: heroHeight,
               onTap: onItemTap,
             ),
           ),
@@ -441,7 +425,7 @@ class _RoomScene extends StatelessWidget {
             child: RoomHintLayer(
               hints: hints,
               onTap: onHintTap,
-              bearModule: furnitureModule,
+              bearModule: heroHeight,
             ),
           ),
           Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
