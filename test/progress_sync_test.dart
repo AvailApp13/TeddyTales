@@ -55,6 +55,10 @@ class _FakeStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> renamePet(String name, {String locale = 'ru'}) async =>
+      answer;
+
+  @override
   Future<void> setPlaced(String itemId, {required bool placed}) async {
     if (failing) throw const ProgressStoreException('нет сети');
     this.placed.add((itemId, placed));

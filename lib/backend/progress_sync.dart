@@ -112,6 +112,22 @@ class ProgressSync {
     }
   }
 
+  /// Переименовывает питомца (КП 2.3).
+  ///
+  /// Возвращает `null`, если сервер имя принял, иначе — что с ним не так.
+  /// Локально имя не меняем до ответа: в отличие от покупки, здесь нечего
+  /// откатывать красиво — человек увидел бы новое имя, а через секунду
+  /// старое, и не понял бы, приняли его или нет.
+  Future<String?> rename(String name) async {
+    try {
+      _apply(await store.renamePet(name));
+      return null;
+    } on Object catch (error) {
+      _offline(error);
+      return error.toString();
+    }
+  }
+
   /// Ставит предмет в комнату или убирает (КП 10.7).
   Future<void> place(String itemId, {required bool placed}) async {
     try {

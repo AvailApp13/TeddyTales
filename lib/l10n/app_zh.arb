@@ -1,5 +1,4 @@
 {
-  "@@locale": "zh",
   "ageDays": "{count}天",
   "ageMonths": "{count}个月",
   "ageMonthsDays": "{months}个月{days}天",
@@ -99,8 +98,8 @@
   "feedHintIndependent": "我自己也行的。嗯……差不多行。",
   "feedHintReserved": "就吃点水果，可以吗？",
   "feedNotEnoughCoins": "金币不够",
-  "feedRecipesNote": "按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。",
   "feedRecipeSteps": "{count, plural, other{{count} 步}}",
+  "feedRecipesNote": "按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。",
   "feedStepProgress": "第 {step} 步，共 {total} 步。奖励：{reward} 金币，食物 +{gain}。",
   "feedTabCook": "动手做",
   "feedTabReady": "现成美食",
@@ -221,6 +220,7 @@
   "learnAgeGateSubtitle": "游戏内容因年龄而异，随时可以更改。",
   "learnAgeGateTitle": "谁来玩？",
   "learnCatColorsTitle": "颜色与形状",
+  "learnCatCountTitle": "数数与简单逻辑",
   "@learnCatLocked": {
     "placeholders": {
       "stage": {
@@ -229,7 +229,6 @@
     }
   },
   "learnCatLocked": "到「{stage}」阶段开放",
-  "learnCatCountTitle": "数数与简单逻辑",
   "learnCatWorldTitle": "认识世界",
   "learnCorrectToast": "{coins, plural, other{答对了！+{coins}金币}}",
   "learnGamesTitle": "游戏",
@@ -250,12 +249,55 @@
   "learnTaskWorldDay": "白天什么在发光？",
   "learnTaskWorldWater": "谁住在水里？",
   "learnTitle": "学习",
+  "@@locale": "zh",
   "moodDirty": "脏兮兮",
   "moodHappy": "开心",
   "moodHungry": "饿了",
   "moodNormal": "平静",
   "moodSad": "难过",
   "moodSleepy": "困了",
+  "nameChanged": "宝宝现在叫 {name}",
+  "@nameChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameDialogHint": "宠物名字",
+  "nameDialogNote": "{min} 到 {max} 个字符，仅限字母、空格和连字符。",
+  "@nameDialogNote": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameDialogSave": "保存",
+  "nameDialogTitle": "宝宝叫什么名字？",
+  "nameErrorBlocked": "这个名字不适合宝宝",
+  "nameErrorCharacters": "只能使用字母、空格和连字符",
+  "nameErrorEmpty": "请输入名字",
+  "nameErrorLong": "最多 {max} 个字符",
+  "@nameErrorLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameErrorNetwork": "保存失败，请重试",
+  "nameErrorShort": "至少 {min} 个字符",
+  "@nameErrorShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "navLockReason": "到“{stage}”阶段解锁",
   "navSectionCatalog": "小熊",
   "navSectionHome": "首页",
@@ -275,6 +317,7 @@
   "profileLinkGrowthSubtitle": "五个阶段及其变化",
   "profileLinkSettings": "设置",
   "profileLinkSettingsSubtitle": "语言与通知",
+  "profileRename": "修改名字",
   "profileSectionBirth": "出生卡 · КП 2.2",
   "profileSectionHistory": "成长阶段记录 · КП 14.1",
   "profileSectionLinks": "更多",
@@ -301,17 +344,17 @@
   "roomItemBought": "已购买「{name}」",
   "roomItemPlaced": "已摆放「{name}」",
   "roomItemRemoved": "已收起「{name}」",
-  "roomSlotEmpty": "空位",
-  "roomSlotPut": "放置",
-  "roomSheetOwned": "已拥有",
-  "roomSheetRemove": "从房间移除",
-  "roomSheetReplace": "换成",
   "roomKindBath": "浴室",
   "roomKindKitchen": "厨房",
   "roomKindNursery": "儿童房",
   "roomNotEnoughCoins": "金币不够",
   "roomOwnedLabel": "已拥有",
   "roomSelectedLabel": "已选择",
+  "roomSheetOwned": "已拥有",
+  "roomSheetRemove": "从房间移除",
+  "roomSheetReplace": "换成",
+  "roomSlotEmpty": "空位",
+  "roomSlotPut": "放置",
   "roomTitle": "我的房间",
   "settingsFootnote": "八种通知类型依据 КП 13.1，免打扰时段与频率限制依据 13.2。账号绑定和法律文件（КП 14.2）将随后端一起推出。",
   "settingsNotifEvent": "活动",
@@ -333,11 +376,11 @@
   "settingsTitle": "设置",
   "settingsVersion": "版本",
   "shopBuyFor": "花 {total} 购买",
-  "shopGroupLater": "长大后会用到",
-  "shopGroupNow": "现在适合宝宝",
   "shopCartDisclaimer": "购物车不在需求文档里——它来自设计稿，属于第二版内容，这里先做出来是为了展示购买流程。价格为占位数据（需求 10.9）。",
   "shopCartEmpty": "购物车是空的",
   "shopCheckoutDone": "{count, plural, other{已购买{count}件物品}}",
+  "shopGroupLater": "长大后会用到",
+  "shopGroupNow": "现在适合宝宝",
   "shopNotEnoughCoins": "金币不够",
   "shopOwnedLabel": "已拥有",
   "shopTabClothes": "服装",

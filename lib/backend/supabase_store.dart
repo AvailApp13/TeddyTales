@@ -118,6 +118,16 @@ class SupabaseStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> renamePet(String name, {String locale = 'ru'}) async {
+    final id = _petId ?? await _findPet();
+    return _snapshot('rename_pet', {
+      'p_pet_id': id,
+      'p_name': name,
+      'p_locale': locale,
+    });
+  }
+
+  @override
   Future<void> setPlaced(String itemId, {required bool placed}) async {
     final player = _client.auth.currentUser?.id;
     if (player == null) {

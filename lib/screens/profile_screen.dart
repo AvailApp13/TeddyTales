@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../game/pet_name.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/rename_pet_dialog.dart';
 import '../widgets/sign_out_dialog.dart';
 
 /// Профиль питомца (КП 14.1): карточка рождения, характер, история стадий.
@@ -34,6 +36,7 @@ class ProfileScreen extends StatelessWidget {
     required this.onOpenDiary,
     required this.onOpenSettings,
     this.onSignOut,
+    this.onRename,
     this.calendar = const GameCalendar(),
     this.language = BearLanguage.ru,
   });
@@ -56,6 +59,11 @@ class ProfileScreen extends StatelessWidget {
   /// Выход из аккаунта (КП 14.2). `null` — кнопка не показывается.
   final VoidCallback? onSignOut;
 
+  /// Переименовать питомца (КП 2.3). Возвращает текст ошибки или `null`,
+  /// если сервер имя принял. `null` вместо самой функции — переименование
+  /// недоступно, карандаш не показывается.
+  final Future<PetNameError?> Function(String name)? onRename;
+
   /// Перевод реального времени в игровой возраст. По КП 1.5 и 15.4 календарь
   /// настраиваемый и должен приезжать с сервера — поэтому он параметр, а не
   /// константа внутри экрана.
@@ -64,6 +72,27 @@ class ProfileScreen extends StatelessWidget {
   /// Язык интерфейса (КП 13.4). Влияет на формат возраста: «3 месяца 12 дней»
   /// против «3 months 12 days».
   final BearLanguage language;
+
+  Future<void> _rename(BuildContext context, String current) async {
+    final l10n = context.l10n;
+    final name = await showRenamePetDialog(
+      context: context,
+      // Сентинел имени по умолчанию человеку показывать нельзя: он увидит
+      // «__default__» вместо «Мой малыш».
+      current: petDisplayName(l10n, current),
+      onSubmit: onRename!,
+    );
+
+    if (name == null || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.nameChanged(name)),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +138,13 @@ class ProfileScreen extends StatelessWidget {
                         _BirthCard(
                           name: petDisplayName(l10n, profile.name),
                           skin: skin,
+                          // Имя правится там, где человек его видит. КП 14.2
+                          // относит это к настройкам, но идти за именем
+                          // питомца в настройки — всё равно что менять
+                          // подпись к фотографии в системных параметрах.
+                          onRename: onRename == null
+                              ? null
+                              : () => _rename(context, profile.name),
                         ),
 
                         _SectionTitle(l10n.profileSectionBirth),
@@ -307,10 +343,13 @@ class _SheetHeader extends StatelessWidget {
 
 /// Шапка профиля: портрет, имя, герой и цвет меха.
 class _BirthCard extends StatelessWidget {
-  const _BirthCard({required this.name, required this.skin});
+  const _BirthCard({required this.name, required this.skin, this.onRename});
 
   final String name;
   final BearSkin skin;
+
+  /// Открыть переименование. `null` — карандаша нет.
+  final VoidCallback? onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -340,12 +379,39 @@ class _BirthCard extends StatelessWidget {
             child: const Icon(Icons.pets, size: 40, color: AppColors.tan),
           ),
           const SizedBox(height: 8),
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (onRename != null) ...[
+                const SizedBox(width: 6),
+                // Карандаш рядом с именем, а не пункт в списке ниже: связь
+                // «это имя — его и меняю» должна читаться без подписи.
+                IconButton(
+                  onPressed: onRename,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  tooltip: context.l10n.profileRename,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 17,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 2),
           // Герой и цвет меха — из каталога TeddyTales® (SLOW · Milk Tea,

@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../game/pet_name.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../l10n/l10n.dart';
@@ -46,6 +47,7 @@ class HomeScreen extends StatefulWidget {
     this.calendar = const GameCalendar(),
     this.onOpenDevPanel,
     this.onSignOut,
+    this.onRename,
     this.riveAssetPath = BearRigSpec.assetPath,
   });
 
@@ -68,6 +70,9 @@ class HomeScreen extends StatefulWidget {
   /// Выход из аккаунта (КП 14.2). `null` — пункта выхода нет ни в профиле,
   /// ни в настройках.
   final VoidCallback? onSignOut;
+
+  /// Переименовать питомца (КП 2.3). `null` — карандаша рядом с именем нет.
+  final Future<PetNameError?> Function(String name)? onRename;
 
   /// Какой `.riv` показывать. Пока настоящий риг не собран, сюда можно
   /// подставить [BearRigSpec.demoAssetPath] и убедиться, что пайплайн живой.
@@ -168,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
     onOpenGrowth: () => _open(GrowthScreen(controller: widget.controller)),
     onOpenDiary: () => _open(const DiaryScreen()),
     onSignOut: widget.onSignOut == null ? null : _signOut,
+    onRename: widget.onRename,
     onOpenSettings: () => _open(
       SettingsScreen(
         game: widget.game,

@@ -74,6 +74,23 @@ class MemoryStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> renamePet(String name, {String locale = 'ru'}) async {
+    // В памяти нет списка запрещённых слов — он живёт на сервере. Здесь
+    // имя просто принимается: офлайн игрок переименовывает мишку, а
+    // проверку слово пройдёт, когда связь вернётся.
+    _snapshot = PetSnapshot(
+      petId: _snapshot.petId,
+      profile: _snapshot.profile.copyWith(name: name),
+      state: _snapshot.state,
+      inventory: _snapshot.inventory,
+      placed: _snapshot.placed,
+      eduProgress: _snapshot.eduProgress,
+      serverTime: _snapshot.serverTime,
+    );
+    return _snapshot;
+  }
+
+  @override
   Future<void> setPlaced(String itemId, {required bool placed}) async {
     final next = Set<String>.from(_snapshot.placed);
     if (placed) {

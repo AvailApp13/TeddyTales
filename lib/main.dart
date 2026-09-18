@@ -9,6 +9,7 @@ import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
 import 'game/game_state.dart';
+import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
@@ -220,6 +221,20 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     setState(() => _signedIn = false);
   }
 
+  /// Переименовать питомца. `null` — сервер имя принял.
+  ///
+  /// Текст ошибки от сервера человеку не показываем: он на языке базы и
+  /// говорит про `check_violation`. Здесь только разбираем, отказали нам
+  /// из-за имени или не достучались вовсе, — переводит экран.
+  Future<PetNameError?> _rename(String name) async {
+    final error = await _sync.rename(name);
+    if (error == null) return null;
+
+    return error.contains('check_violation') || error.contains('запрещ')
+        ? PetNameError.rejected
+        : PetNameError.network;
+  }
+
   Widget _home() {
     return HomeScreen(
       controller: _bear,
@@ -233,6 +248,10 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       // bear_main.riv.
       riveAssetPath: BearRigSpec.assetPath,
       onSignOut: _signOut,
+      // Переименование идёт через мост: имя проверяет сервер (КП 2.3), он
+      // же возвращает снимок с новым именем, и оно доезжает до всех
+      // экранов разом.
+      onRename: _rename,
       // Дев-панель со всеми входами State Machine — только в отладке.
       onOpenDevPanel: kDebugMode
           ? (context) => Navigator.of(context).push(

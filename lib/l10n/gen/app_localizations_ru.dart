@@ -387,10 +387,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get feedNotEnoughCoins => 'Не хватает монет';
 
   @override
-  String get feedRecipesNote =>
-      'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.';
-
-  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -401,6 +397,10 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get feedRecipesNote =>
+      'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -805,12 +805,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get learnCatColorsTitle => 'Цвета и формы';
 
   @override
+  String get learnCatCountTitle => 'Счёт и простая логика';
+
+  @override
   String learnCatLocked(String stage) {
     return 'Откроется на стадии «$stage»';
   }
-
-  @override
-  String get learnCatCountTitle => 'Счёт и простая логика';
 
   @override
   String get learnCatWorldTitle => 'Окружающий мир';
@@ -924,6 +924,47 @@ class AppLocalizationsRu extends AppLocalizations {
   String get moodSleepy => 'Сонный';
 
   @override
+  String nameChanged(String name) {
+    return 'Теперь малыша зовут $name';
+  }
+
+  @override
+  String get nameDialogHint => 'Имя питомца';
+
+  @override
+  String nameDialogNote(int min, int max) {
+    return 'От $min до $max знаков. Буквы, пробел и дефис.';
+  }
+
+  @override
+  String get nameDialogSave => 'Сохранить';
+
+  @override
+  String get nameDialogTitle => 'Как зовут малыша?';
+
+  @override
+  String get nameErrorBlocked => 'Такое имя не подойдёт малышу';
+
+  @override
+  String get nameErrorCharacters => 'Только буквы, пробел и дефис';
+
+  @override
+  String get nameErrorEmpty => 'Впишите имя';
+
+  @override
+  String nameErrorLong(int max) {
+    return 'Не длиннее $max знаков';
+  }
+
+  @override
+  String get nameErrorNetwork => 'Не получилось сохранить — попробуйте ещё раз';
+
+  @override
+  String nameErrorShort(int min) {
+    return 'Не короче $min знаков';
+  }
+
+  @override
   String navLockReason(String stage) {
     return 'Откроется на стадии «$stage»';
   }
@@ -984,6 +1025,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileLinkSettingsSubtitle => 'язык и уведомления';
+
+  @override
+  String get profileRename => 'Изменить имя';
 
   @override
   String get profileSectionBirth => 'Карточка рождения · КП 2.2';
@@ -1071,21 +1115,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get roomSlotEmpty => 'Свободное место';
-
-  @override
-  String get roomSlotPut => 'Поставить';
-
-  @override
-  String get roomSheetOwned => 'уже есть';
-
-  @override
-  String get roomSheetRemove => 'Убрать из комнаты';
-
-  @override
-  String get roomSheetReplace => 'Заменить на';
-
-  @override
   String get roomKindBath => 'Ванная';
 
   @override
@@ -1102,6 +1131,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roomSelectedLabel => 'Выбрано';
+
+  @override
+  String get roomSheetOwned => 'уже есть';
+
+  @override
+  String get roomSheetRemove => 'Убрать из комнаты';
+
+  @override
+  String get roomSheetReplace => 'Заменить на';
+
+  @override
+  String get roomSlotEmpty => 'Свободное место';
+
+  @override
+  String get roomSlotPut => 'Поставить';
 
   @override
   String get roomTitle => 'Моя комната';
@@ -1171,12 +1215,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get shopGroupLater => 'Пригодится, когда подрастёт';
-
-  @override
-  String get shopGroupNow => 'Малышу сейчас';
-
-  @override
   String get shopCartDisclaimer =>
       'Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).';
 
@@ -1194,6 +1232,12 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shopGroupLater => 'Пригодится, когда подрастёт';
+
+  @override
+  String get shopGroupNow => 'Малышу сейчас';
 
   @override
   String get shopNotEnoughCoins => 'Не хватает монет';

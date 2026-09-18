@@ -333,9 +333,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedNotEnoughCoins => '金币不够';
 
   @override
-  String get feedRecipesNote => '按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。';
-
-  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -344,6 +341,9 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get feedRecipesNote => '按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -736,12 +736,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get learnCatColorsTitle => '颜色与形状';
 
   @override
+  String get learnCatCountTitle => '数数与简单逻辑';
+
+  @override
   String learnCatLocked(String stage) {
     return '到「$stage」阶段开放';
   }
-
-  @override
-  String get learnCatCountTitle => '数数与简单逻辑';
 
   @override
   String get learnCatWorldTitle => '认识世界';
@@ -848,6 +848,47 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moodSleepy => '困了';
 
   @override
+  String nameChanged(String name) {
+    return '宝宝现在叫 $name';
+  }
+
+  @override
+  String get nameDialogHint => '宠物名字';
+
+  @override
+  String nameDialogNote(int min, int max) {
+    return '$min 到 $max 个字符，仅限字母、空格和连字符。';
+  }
+
+  @override
+  String get nameDialogSave => '保存';
+
+  @override
+  String get nameDialogTitle => '宝宝叫什么名字？';
+
+  @override
+  String get nameErrorBlocked => '这个名字不适合宝宝';
+
+  @override
+  String get nameErrorCharacters => '只能使用字母、空格和连字符';
+
+  @override
+  String get nameErrorEmpty => '请输入名字';
+
+  @override
+  String nameErrorLong(int max) {
+    return '最多 $max 个字符';
+  }
+
+  @override
+  String get nameErrorNetwork => '保存失败，请重试';
+
+  @override
+  String nameErrorShort(int min) {
+    return '至少 $min 个字符';
+  }
+
+  @override
   String navLockReason(String stage) {
     return '到“$stage”阶段解锁';
   }
@@ -908,6 +949,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileLinkSettingsSubtitle => '语言与通知';
+
+  @override
+  String get profileRename => '修改名字';
 
   @override
   String get profileSectionBirth => '出生卡 · КП 2.2';
@@ -995,21 +1039,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get roomSlotEmpty => '空位';
-
-  @override
-  String get roomSlotPut => '放置';
-
-  @override
-  String get roomSheetOwned => '已拥有';
-
-  @override
-  String get roomSheetRemove => '从房间移除';
-
-  @override
-  String get roomSheetReplace => '换成';
-
-  @override
   String get roomKindBath => '浴室';
 
   @override
@@ -1026,6 +1055,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get roomSelectedLabel => '已选择';
+
+  @override
+  String get roomSheetOwned => '已拥有';
+
+  @override
+  String get roomSheetRemove => '从房间移除';
+
+  @override
+  String get roomSheetReplace => '换成';
+
+  @override
+  String get roomSlotEmpty => '空位';
+
+  @override
+  String get roomSlotPut => '放置';
 
   @override
   String get roomTitle => '我的房间';
@@ -1094,12 +1138,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get shopGroupLater => '长大后会用到';
-
-  @override
-  String get shopGroupNow => '现在适合宝宝';
-
-  @override
   String get shopCartDisclaimer =>
       '购物车不在需求文档里——它来自设计稿，属于第二版内容，这里先做出来是为了展示购买流程。价格为占位数据（需求 10.9）。';
 
@@ -1115,6 +1153,12 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shopGroupLater => '长大后会用到';
+
+  @override
+  String get shopGroupNow => '现在适合宝宝';
 
   @override
   String get shopNotEnoughCoins => '金币不够';

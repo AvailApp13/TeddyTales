@@ -1,5 +1,4 @@
 {
-  "@@locale": "ru",
   "@ageDays": {
     "placeholders": {
       "count": {
@@ -201,7 +200,6 @@
   "feedHintIndependent": "Я бы и сам справился. Ну, почти.",
   "feedHintReserved": "Можно просто фрукты?",
   "feedNotEnoughCoins": "Не хватает монет",
-  "feedRecipesNote": "Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.",
   "@feedRecipeSteps": {
     "placeholders": {
       "count": {
@@ -210,6 +208,7 @@
     }
   },
   "feedRecipeSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
+  "feedRecipesNote": "Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.",
   "@feedStepProgress": {
     "placeholders": {
       "step": {
@@ -426,6 +425,7 @@
   "learnAgeGateSubtitle": "От возраста зависит набор игр. Поменять можно в любой момент.",
   "learnAgeGateTitle": "Кто будет играть?",
   "learnCatColorsTitle": "Цвета и формы",
+  "learnCatCountTitle": "Счёт и простая логика",
   "@learnCatLocked": {
     "placeholders": {
       "stage": {
@@ -434,7 +434,6 @@
     }
   },
   "learnCatLocked": "Откроется на стадии «{stage}»",
-  "learnCatCountTitle": "Счёт и простая логика",
   "learnCatWorldTitle": "Окружающий мир",
   "@learnCorrectToast": {
     "placeholders": {
@@ -496,12 +495,55 @@
   "learnTaskWorldDay": "Что светит днём?",
   "learnTaskWorldWater": "Кто живёт в воде?",
   "learnTitle": "Обучение",
+  "@@locale": "ru",
   "moodDirty": "Чумазый",
   "moodHappy": "Радостный",
   "moodHungry": "Голодный",
   "moodNormal": "Спокойный",
   "moodSad": "Грустный",
   "moodSleepy": "Сонный",
+  "nameChanged": "Теперь малыша зовут {name}",
+  "@nameChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameDialogHint": "Имя питомца",
+  "nameDialogNote": "От {min} до {max} знаков. Буквы, пробел и дефис.",
+  "@nameDialogNote": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameDialogSave": "Сохранить",
+  "nameDialogTitle": "Как зовут малыша?",
+  "nameErrorBlocked": "Такое имя не подойдёт малышу",
+  "nameErrorCharacters": "Только буквы, пробел и дефис",
+  "nameErrorEmpty": "Впишите имя",
+  "nameErrorLong": "Не длиннее {max} знаков",
+  "@nameErrorLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameErrorNetwork": "Не получилось сохранить — попробуйте ещё раз",
+  "nameErrorShort": "Не короче {min} знаков",
+  "@nameErrorShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "@navLockReason": {
     "placeholders": {
       "stage": {
@@ -538,6 +580,7 @@
   "profileLinkGrowthSubtitle": "пять стадий и переходы",
   "profileLinkSettings": "Настройки",
   "profileLinkSettingsSubtitle": "язык и уведомления",
+  "profileRename": "Изменить имя",
   "profileSectionBirth": "Карточка рождения · КП 2.2",
   "profileSectionHistory": "История стадий · КП 14.1",
   "profileSectionLinks": "Разделы",
@@ -585,17 +628,17 @@
     }
   },
   "roomItemRemoved": "{name} убрано",
-  "roomSlotEmpty": "Свободное место",
-  "roomSlotPut": "Поставить",
-  "roomSheetOwned": "уже есть",
-  "roomSheetRemove": "Убрать из комнаты",
-  "roomSheetReplace": "Заменить на",
   "roomKindBath": "Ванная",
   "roomKindKitchen": "Кухня",
   "roomKindNursery": "Детская",
   "roomNotEnoughCoins": "Не хватает монет",
   "roomOwnedLabel": "Куплено",
   "roomSelectedLabel": "Выбрано",
+  "roomSheetOwned": "уже есть",
+  "roomSheetRemove": "Убрать из комнаты",
+  "roomSheetReplace": "Заменить на",
+  "roomSlotEmpty": "Свободное место",
+  "roomSlotPut": "Поставить",
   "roomTitle": "Моя комната",
   "settingsFootnote": "Восемь типов уведомлений по КП 13.1, тихие часы и ограничение частоты — по 13.2. Привязка аккаунта и правовые документы (КП 14.2) появятся вместе с бэкендом.",
   "settingsNotifEvent": "Событие",
@@ -624,8 +667,6 @@
     }
   },
   "shopBuyFor": "Купить за {total}",
-  "shopGroupLater": "Пригодится, когда подрастёт",
-  "shopGroupNow": "Малышу сейчас",
   "shopCartDisclaimer": "Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).",
   "shopCartEmpty": "Корзина пуста",
   "@shopCheckoutDone": {
@@ -636,6 +677,8 @@
     }
   },
   "shopCheckoutDone": "{count, plural, one{Куплен {count} предмет} few{Куплено {count} предмета} other{Куплено {count} предметов}}",
+  "shopGroupLater": "Пригодится, когда подрастёт",
+  "shopGroupNow": "Малышу сейчас",
   "shopNotEnoughCoins": "Не хватает монет",
   "shopOwnedLabel": "Куплено",
   "shopTabClothes": "Одежда",

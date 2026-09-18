@@ -1,5 +1,4 @@
 {
-  "@@locale": "en",
   "ageDays": "{count, plural, one{{count} day} other{{count} days}}",
   "ageMonths": "{count, plural, one{{count} month} other{{count} months}}",
   "ageMonthsDays": "{months, plural, one{{months} month} other{{months} months}} {days, plural, one{{days} day} other{{days} days}}",
@@ -99,8 +98,8 @@
   "feedHintIndependent": "I could manage on my own. Well, almost.",
   "feedHintReserved": "Could I just have some fruit?",
   "feedNotEnoughCoins": "Not enough coins",
-  "feedRecipesNote": "Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.",
   "feedRecipeSteps": "{count, plural, one{{count} step} other{{count} steps}}",
+  "feedRecipesNote": "Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.",
   "feedStepProgress": "Step {step} of {total}. Reward: {reward, plural, one{{reward} coin} other{{reward} coins}} and food +{gain}.",
   "feedTabCook": "Cook",
   "feedTabReady": "Ready meals",
@@ -221,6 +220,7 @@
   "learnAgeGateSubtitle": "The set of games depends on age. You can change it anytime.",
   "learnAgeGateTitle": "Who's playing?",
   "learnCatColorsTitle": "Colors and Shapes",
+  "learnCatCountTitle": "Counting and Simple Logic",
   "@learnCatLocked": {
     "placeholders": {
       "stage": {
@@ -229,7 +229,6 @@
     }
   },
   "learnCatLocked": "Opens at the «{stage}» stage",
-  "learnCatCountTitle": "Counting and Simple Logic",
   "learnCatWorldTitle": "The World Around",
   "learnCorrectToast": "{coins, plural, one{Correct! +{coins} coin} other{Correct! +{coins} coins}}",
   "learnGamesTitle": "Games",
@@ -250,12 +249,55 @@
   "learnTaskWorldDay": "What shines in the daytime?",
   "learnTaskWorldWater": "Who lives in water?",
   "learnTitle": "Learning",
+  "@@locale": "en",
   "moodDirty": "Messy",
   "moodHappy": "Happy",
   "moodHungry": "Hungry",
   "moodNormal": "Content",
   "moodSad": "Sad",
   "moodSleepy": "Sleepy",
+  "nameChanged": "The little one is now called {name}",
+  "@nameChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameDialogHint": "Pet name",
+  "nameDialogNote": "From {min} to {max} characters. Letters, space and hyphen.",
+  "@nameDialogNote": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameDialogSave": "Save",
+  "nameDialogTitle": "What's the little one's name?",
+  "nameErrorBlocked": "That name will not do for a little one",
+  "nameErrorCharacters": "Letters, space and hyphen only",
+  "nameErrorEmpty": "Please enter a name",
+  "nameErrorLong": "No more than {max} characters",
+  "@nameErrorLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameErrorNetwork": "Could not save — please try again",
+  "nameErrorShort": "At least {min} characters",
+  "@nameErrorShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "navLockReason": "Unlocks at the “{stage}” stage",
   "navSectionCatalog": "Bears",
   "navSectionHome": "Home",
@@ -275,6 +317,7 @@
   "profileLinkGrowthSubtitle": "five stages and the road between them",
   "profileLinkSettings": "Settings",
   "profileLinkSettingsSubtitle": "language and notifications",
+  "profileRename": "Change the name",
   "profileSectionBirth": "Birth card · КП 2.2",
   "profileSectionHistory": "Stage history · КП 14.1",
   "profileSectionLinks": "More",
@@ -301,17 +344,17 @@
   "roomItemBought": "{name} purchased",
   "roomItemPlaced": "{name} placed",
   "roomItemRemoved": "{name} put away",
-  "roomSlotEmpty": "An empty spot",
-  "roomSlotPut": "Put here",
-  "roomSheetOwned": "owned",
-  "roomSheetRemove": "Remove from the room",
-  "roomSheetReplace": "Replace with",
   "roomKindBath": "Bathroom",
   "roomKindKitchen": "Kitchen",
   "roomKindNursery": "Nursery",
   "roomNotEnoughCoins": "Not enough coins",
   "roomOwnedLabel": "Owned",
   "roomSelectedLabel": "Selected",
+  "roomSheetOwned": "owned",
+  "roomSheetRemove": "Remove from the room",
+  "roomSheetReplace": "Replace with",
+  "roomSlotEmpty": "An empty spot",
+  "roomSlotPut": "Put here",
   "roomTitle": "My Room",
   "settingsFootnote": "Eight notification types per КП 13.1; quiet hours and frequency limits per 13.2. Account linking and legal documents (КП 14.2) arrive together with the backend.",
   "settingsNotifEvent": "Event",
@@ -333,11 +376,11 @@
   "settingsTitle": "Settings",
   "settingsVersion": "Version",
   "shopBuyFor": "Buy for {total}",
-  "shopGroupLater": "For when they grow up",
-  "shopGroupNow": "For your little one now",
   "shopCartDisclaimer": "The cart isn't in the brief — it comes from the mockup and belongs to version two, but it's built here so the flow is visible. Prices are placeholders (brief 10.9).",
   "shopCartEmpty": "Cart is empty",
   "shopCheckoutDone": "{count, plural, one{Bought {count} item} other{Bought {count} items}}",
+  "shopGroupLater": "For when they grow up",
+  "shopGroupNow": "For your little one now",
   "shopNotEnoughCoins": "Not enough coins",
   "shopOwnedLabel": "Owned",
   "shopTabClothes": "Clothes",

@@ -694,17 +694,17 @@ abstract class AppLocalizations {
   /// **'Не хватает монет'**
   String get feedNotEnoughCoins;
 
-  /// No description provided for @feedRecipesNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.'**
-  String get feedRecipesNote;
-
   /// No description provided for @feedRecipeSteps.
   ///
   /// In ru, this message translates to:
   /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
   String feedRecipeSteps(int count);
+
+  /// No description provided for @feedRecipesNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.'**
+  String get feedRecipesNote;
 
   /// No description provided for @feedStepProgress.
   ///
@@ -1426,17 +1426,17 @@ abstract class AppLocalizations {
   /// **'Цвета и формы'**
   String get learnCatColorsTitle;
 
-  /// No description provided for @learnCatLocked.
-  ///
-  /// In ru, this message translates to:
-  /// **'Откроется на стадии «{stage}»'**
-  String learnCatLocked(String stage);
-
   /// No description provided for @learnCatCountTitle.
   ///
   /// In ru, this message translates to:
   /// **'Счёт и простая логика'**
   String get learnCatCountTitle;
+
+  /// No description provided for @learnCatLocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откроется на стадии «{stage}»'**
+  String learnCatLocked(String stage);
 
   /// No description provided for @learnCatWorldTitle.
   ///
@@ -1594,6 +1594,72 @@ abstract class AppLocalizations {
   /// **'Сонный'**
   String get moodSleepy;
 
+  /// No description provided for @nameChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теперь малыша зовут {name}'**
+  String nameChanged(String name);
+
+  /// No description provided for @nameDialogHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя питомца'**
+  String get nameDialogHint;
+
+  /// No description provided for @nameDialogNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'От {min} до {max} знаков. Буквы, пробел и дефис.'**
+  String nameDialogNote(int min, int max);
+
+  /// No description provided for @nameDialogSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get nameDialogSave;
+
+  /// No description provided for @nameDialogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как зовут малыша?'**
+  String get nameDialogTitle;
+
+  /// No description provided for @nameErrorBlocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Такое имя не подойдёт малышу'**
+  String get nameErrorBlocked;
+
+  /// No description provided for @nameErrorCharacters.
+  ///
+  /// In ru, this message translates to:
+  /// **'Только буквы, пробел и дефис'**
+  String get nameErrorCharacters;
+
+  /// No description provided for @nameErrorEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Впишите имя'**
+  String get nameErrorEmpty;
+
+  /// No description provided for @nameErrorLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не длиннее {max} знаков'**
+  String nameErrorLong(int max);
+
+  /// No description provided for @nameErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось сохранить — попробуйте ещё раз'**
+  String get nameErrorNetwork;
+
+  /// No description provided for @nameErrorShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не короче {min} знаков'**
+  String nameErrorShort(int min);
+
   /// No description provided for @navLockReason.
   ///
   /// In ru, this message translates to:
@@ -1707,6 +1773,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'язык и уведомления'**
   String get profileLinkSettingsSubtitle;
+
+  /// No description provided for @profileRename.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить имя'**
+  String get profileRename;
 
   /// No description provided for @profileSectionBirth.
   ///
@@ -1864,36 +1936,6 @@ abstract class AppLocalizations {
   /// **'{name} убрано'**
   String roomItemRemoved(String name);
 
-  /// No description provided for @roomSlotEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Свободное место'**
-  String get roomSlotEmpty;
-
-  /// No description provided for @roomSlotPut.
-  ///
-  /// In ru, this message translates to:
-  /// **'Поставить'**
-  String get roomSlotPut;
-
-  /// No description provided for @roomSheetOwned.
-  ///
-  /// In ru, this message translates to:
-  /// **'уже есть'**
-  String get roomSheetOwned;
-
-  /// No description provided for @roomSheetRemove.
-  ///
-  /// In ru, this message translates to:
-  /// **'Убрать из комнаты'**
-  String get roomSheetRemove;
-
-  /// No description provided for @roomSheetReplace.
-  ///
-  /// In ru, this message translates to:
-  /// **'Заменить на'**
-  String get roomSheetReplace;
-
   /// No description provided for @roomKindBath.
   ///
   /// In ru, this message translates to:
@@ -1929,6 +1971,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Выбрано'**
   String get roomSelectedLabel;
+
+  /// No description provided for @roomSheetOwned.
+  ///
+  /// In ru, this message translates to:
+  /// **'уже есть'**
+  String get roomSheetOwned;
+
+  /// No description provided for @roomSheetRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из комнаты'**
+  String get roomSheetRemove;
+
+  /// No description provided for @roomSheetReplace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заменить на'**
+  String get roomSheetReplace;
+
+  /// No description provided for @roomSlotEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свободное место'**
+  String get roomSlotEmpty;
+
+  /// No description provided for @roomSlotPut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить'**
+  String get roomSlotPut;
 
   /// No description provided for @roomTitle.
   ///
@@ -2056,18 +2128,6 @@ abstract class AppLocalizations {
   /// **'Купить за {total}'**
   String shopBuyFor(int total);
 
-  /// No description provided for @shopGroupLater.
-  ///
-  /// In ru, this message translates to:
-  /// **'Пригодится, когда подрастёт'**
-  String get shopGroupLater;
-
-  /// No description provided for @shopGroupNow.
-  ///
-  /// In ru, this message translates to:
-  /// **'Малышу сейчас'**
-  String get shopGroupNow;
-
   /// No description provided for @shopCartDisclaimer.
   ///
   /// In ru, this message translates to:
@@ -2085,6 +2145,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{count, plural, one{Куплен {count} предмет} few{Куплено {count} предмета} other{Куплено {count} предметов}}'**
   String shopCheckoutDone(int count);
+
+  /// No description provided for @shopGroupLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пригодится, когда подрастёт'**
+  String get shopGroupLater;
+
+  /// No description provided for @shopGroupNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малышу сейчас'**
+  String get shopGroupNow;
 
   /// No description provided for @shopNotEnoughCoins.
   ///

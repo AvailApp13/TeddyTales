@@ -33,6 +33,17 @@ abstract interface class ProgressStore {
   /// Пройденный уровень обучения (КП 9.5).
   Future<PetSnapshot> completeLevel(String categoryId, int level);
 
+  /// Переименовать питомца (КП 2.3).
+  ///
+  /// Форму имени — длину и знаки — приложение проверяет само, но сервер
+  /// проверяет её заново: клиент бывает старым, чужим или поддельным.
+  /// Запрещённые слова ловит только сервер: список правит модератор из
+  /// панели (КП 15.6), и приложение со старым списком пропустило бы то,
+  /// что уже запретили.
+  ///
+  /// Бросает [ProgressStoreException], если имя отклонено.
+  Future<PetSnapshot> renamePet(String name, {String locale = 'ru'});
+
   /// Поставить предмет в комнату или убрать (КП 10.7).
   Future<void> setPlaced(String itemId, {required bool placed});
 

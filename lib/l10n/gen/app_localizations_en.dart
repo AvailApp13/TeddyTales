@@ -381,10 +381,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedNotEnoughCoins => 'Not enough coins';
 
   @override
-  String get feedRecipesNote =>
-      'Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.';
-
-  @override
   String feedRecipeSteps(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -394,6 +390,10 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get feedRecipesNote =>
+      'Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -798,12 +798,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learnCatColorsTitle => 'Colors and Shapes';
 
   @override
+  String get learnCatCountTitle => 'Counting and Simple Logic';
+
+  @override
   String learnCatLocked(String stage) {
     return 'Opens at the «$stage» stage';
   }
-
-  @override
-  String get learnCatCountTitle => 'Counting and Simple Logic';
 
   @override
   String get learnCatWorldTitle => 'The World Around';
@@ -915,6 +915,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodSleepy => 'Sleepy';
 
   @override
+  String nameChanged(String name) {
+    return 'The little one is now called $name';
+  }
+
+  @override
+  String get nameDialogHint => 'Pet name';
+
+  @override
+  String nameDialogNote(int min, int max) {
+    return 'From $min to $max characters. Letters, space and hyphen.';
+  }
+
+  @override
+  String get nameDialogSave => 'Save';
+
+  @override
+  String get nameDialogTitle => 'What\'s the little one\'s name?';
+
+  @override
+  String get nameErrorBlocked => 'That name will not do for a little one';
+
+  @override
+  String get nameErrorCharacters => 'Letters, space and hyphen only';
+
+  @override
+  String get nameErrorEmpty => 'Please enter a name';
+
+  @override
+  String nameErrorLong(int max) {
+    return 'No more than $max characters';
+  }
+
+  @override
+  String get nameErrorNetwork => 'Could not save — please try again';
+
+  @override
+  String nameErrorShort(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
   String navLockReason(String stage) {
     return 'Unlocks at the “$stage” stage';
   }
@@ -976,6 +1017,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileLinkSettingsSubtitle => 'language and notifications';
+
+  @override
+  String get profileRename => 'Change the name';
 
   @override
   String get profileSectionBirth => 'Birth card · КП 2.2';
@@ -1063,21 +1107,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get roomSlotEmpty => 'An empty spot';
-
-  @override
-  String get roomSlotPut => 'Put here';
-
-  @override
-  String get roomSheetOwned => 'owned';
-
-  @override
-  String get roomSheetRemove => 'Remove from the room';
-
-  @override
-  String get roomSheetReplace => 'Replace with';
-
-  @override
   String get roomKindBath => 'Bathroom';
 
   @override
@@ -1094,6 +1123,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roomSelectedLabel => 'Selected';
+
+  @override
+  String get roomSheetOwned => 'owned';
+
+  @override
+  String get roomSheetRemove => 'Remove from the room';
+
+  @override
+  String get roomSheetReplace => 'Replace with';
+
+  @override
+  String get roomSlotEmpty => 'An empty spot';
+
+  @override
+  String get roomSlotPut => 'Put here';
 
   @override
   String get roomTitle => 'My Room';
@@ -1163,12 +1207,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get shopGroupLater => 'For when they grow up';
-
-  @override
-  String get shopGroupNow => 'For your little one now';
-
-  @override
   String get shopCartDisclaimer =>
       'The cart isn\'t in the brief — it comes from the mockup and belongs to version two, but it\'s built here so the flow is visible. Prices are placeholders (brief 10.9).';
 
@@ -1185,6 +1223,12 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shopGroupLater => 'For when they grow up';
+
+  @override
+  String get shopGroupNow => 'For your little one now';
 
   @override
   String get shopNotEnoughCoins => 'Not enough coins';
