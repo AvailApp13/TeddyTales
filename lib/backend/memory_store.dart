@@ -75,19 +75,17 @@ class MemoryStore implements ProgressStore {
 
   @override
   Future<PetSnapshot> renamePet(String name, {String locale = 'ru'}) async {
-    // В памяти нет списка запрещённых слов — он живёт на сервере. Здесь
-    // имя просто принимается: офлайн игрок переименовывает мишку, а
-    // проверку слово пройдёт, когда связь вернётся.
-    _snapshot = PetSnapshot(
-      petId: _snapshot.petId,
-      profile: _snapshot.profile.copyWith(name: name),
-      state: _snapshot.state,
-      inventory: _snapshot.inventory,
-      placed: _snapshot.placed,
-      eduProgress: _snapshot.eduProgress,
-      serverTime: _snapshot.serverTime,
-    );
-    return _snapshot;
+    // Единственное действие, которое офлайн НЕ принимается.
+    //
+    // Всё остальное здесь копится и досылается: покормить без связи можно,
+    // сервер потом пересчитает. С именем так нельзя — его проверяет список
+    // запрещённых слов, который живёт только на сервере (КП 15.6). Принять
+    // имя локально значит пустить в игру то, что модератор запретил, и
+    // показать человеку, что имя сохранено, когда оно не сохранено.
+    //
+    // Проверено живьём 18.09: до этой строки имя менялось на экране, а в
+    // базе оставалось прежним.
+    throw const ProgressStoreException('Имя меняется только при связи');
   }
 
   @override

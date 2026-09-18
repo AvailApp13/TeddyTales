@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/backend/memory_store.dart';
+import 'package:teddy_tales/backend/progress_store.dart';
+import 'package:teddy_tales/bear/bear_action.dart';
 import 'package:teddy_tales/game/pet_name.dart';
 
 /// Имя питомца (КП 2.3).
@@ -74,6 +77,28 @@ void main() {
     test('«Тед ди» и «  Тед   ди » — одно имя', () {
       // Иначе в базе завелись бы два «одинаковых» мишки с разными записями.
       expect(normalizePetName('Тед ди'), normalizePetName('  Тед   ди '));
+    });
+  });
+
+  group('Офлайн', () {
+    test('без связи имя не принимается', () async {
+      // Проверено живьём 18.09: до этой правки имя менялось на экране, а в
+      // базе оставалось прежним — и мимо фильтра слов проходило что угодно.
+      final store = MemoryStore();
+      await store.signIn();
+
+      expect(
+        () => store.renamePet('Топтыжка'),
+        throwsA(isA<ProgressStoreException>()),
+      );
+    });
+
+    test('остальное офлайн работает как работало', () async {
+      final store = MemoryStore();
+      await store.signIn();
+
+      // Уход копится и досылается: сервер потом пересчитает.
+      await expectLater(store.recordCare(BearAction.pet), completes);
     });
   });
 }
