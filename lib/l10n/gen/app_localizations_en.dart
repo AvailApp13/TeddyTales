@@ -1072,6 +1072,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roomSheetReplace => 'Replace with';
 
   @override
+  String get roomKindBath => 'Bathroom';
+
+  @override
+  String get roomKindKitchen => 'Kitchen';
+
+  @override
+  String get roomKindNursery => 'Nursery';
+
+  @override
   String get roomNotEnoughCoins => 'Not enough coins';
 
   @override

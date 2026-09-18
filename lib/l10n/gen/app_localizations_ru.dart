@@ -1080,6 +1080,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get roomSheetReplace => 'Заменить на';
 
   @override
+  String get roomKindBath => 'Ванная';
+
+  @override
+  String get roomKindKitchen => 'Кухня';
+
+  @override
+  String get roomKindNursery => 'Детская';
+
+  @override
   String get roomNotEnoughCoins => 'Не хватает монет';
 
   @override

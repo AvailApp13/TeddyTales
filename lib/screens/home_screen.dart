@@ -5,6 +5,7 @@ import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
 import '../game/room_hints.dart';
+import '../game/room_kind.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
@@ -16,6 +17,7 @@ import '../widgets/pet_speech_bubble.dart';
 import '../widgets/room_hint_layer.dart';
 import '../widgets/room_item_sheet.dart';
 import '../widgets/room_items_layer.dart';
+import '../widgets/room_switcher.dart';
 import '../widgets/room_scene_backdrop.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
@@ -93,6 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// потому, что мы его уменьшили, а потому, что он дальше.
 
   AppSection _section = AppSection.home;
+
+  /// Открытая комната. Живёт в памяти экрана: это не прогресс, а взгляд —
+  /// куда человек сейчас смотрит. Уходить на сервер здесь нечему.
+  RoomKind _room = RoomKind.nursery;
 
   void _runAction(BearAction action) {
     final controller = widget.controller;
@@ -267,6 +273,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       onHintTap: _useHint,
                       onItemTap: _openItemSheet,
+                      room: _room,
+                      onRoomChanged: (kind) => setState(() => _room = kind),
                       heroHeight: _heroHeight,
                       onOpenCare: () => _open(
                         CareScreen(
@@ -322,6 +330,8 @@ class _RoomScene extends StatelessWidget {
     required this.hints,
     required this.onHintTap,
     required this.onItemTap,
+    required this.room,
+    required this.onRoomChanged,
     this.heroHeight = RoomSceneBackdrop.defaultBearModule,
   });
 
@@ -343,6 +353,10 @@ class _RoomScene extends StatelessWidget {
   /// Тап по уже стоящей вещи.
   final ValueChanged<String> onItemTap;
 
+  /// Какая комната показана и что делать при переключении.
+  final RoomKind room;
+  final ValueChanged<RoomKind> onRoomChanged;
+
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
   /// ДОПУЩЕНИЕ: ставим её в угол комнаты.
@@ -362,7 +376,11 @@ class _RoomScene extends StatelessWidget {
           // размерной сетки (room_layout.dart) — мебель мельче героя, как
           // задний план с перспективой на макете.
           Positioned.fill(
-            child: RoomSceneBackdrop(placed: placed, bearModule: heroHeight),
+            child: RoomSceneBackdrop(
+              placed: placed,
+              room: room,
+              bearModule: heroHeight,
+            ),
           ),
           // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
           //
@@ -429,6 +447,11 @@ class _RoomScene extends StatelessWidget {
             ),
           ),
           Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
+          Positioned(
+            left: 12,
+            bottom: 12,
+            child: RoomSwitcher(current: room, onSelect: onRoomChanged),
+          ),
           // Пузырь — в левом верхнем углу, зеркально кнопке «Что будем
           // делать?» справа (решение заказчика). Внизу он закрывал мишке
           // ноги, по центру сверху — упирался в капюшон. Правая граница

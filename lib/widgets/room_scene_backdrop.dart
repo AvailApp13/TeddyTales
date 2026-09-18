@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../game/room_kind.dart';
 import '../game/room_layout.dart';
 import '../game/shop_items.dart';
 
@@ -21,11 +22,15 @@ class RoomSceneBackdrop extends StatelessWidget {
   const RoomSceneBackdrop({
     super.key,
     required this.placed,
+    this.room = RoomKind.nursery,
     this.bearModule = defaultBearModule,
   });
 
   /// Какие предметы размещены (ids из каталога, включая обои и пол).
   final Set<String> placed;
+
+  /// Какая комната показана.
+  final RoomKind room;
 
   /// Рост мишки в долях высоты сцены. Модуль всей размерной сетки: предмет
   /// в 1.0 модуля равен герою, стоящему на переднем плане.
@@ -63,8 +68,21 @@ class RoomSceneBackdrop extends StatelessWidget {
         return ClipRect(
           child: Stack(
             children: [
+              // Фон — картинка, нарисованные стены остались запасным
+              // вариантом на случай, если ассет не загрузится.
+              //
+              // BoxFit.fill, а не cover: кадр фона 4:5, сцена на телефоне
+              // чуть шире. При cover обрезался бы верх или низ, и линия
+              // горизонта уехала бы с 0.58 — а по ней размечены места всех
+              // предметов. Растяжение на 8% по ширине на стене и полу
+              // незаметно, съехавший горизонт — нет.
               Positioned.fill(
-                child: CustomPaint(painter: _RoomPainter(placed)),
+                child: Image.asset(
+                  room.asset,
+                  fit: BoxFit.fill,
+                  errorBuilder: (context, _, _) =>
+                      CustomPaint(painter: _RoomPainter(placed)),
+                ),
               ),
               for (final p in items)
                 Positioned(

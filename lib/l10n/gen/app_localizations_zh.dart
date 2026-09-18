@@ -1004,6 +1004,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get roomSheetReplace => '换成';
 
   @override
+  String get roomKindBath => '浴室';
+
+  @override
+  String get roomKindKitchen => '厨房';
+
+  @override
+  String get roomKindNursery => '儿童房';
+
+  @override
   String get roomNotEnoughCoins => '金币不够';
 
   @override

@@ -1882,6 +1882,24 @@ abstract class AppLocalizations {
   /// **'Заменить на'**
   String get roomSheetReplace;
 
+  /// No description provided for @roomKindBath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ванная'**
+  String get roomKindBath;
+
+  /// No description provided for @roomKindKitchen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кухня'**
+  String get roomKindKitchen;
+
+  /// No description provided for @roomKindNursery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Детская'**
+  String get roomKindNursery;
+
   /// No description provided for @roomNotEnoughCoins.
   ///
   /// In ru, this message translates to:
