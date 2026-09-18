@@ -1,0 +1,139 @@
+# Сборка iOS и автоматическая отправка в TestFlight.
+#
+# Сборка запускается вручную кнопкой в Codemagic — это осознанно: пока
+# приложение в разработке, каждая сборка занимает минуты платного времени на
+# macOS-агенте. Всё, что после нажатия, идёт без рук: тесты, подпись, ipa,
+# загрузка в App Store Connect и раздача тестировщикам в TestFlight.
+#
+# Когда захотите собирать автоматически на каждый push — раскомментируйте
+# блок `triggering` ниже.
+#
+# Что должно быть настроено на стороне Codemagic до первого запуска:
+#   1. Интеграция App Store Connect с именем `Codemagic Admin 2`
+#      (Teams → Integrations → Developer Portal → добавить ключ API).
+#   2. Группа переменных `appstore` с переменной APP_STORE_APP_ID —
+#      числовой ID приложения из App Store Connect.
+#   3. Группа тестировщиков `Internal testers` в TestFlight.
+# Подробный порядок — docs/release-ios.md.
+
+definitions:
+  # Версия Flutter закреплена намеренно. `stable` меняется под ногами, и
+  # сборка, которая шла вчера, завтра падает на чужом релизе.
+  flutter_version: &flutter_version 3.44.9
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    # triggering:
+    #   events:
+    #     - push
+    #   branch_patterns:
+    #     - pattern: main
+    #       include: true
+
+    integrations:
+      # Имя должно побуквенно совпадать с ключом в Codemagic:
+      # Settings → Integrations → Developer Portal → Manage keys.
+      # Если имя разошлось, автоподпись молча не подключается, и сборка
+      # падает с «No matching profiles found» ещё до первого шага.
+      app_store_connect: Codemagic Admin 2
+
+    environment:
+      flutter: *flutter_version
+      xcode: latest
+      cocoapods: default
+      groups:
+        - appstore
+      vars:
+        BUNDLE_ID: com.teddytales.app
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $FCI_BUILD_DIR/ios/Pods
+
+    scripts:
+      - name: Зависимости
+        script: flutter pub get
+
+      - name: Анализ и тесты
+        # Гейт намеренно жёсткий: в TestFlight не должно уезжать то, что не
+        # проходит анализатор. Тестировщики — живые люди, их время дороже
+        # минуты сборки.
+        script: |
+          flutter analyze
+          flutter test
+
+      - name: Номер сборки
+        # TestFlight требует строго возрастающий номер. Схема «последний плюс
+        # один» разбилась о реальность: в TestFlight уже лежал номер-таймстамп
+        # 20260811051703 от прежних сборок, и арифметика столкнулась с ним.
+        # Теперь номер — текущие дата-время до секунды: он больше любого
+        # прежнего и растёт сам собой от сборки к сборке. Подстраховка: если
+        # у Apple вдруг лежит число ещё больше, берём его плюс один.
+        script: |
+          set -e
+          STAMP=$(date -u +%Y%m%d%H%M%S)
+          LATEST=$(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APP_ID" 2>/dev/null || echo "")
+          echo "Последний в TestFlight: ${LATEST:-<нет>}; таймстамп: $STAMP"
+          if [ -n "$LATEST" ] && [ "$LATEST" -ge "$STAMP" ] 2>/dev/null; then
+            BUILD_NUMBER=$(($LATEST + 1))
+          else
+            BUILD_NUMBER=$STAMP
+          fi
+          echo "Номер этой сборки: $BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+      - name: Профили подписи
+        # Подпись нарочно собрана скриптом, а не блоком `ios_signing`:
+        # автоматический режим трижды падал с «No matching profiles found»
+        # молча и до первого шага, хотя и Bundle ID, и профиль в портале
+        # существовали. Здесь каждая команда пишет в лог, что она нашла
+        # у Apple и что создала, — причину видно сразу.
+        #
+        # Требует секретную переменную CERTIFICATE_PRIVATE_KEY (группа
+        # appstore): RSA-ключ, которым выпускается сертификат подписи.
+        # Один раз сгенерировать и сохранить — см. docs/release-ios.md.
+        script: |
+          set -e
+          keychain initialize
+          echo "--- Что видит ключ API ---"
+          app-store-connect list-bundle-ids \
+            --bundle-id-identifier "$BUNDLE_ID" || true
+          app-store-connect list-certificates --type DISTRIBUTION || true
+          echo "--- Забираем или создаём файлы подписи ---"
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Сборка ipa
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal testers
+        # В App Store не подаём: это отдельное решение и отдельная проверка.
+        submit_to_app_store: false
+
+      email:
+        recipients:
+          - ru.life3@gmail.com
+        notify:
+          success: true
+          failure: true
