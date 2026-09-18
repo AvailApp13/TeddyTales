@@ -103,12 +103,13 @@ const List<RoomSlot> roomSlots = [
   RoomSlot(
     id: 'nursery.back_left',
     room: RoomKind.nursery,
-    // Правее, чем просится: место у левой стены широкое, и при x около 0.42
-    // их рамки накладывались друг на друга.
-    x: 0.54,
-    y: 0.60,
-    maxW: 0.20,
-    maxH: 0.28,
+    // Мишка вырос до 52% высоты и занимает по центру примерно от 0.33 до
+    // 0.67 ширины. Всё, что попадает в эту полосу, перечёркивает ему лицо,
+    // поэтому напольные места живут по краям кадра, а не по центру.
+    x: 0.30,
+    y: 0.62,
+    maxW: 0.17,
+    maxH: 0.26,
     accepts: {ItemKind.furniture},
     depth: 2,
   ),
@@ -116,9 +117,9 @@ const List<RoomSlot> roomSlots = [
   RoomSlot(
     id: 'nursery.back_right',
     room: RoomKind.nursery,
-    x: 0.74,
+    x: 0.80,
     y: 0.64,
-    maxW: 0.26,
+    maxW: 0.24,
     maxH: 0.24,
     accepts: {ItemKind.furniture},
     depth: 2,
@@ -139,9 +140,9 @@ const List<RoomSlot> roomSlots = [
     id: 'nursery.rug',
     room: RoomKind.nursery,
     x: 0.50,
-    y: 0.92,
-    maxW: 0.62,
-    maxH: 0.12,
+    y: 0.95,
+    maxW: 0.46,
+    maxH: 0.09,
     accepts: {ItemKind.furniture},
     depth: 1,
   ),
