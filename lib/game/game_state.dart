@@ -32,7 +32,9 @@ class GameState extends ChangeNotifier {
        // Дефолт — ПУСТАЯ сцена: только стены и пол, без мебели. Решение
        // заказчика: предметы не ставить заранее, герой один в кадре, а
        // комнату каждый собирает сам через раздел «Комната».
-       _placed = {...placed ?? const {'wall_rose', 'floor_wood'}};
+       _placed = {
+         ...placed ?? const {'wall_rose', 'floor_wood'},
+       };
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
