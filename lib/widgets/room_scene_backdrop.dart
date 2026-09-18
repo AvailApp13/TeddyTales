@@ -16,26 +16,14 @@ import 'package:flutter/material.dart';
 
 import '../game/room_kind.dart';
 import '../game/room_layout.dart';
-import '../game/shop_items.dart';
 
 class RoomSceneBackdrop extends StatelessWidget {
-  const RoomSceneBackdrop({
-    super.key,
-    required this.placed,
-    this.room = RoomKind.nursery,
-    this.bearModule = defaultBearModule,
-  });
-
-  /// Какие предметы размещены (ids из каталога, включая обои и пол).
-  final Set<String> placed;
+  const RoomSceneBackdrop({super.key, this.room = RoomKind.nursery});
 
   /// Какая комната показана.
   final RoomKind room;
 
-  /// Рост мишки в долях высоты сцены. Модуль всей размерной сетки: предмет
-  /// в 1.0 модуля равен герою, стоящему на переднем плане.
-  final double bearModule;
-
+  /// Рост мишки в долях высоты сцены — модуль, в котором меряются места.
   static const double defaultBearModule = 0.45;
 
   /// Линия горизонта: где задняя стена встречается с полом.
@@ -44,108 +32,21 @@ class RoomSceneBackdrop extends StatelessWidget {
   /// Вертикаль угла между левой и задней стеной, доля ширины.
   static const double cornerX = 0.26;
 
-  /// Линия пола переднего плана — на ней стоит герой.
-  static double get floorLine => RoomPlane.near.floorLine;
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
-
-        // Дальний план рисуется первым, передний последним: иначе шкаф у
-        // стены закрыл бы мячик, лежащий у ног зрителя.
-        final items =
-            [
-              for (final p in roomLayout)
-                if (placed.contains(p.id)) p,
-            ]..sort((a, b) {
-              final byPlane = a.plane.index.compareTo(b.plane.index);
-              return byPlane != 0 ? byPlane : a.z.compareTo(b.z);
-            });
-
-        return ClipRect(
-          child: Stack(
-            children: [
-              // Фон — картинка, нарисованные стены остались запасным
-              // вариантом на случай, если ассет не загрузится.
-              //
-              // BoxFit.fill, а не cover: кадр фона 4:5, сцена на телефоне
-              // чуть шире. При cover обрезался бы верх или низ, и линия
-              // горизонта уехала бы с 0.58 — а по ней размечены места всех
-              // предметов. Растяжение на 8% по ширине на стене и полу
-              // незаметно, съехавший горизонт — нет.
-              Positioned.fill(
-                child: Image.asset(
-                  room.asset,
-                  fit: BoxFit.fill,
-                  errorBuilder: (context, _, _) =>
-                      CustomPaint(painter: _RoomPainter(placed)),
-                ),
-              ),
-              for (final p in items)
-                Positioned(
-                  left: p.fx * width - p.w * bearModule * p.scale * height / 2,
-                  top: p.onWall
-                      ? p.wallFy! * height -
-                            p.h * bearModule * p.scale * height / 2
-                      : p.plane.floorLine * height -
-                            p.h * bearModule * p.scale * height,
-                  width: p.w * bearModule * p.scale * height,
-                  height: p.h * bearModule * p.scale * height,
-                  child: _ItemGhost(
-                    id: p.id,
-                    heightPx: p.h * bearModule * p.scale * height,
-                    // Напольные предметы прижаты к низу габарита, настенные —
-                    // по центру: так торшер не «плавает» в середине рамки.
-                    alignment: p.onWall
-                        ? Alignment.center
-                        : Alignment.bottomCenter,
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Эмодзи-заглушка предмета, растянутая до габарита из размерной сетки.
-class _ItemGhost extends StatelessWidget {
-  const _ItemGhost({
-    required this.id,
-    required this.heightPx,
-    required this.alignment,
-  });
-
-  final String id;
-  final double heightPx;
-  final Alignment alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    // Ковёр — не эмодзи, а мягкий эллипс: он лежит под мишкой и должен
-    // читаться пятном, как в макете.
-    if (id == 'rug') {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFC9BC),
-          borderRadius: BorderRadius.all(
-            Radius.elliptical(heightPx * 4, heightPx),
-          ),
-        ),
-      );
-    }
-
-    // Эмодзи — из каталога: у предмета один источник картинки-заглушки.
-    return FittedBox(
-      fit: BoxFit.contain,
-      alignment: alignment,
-      child: Text(
-        ItemCatalog.byId(id).emoji,
-        style: const TextStyle(fontSize: 100),
+    // Фон — картинка; нарисованные стены остались запасным вариантом на
+    // случай, если ассет не загрузится.
+    //
+    // BoxFit.fill, а не cover: кадр фона 4:5, сцена на телефоне чуть шире.
+    // При cover обрезался бы верх или низ, и линия горизонта уехала бы — а
+    // по ней размечены все места. Растяжение на 8% по стене и полу
+    // незаметно, съехавший горизонт — нет.
+    return ClipRect(
+      child: Image.asset(
+        room.asset,
+        fit: BoxFit.fill,
+        errorBuilder: (context, _, _) =>
+            CustomPaint(painter: _RoomPainter(const {})),
       ),
     );
   }

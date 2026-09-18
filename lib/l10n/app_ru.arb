@@ -585,6 +585,8 @@
     }
   },
   "roomItemRemoved": "{name} убрано",
+  "roomSlotEmpty": "Свободное место",
+  "roomSlotPut": "Поставить",
   "roomSheetOwned": "уже есть",
   "roomSheetRemove": "Убрать из комнаты",
   "roomSheetReplace": "Заменить на",

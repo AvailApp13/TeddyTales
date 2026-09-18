@@ -995,6 +995,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get roomSlotEmpty => '空位';
+
+  @override
+  String get roomSlotPut => '放置';
+
+  @override
   String get roomSheetOwned => '已拥有';
 
   @override

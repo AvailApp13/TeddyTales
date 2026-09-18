@@ -1063,6 +1063,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get roomSlotEmpty => 'An empty spot';
+
+  @override
+  String get roomSlotPut => 'Put here';
+
+  @override
   String get roomSheetOwned => 'owned';
 
   @override

@@ -1864,6 +1864,18 @@ abstract class AppLocalizations {
   /// **'{name} убрано'**
   String roomItemRemoved(String name);
 
+  /// No description provided for @roomSlotEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свободное место'**
+  String get roomSlotEmpty;
+
+  /// No description provided for @roomSlotPut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить'**
+  String get roomSlotPut;
+
   /// No description provided for @roomSheetOwned.
   ///
   /// In ru, this message translates to:

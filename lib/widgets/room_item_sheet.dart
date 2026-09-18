@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
+import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Что делать с вещью, которая уже стоит в комнате.
+/// Что можно сделать с местом в комнате.
 ///
-/// Замечание заказчика (17.09): поставленную кроватку нельзя было тронуть
-/// прямо со сцены — ни убрать, ни поменять. Единственный путь вёл в раздел
-/// «Комната», и человек, который тапнул по кроватке, не получал в ответ
-/// ничего.
+/// Один лист на два случая — место занято и место свободно, — потому что
+/// действие по сути одно: решить, что здесь стоит. Свободное место
+/// предлагает поставить, занятое добавляет сверху «убрать».
 ///
-/// Лист показывает ровно два действия: убрать и заменить. Замена — это и
-/// есть витрина: рядом со своими вещами лежат покупные того же вида, с
-/// ценой. Человек пришёл поменять кроватку — и видит, на какую может
-/// поменять. Более честного места для продажи в игре нет.
-Future<void> showRoomItemSheet({
+/// Список — это и есть витрина: рядом со своими вещами лежат покупные, с
+/// ценой. Человек пришёл обставить угол и видит, чем может его обставить.
+/// Более честного места для продажи в игре нет.
+Future<void> showSlotSheet({
   required BuildContext context,
   required GameState game,
-  required String itemId,
+  required RoomSlot slot,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -31,15 +30,15 @@ Future<void> showRoomItemSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
-    builder: (context) => _RoomItemSheet(game: game, itemId: itemId),
+    builder: (context) => _SlotSheet(game: game, slot: slot),
   );
 }
 
-class _RoomItemSheet extends StatelessWidget {
-  const _RoomItemSheet({required this.game, required this.itemId});
+class _SlotSheet extends StatelessWidget {
+  const _SlotSheet({required this.game, required this.slot});
 
   final GameState game;
-  final String itemId;
+  final RoomSlot slot;
 
   void _toast(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
@@ -49,26 +48,26 @@ class _RoomItemSheet extends StatelessWidget {
       );
   }
 
-  void _remove(BuildContext context) {
+  void _clear(BuildContext context, String itemId) {
     final name = shopItemName(context.l10n, itemId);
-    game.togglePlaced(itemId);
+    game.clearSlot(slot.id);
     Navigator.of(context).pop();
     _toast(context, context.l10n.roomItemRemoved(name));
   }
 
-  void _replace(BuildContext context, ShopItem next) {
+  void _put(BuildContext context, ShopItem item) {
     final l10n = context.l10n;
-    final name = shopItemName(l10n, next.id);
-    final wasOwned = game.isOwned(next.id);
+    final name = shopItemName(l10n, item.id);
+    final wasOwned = game.isOwned(item.id);
 
-    if (!game.replacePlaced(itemId, next.id)) {
-      // Единственная причина отказа — не хватило монет на покупку. Старая
-      // вещь при этом осталась на месте, и говорить об этом не нужно:
-      // человек видит, что комната не изменилась.
+    // Не куплено — покупаем. Не хватило монет: место остаётся как было, и
+    // говорить об этом не нужно — человек видит, что комната не изменилась.
+    if (!wasOwned && !game.buy(item.id)) {
       _toast(context, l10n.roomNotEnoughCoins);
       return;
     }
 
+    game.placeInSlot(slot.id, item.id);
     Navigator.of(context).pop();
     _toast(
       context,
@@ -79,19 +78,22 @@ class _RoomItemSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final item = ItemCatalog.byId(itemId);
     final theme = Theme.of(context);
-
-    // Меняем на вещь того же вида: кроватку на кроватку, картину на картину.
-    // Предлагать вместо кроватки барабан значило бы не «заменить», а
-    // «переставить комнату», и место под кроватку осталось бы пустым.
+    final standing = game.itemInSlot(slot.id);
     final stage = game.bear.state.stage;
-    final others =
+
+    // Что сюда становится: вещи подходящих категорий, кроме той, что уже
+    // стоит здесь, и кроме тех, что заняты другими местами. Вещь не может
+    // стоять в двух местах сразу, и предлагать её второй раз — обман.
+    final options =
         [
-          for (final other in ItemCatalog.ofKind(item.kind))
-            if (other.id != itemId && !game.isPlaced(other.id)) other,
+          for (final item in ItemCatalog.all)
+            if (slot.takes(item) &&
+                item.id != standing &&
+                (game.slotOf(item.id) == null))
+              item,
         ]..sort((a, b) {
-          // Своё вперёд покупного: поставить то, что уже есть, — бесплатно.
+          // Своё вперёд покупного: поставить то, что уже есть, бесплатно.
           final ownedA = game.isOwned(a.id);
           final ownedB = game.isOwned(b.id);
           if (ownedA != ownedB) return ownedA ? -1 : 1;
@@ -117,11 +119,11 @@ class _RoomItemSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(item.emoji, style: const TextStyle(fontSize: 26)),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    shopItemName(l10n, itemId),
+                    standing == null
+                        ? l10n.roomSlotEmpty
+                        : shopItemName(l10n, standing),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -130,24 +132,27 @@ class _RoomItemSheet extends StatelessWidget {
                 _Purse(coins: game.coins),
               ],
             ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _remove(context),
-                icon: const Icon(Icons.delete_outline, size: 19),
-                label: Text(l10n.roomSheetRemove),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.outline),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+            if (standing != null) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _clear(context, standing),
+                  icon: const Icon(Icons.delete_outline, size: 19),
+                  label: Text(l10n.roomSheetRemove),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    side: const BorderSide(color: AppColors.outline),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
                 ),
               ),
-            ),
-            if (others.isNotEmpty) ...[
+            ],
+            if (options.isNotEmpty) ...[
               const SizedBox(height: 18),
               Text(
-                l10n.roomSheetReplace.toUpperCase(),
+                (standing == null ? l10n.roomSlotPut : l10n.roomSheetReplace)
+                    .toUpperCase(),
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -156,21 +161,21 @@ class _RoomItemSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // Высота ограничена: видов, где вещей много (декор, одежда),
-              // хватает, чтобы лист занял весь экран и перестал быть листом.
+              // Высота ограничена: в мебели и декоре вещей столько, что лист
+              // занял бы весь экран и перестал быть листом.
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 280),
+                constraints: const BoxConstraints(maxHeight: 300),
                 child: ListView.separated(
                   shrinkWrap: true,
-                  itemCount: others.length,
+                  itemCount: options.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final other = others[index];
+                    final item = options[index];
                     return _OptionTile(
-                      item: other,
-                      owned: game.isOwned(other.id),
-                      affordable: game.coins >= other.price,
-                      onTap: () => _replace(context, other),
+                      item: item,
+                      owned: game.isOwned(item.id),
+                      affordable: game.coins >= item.price,
+                      onTap: () => _put(context, item),
                     );
                   },
                 ),
@@ -183,7 +188,7 @@ class _RoomItemSheet extends StatelessWidget {
   }
 }
 
-/// Строка варианта замены: своё — с пометкой, покупное — с ценой.
+/// Строка варианта: своё — с пометкой, покупное — с ценой.
 class _OptionTile extends StatelessWidget {
   const _OptionTile({
     required this.item,

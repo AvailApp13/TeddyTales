@@ -4,9 +4,8 @@ import '../bear/bear.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
-import '../game/room_hints.dart';
 import '../game/room_kind.dart';
-import '../l10n/catalog_l10n.dart';
+import '../game/room_slots.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -14,9 +13,8 @@ import '../widgets/app_bottom_nav.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
-import '../widgets/room_hint_layer.dart';
 import '../widgets/room_item_sheet.dart';
-import '../widgets/room_items_layer.dart';
+import '../widgets/room_slot_layer.dart';
 import '../widgets/room_switcher.dart';
 import '../widgets/room_scene_backdrop.dart';
 import 'care_screen.dart';
@@ -192,39 +190,12 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onSignOut?.call();
   }
 
-  /// Тап по подсвеченному месту в комнате.
+  /// Тап по месту в комнате — занятому или свободному.
   ///
-  /// Своё ставим молча и сразу — это бесплатно, обратимо и должно
-  /// чувствоваться как один жест, а не как покупка. За остальным идём в
-  /// магазин, открытый на нужной вкладке: человек уже показал, что ему
-  /// нужно, искать это заново он не должен.
-  void _useHint(RoomHint hint) {
-    if (!hint.owned) {
-      _open(ShopScreen(game: widget.game, focusItemId: hint.id));
-      return;
-    }
-
-    widget.game.togglePlaced(hint.id);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.roomItemPlaced(shopItemName(context.l10n, hint.id)),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-  }
-
-  /// Тап по вещи, которая уже стоит в комнате.
-  ///
-  /// Замечание заказчика: поставленную кроватку нельзя было тронуть прямо
-  /// со сцены. Теперь она открывает лист с двумя действиями — убрать и
-  /// заменить, — и замена заодно работает витриной: рядом со своими вещами
-  /// лежат покупные того же вида.
-  void _openItemSheet(String itemId) {
-    showRoomItemSheet(context: context, game: widget.game, itemId: itemId);
+  /// Один обработчик на оба случая: для человека это одно действие —
+  /// решить, что здесь стоит. Лист сам покажет «убрать», если место занято.
+  void _openSlotSheet(RoomSlot slot) {
+    showSlotSheet(context: context, game: widget.game, slot: slot);
   }
 
   void _notImplemented(BearAction action) {
@@ -265,14 +236,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       language: widget.language,
                       onAcceptInitiative: _runAction,
                       riveAssetPath: widget.riveAssetPath,
-                      placed: widget.game.placed,
-                      hints: roomHints(
-                        placed: widget.game.placed,
-                        owned: widget.game.owned,
-                        stage: state.stage,
-                      ),
-                      onHintTap: _useHint,
-                      onItemTap: _openItemSheet,
+                      game: widget.game,
+                      onSlotTap: _openSlotSheet,
                       room: _room,
                       onRoomChanged: (kind) => setState(() => _room = kind),
                       heroHeight: _heroHeight,
@@ -326,10 +291,8 @@ class _RoomScene extends StatelessWidget {
     required this.onAcceptInitiative,
     required this.riveAssetPath,
     required this.onOpenCare,
-    required this.placed,
-    required this.hints,
-    required this.onHintTap,
-    required this.onItemTap,
+    required this.game,
+    required this.onSlotTap,
     required this.room,
     required this.onRoomChanged,
     this.heroHeight = RoomSceneBackdrop.defaultBearModule,
@@ -340,18 +303,18 @@ class _RoomScene extends StatelessWidget {
   final ValueChanged<BearAction> onAcceptInitiative;
   final String riveAssetPath;
 
-  /// Размещённые в комнате предметы — их рисует фон-сцена.
-  final Set<String> placed;
+  /// Обстановка комнаты и кошелёк: сцена показывает, что где стоит.
+  final GameState game;
+
+  /// Тап по месту — занятому или свободному.
+  final ValueChanged<RoomSlot> onSlotTap;
 
   /// Рост героя в долях высоты сцены.
   final double heroHeight;
 
-  /// Пустые места, которые стоит подсветить.
-  final List<RoomHint> hints;
-  final ValueChanged<RoomHint> onHintTap;
-
-  /// Тап по уже стоящей вещи.
-  final ValueChanged<String> onItemTap;
+  /// Линия пола переднего плана: на ней стоит герой. Та же, к которой
+  /// привязаны места переднего плана в `room_slots.dart`.
+  static const double _floorLine = 0.92;
 
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
@@ -375,41 +338,26 @@ class _RoomScene extends StatelessWidget {
           // Габаритная сборка комнаты: фон и мебель каталога в масштабе
           // размерной сетки (room_layout.dart) — мебель мельче героя, как
           // задний план с перспективой на макете.
-          Positioned.fill(
-            child: RoomSceneBackdrop(
-              placed: placed,
-              room: room,
-              bearModule: heroHeight,
-            ),
-          ),
+          Positioned.fill(child: RoomSceneBackdrop(room: room)),
           // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
           //
-          // Раньше он был растянут во всю сцену — так требовало прежнее
-          // решение заказчика («не уменьшать»). Решение отменено 17.09:
-          // мишка во весь экран не оставлял места комнате, мебель рядом с
-          // ним была неразличима, а покупать неразличимое незачем. Ссылка —
-          // My Talking Tom, где герой занимает примерно треть кадра, а
-          // остальное отдано обстановке, которую и продают.
-          //
-          // Тот же размер — модуль всей размерной сетки: мебель меряется в
-          // ростах мишки, и пока он был во весь экран, шкаф рядом с ним был
-          // втрое ниже, чем должен.
+          // Решение заказчика 17.09 взамен прежнего «во весь экран»: мишка
+          // во весь кадр не оставлял места комнате, мебель рядом с ним была
+          // неразличима, а покупать неразличимое незачем.
           Positioned(
             left: 0,
             right: 0,
-            bottom: 0,
             top: 0,
+            bottom: 0,
             child: LayoutBuilder(
               builder: (context, c) {
-                final heroPx = c.maxHeight * heroHeight;
                 return Stack(
                   children: [
                     Positioned(
-                      // Ноги на линии пола — той же, на которой стоит мебель.
-                      bottom: c.maxHeight * (1 - RoomSceneBackdrop.floorLine),
+                      bottom: c.maxHeight * (1 - _floorLine),
                       left: 0,
                       right: 0,
-                      height: heroPx,
+                      height: c.maxHeight * heroHeight,
                       // Тап по мишке — погладить: контроллер стреляет trg_pet,
                       // риг проигрывает смех с подскоком (КП 7.6).
                       child: GestureDetector(
@@ -426,24 +374,16 @@ class _RoomScene extends StatelessWidget {
               },
             ),
           ),
-          // Стоящие вещи нажимаются: тап открывает «убрать или заменить».
-          // Слой тоже поверх мишки и по той же причине, что и подсказки.
+          // Места лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по ним:
+          // на главном экране он растянут во всю ширину сцены. Сам слой
+          // занимает только площадь мест, остальное прозрачно для касаний —
+          // погладить мишку по-прежнему можно где угодно.
           Positioned.fill(
-            child: RoomItemsLayer(
-              placed: placed,
-              bearModule: heroHeight,
-              onTap: onItemTap,
-            ),
-          ),
-          // Подсказки лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по
-          // ним: на главном экране он растянут во всю сцену. Сам слой
-          // занимает только рамки, остальное пространство прозрачно для
-          // касаний — погладить мишку по-прежнему можно где угодно.
-          Positioned.fill(
-            child: RoomHintLayer(
-              hints: hints,
-              onTap: onHintTap,
-              bearModule: heroHeight,
+            child: RoomSlotLayer(
+              game: game,
+              room: room,
+              onTapItem: (slot, _) => onSlotTap(slot),
+              onTapEmpty: onSlotTap,
             ),
           ),
           Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),

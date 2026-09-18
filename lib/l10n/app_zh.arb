@@ -301,6 +301,8 @@
   "roomItemBought": "已购买「{name}」",
   "roomItemPlaced": "已摆放「{name}」",
   "roomItemRemoved": "已收起「{name}」",
+  "roomSlotEmpty": "空位",
+  "roomSlotPut": "放置",
   "roomSheetOwned": "已拥有",
   "roomSheetRemove": "从房间移除",
   "roomSheetReplace": "换成",

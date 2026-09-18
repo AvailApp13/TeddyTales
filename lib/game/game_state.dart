@@ -24,11 +24,15 @@ class GameState extends ChangeNotifier {
     Set<String>? owned,
     Set<String>? placed,
   }) : _profile = profile,
-       _owned = owned ?? {..._startingItems},
+       // Наборы копируются, а не берутся как есть: снаружи легко прилетает
+       // неизменяемый (`const {}` из теста, `Set.unmodifiable` из ответа
+       // сервера), и первая же покупка падала бы на попытке в него
+       // дописать.
+       _owned = {...owned ?? _startingItems},
        // Дефолт — ПУСТАЯ сцена: только стены и пол, без мебели. Решение
        // заказчика: предметы не ставить заранее, герой один в кадре, а
        // комнату каждый собирает сам через раздел «Комната».
-       _placed = placed ?? {'wall_rose', 'floor_wood'};
+       _placed = {...placed ?? const {'wall_rose', 'floor_wood'}};
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
@@ -69,6 +73,13 @@ class GameState extends ChangeNotifier {
   PetProfile _profile;
   final Set<String> _owned;
   final Set<String> _placed;
+
+  /// Что в каком месте стоит: ключ — id слота, значение — id вещи.
+  ///
+  /// [_placed] остаётся как «что вообще выставлено» — на него смотрят
+  /// магазин и комната, и он же уходит на сервер. Слоты — это где именно.
+  final Map<String, String> _slots = {};
+
   final List<String> _cart = [];
   final Map<String, int> _eduProgress = {};
   final Map<String, bool> _notifications = {
@@ -93,6 +104,57 @@ class GameState extends ChangeNotifier {
 
   bool isOwned(String id) => _owned.contains(id);
   bool isPlaced(String id) => _placed.contains(id);
+
+  /// Что стоит в этом месте. `null` — место свободно.
+  String? itemInSlot(String slotId) => _slots[slotId];
+
+  /// В каком месте стоит эта вещь. `null` — нигде.
+  String? slotOf(String itemId) {
+    for (final entry in _slots.entries) {
+      if (entry.value == itemId) return entry.key;
+    }
+    return null;
+  }
+
+  Map<String, String> get slots => Map.unmodifiable(_slots);
+
+  /// Ставит вещь в место. Вещь, которая там стояла, возвращается в
+  /// инвентарь: место одно, и две вещи в нём не помещаются.
+  ///
+  /// Вещь, стоящая в другом месте, переезжает сюда — не раздваивается.
+  void placeInSlot(String slotId, String itemId) {
+    if (!isOwned(itemId)) return;
+
+    final previous = _slots[slotId];
+    if (previous == itemId) return;
+
+    if (previous != null) {
+      _placed.remove(previous);
+      onPlace?.call(previous, placed: false);
+    }
+
+    final from = slotOf(itemId);
+    if (from != null) _slots.remove(from);
+
+    _slots[slotId] = itemId;
+    _placed.add(itemId);
+
+    bear.recordAction(BearAction.decorate);
+    onPlace?.call(itemId, placed: true);
+    notifyListeners();
+  }
+
+  /// Освобождает место.
+  void clearSlot(String slotId) {
+    final itemId = _slots.remove(slotId);
+    if (itemId == null) return;
+
+    _placed.remove(itemId);
+    bear.recordAction(BearAction.decorate);
+    onPlace?.call(itemId, placed: false);
+    notifyListeners();
+  }
+
   bool isInCart(String id) => _cart.contains(id);
   bool isNotificationOn(String id) => _notifications[id] ?? false;
 
