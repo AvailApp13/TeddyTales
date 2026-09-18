@@ -42,13 +42,27 @@ class RoomSlotLayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final slots = slotsOf(room);
 
-    // Подсвечиваем те свободные места, куда игроку есть что поставить, —
-    // и только первые несколько. Место, для которого у человека нет ни
-    // одной подходящей вещи и ни одной по карману, приглашением не будет.
-    final empty = [
-      for (final slot in slots)
-        if (game.itemInSlot(slot.id) == null) slot,
-    ];
+    // Подсвечиваются не все свободные места, а несколько — и не первые
+    // попавшиеся.
+    //
+    // Порядок такой: сначала места, куда человеку есть что поставить прямо
+    // сейчас, из уже купленного. Двенадцать бесплатных вещей (КП 10.8) не
+    // должны лежать в инвентаре мёртвым грузом, и первое действие в комнате
+    // должно быть бесплатным и мгновенным.
+    //
+    // Дальше крупное вперёд мелкого: комнату делает кроватка, а не картинка
+    // на стене. Три подсвеченные рамки под картины в пустой комнате
+    // показывают, что обставлять нечем, — ровно обратное тому, что нужно.
+    final empty =
+        [
+          for (final slot in slots)
+            if (game.itemInSlot(slot.id) == null) slot,
+        ]..sort((a, b) {
+          final hasA = _hasItemFor(game, a);
+          final hasB = _hasItemFor(game, b);
+          if (hasA != hasB) return hasA ? -1 : 1;
+          return (b.maxW * b.maxH).compareTo(a.maxW * a.maxH);
+        });
     final hinted = empty.take(hintLimit).toSet();
 
     return LayoutBuilder(
@@ -72,6 +86,15 @@ class RoomSlotLayer extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Есть ли у игрока купленная вещь, которую можно поставить в это место.
+  static bool _hasItemFor(GameState game, RoomSlot slot) {
+    for (final id in game.owned) {
+      final item = ItemCatalog.byId(id);
+      if (slot.takes(item) && game.slotOf(id) == null) return true;
+    }
+    return false;
   }
 
   static Widget _positioned({
