@@ -84,13 +84,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// Высота нижнего меню, под которое уходит комната.
-  ///
-  /// Меню по решению заказчика 20.09 в итоге исчезнет — разделы переедут в
-  /// кнопку-лапу. Пока оно на месте, показателям нужно знать, сколько под
-  /// ними занято, иначе они лягут прямо на вкладки.
-  static const double _bottomNavHeight = 80;
-
   AppSection _section = AppSection.home;
 
   /// Открытая комната. Живёт в памяти экрана: это не прогресс, а взгляд —
@@ -99,6 +92,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _runAction(BearAction action) {
     final controller = widget.controller;
+
+    // Комната — следствие действия (`roomForAction`), а не отдельный выбор.
+    final room = roomForAction(action);
+    if (room != null && room != _room) setState(() => _room = room);
 
     switch (action) {
       // По КП 8 кормление — это выбор блюда на отдельном экране, а не
@@ -223,7 +220,11 @@ class _HomeScreenState extends State<HomeScreen> {
           // (решение заказчика 20.09). Шапка и показатели лежат поверх неё
           // отдельными слоями, а не делят с ней высоту колонкой.
           extendBody: true,
+          // StackFit.expand обязателен: слой управления — колонка по высоте
+          // содержимого, и без него стек сжался бы до её высоты, а комната
+          // вместе с ним.
           body: Stack(
+            fit: StackFit.expand,
             children: [
               Positioned.fill(
                 child: _RoomScene(
@@ -248,9 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Слой управления. Пустоты в нём касания не ловят: между
-              // шапкой и показателями стоит распорка, а она прозрачна для
-              // пальца — погладить мишку можно через неё.
+              // Слой управления: шапка и кольца показателей вверху, над
+              // потолком. Пустота под ними касания не ловит — погладить
+              // мишку можно прямо через неё.
               SafeArea(
                 bottom: false,
                 child: Padding(
@@ -258,14 +259,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     AppDimens.pagePadding,
                     8,
                     AppDimens.pagePadding,
-                    // Место под нижнее меню: оно ещё на своём месте, но
-                    // комната уже уходит под него.
-                    _bottomNavHeight + AppDimens.gap,
+                    0,
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      PetHeader(profile: profile, age: age),
-                      const Spacer(),
+                      PetHeader(
+                        profile: profile,
+                        age: age,
+                        onOpenProfile: () => _open(_profileScreen()),
+                      ),
+                      const SizedBox(height: 14),
                       CareStatsPanel(
                         stats: state.stats,
                         stage: state.stage,
@@ -441,8 +445,8 @@ class _RoomScene extends StatelessWidget {
     );
   }
 
-  /// Верх свободной зоны: ниже шапки, но ещё на потолке.
-  static const double _hudTop = 132;
+  /// Верх свободной зоны: ниже колец показателей, но ещё на потолке.
+  static const double _hudTop = 178;
 }
 
 /// Кнопка перехода к списку действий ухода.

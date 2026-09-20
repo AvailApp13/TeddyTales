@@ -12,6 +12,31 @@
 /// место для них уже готово.
 library;
 
+import '../bear/bear_action.dart';
+
+/// Куда уводит действие ухода.
+///
+/// Решение заказчика 20.09: «ванная это и есть гигиена, при нажатии на
+/// гигиену он должен попадать в ванную… Зачем нам дублировать?» Комната стала
+/// следствием действия, а не отдельным выбором, и три кнопки переключения
+/// комнат после этого оказались дублями навигации.
+///
+/// `null` — действие комнату не меняет. Погладить можно где угодно, и
+/// уносить мишку ради этого из ванной было бы странно.
+RoomKind? roomForAction(BearAction action) => switch (action) {
+  BearAction.feed => RoomKind.kitchen,
+  BearAction.wash => RoomKind.bath,
+  // Спальни пока нет: заказчик решил 20.09, что сон получит свой фон с
+  // кроваткой, но арта ещё нет. До него спим дома.
+  BearAction.sleep => RoomKind.nursery,
+  BearAction.play => RoomKind.nursery,
+  BearAction.pet ||
+  BearAction.wake ||
+  BearAction.learn ||
+  BearAction.dressUp ||
+  BearAction.decorate => null,
+};
+
 enum RoomKind {
   nursery('assets/rooms/nursery.png'),
   kitchen('assets/rooms/kitchen.png'),

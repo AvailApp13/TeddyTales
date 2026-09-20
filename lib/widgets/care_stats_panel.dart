@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../bear/bear_action.dart';
@@ -5,9 +7,8 @@ import '../bear/bear_rig_spec.dart';
 import '../bear/bear_stats.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 
-/// Одна плитка показателя.
+/// Один показатель.
 class CareStat {
   const CareStat({
     required this.label,
@@ -26,15 +27,17 @@ class CareStat {
   final BearAction action;
 }
 
-/// Панель пяти показателей ухода (КП 3.2, 6.1).
+/// Пять показателей ухода (КП 3.2, 6.1).
 ///
-/// Значения 0–100%, подпись и иконка — как на макете. Тап по плитке запускает
-/// соответствующее действие ухода: на макете список действий живёт на отдельном
-/// экране «Что будем делать?», но кнопки, ведущей туда, в макете не видно, а
-/// показатели напрашиваются на роль такой кнопки.
+/// С 20.09 это не плитки внизу экрана, а кольца поверх комнаты под шапкой, и
+/// не индикаторы, а **основная навигация**. Решение заказчика: «ванная это и
+/// есть гигиена, при нажатии на гигиену он должен попадать в ванную». Тап по
+/// кольцу уводит мишку туда, где этот показатель поправляют, — отдельные
+/// кнопки переключения комнат после этого оказались дублями и убраны.
 ///
-/// **ДОПУЩЕНИЕ:** тап по плитке = действие. Если по замыслу плитки только
-/// показывают, а действия открываются иначе, снимается параметром [onAction].
+/// Кольцо, а не полоска: заливка по кругу читается с одного взгляда и не
+/// требует подписи «из ста», а на круглой форме помещается иконка, которая и
+/// делает кольцо кнопкой.
 class CareStatsPanel extends StatelessWidget {
   const CareStatsPanel({
     super.key,
@@ -90,24 +93,24 @@ class CareStatsPanel extends StatelessWidget {
     final tiles = _tiles(context.l10n);
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final tile in tiles) ...[
-          Expanded(
-            child: _StatTile(
+        for (final tile in tiles)
+          Flexible(
+            child: _StatRing(
               stat: tile,
               enabled: onAction != null && tile.action.isAvailableOn(stage),
               onTap: () => onAction?.call(tile.action),
             ),
           ),
-          if (tile != tiles.last) const SizedBox(width: 8),
-        ],
       ],
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+class _StatRing extends StatelessWidget {
+  const _StatRing({
     required this.stat,
     required this.enabled,
     required this.onTap,
@@ -117,47 +120,131 @@ class _StatTile extends StatelessWidget {
   final bool enabled;
   final VoidCallback onTap;
 
+  static const double _size = 58;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Opacity(
       opacity: enabled ? 1 : 0.45,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.outline),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(stat.icon, size: 22, color: stat.color),
-                const SizedBox(height: 6),
-                Text(
-                  stat.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? onTap : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: _size,
+              height: _size,
+              child: CustomPaint(
+                painter: _RingPainter(
+                  value: stat.value.clamp(0, 100) / 100,
+                  color: stat.color,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${stat.value.round()}%',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                child: Center(
+                  child: Container(
+                    width: _size - 13,
+                    height: _size - 13,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(stat.icon, size: 22, color: stat.color),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+            _Caption(
+              text: stat.label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            _Caption(
+              text: '${stat.value.round()}%',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// Подпись со светлой обводкой: кольца лежат поверх комнаты, и на тёмном
+/// участке обоев простой текст пропадёт.
+class _Caption extends StatelessWidget {
+  const _Caption({required this.text, required this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style?.copyWith(
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3
+              ..strokeJoin = StrokeJoin.round
+              ..color = AppColors.background,
+          ),
+        ),
+        Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+      ],
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter({required this.value, required this.color});
+
+  /// Доля от нуля до единицы.
+  final double value;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = size.shortestSide * 0.11;
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: (size.shortestSide - stroke) / 2,
+    );
+
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = AppColors.surface.withValues(alpha: 0.85);
+    canvas.drawCircle(rect.center, rect.width / 2, track);
+
+    if (value <= 0) return;
+
+    // От двенадцати часов по часовой стрелке: так растущее значение читается
+    // как заполняющийся сосуд, а не как стрелка часов.
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      2 * math.pi * value,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.value != value || old.color != color;
 }
