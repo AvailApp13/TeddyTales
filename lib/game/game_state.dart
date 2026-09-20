@@ -36,10 +36,15 @@ class GameState extends ChangeNotifier {
     required PetProfile profile,
     Set<String>? owned,
     Set<String>? placed,
+    int walletFloor = kTestWallet,
   }) : // Не «выдать 5000», а «поднять до 5000»: если на счету больше —
        // например, заработано или пришло с сервера, — отнимать нельзя.
-       _profile = profile.coins < kTestWallet
-           ? profile.copyWith(coins: kTestWallet)
+       //
+       // Порог берётся параметром, а не константой напрямую: тесты про
+       // нехватку монет иначе проверяли бы не то — с полным кошельком не
+       // бывает «денег не хватило».
+       _profile = profile.coins < walletFloor
+           ? profile.copyWith(coins: walletFloor)
            : profile,
        // Наборы копируются, а не берутся как есть: снаружи легко прилетает
        // неизменяемый (`const {}` из теста, `Set.unmodifiable` из ответа

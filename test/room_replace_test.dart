@@ -16,6 +16,9 @@ void main() {
     bear = BearController();
     return GameState(
       bear: bear,
+      // Кошелёк для испытаний здесь не нужен: проверяем как раз нехватку
+      // монет, а с полными пятью тысячами её не бывает.
+      walletFloor: 0,
       profile: PetProfile(
         name: 'Тедди',
         birthAt: DateTime(2026, 6, 1),
