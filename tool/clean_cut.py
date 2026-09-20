@@ -27,7 +27,7 @@ def clean(
     path: Path,
     target: Path,
     keep: float = 0.01,
-    reach: float = 0.012,
+    reach: float = 0.005,
     solid_floor: int = 128,
 ) -> tuple[int, int]:
     image, pieces, dropped = cleaned_image(
@@ -40,7 +40,7 @@ def clean(
 def cleaned_image(
     source: Image.Image,
     keep: float = 0.01,
-    reach: float = 0.012,
+    reach: float = 0.005,
     solid_floor: int = 128,
 ) -> tuple[Image.Image, int, int]:
     image = source.convert('RGBA')
