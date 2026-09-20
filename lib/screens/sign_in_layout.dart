@@ -28,6 +28,19 @@ const double signInBearsTop = 0.245;
 /// Низ мишек: лапы кончаются на 0.525, ещё немного берём на тень.
 const double signInBearsBottom = 0.535;
 
+/// Сколько кадра разрешено срезать с каждого бока.
+///
+/// На вытянутом телефоне (19,5:9) кадр 9:16 закрывает экран целиком только
+/// с сильной обрезкой — а по бокам сцены стоят книжки «Small Friends» и
+/// домик с окошком, и срезанные наполовину они читаются как брак. Поэтому
+/// обрезка ограничена, а остаток внизу закрывается цветом нижней кромки
+/// кадра: он там ровный, и шва не видно — тем более что на этой полосе
+/// лежат кнопки.
+const double signInSideCrop = 0.06;
+
+/// Цвет нижней кромки сцены — им и продолжается ковёр под кадром.
+const int signInEdgeColor = 0xFFECC9BC;
+
 /// Насколько кадр разрешено утянуть вверх, когда кнопкам не хватает места.
 ///
 /// Над логотипом в кадре пустое поле; срезать его незаметно, а мишкам это
@@ -78,9 +91,10 @@ class SignInFrame {
   /// Масштаб учитывает этот сдвиг: иначе поднятый кадр оторвался бы от
   /// нижнего края и под кнопками появилась бы полоса краски.
   static SignInFrame _fit(Size scene, double lift) {
-    final scale = math.max(
-      scene.width / signInArtWidth,
-      scene.height / (signInArtHeight * (1 - lift)),
+    final wide = scene.width / signInArtWidth;
+    final scale = math.min(
+      math.max(wide, scene.height / (signInArtHeight * (1 - lift))),
+      wide / (1 - 2 * signInSideCrop),
     );
     final size = Size(signInArtWidth * scale, signInArtHeight * scale);
 
@@ -119,10 +133,18 @@ class SignInFrame {
 /// которого в неё начинают промахиваться. Верхний — по виду: кнопка во всю
 /// ладонь читается как заглушка.
 class SignInMetrics {
-  const SignInMetrics._(this.room);
+  const SignInMetrics._(this.room, {this.showPrompt = true});
 
   /// Насколько просторно: 0 — теснее некуда, 1 — как на макете.
   final double room;
+
+  /// Показывать ли подпись «Выберите способ входа».
+  ///
+  /// На совсем коротком экране (360 × 640) даже ужатая панель не помещается
+  /// под лапами, и подпись — первое, чем стоит пожертвовать: пять кнопок с
+  /// названиями способов и без неё понятны, а налезающая на мишек строка
+  /// портит всю сцену.
+  final bool showPrompt;
 
   double get buttonHeight => 42 + 12 * room;
   double get gap => 7 + 3 * room;
@@ -132,11 +154,13 @@ class SignInMetrics {
 
   /// Всё, кроме самих кнопок: подпись сверху, «Пропустить» и условия в две
   /// строки снизу.
-  double get chrome => promptSize * 1.32 + skipHeight + legalSize * 2.8;
+  double get chrome =>
+      (showPrompt ? promptSize * 1.32 + gap : 0) +
+      skipHeight +
+      legalSize * 2.8;
 
-  /// Сколько места займёт панель целиком. Пять просветов, а не четыре:
-  /// один уходит под подпись.
-  double get height => 5 * buttonHeight + 5 * gap + chrome;
+  /// Сколько места займёт панель целиком.
+  double get height => 5 * buttonHeight + 4 * gap + chrome;
 
   /// Панель, ужатая до предела: по ней считается, надо ли тянуть кадр вверх.
   static const SignInMetrics tight = SignInMetrics._(0);
@@ -150,6 +174,7 @@ class SignInMetrics {
 
     return SignInMetrics._(
       ((available - tight.height) / span).clamp(0.0, 1.0),
+      showPrompt: available + 1 >= tight.height,
     );
   }
 }

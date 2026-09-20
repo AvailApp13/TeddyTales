@@ -57,11 +57,11 @@ enum _SignInMethod {
 
 class _SignInScreenState extends State<SignInScreen>
     with SingleTickerProviderStateMixin {
-  /// Цвет самой нижней строки присланной сцены — снят с картинки.
+  /// Цвет нижней кромки присланной сцены — снят с картинки.
   ///
-  /// Кадр вписан по ширине, поэтому ниже него остаётся полоса. Залитая этим
-  /// цветом, она продолжает ковёр без шва.
-  static const Color _sceneEdge = Color(0xFFEAC6B9);
+  /// На вытянутом экране кадр не достаёт до низа: обрезать ему бока дальше
+  /// нельзя. Полоса, залитая этим цветом, продолжает ковёр без шва.
+  static const Color _sceneEdge = Color(signInEdgeColor);
 
   /// Сколько уведомление висит, прежде чем пустить внутрь. Полторы секунды —
   /// столько нужно, чтобы прочитать две строки и не заскучать.
@@ -100,7 +100,7 @@ class _SignInScreenState extends State<SignInScreen>
     final l10n = context.l10n;
 
     return Scaffold(
-      // Виден только в щелях при перестроении: сцена закрывает экран целиком.
+      // Тот же цвет, что у полосы под кадром, — на случай щелей.
       backgroundColor: _sceneEdge,
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -121,9 +121,28 @@ class _SignInScreenState extends State<SignInScreen>
 
           return Stack(
             children: [
-              // Сцена целиком, без заливок и градиентов: под кнопками
-              // должен быть тот же ковёр с листьями и звёздами, что на
-              // макете заказчика.
+              // Ковёр ниже кадра: на вытянутом телефоне сцена не достаёт до
+              // низа, потому что обрезать ей бока дальше нельзя — срежутся
+              // книжки и домик. Полоса берёт цвет нижней кромки кадра, а
+              // мягкий переход прячет стык.
+              Positioned(
+                left: 0,
+                right: 0,
+                top: frame.rect.bottom - 90,
+                bottom: 0,
+                child: const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x00ECC9BC), _sceneEdge, _sceneEdge],
+                      stops: [0, 0.62, 1],
+                    ),
+                  ),
+                ),
+              ),
+              // Сама сцена: без заливок поверх неё — под кнопками должен
+              // быть тот же ковёр с листьями и звёздами, что на макете.
               Positioned.fromRect(
                 rect: frame.rect,
                 child: const Image(
@@ -204,19 +223,21 @@ class _SignInPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.signInPrompt,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: metrics.promptSize,
-            letterSpacing: 0.4,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+        if (metrics.showPrompt) ...[
+          Text(
+            l10n.signInPrompt,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: metrics.promptSize,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
           ),
-        ),
-        SizedBox(height: metrics.gap),
+          SizedBox(height: metrics.gap),
+        ],
         for (final method in _SignInMethod.values) ...[
           _MethodButton(
             method: method,

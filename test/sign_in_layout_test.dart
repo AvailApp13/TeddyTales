@@ -25,8 +25,7 @@ void main() {
   );
 
   group('Кадр сцены', () {
-    test('закрывает экран целиком, сколько бы его ни тянули вверх', () {
-      // Иначе под кнопками появится полоса краски вместо ковра.
+    test('закрывает экран по ширине и не даёт полей сверху', () {
       for (final scene in all) {
         final rect = frameOf(scene).rect;
 
@@ -34,8 +33,31 @@ void main() {
         expect(rect.right, greaterThanOrEqualTo(scene.width - 0.01),
             reason: '$scene');
         expect(rect.top, lessThanOrEqualTo(0.01), reason: '$scene');
-        expect(rect.bottom, greaterThanOrEqualTo(scene.height - 0.01),
-            reason: '$scene');
+      }
+    });
+
+    test('с боков срезает не больше, чем позволено книжкам и домику', () {
+      // Дальше обрезать нельзя: по краям сцены стоят книжки «Small Friends»
+      // и домик с окошком, и срезанные наполовину они читаются как брак.
+      for (final scene in all) {
+        final rect = frameOf(scene).rect;
+
+        expect(
+          (rect.width - scene.width) / 2 / rect.width,
+          lessThanOrEqualTo(signInSideCrop + 0.001),
+          reason: '$scene',
+        );
+      }
+    });
+
+    test('мишки целиком помещаются на экран', () {
+      // Полоса ковра под кадром — не беда, а вот срезанные лапы беда.
+      for (final scene in all) {
+        expect(
+          frameOf(scene).bearsBottomY,
+          lessThan(scene.height),
+          reason: '$scene',
+        );
       }
     });
 
@@ -104,17 +126,18 @@ void main() {
       }
     });
 
-    test('на совсем коротком экране уступают мишки, а не кнопки', () {
+    test('на совсем коротком экране уходит подпись, а не размер кнопок', () {
       // 360 × 640 — предел, дальше которого честного места нет: пять кнопок
-      // по пальцу с подписями просто не умещаются под лапами. Тогда панель
-      // ужимается до предела и заходит на нижний край сцены, но не настолько,
-      // чтобы закрыть мишек, — и кнопка остаётся кнопкой, а не полоской.
+      // по пальцу и обе служебные строки под лапами уже не умещаются. Тогда
+      // жертвуют подписью «Выберите способ входа» — без неё пять кнопок с
+      // названиями способов понятны, — а кнопка остаётся кнопкой.
       final frame = frameOf(small);
       final free = small.height - frame.bearsBottomY - 8;
       final metrics = SignInMetrics.of(free);
 
+      expect(metrics.showPrompt, isFalse);
       expect(metrics.room, 0);
-      expect(metrics.height - free, lessThan(24));
+      expect(metrics.height, lessThanOrEqualTo(free + 1));
     });
 
     test('кнопка нигде не мельче пальца', () {
