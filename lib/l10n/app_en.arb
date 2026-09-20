@@ -412,6 +412,8 @@
   "statsFood": "Food",
   "statsHygiene": "Hygiene",
   "statsLove": "Love",
+  "statsShow": "Show care",
+  "statsHide": "Hide care",
   "statsPlay": "Play",
   "statsSleep": "Sleep",
   "traitActive": "Active",

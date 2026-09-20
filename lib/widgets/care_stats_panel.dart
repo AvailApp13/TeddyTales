@@ -40,18 +40,21 @@ class CareStat {
 /// снова можно будет только выращенным мишкой.
 const bool kStageLocksOnStats = false;
 
-/// Пять показателей ухода (КП 3.2, 6.1).
+/// Кольца показателей, спрятанные в одну кнопку (решение заказчика 20.09).
 ///
-/// С 20.09 это не плитки внизу экрана, а кольца поверх комнаты под шапкой, и
-/// не индикаторы, а **основная навигация**. Решение заказчика: «ванная это и
-/// есть гигиена, при нажатии на гигиену он должен попадать в ванную». Тап по
-/// кольцу уводит мишку туда, где этот показатель поправляют, — отдельные
-/// кнопки переключения комнат после этого оказались дублями и убраны.
+/// До этого пятёрка колец — еда, гигиена, сон, игра, любовь — стояла поверх
+/// комнаты постоянно и вместе с процентами занимала весь верх экрана.
+/// Заказчик: «вместо любви мы делаем эту кнопку, она будет прятать все».
 ///
-/// Кольцо, а не полоска: заливка по кругу читается с одного взгляда и не
-/// требует подписи «из ста», а на круглой форме помещается иконка, которая и
-/// делает кольцо кнопкой.
-class CareStatsPanel extends StatelessWidget {
+/// Любовь с экрана ушла: гладить мишку можно тапом по нему самому, а
+/// показатель по КП 6.1 остался жив — он растёт от поглаживаний, держит
+/// характер «ласковый» (КП 7.1) и входит в общий процент на кнопке. Кольца
+/// ему не нужно: в отличие от четырёх остальных, оно никуда не вело — ласка
+/// происходит там, где мишка стоит.
+///
+/// Проценты цифрами убраны совсем: заливка кольца и так показывает долю, а
+/// число рядом с ней — то же самое второй раз.
+class CareStatsPanel extends StatefulWidget {
   const CareStatsPanel({
     super.key,
     required this.stats,
@@ -63,41 +66,85 @@ class CareStatsPanel extends StatelessWidget {
   final BearStage stage;
   final ValueChanged<BearAction>? onAction;
 
+  /// Высота панели: кольцо и подпись под ним.
+  static const double height = _ringSize + 4 + 16;
+
+  /// Общий уход — среднее всех пяти показателей КП 6.1, вместе с любовью.
+  ///
+  /// Любви нет на экране, но она входит сюда: заброшенная ласка так же
+  /// тормозит рост (КП 5.7), как несъеденный обед, и по одной этой заливке
+  /// должно быть видно, всё ли у мишки хорошо.
+  static double totalCare(BearCareStats s) =>
+      (s.food + s.hygiene + s.sleep + s.play + s.love) / 5;
+
+  static const double _ringSize = 58;
+
+  @override
+  State<CareStatsPanel> createState() => _CareStatsPanelState();
+}
+
+class _CareStatsPanelState extends State<CareStatsPanel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _slide = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+    reverseDuration: const Duration(milliseconds: 220),
+  );
+
+  /// Открыт ли ряд. Отдельным полем, а не по значению анимации: в кадр
+  /// нажатия контроллер ещё стоит на нуле, и проверка через него
+  /// переключала бы состояние вхолостую.
+  bool _open = false;
+
+  @override
+  void dispose() {
+    _slide.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _open = !_open);
+    if (_open) {
+      _slide.forward();
+    } else {
+      _slide.reverse();
+    }
+  }
+
+  /// Выбор действия закрывает ряд: он своё дело сделал и уводит в комнату.
+  void _pick(BearAction action) {
+    _toggle();
+    widget.onAction?.call(action);
+  }
+
   List<CareStat> _tiles(AppLocalizations l10n) => [
     CareStat(
       label: l10n.statsFood,
       icon: Icons.restaurant,
-      value: stats.food,
+      value: widget.stats.food,
       color: AppColors.statFood,
       action: BearAction.feed,
     ),
     CareStat(
       label: l10n.statsHygiene,
       icon: Icons.bathtub_outlined,
-      value: stats.hygiene,
+      value: widget.stats.hygiene,
       color: AppColors.statHygiene,
       action: BearAction.wash,
     ),
     CareStat(
       label: l10n.statsSleep,
       icon: Icons.nightlight_round,
-      value: stats.sleep,
+      value: widget.stats.sleep,
       color: AppColors.statSleep,
       action: BearAction.sleep,
     ),
     CareStat(
       label: l10n.statsPlay,
       icon: Icons.sports_baseball_outlined,
-      value: stats.play,
+      value: widget.stats.play,
       color: AppColors.statPlay,
       action: BearAction.play,
-    ),
-    CareStat(
-      label: l10n.statsLove,
-      icon: Icons.favorite,
-      value: stats.love,
-      color: AppColors.statLove,
-      action: BearAction.pet,
     ),
   ];
 
@@ -105,21 +152,128 @@ class CareStatsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final tiles = _tiles(context.l10n);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final tile in tiles)
-          Flexible(
+    return SizedBox(
+      height: CareStatsPanel.height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Пять мест в ряд, как было с пятью кольцами: четыре показателя и
+          // кнопка на месте бывшей «Любви», у самого края.
+          final slot = constraints.maxWidth / 5;
+          final closed = slot * 4;
+
+          return AnimatedBuilder(
+            animation: _slide,
+            builder: (context, _) => Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Кольца рисуются под кнопкой: они из-под неё и выезжают.
+                for (var i = 0; i < tiles.length; i++)
+                  ..._ring(tiles[i], i, slot, closed),
+                Positioned(
+                  left: closed,
+                  width: slot,
+                  top: 0,
+                  child: Center(
+                    child: _TotalButton(
+                      value: CareStatsPanel.totalCare(widget.stats),
+                      open: _open,
+                      onTap: _toggle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Одно кольцо на своём месте в ряду — или сложенное под кнопкой.
+  List<Widget> _ring(CareStat tile, int index, double slot, double closed) {
+    // Ближнее к кнопке кольцо трогается первым, дальнее последним: ряд
+    // разворачивается веером, а не едет одной плитой.
+    final t = CurvedAnimation(
+      parent: _slide,
+      curve: Interval(0.08 * (3 - index), 1, curve: Curves.easeOutCubic),
+      reverseCurve: Interval(0.08 * index, 1, curve: Curves.easeInCubic),
+    ).value;
+
+    // Пока ряд сложен, колец в дереве нет вовсе: иначе под кнопкой остаются
+    // четыре прозрачных кружка, и скринридер читает спрятанное меню.
+    if (t <= 0) return const [];
+
+    return [
+      Positioned(
+        left: closed + (index * slot - closed) * t,
+        width: slot,
+        top: 0,
+        child: Opacity(
+          opacity: t.clamp(0, 1),
+          child: Center(
             child: _StatRing(
               stat: tile,
               enabled:
-                  onAction != null &&
-                  (!kStageLocksOnStats || tile.action.isAvailableOn(stage)),
-              onTap: () => onAction?.call(tile.action),
+                  widget.onAction != null &&
+                  (!kStageLocksOnStats ||
+                      tile.action.isAvailableOn(widget.stage)),
+              onTap: () => _pick(tile.action),
             ),
           ),
-      ],
+        ),
+      ),
+    ];
+  }
+}
+
+/// Кнопка с тремя полосками: общий уход на обводке, ряд колец внутри.
+class _TotalButton extends StatelessWidget {
+  const _TotalButton({
+    required this.value,
+    required this.open,
+    required this.onTap,
+  });
+
+  final double value;
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Semantics(
+      button: true,
+      label: open ? l10n.statsHide : l10n.statsShow,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: CareStatsPanel._ringSize,
+          height: CareStatsPanel._ringSize,
+          child: CustomPaint(
+            painter: _RingPainter(
+              value: value.clamp(0, 100) / 100,
+              color: AppColors.sageDark,
+            ),
+            child: Center(
+              child: Container(
+                width: CareStatsPanel._ringSize - 13,
+                height: CareStatsPanel._ringSize - 13,
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  open ? Icons.close_rounded : Icons.menu_rounded,
+                  size: 24,
+                  color: AppColors.sageDark,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -135,8 +289,6 @@ class _StatRing extends StatelessWidget {
   final bool enabled;
   final VoidCallback onTap;
 
-  static const double _size = 58;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -150,8 +302,8 @@ class _StatRing extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: _size,
-              height: _size,
+              width: CareStatsPanel._ringSize,
+              height: CareStatsPanel._ringSize,
               child: CustomPaint(
                 painter: _RingPainter(
                   value: stat.value.clamp(0, 100) / 100,
@@ -159,8 +311,8 @@ class _StatRing extends StatelessWidget {
                 ),
                 child: Center(
                   child: Container(
-                    width: _size - 13,
-                    height: _size - 13,
+                    width: CareStatsPanel._ringSize - 13,
+                    height: CareStatsPanel._ringSize - 13,
                     decoration: const BoxDecoration(
                       color: AppColors.surface,
                       shape: BoxShape.circle,
@@ -175,12 +327,6 @@ class _StatRing extends StatelessWidget {
               text: stat.label,
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-              ),
-            ),
-            _Caption(
-              text: '${stat.value.round()}%',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: AppColors.textSecondary,
               ),
             ),
           ],

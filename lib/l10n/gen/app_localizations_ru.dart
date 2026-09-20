@@ -1336,6 +1336,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statsLove => 'Любовь';
 
   @override
+  String get statsShow => 'Показать уход';
+
+  @override
+  String get statsHide => 'Свернуть уход';
+
+  @override
   String get statsPlay => 'Игра';
 
   @override

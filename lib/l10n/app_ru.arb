@@ -717,6 +717,8 @@
   "statsFood": "Еда",
   "statsHygiene": "Гигиена",
   "statsLove": "Любовь",
+  "statsShow": "Показать уход",
+  "statsHide": "Свернуть уход",
   "statsPlay": "Игра",
   "statsSleep": "Сон",
   "traitActive": "Активный",

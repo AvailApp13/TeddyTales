@@ -2344,6 +2344,18 @@ abstract class AppLocalizations {
   /// **'Любовь'**
   String get statsLove;
 
+  /// No description provided for @statsShow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать уход'**
+  String get statsShow;
+
+  /// No description provided for @statsHide.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть уход'**
+  String get statsHide;
+
   /// No description provided for @statsPlay.
   ///
   /// In ru, this message translates to:

@@ -412,6 +412,8 @@
   "statsFood": "食物",
   "statsHygiene": "卫生",
   "statsLove": "关爱",
+  "statsShow": "显示照顾",
+  "statsHide": "收起照顾",
   "statsPlay": "玩耍",
   "statsSleep": "睡眠",
   "traitActive": "活泼",

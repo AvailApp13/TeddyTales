@@ -1327,6 +1327,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsLove => 'Love';
 
   @override
+  String get statsShow => 'Show care';
+
+  @override
+  String get statsHide => 'Hide care';
+
+  @override
   String get statsPlay => 'Play';
 
   @override

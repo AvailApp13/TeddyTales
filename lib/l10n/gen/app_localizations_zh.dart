@@ -1256,6 +1256,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statsLove => '关爱';
 
   @override
+  String get statsShow => '显示照顾';
+
+  @override
+  String get statsHide => '收起照顾';
+
+  @override
   String get statsPlay => '玩耍';
 
   @override
