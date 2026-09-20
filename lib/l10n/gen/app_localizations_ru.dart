@@ -73,6 +73,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bathActionWash => 'Искупаться';
 
   @override
+  String get bathWashSoon => 'Чиним душ — скоро сможем купать малыша';
+
+  @override
   String get bathToiletSoon => 'Горшок ещё в работе — скоро научим';
 
   @override

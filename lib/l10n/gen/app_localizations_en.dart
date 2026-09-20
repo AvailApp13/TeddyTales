@@ -68,6 +68,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bathActionWash => 'Take a bath';
 
   @override
+  String get bathWashSoon => 'Fixing the shower — bath time is coming soon';
+
+  @override
   String get bathToiletSoon => 'The potty is still in the works';
 
   @override

@@ -198,12 +198,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Горшок в ванной. Механики в КП нет — кнопка стоит, чтобы заказчик
   /// видел состав ванной целиком, и честно говорит, что её ещё нет.
-  void _toilet() {
+  void _toilet() => _soon(context.l10n.bathToiletSoon);
+
+  /// Купание. Показатель гигиены поднимался, а самого купания не было: ни
+  /// пены, ни воды, ни анимации — просто росла цифра. Заказчик 20.09
+  /// попросил и здесь говорить честно, как про горшок: «мы чиним душ, скоро
+  /// будет работать».
+  ///
+  /// Поэтому кнопка больше ничего не поднимает. Механика мытья цела
+  /// (`controller.washBear`) и вернётся сюда, когда у аниматора будет сцена
+  /// купания.
+  void _wash() => _soon(context.l10n.bathWashSoon);
+
+  /// Сообщение «этого ещё нет». Нарочно одинаковое для всех недоделок:
+  /// тестировщик по нему сразу понимает, что нажатие обработано, а работы
+  /// ещё идут.
+  void _soon(String text) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(context.l10n.bathToiletSoon),
+          content: Text(text),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -259,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   room: _room,
                   onRoomChanged: (kind) => setState(() => _room = kind),
                   onOpenFeed: _openFeed,
+                  onWash: _wash,
                   onToilet: _toilet,
                   onOpenCare: () => _open(
                     CareScreen(
@@ -356,6 +372,7 @@ class _RoomScene extends StatelessWidget {
     required this.room,
     required this.onRoomChanged,
     required this.onOpenFeed,
+    required this.onWash,
     required this.onToilet,
   });
 
@@ -376,7 +393,8 @@ class _RoomScene extends StatelessWidget {
   /// Открыть кормление с кухни на выбранной вкладке.
   final ValueChanged<FeedTab> onOpenFeed;
 
-  /// Горшок. Механики пока нет — кнопка честно об этом говорит.
+  /// Купание и горшок. Механики пока нет — кнопки честно об этом говорят.
+  final VoidCallback onWash;
   final VoidCallback onToilet;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
@@ -507,7 +525,7 @@ class _RoomScene extends StatelessWidget {
             left: 16,
             right: _pawSpace,
             bottom: 34,
-            child: _BathMenu(onAction: onAcceptInitiative, onToilet: onToilet),
+            child: _BathMenu(onWash: onWash, onToilet: onToilet),
           ),
       ],
     );
@@ -543,9 +561,9 @@ class _ActionRow extends StatelessWidget {
 
 /// Две кнопки ванной: искупаться и на горшок.
 class _BathMenu extends StatelessWidget {
-  const _BathMenu({required this.onAction, required this.onToilet});
+  const _BathMenu({required this.onWash, required this.onToilet});
 
-  final ValueChanged<BearAction> onAction;
+  final VoidCallback onWash;
   final VoidCallback onToilet;
 
   @override
@@ -557,7 +575,7 @@ class _BathMenu extends StatelessWidget {
         _Pill(
           label: l10n.bathActionWash,
           icon: Icons.bathtub_outlined,
-          onTap: () => onAction(BearAction.wash),
+          onTap: onWash,
         ),
         const SizedBox(width: 8),
         _Pill(

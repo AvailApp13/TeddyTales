@@ -7,6 +7,7 @@
   "appTitle": "TeddyTales",
   "bathActionToilet": "上厕所",
   "bathActionWash": "洗澡",
+  "bathWashSoon": "正在修淋浴 — 很快就能洗澡啦",
   "bathToiletSoon": "马桶功能还在制作中",
   "bearRigMissingHint": "请将 {path} 放入应用",
   "bearRigMissingTitle": "骨骼动画还没接入",

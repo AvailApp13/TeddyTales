@@ -142,6 +142,12 @@ abstract class AppLocalizations {
   /// **'Искупаться'**
   String get bathActionWash;
 
+  /// No description provided for @bathWashSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чиним душ — скоро сможем купать малыша'**
+  String get bathWashSoon;
+
   /// No description provided for @bathToiletSoon.
   ///
   /// In ru, this message translates to:
