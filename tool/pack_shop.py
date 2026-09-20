@@ -21,20 +21,20 @@ from pathlib import Path
 
 from PIL import Image
 
+from clean_cut import cleaned_image
+
 SIDE = 512
 PAD = 0.04
 QUALITY = 86
 
 
 def pack(source: Path, target: Path) -> tuple[int, int]:
-    image = Image.open(source).convert('RGBA')
-
-    # Обрезаем по самой вещи, а не по кадру: у присланных картинок поля
-    # разной ширины, и без обрезки одинаковые по размеру вещи выходят в
-    # карточках разного масштаба.
-    box = image.split()[-1].point(lambda v: 255 if v > 8 else 0).getbbox()
-    if box:
-        image = image.crop(box)
+    # Сначала чистим: нарезка листа режет прямоугольниками, и в угол куска
+    # попадает лист соседнего растения или полоска фона. В карточке этого
+    # не видно, а в полноэкранном просмотре бросается в глаза — заказчик
+    # 20.09: «вырезано не аккуратно». Заодно обрезаются прозрачные поля,
+    # иначе вещь болтается в кадре и в сетке выглядит мельче соседей.
+    image, _, _ = cleaned_image(Image.open(source))
 
     inner = round(SIDE * (1 - 2 * PAD))
     image.thumbnail((inner, inner), Image.LANCZOS)
