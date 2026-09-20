@@ -89,16 +89,35 @@ class RoomFrame {
   /// Рост мишки в пикселях — доля кадра комнаты, а не экрана.
   double get bearHeight => camera.bearHeight * rect.height;
 
-  /// Сколько мишки видно: ниже линии переднего плана он уходит за мебель,
-  /// нарисованную на самом фоне.
-  double get bearVisibleHeight {
-    final front = camera.frontLine;
-    if (front == null) return bearHeight;
-    return math.min(bearHeight, rect.top + front * rect.height - bearTop);
-  }
-
   /// Верх мишки.
   double get bearTop => standY - bearHeight;
+
+  /// Полосы, в которых мишку видно, сверху вниз.
+  ///
+  /// Обычно одна — он весь на виду. В комнате с мебелью переднего плана их
+  /// две: над мебелью и в просвете под ней. Мебель нарисована на самом
+  /// фоне, то есть лежит под мишкой, и без этих полос его ноги оказались
+  /// бы поверх столешницы, а сам он выглядел бы приклеенным к столу.
+  List<({double top, double bottom})> get bearSlices {
+    final front = camera.frontLine;
+    if (front == null) return [(top: bearTop, bottom: standY)];
+
+    final frontTop = rect.top + front * rect.height;
+    final slices = <({double top, double bottom})>[];
+
+    if (frontTop > bearTop) {
+      slices.add((top: bearTop, bottom: math.min(frontTop, standY)));
+    }
+
+    final bottom = camera.frontBottom;
+    if (bottom != null) {
+      final frontBottom = rect.top + bottom * rect.height;
+      if (standY > frontBottom) {
+        slices.add((top: math.max(frontBottom, bearTop), bottom: standY));
+      }
+    }
+    return slices;
+  }
 
   /// Куда смотрит камера по горизонтали.
   double get centerX => rect.center.dx;

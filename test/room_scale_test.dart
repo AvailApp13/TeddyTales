@@ -15,19 +15,32 @@ import 'package:teddy_tales/widgets/room_slot_layer.dart';
 /// потерявшаяся в зале игрушка.
 void main() {
   group('Мишка в комнате', () {
-    test('в каждой комнате мишка одного роста', () {
+    test('где мишка стоит, он везде одного роста', () {
       // Главное обещание заказчику: «он как будто влитой». Комнаты сняты
-      // разными камерами — детская с высоты взрослого, черновые кухня и
-      // ванная почти с пола, — и доли кадра у них поэтому разные. А метры
+      // разными камерами, и доли кадра у них поэтому разные — а метры
       // должны совпадать, иначе переход между комнатами читался бы как
       // смена масштаба мира.
-      final heights = [
-        for (final room in RoomKind.values) cameraOf(room).bearMetres(),
+      //
+      // 1.18 м — это прежние 1.07 плюс десять процентов, о которых
+      // заказчик попросил 20.09: «а не как маленькая игрушка».
+      //
+      // Кухня сюда не входит: там мишка не стоит, а изображает сидящего за
+      // столом телом стоящего рига. Мерить его рост по линии пола в том
+      // кадре нечестно — он на ней не стоит.
+      for (final room in [RoomKind.nursery, RoomKind.bath]) {
+        expect(cameraOf(room).bearMetres(), closeTo(1.18, 0.05));
+      }
+    });
+
+    test('сидящего выдаёт только кухня, и только пока нет позы', () {
+      // Если однажды таких комнат станет больше одной, это перестанет быть
+      // исключением и должно стать полем рига, а не подгонкой камеры.
+      final odd = [
+        for (final room in RoomKind.values)
+          if ((cameraOf(room).bearMetres() - 1.18).abs() > 0.05) room,
       ];
 
-      for (final height in heights) {
-        expect(height, closeTo(1.07, 0.12));
-      }
+      expect(odd, [RoomKind.kitchen]);
     });
 
     test('у самого нижнего края кадра то же тело читалось бы мельче', () {
@@ -166,6 +179,42 @@ void main() {
       expect(slotDepth(slotById('nursery.back_right')!), SlotDepth.behind);
       expect(slotDepth(slotById('kitchen.toy_front')!), SlotDepth.front);
       expect(slotDepth(slotById('bath.toy_front')!), SlotDepth.front);
+    });
+  });
+
+  group('Мебель переднего плана', () {
+    const phone = Size(430, 932);
+
+    test('в кухне мишка разрезан столом надвое', () {
+      // Видны голова с плечами над столешницей и лапы в просвете под
+      // скатертью. Если полоса останется одна, он будет обрываться на
+      // столе и выглядеть приклеенным к нему сверху.
+      final slices = RoomFrame.of(phone, RoomKind.kitchen).bearSlices;
+
+      expect(slices, hasLength(2));
+      expect(slices.first.bottom, lessThan(slices.last.top));
+    });
+
+    test('в остальных комнатах мишка цел', () {
+      for (final room in [RoomKind.nursery, RoomKind.bath]) {
+        final frame = RoomFrame.of(phone, room);
+        final slices = frame.bearSlices;
+
+        expect(slices, hasLength(1), reason: room.name);
+        expect(slices.single.top, frame.bearTop, reason: room.name);
+        expect(slices.single.bottom, frame.standY, reason: room.name);
+      }
+    });
+
+    test('полосы не вылезают за самого мишку', () {
+      for (final room in RoomKind.values) {
+        final frame = RoomFrame.of(phone, room);
+        for (final slice in frame.bearSlices) {
+          expect(slice.top, greaterThanOrEqualTo(frame.bearTop));
+          expect(slice.bottom, lessThanOrEqualTo(frame.standY));
+          expect(slice.bottom, greaterThan(slice.top));
+        }
+      }
     });
   });
 

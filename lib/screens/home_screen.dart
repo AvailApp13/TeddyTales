@@ -409,28 +409,37 @@ class _RoomScene extends StatelessWidget {
         // Герой стоит на линии пола комнаты и занимает свою долю её кадра.
         // Касания не ловит — их ловит слой под ним.
         //
-        // Снизу он может быть обрезан: в кухне стол идёт от края до края, и
-        // мишка стоит за ним. Мебель нарисована на фоне, то есть лежит под
-        // мишкой, — без обрезки его ноги оказались бы поверх столешницы.
-        Positioned(
-          left: frame.bearCenterX - frame.rect.width / 2,
-          top: frame.bearTop,
-          width: frame.rect.width,
-          height: frame.bearVisibleHeight,
-          child: IgnorePointer(
-            child: ClipRect(
-              child: OverflowBox(
-                alignment: Alignment.topCenter,
-                minHeight: frame.bearHeight,
-                maxHeight: frame.bearHeight,
-                child: BearView(
-                  controller: controller,
-                  assetPath: riveAssetPath,
+        // Рисуется полосами: в кухне стол идёт от края до края, и мишка
+        // сидит за ним — видны голова с плечами над столешницей и лапы в
+        // просвете под скатертью, а сам стол проходит между ними. Мебель
+        // нарисована на фоне, то есть лежит под мишкой, и без этого его
+        // ноги оказались бы поверх столешницы.
+        for (final slice in frame.bearSlices)
+          Positioned(
+            left: frame.bearCenterX - frame.rect.width / 2,
+            top: slice.top,
+            width: frame.rect.width,
+            height: slice.bottom - slice.top,
+            child: IgnorePointer(
+              child: ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.topCenter,
+                  minHeight: frame.bearHeight,
+                  maxHeight: frame.bearHeight,
+                  child: Transform.translate(
+                    // Полоса показывает свой кусок одного и того же тела:
+                    // смещаем его так, чтобы в окне оказалась именно эта
+                    // часть, а не начало снова и снова.
+                    offset: Offset(0, frame.bearTop - slice.top),
+                    child: BearView(
+                      controller: controller,
+                      assetPath: riveAssetPath,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
         // остальное прозрачно для касаний: погладить мишку по-прежнему
         // можно где угодно.
