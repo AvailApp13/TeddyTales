@@ -86,8 +86,16 @@ class RoomFrame {
   /// Линия пола, на которой стоит мишка.
   double get standY => rect.top + camera.standLine * rect.height;
 
-  /// Рост мишки в пикселях — доля кадра комнаты, а не экрана.
-  double get bearHeight => camera.bearHeight * rect.height;
+  /// Рост мишки в пикселях.
+  ///
+  /// Считается от высоты **экрана**, а не кадра: кадры у комнат разной
+  /// формы, и одна и та же доля кадра давала на экране разный размер —
+  /// заказчик замечал это при каждом переключении.
+  double get bearHeight => scene.height * bearScreenHeight;
+
+  /// Какую долю кадра он при этом занимает. Нужно, чтобы посчитать, каким
+  /// ростом он читается в метрах.
+  double get bearFrameFraction => bearHeight / rect.height;
 
   /// Верх мишки.
   double get bearTop => standY - bearHeight;

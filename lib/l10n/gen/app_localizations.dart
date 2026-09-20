@@ -130,6 +130,24 @@ abstract class AppLocalizations {
   /// **'TeddyTales'**
   String get appTitle;
 
+  /// No description provided for @bathActionToilet.
+  ///
+  /// In ru, this message translates to:
+  /// **'В туалет'**
+  String get bathActionToilet;
+
+  /// No description provided for @bathActionWash.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искупаться'**
+  String get bathActionWash;
+
+  /// No description provided for @bathToiletSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Горшок ещё в работе — скоро научим'**
+  String get bathToiletSoon;
+
   /// No description provided for @bearRigMissingHint.
   ///
   /// In ru, this message translates to:

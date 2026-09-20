@@ -14,8 +14,27 @@ import 'package:teddy_tales/widgets/room_slot_layer.dart';
 /// проверяется сама эта арифметика: она и решает, великан мишка или
 /// потерявшаяся в зале игрушка.
 void main() {
+  const phone = Size(430, 932);
+  const tall = Size(430, 1100);
+  const short = Size(430, 500);
+
   group('Мишка в комнате', () {
-    test('где мишка стоит, он везде одного роста', () {
+    test('на экране он везде одного размера', () {
+      // Заказчик 20.09: «при переключении очень заметно, что меняется
+      // размер, этого не должно быть». Раньше рост задавался долей кадра, у
+      // каждой комнаты своей, — арифметически честно, а на глаз нет: кадры
+      // разной формы давали на экране разный размер.
+      for (final scene in [phone, tall, short]) {
+        final sizes = {
+          for (final room in RoomKind.values)
+            if (!cameraOf(room).bearInArt) RoomFrame.of(scene, room).bearHeight,
+        };
+
+        expect(sizes, hasLength(1), reason: '$scene');
+      }
+    });
+
+    test('где мишка стоит, он везде примерно одного роста', () {
       // Главное обещание заказчику: «он как будто влитой». Комнаты сняты
       // разными камерами, и доли кадра у них поэтому разные — а метры
       // должны совпадать, иначе переход между комнатами читался бы как
@@ -27,8 +46,17 @@ void main() {
       // Кухня сюда не входит: там мишка не стоит, а изображает сидящего за
       // столом телом стоящего рига. Мерить его рост по линии пола в том
       // кадре нечестно — он на ней не стоит.
+      //
+      // Метры теперь слегка расходятся: размер задан от экрана, а камеры у
+      // комнат разные. Допуск здесь про то, что расхождение осталось в
+      // нескольких сантиметрах, а не выросло в разы.
       for (final room in [RoomKind.nursery, RoomKind.bath]) {
-        expect(cameraOf(room).bearMetres(), closeTo(1.18, 0.05));
+        final frame = RoomFrame.of(phone, room);
+        expect(
+          cameraOf(room).bearMetres(frame.bearFrameFraction),
+          closeTo(1.13, 0.05),
+          reason: room.name,
+        );
       }
     });
 
@@ -51,13 +79,15 @@ void main() {
       // такая, — если знак однажды перевернут, комнату опять раздует.
       for (final room in RoomKind.values) {
         final camera = cameraOf(room);
+        final body = RoomFrame.of(phone, room).bearFrameFraction;
         final atEdge =
-            camera.bearHeight /
-            (1.0 - camera.eyeLine) *
-            camera.cameraOverWall *
-            2.5;
+            body / (1.0 - camera.eyeLine) * camera.cameraOverWall * 2.5;
 
-        expect(atEdge, lessThan(camera.bearMetres()), reason: room.name);
+        expect(
+          atEdge,
+          lessThan(camera.bearMetres(body)),
+          reason: room.name,
+        );
       }
     });
 
@@ -80,20 +110,22 @@ void main() {
 
     test('голова выше стыка со стеной', () {
       for (final room in RoomKind.values) {
-        final camera = cameraOf(room);
-        final head = camera.standLine - camera.bearHeight;
+        if (cameraOf(room).bearInArt) continue;
+        final frame = RoomFrame.of(phone, room);
         // Иначе мишка читался бы стоящим не в комнате, а на полоске пола
         // перед ней.
-        expect(head, lessThan(camera.floorLine), reason: room.name);
+        expect(
+          frame.bearTop,
+          lessThan(
+            frame.rect.top + cameraOf(room).floorLine * frame.rect.height,
+          ),
+          reason: room.name,
+        );
       }
     });
   });
 
   group('Кадр комнаты на весь экран', () {
-    const phone = Size(430, 932);
-    const tall = Size(430, 1100);
-    const short = Size(430, 500);
-
     test('все присланные комнаты идут со своим потолком', () {
       // 20.09 заказчик прислал все три фона нарисованными до потолка, и
       // дорисовывать больше нечего. Слой RoomCeiling оставлен: спальня, о
@@ -192,8 +224,6 @@ void main() {
   });
 
   group('Мебель переднего плана', () {
-    const phone = Size(430, 932);
-
     test('где мишка нарисован, рига не ставят вовсе', () {
       // Поставь поверх нарисованного живого — на стуле и в кровати окажется
       // по двое.

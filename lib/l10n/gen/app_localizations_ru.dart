@@ -67,6 +67,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'TeddyTales';
 
   @override
+  String get bathActionToilet => 'В туалет';
+
+  @override
+  String get bathActionWash => 'Искупаться';
+
+  @override
+  String get bathToiletSoon => 'Горшок ещё в работе — скоро научим';
+
+  @override
   String bearRigMissingHint(String path) {
     return 'Положите $path';
   }

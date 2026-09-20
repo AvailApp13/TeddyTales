@@ -1,4 +1,5 @@
 {
+  "@@locale": "ru",
   "@ageDays": {
     "placeholders": {
       "count": {
@@ -35,6 +36,9 @@
   },
   "ageYears": "{count, plural, one{{count} год} few{{count} года} other{{count} лет}}",
   "appTitle": "TeddyTales",
+  "bathActionToilet": "В туалет",
+  "bathActionWash": "Искупаться",
+  "bathToiletSoon": "Горшок ещё в работе — скоро научим",
   "@bearRigMissingHint": {
     "placeholders": {
       "path": {
@@ -495,7 +499,6 @@
   "learnTaskWorldDay": "Что светит днём?",
   "learnTaskWorldWater": "Кто живёт в воде?",
   "learnTitle": "Обучение",
-  "@@locale": "ru",
   "moodDirty": "Чумазый",
   "moodHappy": "Радостный",
   "moodHungry": "Голодный",

@@ -196,6 +196,19 @@ class _HomeScreenState extends State<HomeScreen> {
     showSlotSheet(context: context, game: widget.game, slot: slot);
   }
 
+  /// Горшок в ванной. Механики в КП нет — кнопка стоит, чтобы заказчик
+  /// видел состав ванной целиком, и честно говорит, что её ещё нет.
+  void _toilet() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.bathToiletSoon),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   /// Открыть кормление с кухни, на нужной вкладке (КП 8.1).
   void _openFeed(FeedTab tab) => _openSheet(
     FeedScreen(
@@ -247,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   room: _room,
                   onRoomChanged: (kind) => setState(() => _room = kind),
                   onOpenFeed: _openFeed,
+                  onToilet: _toilet,
                   onOpenCare: () => _open(
                     CareScreen(
                       controller: widget.controller,
@@ -323,6 +337,7 @@ class _RoomScene extends StatelessWidget {
     required this.room,
     required this.onRoomChanged,
     required this.onOpenFeed,
+    required this.onToilet,
   });
 
   final BearController controller;
@@ -342,6 +357,9 @@ class _RoomScene extends StatelessWidget {
 
   /// Открыть кормление с кухни на выбранной вкладке.
   final ValueChanged<FeedTab> onOpenFeed;
+
+  /// Горшок. Механики пока нет — кнопка честно об этом говорит.
+  final VoidCallback onToilet;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -452,15 +470,22 @@ class _RoomScene extends StatelessWidget {
             onTapEmpty: onSlotTap,
           ),
         ),
-        // Выбор еды стоит в самой кухне, а не открывается поверх неё:
-        // решение заказчика 20.09. Две кнопки на столешнице — «готовые
-        // блюда» и «приготовить», каждая ведёт на свою вкладку.
+        // Действия стоят в самой комнате, а не открываются поверх неё:
+        // решение заказчика 20.09. На кухне это выбор еды, в ванной — что
+        // именно делаем с гигиеной.
         if (room == RoomKind.kitchen)
           Positioned(
             left: 16,
             right: 100,
             bottom: 34,
             child: _KitchenMenu(onOpenFeed: onOpenFeed),
+          ),
+        if (room == RoomKind.bath)
+          Positioned(
+            left: 16,
+            right: 100,
+            bottom: 34,
+            child: _BathMenu(onAction: onAcceptInitiative, onToilet: onToilet),
           ),
         // Реплика питомца. Раньше рядом с ней стояла кнопка «Что будем
         // делать?» — она вела в список действий ухода и после того, как
@@ -483,6 +508,36 @@ class _RoomScene extends StatelessWidget {
 
   /// Верх свободной зоны: ниже колец показателей, но ещё на потолке.
   static const double _hudTop = 178;
+}
+
+/// Две кнопки ванной: искупаться и на горшок.
+class _BathMenu extends StatelessWidget {
+  const _BathMenu({required this.onAction, required this.onToilet});
+
+  final ValueChanged<BearAction> onAction;
+  final VoidCallback onToilet;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Pill(
+          label: l10n.bathActionWash,
+          icon: Icons.bathtub_outlined,
+          onTap: () => onAction(BearAction.wash),
+        ),
+        const SizedBox(width: 8),
+        _Pill(
+          label: l10n.bathActionToilet,
+          icon: Icons.wc_outlined,
+          onTap: onToilet,
+        ),
+      ],
+    );
+  }
 }
 
 /// Две кнопки выбора еды, стоящие прямо на кухне.

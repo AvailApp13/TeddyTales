@@ -32,6 +32,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'TeddyTales';
 
   @override
+  String get bathActionToilet => '上厕所';
+
+  @override
+  String get bathActionWash => '洗澡';
+
+  @override
+  String get bathToiletSoon => '马桶功能还在制作中';
+
+  @override
   String bearRigMissingHint(String path) {
     return '请将 $path 放入应用';
   }

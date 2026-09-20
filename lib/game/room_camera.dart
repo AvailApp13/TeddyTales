@@ -22,7 +22,6 @@ class RoomCamera {
     required this.eyeLine,
     required this.floorLine,
     required this.standLine,
-    required this.bearHeight,
     required this.hasCeiling,
     this.bearOffsetX = 0.10,
     this.frontLine,
@@ -46,9 +45,6 @@ class RoomCamera {
 
   /// Линия пола, на которой стоит мишка.
   final double standLine;
-
-  /// Рост мишки в долях высоты кадра.
-  final double bearHeight;
 
   /// Нарисован ли потолок на самой картинке. Если нет — его дорисовывает
   /// [RoomCeiling] поверх пустой полосы над кадром.
@@ -94,14 +90,30 @@ class RoomCamera {
   /// до точки схода.
   double get cameraOverWall => (floorLine - eyeLine) / (floorLine - wallTop);
 
-  /// Рост мишки в метрах при заданной высоте потолка.
+  /// Рост мишки в метрах, если в этом кадре он занимает [frameFraction]
+  /// его высоты.
   ///
   /// Не для показа — для проверки. Этим числом сверяются комнаты между
-  /// собой: мишка должен быть одного роста и в детской, и на кухне, иначе
-  /// переход между ними будет выглядеть как смена масштаба мира.
-  double bearMetres({double ceilingMetres = 2.5}) =>
-      bearHeight / (standLine - eyeLine) * cameraOverWall * ceilingMetres;
+  /// собой: расходиться сильно они не должны, иначе переход будет читаться
+  /// как смена масштаба мира.
+  double bearMetres(double frameFraction, {double ceilingMetres = 2.5}) =>
+      frameFraction / (standLine - eyeLine) * cameraOverWall * ceilingMetres;
 }
+
+/// Рост мишки в долях высоты **экрана**, а не кадра.
+///
+/// Раньше это была доля кадра, у каждой комнаты своя, подобранная так,
+/// чтобы рост в метрах везде совпадал. Арифметически честно, а на глаз —
+/// нет: кадры у комнат разной формы, и один и тот же метр с небольшим
+/// давал на экране заметно разный размер. Заказчик увидел это сразу:
+/// «при переключении очень заметно, что меняется размер, этого не должно
+/// быть».
+///
+/// Поэтому размер теперь общий и задаётся от экрана — тогда он одинаков на
+/// любом телефоне и в любой комнате. Метры при этом слегка расходятся между
+/// комнатами; линии, на которых мишка стоит, подобраны так, чтобы
+/// расхождение осталось в пределах нескольких сантиметров.
+const double bearScreenHeight = 0.50;
 
 /// Камера каждой комнаты.
 const Map<RoomKind, RoomCamera> roomCameras = {
@@ -125,8 +137,6 @@ const Map<RoomKind, RoomCamera> roomCameras = {
     // Ковёр в кадре от 0.73 до 0.89; 0.84 — его ближняя половина, чтобы
     // мишка читался стоящим на ковре, а не за ним.
     standLine: 0.84,
-    // 0.509 при этой камере даёт те же 1.18 м, что и в ванной.
-    bearHeight: 0.509,
     hasCeiling: true,
     bearOffsetX: 0.0,
   ),
@@ -146,7 +156,6 @@ const Map<RoomKind, RoomCamera> roomCameras = {
     eyeLine: 0.60,
     floorLine: 0.82,
     standLine: 0.95,
-    bearHeight: 0.33,
     hasCeiling: true,
     bearInArt: true,
   ),
@@ -168,9 +177,10 @@ const Map<RoomKind, RoomCamera> roomCameras = {
     wallTop: 0.031,
     eyeLine: 0.472,
     floorLine: 0.638,
+    // 0.78 — середина коврика. На его дальнем крае мишка выглядел парящим:
+    // ноги приходились на кромку, а тени под ними нет. Глубже нельзя —
+    // разойдутся метры с детской.
     standLine: 0.78,
-    // 0.532 при этой камере даёт те же 1.18 м, что и в детской.
-    bearHeight: 0.532,
     hasCeiling: true,
     // Коврик лежит чуть правее центра кадра — мишка встаёт на него.
     bearOffsetX: 0.028,
@@ -191,7 +201,6 @@ const Map<RoomKind, RoomCamera> roomCameras = {
     eyeLine: 0.42,
     floorLine: 0.70,
     standLine: 0.87,
-    bearHeight: 0.52,
     hasCeiling: true,
     bearOffsetX: 0.0,
     bearInArt: true,

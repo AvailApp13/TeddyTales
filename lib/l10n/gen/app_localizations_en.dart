@@ -62,6 +62,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'TeddyTales';
 
   @override
+  String get bathActionToilet => 'Potty';
+
+  @override
+  String get bathActionWash => 'Take a bath';
+
+  @override
+  String get bathToiletSoon => 'The potty is still in the works';
+
+  @override
   String bearRigMissingHint(String path) {
     return 'Add $path to the app';
   }
