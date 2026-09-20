@@ -89,6 +89,17 @@ class RoomFrame {
   /// Рост мишки в пикселях — доля кадра комнаты, а не экрана.
   double get bearHeight => camera.bearHeight * rect.height;
 
+  /// Сколько мишки видно: ниже линии переднего плана он уходит за мебель,
+  /// нарисованную на самом фоне.
+  double get bearVisibleHeight {
+    final front = camera.frontLine;
+    if (front == null) return bearHeight;
+    return math.min(bearHeight, rect.top + front * rect.height - bearTop);
+  }
+
+  /// Верх мишки.
+  double get bearTop => standY - bearHeight;
+
   /// Куда смотрит камера по горизонтали.
   double get centerX => rect.center.dx;
 
@@ -96,7 +107,8 @@ class RoomFrame {
   ///
   /// Не по центру: заказчик просил сдвинуть примерно на 10% правее, со
   /// стороны зрителя.
-  double get bearCenterX => rect.left + rect.width * (0.5 + bearOffsetX);
+  double get bearCenterX =>
+      rect.left + rect.width * (0.5 + camera.bearOffsetX);
 
   /// Сдвиг мишки вправо от центра, в долях ширины.
   static const double bearOffsetX = 0.10;

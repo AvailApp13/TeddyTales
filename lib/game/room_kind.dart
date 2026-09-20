@@ -39,13 +39,13 @@ RoomKind? roomForAction(BearAction action) => switch (action) {
 
 enum RoomKind {
   nursery('assets/rooms/nursery.jpg'),
-  kitchen('assets/rooms/kitchen.png'),
-  bath('assets/rooms/bath.png');
+  kitchen('assets/rooms/kitchen.jpg'),
+  bath('assets/rooms/bath.jpg');
 
   const RoomKind(this.asset);
 
-  /// Фон комнаты. Черновая генерация от 17.09 — дизайнер перерисует её
-  /// заново, но композиция, свет и высота горизонта останутся теми же:
-  /// под них размечены места предметов (`docs/room-design-v1.md`).
+  /// Фон комнаты. Все три присланы заказчиком 20.09 — кадр 9:16, потолок
+  /// нарисован, комнаты уже обставлены. Как снята каждая, записано в
+  /// `room_camera.dart`: у них разные камеры, и общих долей кадра у них нет.
   final String asset;
 }

@@ -8,6 +8,7 @@ import '../game/pet_name.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/paw_menu.dart';
@@ -95,10 +96,13 @@ class _HomeScreenState extends State<HomeScreen> {
     if (room != null && room != _room) setState(() => _room = room);
 
     switch (action) {
-      // По КП 8 кормление — это выбор блюда на отдельном экране, а не
-      // мгновенное действие: там и списываются монеты.
+      // Кормление само по себе ничего не открывает: по решению заказчика
+      // 20.09 «Еда» просто приводит мишку на кухню, а что он будет есть,
+      // выбирается уже там — двумя кнопками на столе. Иначе комната
+      // мелькала бы и тут же закрывалась листом, и нажатие выглядело бы
+      // так, будто кухня ни при чём.
       case BearAction.feed:
-        _open(FeedScreen(controller: controller, game: widget.game));
+        break;
       case BearAction.wash:
         controller.washBear();
       case BearAction.sleep:
@@ -192,6 +196,15 @@ class _HomeScreenState extends State<HomeScreen> {
     showSlotSheet(context: context, game: widget.game, slot: slot);
   }
 
+  /// Открыть кормление с кухни, на нужной вкладке (КП 8.1).
+  void _openFeed(FeedTab tab) => _openSheet(
+    FeedScreen(
+      controller: widget.controller,
+      game: widget.game,
+      initialTab: tab,
+    ),
+  );
+
   void _notImplemented(BearAction action) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -233,10 +246,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSlotTap: _openSlotSheet,
                   room: _room,
                   onRoomChanged: (kind) => setState(() => _room = kind),
+                  onOpenFeed: _openFeed,
                   onOpenCare: () => _open(
                     CareScreen(
                       controller: widget.controller,
-                      onOpenFeed: () => _open(
+                      onOpenFeed: () => _openSheet(
                         FeedScreen(
                           controller: widget.controller,
                           game: widget.game,
@@ -308,6 +322,7 @@ class _RoomScene extends StatelessWidget {
     required this.onSlotTap,
     required this.room,
     required this.onRoomChanged,
+    required this.onOpenFeed,
   });
 
   final BearController controller;
@@ -324,6 +339,9 @@ class _RoomScene extends StatelessWidget {
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
   final ValueChanged<RoomKind> onRoomChanged;
+
+  /// Открыть кормление с кухни на выбранной вкладке.
+  final ValueChanged<FeedTab> onOpenFeed;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -390,13 +408,27 @@ class _RoomScene extends StatelessWidget {
         ),
         // Герой стоит на линии пола комнаты и занимает свою долю её кадра.
         // Касания не ловит — их ловит слой под ним.
+        //
+        // Снизу он может быть обрезан: в кухне стол идёт от края до края, и
+        // мишка стоит за ним. Мебель нарисована на фоне, то есть лежит под
+        // мишкой, — без обрезки его ноги оказались бы поверх столешницы.
         Positioned(
           left: frame.bearCenterX - frame.rect.width / 2,
-          top: frame.standY - frame.bearHeight,
+          top: frame.bearTop,
           width: frame.rect.width,
-          height: frame.bearHeight,
+          height: frame.bearVisibleHeight,
           child: IgnorePointer(
-            child: BearView(controller: controller, assetPath: riveAssetPath),
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.topCenter,
+                minHeight: frame.bearHeight,
+                maxHeight: frame.bearHeight,
+                child: BearView(
+                  controller: controller,
+                  assetPath: riveAssetPath,
+                ),
+              ),
+            ),
           ),
         ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
@@ -411,6 +443,16 @@ class _RoomScene extends StatelessWidget {
             onTapEmpty: onSlotTap,
           ),
         ),
+        // Выбор еды стоит в самой кухне, а не открывается поверх неё:
+        // решение заказчика 20.09. Две кнопки на столешнице — «готовые
+        // блюда» и «приготовить», каждая ведёт на свою вкладку.
+        if (room == RoomKind.kitchen)
+          Positioned(
+            left: 16,
+            right: 100,
+            bottom: 34,
+            child: _KitchenMenu(onOpenFeed: onOpenFeed),
+          ),
         // Реплика питомца. Раньше рядом с ней стояла кнопка «Что будем
         // делать?» — она вела в список действий ухода и после того, как
         // кольца показателей стали запускать те же действия, осталась
@@ -432,5 +474,73 @@ class _RoomScene extends StatelessWidget {
 
   /// Верх свободной зоны: ниже колец показателей, но ещё на потолке.
   static const double _hudTop = 178;
+}
+
+/// Две кнопки выбора еды, стоящие прямо на кухне.
+class _KitchenMenu extends StatelessWidget {
+  const _KitchenMenu({required this.onOpenFeed});
+
+  final ValueChanged<FeedTab> onOpenFeed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Pill(
+          label: l10n.feedTabReady,
+          icon: Icons.room_service_outlined,
+          onTap: () => onOpenFeed(FeedTab.ready),
+        ),
+        const SizedBox(width: 8),
+        _Pill(
+          label: l10n.feedTabCook,
+          icon: Icons.soup_kitchen_outlined,
+          onTap: () => onOpenFeed(FeedTab.cook),
+        ),
+      ],
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.label, required this.icon, required this.onTap});
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+      elevation: 3,
+      shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 9, 14, 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 19, color: AppColors.sageDark),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 

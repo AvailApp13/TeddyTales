@@ -30,13 +30,21 @@ void main() {
       }
     });
 
-    test('у самого края кадра мишка читался бы игрушкой в зале', () {
-      // Так было до 20.09 на черновом фоне: 0.92 — нижний край сцены.
-      final draft = cameraOf(RoomKind.kitchen);
-      final atEdge =
-          draft.bearHeight / (0.92 - draft.eyeLine) * draft.cameraOverWall * 2.5;
+    test('у самого нижнего края кадра то же тело читалось бы мельче', () {
+      // Арифметика, из-за которой 20.09 комната казалась гигантской: мишка
+      // стоял вплотную к зрителю, где всё выглядит крупнее своего масштаба,
+      // и потому сам читался коротышкой. Проверяем, что зависимость именно
+      // такая, — если знак однажды перевернут, комнату опять раздует.
+      for (final room in RoomKind.values) {
+        final camera = cameraOf(room);
+        final atEdge =
+            camera.bearHeight /
+            (1.0 - camera.eyeLine) *
+            camera.cameraOverWall *
+            2.5;
 
-      expect(atEdge, lessThan(0.75));
+        expect(atEdge, lessThan(camera.bearMetres()), reason: room.name);
+      }
     });
 
     test('камеры померены, а не назначены', () {
@@ -72,13 +80,17 @@ void main() {
     const tall = Size(430, 1100);
     const short = Size(430, 500);
 
-    test('нарисованный потолок нужен только комнатам без своего', () {
-      // Детская пришла от заказчика сразу с потолком — дорисовывать нечего.
-      expect(RoomFrame.of(phone, RoomKind.nursery).ceilingHeight, 0);
-      expect(
-        RoomFrame.of(phone, RoomKind.kitchen).ceilingHeight,
-        greaterThan(0),
-      );
+    test('все присланные комнаты идут со своим потолком', () {
+      // 20.09 заказчик прислал все три фона нарисованными до потолка, и
+      // дорисовывать больше нечего. Слой RoomCeiling оставлен: спальня, о
+      // которой он говорил, может прийти и без него.
+      for (final room in RoomKind.values) {
+        expect(
+          RoomFrame.of(phone, room).ceilingHeight,
+          0,
+          reason: room.name,
+        );
+      }
     });
 
     test('кадр с потолком закрывает экран целиком', () {
@@ -90,16 +102,18 @@ void main() {
       expect(frame.rect.bottom, phone.height);
     });
 
-    test('кадр без потолка вписан по ширине и прижат к низу', () {
-      final frame = RoomFrame.of(phone, RoomKind.kitchen);
-      final camera = cameraOf(RoomKind.kitchen);
-
-      expect(frame.rect.width, phone.width);
-      expect(frame.rect.bottom, phone.height);
-      expect(
-        frame.rect.height,
-        closeTo(430 * camera.artHeight / camera.artWidth, 0.01),
-      );
+    test('пол доходит до нижнего края экрана в любой комнате', () {
+      // Срезать можно потолок, но не пол: иначе мишка встанет ниже края
+      // экрана, и под ним будет видна полоска фона приложения.
+      for (final room in RoomKind.values) {
+        for (final scene in [phone, tall, short]) {
+          expect(
+            RoomFrame.of(scene, room).rect.bottom,
+            scene.height,
+            reason: '${room.name} $scene',
+          );
+        }
+      }
     });
 
     test('кадр всегда сохраняет пропорции картинки', () {

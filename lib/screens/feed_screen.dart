@@ -41,13 +41,17 @@ const Map<BearTrait, String> _favouriteDish = {
 };
 
 /// Две вкладки экрана кормления (КП 8.1).
-enum _FeedTab { ready, cook }
+///
+/// Публичный: с 20.09 кормление открывается не само по себе, а с кухни, и
+/// кухня решает, на какой вкладке его открыть — заказчик просил, чтобы выбор
+/// «готовим или готовое» стоял прямо в комнате.
+enum FeedTab { ready, cook }
 
 /// Подпись вкладки. В enum её не положить: локализованная строка требует
 /// контекста, а он есть только в build.
-String _tabTitle(AppLocalizations l10n, _FeedTab tab) => switch (tab) {
-  _FeedTab.ready => l10n.feedTabReady,
-  _FeedTab.cook => l10n.feedTabCook,
+String _tabTitle(AppLocalizations l10n, FeedTab tab) => switch (tab) {
+  FeedTab.ready => l10n.feedTabReady,
+  FeedTab.cook => l10n.feedTabCook,
 };
 
 /// Экран кормления с мини-игрой готовки (КП 8).
@@ -61,7 +65,16 @@ String _tabTitle(AppLocalizations l10n, _FeedTab tab) => switch (tab) {
 /// принятом прототипе «назад» из готовки возвращает к списку рецептов, а не
 /// закрывает кормление целиком.
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key, required this.controller, required this.game});
+  const FeedScreen({
+    super.key,
+    required this.controller,
+    required this.game,
+    this.initialTab = FeedTab.ready,
+  });
+
+  /// С какой вкладки открыться. Кухня показывает обе кнопки отдельно, и
+  /// человек, нажавший «Приготовить», должен попасть сразу в рецепты.
+  final FeedTab initialTab;
 
   /// Питомец: отсюда берётся характер — от него зависят подсказка и любимое
   /// блюдо (КП 7.4). Кормит мишку [GameState], а не экран.
@@ -78,7 +91,7 @@ class _FeedScreenState extends State<FeedScreen> {
   /// слева направо.
   final Random _random = Random();
 
-  _FeedTab _tab = _FeedTab.ready;
+  late FeedTab _tab = widget.initialTab;
 
   /// Открытый рецепт — экран мини-игры. `null` — список блюд и рецептов.
   Recipe? _recipe;
@@ -249,7 +262,7 @@ class _FeedScreenState extends State<FeedScreen> {
         _HintBar(emoji: '🧸', text: _foodHint(l10n, trait)),
         const SizedBox(height: 10),
         Expanded(
-          child: _tab == _FeedTab.ready ? _buildDishes(trait) : _buildRecipes(),
+          child: _tab == FeedTab.ready ? _buildDishes(trait) : _buildRecipes(),
         ),
       ],
     );
@@ -512,8 +525,8 @@ class _Coin extends StatelessWidget {
 class _TabsBar extends StatelessWidget {
   const _TabsBar({required this.current, required this.onSelected});
 
-  final _FeedTab current;
-  final ValueChanged<_FeedTab> onSelected;
+  final FeedTab current;
+  final ValueChanged<FeedTab> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +534,7 @@ class _TabsBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.pagePadding),
       child: Row(
         children: [
-          for (final tab in _FeedTab.values) ...[
+          for (final tab in FeedTab.values) ...[
             Expanded(
               child: _TabButton(
                 tab: tab,
@@ -529,7 +542,7 @@ class _TabsBar extends StatelessWidget {
                 onTap: () => onSelected(tab),
               ),
             ),
-            if (tab != _FeedTab.values.last) const SizedBox(width: 6),
+            if (tab != FeedTab.values.last) const SizedBox(width: 6),
           ],
         ],
       ),
@@ -544,7 +557,7 @@ class _TabButton extends StatelessWidget {
     required this.onTap,
   });
 
-  final _FeedTab tab;
+  final FeedTab tab;
   final bool isSelected;
   final VoidCallback onTap;
 
