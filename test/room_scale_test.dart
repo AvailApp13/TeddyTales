@@ -144,14 +144,22 @@ void main() {
       }
     });
 
-    test('мишка стоит правее центра, как просил заказчик', () {
-      final frame = RoomFrame.of(phone, RoomKind.nursery);
+    test('мишка стоит там, где его ждёт мебель', () {
+      // Просьба заказчика «сдвинь на 10% правее» была про пустой фон, где
+      // привязаться было не к чему. В обставленных комнатах место задаёт
+      // сама картинка: в детской это ковёр по центру кадра.
+      final nursery = RoomFrame.of(phone, RoomKind.nursery);
+      expect(nursery.bearCenterX, closeTo(nursery.centerX, 0.01));
 
-      expect(frame.bearCenterX, greaterThan(frame.centerX));
-      expect(
-        (frame.bearCenterX - frame.centerX) / frame.rect.width,
-        closeTo(0.10, 0.001),
-      );
+      for (final room in RoomKind.values) {
+        final frame = RoomFrame.of(phone, room);
+        // Куда бы его ни поставили, он остаётся в кадре целиком.
+        expect(
+          frame.bearCenterX,
+          inInclusiveRange(frame.rect.left, frame.rect.right),
+          reason: room.name,
+        );
+      }
     });
 
     test('ноги на полу, и пол не уходит за нижний край экрана', () {
