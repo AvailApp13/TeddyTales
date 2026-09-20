@@ -252,7 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
               Positioned.fill(
                 child: _RoomScene(
                   controller: widget.controller,
-                  language: widget.language,
                   onAcceptInitiative: _runAction,
                   riveAssetPath: widget.riveAssetPath,
                   game: widget.game,
@@ -300,6 +299,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         stage: state.stage,
                         onAction: _runAction,
                       ),
+                      const SizedBox(height: 10),
+                      // Реплика идёт следом за кольцами в одной колонке, а
+                      // не висит на своей высоте поверх них. Раньше высота
+                      // была числом (178), а подписи колец занимают разное
+                      // место: на телефоне с высоким вырезом пузырь ложился
+                      // прямо на «Еда» и «Гигиена» — заказчик 20.09: «здесь
+                      // у нас идут наложения, это никак не катит».
+                      //
+                      // Справа оставлено место под кнопку профиля и лапу.
+                      Padding(
+                        padding: const EdgeInsets.only(right: 64),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: PetSpeechBubble(
+                            mood: state.mood,
+                            initiative: widget.controller.initiative,
+                            language: widget.language,
+                            onTap: _runAction,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -328,7 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
 class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.controller,
-    required this.language,
     required this.onAcceptInitiative,
     required this.riveAssetPath,
     required this.onOpenCare,
@@ -341,7 +360,6 @@ class _RoomScene extends StatelessWidget {
   });
 
   final BearController controller;
-  final BearLanguage language;
   final ValueChanged<BearAction> onAcceptInitiative;
   final String riveAssetPath;
 
@@ -473,41 +491,54 @@ class _RoomScene extends StatelessWidget {
         // Действия стоят в самой комнате, а не открываются поверх неё:
         // решение заказчика 20.09. На кухне это выбор еды, в ванной — что
         // именно делаем с гигиеной.
+        // Справа оставлено место под лапу: она круглая, стоит в углу и
+        // занимает 86 пикселей от края. Раньше здесь было 100, и кнопка
+        // «Приготовить» подходила к ней вплотную — заказчик 20.09 прочитал
+        // это как наложение.
         if (room == RoomKind.kitchen)
           Positioned(
             left: 16,
-            right: 100,
+            right: _pawSpace,
             bottom: 34,
             child: _KitchenMenu(onOpenFeed: onOpenFeed),
           ),
         if (room == RoomKind.bath)
           Positioned(
             left: 16,
-            right: 100,
+            right: _pawSpace,
             bottom: 34,
             child: _BathMenu(onAction: onAcceptInitiative, onToilet: onToilet),
           ),
-        // Реплика питомца. Раньше рядом с ней стояла кнопка «Что будем
-        // делать?» — она вела в список действий ухода и после того, как
-        // кольца показателей стали запускать те же действия, осталась
-        // дублем. Сам экран `CareScreen` жив и открывается из кормления.
-        Positioned(
-          left: 16,
-          right: 80,
-          top: _hudTop,
-          child: PetSpeechBubble(
-            mood: controller.state.mood,
-            initiative: controller.initiative,
-            language: language,
-            onTap: onAcceptInitiative,
-          ),
-        ),
       ],
     );
   }
 
-  /// Верх свободной зоны: ниже колец показателей, но ещё на потолке.
-  static const double _hudTop = 178;
+  /// Сколько места вдоль правого края держим свободным под лапу.
+  static const double _pawSpace = 112;
+}
+
+/// Ряд кнопок комнаты вдоль нижнего края.
+///
+/// Кнопки стоят в строку, как на макете, и вместе уменьшаются, если в
+/// отведённую полосу не помещаются: справа в углу лапа, и подходить к ней
+/// вплотную нельзя — заказчик 20.09 прочитал это как наложение. Перенос на
+/// вторую строку здесь хуже уменьшения: ряд тогда лезет вверх на мишку.
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(mainAxisSize: MainAxisSize.min, children: children),
+      ),
+    );
+  }
 }
 
 /// Две кнопки ванной: искупаться и на горшок.
@@ -521,8 +552,7 @@ class _BathMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return _ActionRow(
       children: [
         _Pill(
           label: l10n.bathActionWash,
@@ -550,8 +580,7 @@ class _KitchenMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return _ActionRow(
       children: [
         _Pill(
           label: l10n.feedTabReady,
