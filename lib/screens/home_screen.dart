@@ -8,17 +8,16 @@ import '../game/pet_name.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../l10n/l10n.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_bottom_nav.dart';
 import '../widgets/care_stats_panel.dart';
+import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
 import '../widgets/room_item_sheet.dart';
 import '../widgets/room_ceiling.dart';
 import '../widgets/room_slot_layer.dart';
-import '../widgets/room_switcher.dart';
 import '../widgets/room_scene_backdrop.dart';
+import '../widgets/section_sheet.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
 import 'diary_screen.dart';
@@ -84,8 +83,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  AppSection _section = AppSection.home;
-
   /// Открытая комната. Живёт в памяти экрана: это не прогресс, а взгляд —
   /// куда человек сейчас смотрит. Уходить на сервер здесь нечему.
   RoomKind _room = RoomKind.nursery;
@@ -127,28 +124,28 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => screen));
-    if (mounted) setState(() => _section = AppSection.home);
   }
 
+  /// Раздел открывается листом поверх комнаты, а не отдельным экраном
+  /// (решение заказчика 20.09). Мишка при этом остаётся виден над листом —
+  /// покупка и обучение происходят при нём, а не вместо него.
+  Future<void> _openSheet(Widget screen) =>
+      showSectionSheet(context: context, builder: (_) => screen);
+
   void _openSection(AppSection section) {
-    if (section == AppSection.home) {
-      setState(() => _section = AppSection.home);
-      return;
-    }
-
-    setState(() => _section = section);
-
     switch (section) {
       case AppSection.room:
-        _open(RoomScreen(game: widget.game));
+        _openSheet(RoomScreen(game: widget.game));
       case AppSection.shop:
-        _open(ShopScreen(game: widget.game));
+        _openSheet(ShopScreen(game: widget.game));
       case AppSection.learning:
-        _open(LearningScreen(game: widget.game));
+        _openSheet(LearningScreen(game: widget.game));
       case AppSection.catalog:
-        _open(CatalogScreen(controller: widget.controller));
+        _openSheet(CatalogScreen(controller: widget.controller));
       case AppSection.profile:
-        _open(_profileScreen());
+        _openSheet(_profileScreen());
+      // «Главная» — это и есть комната на экране. Отдельного перехода у неё
+      // нет: закрыл лист — ты дома.
       case AppSection.home:
         break;
     }
@@ -279,8 +276,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              // Разделы. Лежат выше всего: разлетевшиеся кружки должны
+              // перекрывать и комнату, и кольца показателей.
+              PawMenu(stage: state.stage, onSelected: _openSection),
             ],
           ),
+          // Дев-панель уехала влево: справа внизу теперь лапа.
+          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
           floatingActionButton: widget.onOpenDevPanel == null
               ? null
               : FloatingActionButton.small(
@@ -288,11 +290,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   tooltip: context.l10n.homeDevPanelTooltip,
                   child: const Icon(Icons.tune),
                 ),
-          bottomNavigationBar: AppBottomNav(
-            current: _section,
-            stage: state.stage,
-            onSelected: _openSection,
-          ),
         );
       },
     );
@@ -414,25 +411,13 @@ class _RoomScene extends StatelessWidget {
             onTapEmpty: onSlotTap,
           ),
         ),
-        // Кнопка ухода и пузырь опущены под шапку: сцена больше не
-        // начинается под ней, а лежит во весь экран, и прежние «12 от
-        // верха» попали бы прямо на имя питомца.
-        Positioned(
-          top: _hudTop,
-          right: 16,
-          child: _CareButton(onTap: onOpenCare),
-        ),
+        // Реплика питомца. Раньше рядом с ней стояла кнопка «Что будем
+        // делать?» — она вела в список действий ухода и после того, как
+        // кольца показателей стали запускать те же действия, осталась
+        // дублем. Сам экран `CareScreen` жив и открывается из кормления.
         Positioned(
           left: 16,
-          bottom: 210,
-          child: RoomSwitcher(current: room, onSelect: onRoomChanged),
-        ),
-        // Пузырь — слева, зеркально кнопке «Что будем делать?» справа
-        // (решение заказчика). Внизу он закрывал мишке ноги, по центру
-        // сверху — упирался в капюшон.
-        Positioned(
-          left: 16,
-          right: 176,
+          right: 80,
           top: _hudTop,
           child: PetSpeechBubble(
             mood: controller.state.mood,
@@ -449,34 +434,3 @@ class _RoomScene extends StatelessWidget {
   static const double _hudTop = 178;
 }
 
-/// Кнопка перехода к списку действий ухода.
-class _CareButton extends StatelessWidget {
-  const _CareButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimens.radiusPill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimens.radiusPill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimens.radiusPill),
-            border: Border.all(color: AppColors.outline),
-          ),
-          child: Text(
-            context.l10n.homeCareButton,
-            style: Theme.of(
-              context,
-            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
-    );
-  }
-}
