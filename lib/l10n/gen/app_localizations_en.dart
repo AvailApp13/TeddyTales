@@ -1312,6 +1312,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopNotEnoughCoins => 'Not enough coins';
 
   @override
+  String get shopAddToCart => 'Add to cart';
+
+  @override
+  String get shopRemoveFromCart => 'Remove from cart';
+
+  @override
+  String get shopZoom => 'Take a closer look';
+
+  @override
   String get shopOwnedLabel => 'Owned';
 
   @override

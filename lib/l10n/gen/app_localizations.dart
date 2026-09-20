@@ -2320,6 +2320,24 @@ abstract class AppLocalizations {
   /// **'Не хватает монет'**
   String get shopNotEnoughCoins;
 
+  /// No description provided for @shopAddToCart.
+  ///
+  /// In ru, this message translates to:
+  /// **'В корзину'**
+  String get shopAddToCart;
+
+  /// No description provided for @shopRemoveFromCart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из корзины'**
+  String get shopRemoveFromCart;
+
+  /// No description provided for @shopZoom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассмотреть'**
+  String get shopZoom;
+
   /// No description provided for @shopOwnedLabel.
   ///
   /// In ru, this message translates to:

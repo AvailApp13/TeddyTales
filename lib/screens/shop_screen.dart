@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/item_picture.dart';
+import '../widgets/item_preview.dart';
 import '../widgets/scene_label.dart';
 
 /// Магазин предметов (КП 11.2).
@@ -249,6 +250,8 @@ class _ItemGrid extends StatelessWidget {
           owned: game.isOwned(item.id),
           inCart: game.isInCart(item.id),
           onTap: () => game.toggleCart(item.id),
+          onZoom: () =>
+              showItemPreview(context: context, item: item, game: game),
         );
       },
     );
@@ -400,12 +403,16 @@ class _ItemTile extends StatelessWidget {
     required this.owned,
     required this.inCart,
     required this.onTap,
+    required this.onZoom,
   });
 
   final ShopItem item;
   final bool owned;
   final bool inCart;
   final VoidCallback onTap;
+
+  /// Рассмотреть вещь крупно.
+  final VoidCallback onZoom;
 
   @override
   Widget build(BuildContext context) {
@@ -419,6 +426,9 @@ class _ItemTile extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: owned ? null : onTap,
+        // Долгое нажатие — то же, что лупа: привычный жест для «покажи
+        // поближе», и он работает на всей площади карточки.
+        onLongPress: onZoom,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: radius,
@@ -450,8 +460,12 @@ class _ItemTile extends StatelessWidget {
                 child: Column(
                   children: [
                     Expanded(
-                      child: Center(
-                        child: ItemPicture(item: item),
+                      // Hero по id товара: из карточки вещь вырастает на
+                      // весь экран и тем же движением возвращается, так что
+                      // место в витрине не теряется.
+                      child: Hero(
+                        tag: 'shop.item.${item.id}',
+                        child: Center(child: ItemPicture(item: item)),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -483,6 +497,10 @@ class _ItemTile extends StatelessWidget {
                   right: 8,
                   child: _CornerBadge(icon: owned ? Icons.check : Icons.add),
                 ),
+              // Лупа слева, чтобы не спорить с галочкой «куплено» справа.
+              // Тап по самой карточке по-прежнему кладёт вещь в корзину:
+              // разглядывать хочется не каждую, а покупать — быстро.
+              Positioned(top: 6, left: 6, child: _ZoomButton(onTap: onZoom)),
             ],
           ),
         ),
@@ -542,6 +560,46 @@ class _CornerBadge extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 11, color: Colors.white),
+    );
+  }
+}
+
+/// Кнопка «рассмотреть» в углу карточки.
+class _ZoomButton extends StatelessWidget {
+  const _ZoomButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: context.l10n.shopZoom,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.outline),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.tan.withValues(alpha: 0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.zoom_in_rounded,
+            size: 18,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1242,6 +1242,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shopNotEnoughCoins => '金币不够';
 
   @override
+  String get shopAddToCart => '加入购物车';
+
+  @override
+  String get shopRemoveFromCart => '从购物车移除';
+
+  @override
+  String get shopZoom => '放大查看';
+
+  @override
   String get shopOwnedLabel => '已拥有';
 
   @override

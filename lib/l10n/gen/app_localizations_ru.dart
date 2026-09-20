@@ -1321,6 +1321,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shopNotEnoughCoins => 'Не хватает монет';
 
   @override
+  String get shopAddToCart => 'В корзину';
+
+  @override
+  String get shopRemoveFromCart => 'Убрать из корзины';
+
+  @override
+  String get shopZoom => 'Рассмотреть';
+
+  @override
   String get shopOwnedLabel => 'Куплено';
 
   @override
