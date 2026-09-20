@@ -23,7 +23,8 @@ import 'scene_label.dart';
 /// где листал.
 Future<void> showItemPreview({
   required BuildContext context,
-  required ShopItem item,
+  required List<ShopItem> items,
+  required int index,
   required GameState game,
 }) {
   return Navigator.of(context).push(
@@ -34,27 +35,60 @@ Future<void> showItemPreview({
       reverseTransitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (context, animation, _) => FadeTransition(
         opacity: animation,
-        child: _ItemPreview(item: item, game: game),
+        child: _ItemPreview(items: items, index: index, game: game),
       ),
     ),
   );
 }
 
-class _ItemPreview extends StatelessWidget {
-  const _ItemPreview({required this.item, required this.game});
+class _ItemPreview extends StatefulWidget {
+  const _ItemPreview({
+    required this.items,
+    required this.index,
+    required this.game,
+  });
 
-  final ShopItem item;
+  /// Весь раздел витрины в том же порядке, что на её экране: из просмотра
+  /// листают дальше, а не возвращаются за каждой вещью в список.
+  final List<ShopItem> items;
+  final int index;
   final GameState game;
+
+  @override
+  State<_ItemPreview> createState() => _ItemPreviewState();
+}
+
+class _ItemPreviewState extends State<_ItemPreview> {
+  late final PageController _pages = PageController(initialPage: widget.index);
+  late int _current = widget.index;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _step(int delta) {
+    final next = _current + delta;
+    if (next < 0 || next >= widget.items.length) return;
+
+    _pages.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
     return AnimatedBuilder(
-      animation: game,
+      animation: widget.game,
       builder: (context, _) {
-        final owned = game.isOwned(item.id);
-        final inCart = game.isInCart(item.id);
+        final item = widget.items[_current];
+        final owned = widget.game.isOwned(item.id);
+        final inCart = widget.game.isInCart(item.id);
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -85,11 +119,43 @@ class _ItemPreview extends StatelessWidget {
                         ),
                       ),
                       Expanded(
-                        child: Center(
-                          child: Hero(
-                            tag: 'shop.item.${item.id}',
-                            child: ItemPicture(item: item),
-                          ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PageView.builder(
+                              controller: _pages,
+                              itemCount: widget.items.length,
+                              onPageChanged: (page) =>
+                                  setState(() => _current = page),
+                              itemBuilder: (context, page) {
+                                final shown = widget.items[page];
+
+                                return Hero(
+                                  tag: 'shop.item.${shown.id}',
+                                  child: ItemPicture(item: shown),
+                                );
+                              },
+                            ),
+                            // Стрелки — для тех, кто не догадается смахнуть,
+                            // и для крайних вещей: по ним сразу видно, что
+                            // раздел кончился.
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: _ArrowButton(
+                                icon: Icons.chevron_left_rounded,
+                                enabled: _current > 0,
+                                onTap: () => _step(-1),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: _ArrowButton(
+                                icon: Icons.chevron_right_rounded,
+                                enabled: _current < widget.items.length - 1,
+                                onTap: () => _step(1),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -103,14 +169,14 @@ class _ItemPreview extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      // Кнопка остаётся на месте, меняются только картинка,
+                      // название и цена: так набирают корзину не выходя из
+                      // просмотра.
                       _PreviewAction(
                         item: item,
                         owned: owned,
                         inCart: inCart,
-                        onTap: () {
-                          game.toggleCart(item.id);
-                          Navigator.of(context).maybePop();
-                        },
+                        onTap: () => widget.game.toggleCart(item.id),
                       ),
                     ],
                   ),
@@ -120,6 +186,46 @@ class _ItemPreview extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Стрелка листания. На краю раздела гаснет, а не исчезает: пропадающая
+/// кнопка дёргает раскладку и заставляет искать её заново.
+class _ArrowButton extends StatelessWidget {
+  const _ArrowButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.25,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.92),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textPrimary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, size: 26, color: AppColors.textPrimary),
+        ),
+      ),
     );
   }
 }
@@ -143,12 +249,19 @@ class _PreviewAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
+    // Высота одна и та же с кнопкой: при листании низ экрана не должен
+    // прыгать оттого, что одна вещь куплена, а соседняя нет.
     if (owned) {
-      return SceneLabel(
-        text: l10n.shopOwnedLabel,
-        size: 14,
-        weight: 800,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      return SizedBox(
+        height: 56,
+        child: Center(
+          child: SceneLabel(
+            text: l10n.shopOwnedLabel,
+            size: 14,
+            weight: 800,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+        ),
       );
     }
 

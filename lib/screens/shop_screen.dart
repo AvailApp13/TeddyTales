@@ -127,6 +127,8 @@ class _ShopScreenState extends State<ShopScreen> {
               for (final i in _tab.items)
                 if (!i.suitsAt(stage)) i,
             ];
+            // Порядок показа раздела целиком: по нему листают в просмотре.
+            final showcase = [...now, ...later];
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -153,12 +155,21 @@ class _ShopScreenState extends State<ShopScreen> {
                         // читалась бы как насмешка.
                         if (later.isNotEmpty && now.isNotEmpty) ...[
                           _GroupTitle(context.l10n.shopGroupNow),
-                          _ItemGrid(items: now, game: game),
+                          _ItemGrid(
+                            items: now,
+                            showcase: showcase,
+                            game: game,
+                          ),
                           _GroupTitle(context.l10n.shopGroupLater),
-                          _ItemGrid(items: later, game: game),
+                          _ItemGrid(
+                            items: later,
+                            showcase: showcase,
+                            game: game,
+                          ),
                         ] else
                           _ItemGrid(
                             items: now.isEmpty ? later : now,
+                            showcase: showcase,
                             game: game,
                           ),
                         const SizedBox(height: 10),
@@ -220,9 +231,19 @@ class _GroupTitle extends StatelessWidget {
 
 /// Сетка карточек товара.
 class _ItemGrid extends StatelessWidget {
-  const _ItemGrid({required this.items, required this.game});
+  const _ItemGrid({
+    required this.items,
+    required this.showcase,
+    required this.game,
+  });
 
+  /// Что показывает эта сетка: «подходит сейчас» или «пригодится потом».
   final List<ShopItem> items;
+
+  /// Весь раздел целиком, в порядке показа. Нужен просмотру: из него
+  /// листают дальше по разделу, а не по одной группе.
+  final List<ShopItem> showcase;
+
   final GameState game;
 
   @override
@@ -250,8 +271,12 @@ class _ItemGrid extends StatelessWidget {
           owned: game.isOwned(item.id),
           inCart: game.isInCart(item.id),
           onTap: () => game.toggleCart(item.id),
-          onZoom: () =>
-              showItemPreview(context: context, item: item, game: game),
+          onZoom: () => showItemPreview(
+            context: context,
+            items: showcase,
+            index: showcase.indexOf(item),
+            game: game,
+          ),
         );
       },
     );
