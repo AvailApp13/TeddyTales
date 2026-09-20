@@ -5,6 +5,7 @@ import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import '../widgets/item_picture.dart';
 import '../theme/app_theme.dart';
 
 /// Экран «Моя комната» — редактор обстановки (КП 10.7).
@@ -317,14 +318,7 @@ class _ItemTile extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // ЗАГЛУШКА: эмодзи вместо иллюстрации предмета.
-                        // Отрисовка 52 предметов — отдельная работа по КП 10,
-                        // эмодзи стоят из прототипа, чтобы карточки были
-                        // различимы.
-                        Text(
-                          item.emoji,
-                          style: const TextStyle(fontSize: 26, height: 1.1),
-                        ),
+                        ItemPicture(item: item, size: 46),
                         const SizedBox(height: 3),
                         Text(
                           shopItemName(context.l10n, item.id),

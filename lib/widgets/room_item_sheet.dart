@@ -6,6 +6,7 @@ import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'item_picture.dart';
 import '../theme/app_theme.dart';
 
 /// Что можно сделать с местом в комнате.
@@ -226,7 +227,7 @@ class _OptionTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Text(item.emoji, style: const TextStyle(fontSize: 22)),
+                ItemPicture(item: item, size: 28),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

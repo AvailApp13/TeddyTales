@@ -45,7 +45,6 @@ enum ItemKind {
 class ShopItem {
   const ShopItem({
     required this.id,
-    required this.emoji,
     required this.title,
     required this.price,
     required this.kind,
@@ -56,16 +55,12 @@ class ShopItem {
 
   final String id;
 
-  /// Запасной значок: показывается, пока у товара нет своей картинки.
-  ///
-  /// До 20.09 эмодзи были единственным изображением в магазине, и витрина
-  /// рядом с фотографическими комнатами выглядела чужой — заказчик: «это же
-  /// абсурд». Теперь заказчик присылает настоящие картинки; у позиций,
-  /// которых в присланном наборе не оказалось (вся одежда и часть декора),
-  /// значок пока остаётся.
-  final String emoji;
-
   /// Есть ли у товара своя картинка в `assets/shop/items`.
+  ///
+  /// Позиции без картинки в витрину не попадают: до 20.09 они рисовались
+  /// эмодзи, и заказчик попросил убрать их совсем — «все эмодзи, которые
+  /// остались, удали их». Сами позиции живы: купленные вещи стоят в
+  /// комнате, а каталог ждёт картинок.
   final bool photo;
 
   final String title;
@@ -139,7 +134,6 @@ abstract final class ItemCatalog {
   static const List<ShopItem> furniture = <ShopItem>[
     ShopItem(
       id: 'bed',
-      emoji: '🛏',
       title: 'Кроватка',
       price: 120,
       photo: true,
@@ -147,7 +141,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'wardrobe',
-      emoji: '🚪',
       title: 'Шкаф',
       price: 140,
       kind: ItemKind.furniture,
@@ -155,7 +148,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'table',
-      emoji: '🪑',
       title: 'Стол',
       price: 90,
       photo: true,
@@ -164,7 +156,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'chair',
-      emoji: '💺',
       title: 'Стул',
       price: 70,
       kind: ItemKind.furniture,
@@ -172,7 +163,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf',
-      emoji: '📚',
       title: 'Книжная полка',
       price: 110,
       photo: true,
@@ -181,7 +171,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'dresser',
-      emoji: '🗄',
       title: 'Комод',
       price: 150,
       photo: true,
@@ -190,7 +179,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair',
-      emoji: '🛋',
       title: 'Кресло',
       price: 130,
       photo: true,
@@ -199,7 +187,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'rug',
-      emoji: '🟫',
       title: 'Ковёр',
       price: 80,
       photo: true,
@@ -207,14 +194,12 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'lamp',
-      emoji: '💡',
       title: 'Светильник',
       price: 60,
       kind: ItemKind.furniture,
     ),
     ShopItem(
       id: 'basket',
-      emoji: '🧺',
       title: 'Корзина',
       price: 50,
       photo: true,
@@ -222,7 +207,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf_house',
-      emoji: '🏠',
       title: 'Полка-домик',
       price: 150,
       photo: true,
@@ -230,7 +214,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf_moon',
-      emoji: '🌙',
       title: 'Полка-месяц',
       price: 130,
       photo: true,
@@ -238,7 +221,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_sage',
-      emoji: '🪑',
       title: 'Кресло мятное',
       price: 170,
       photo: true,
@@ -247,7 +229,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_bean',
-      emoji: '🛋',
       title: 'Кресло-пуф',
       price: 150,
       photo: true,
@@ -255,7 +236,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_flower',
-      emoji: '🌸',
       title: 'Кресло-цветок',
       price: 180,
       photo: true,
@@ -264,7 +244,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_wing',
-      emoji: '👑',
       title: 'Кресло с ушками',
       price: 190,
       photo: true,
@@ -273,7 +252,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'swing',
-      emoji: '🪺',
       title: 'Подвесное кресло',
       price: 200,
       photo: true,
@@ -282,7 +260,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'basket_star',
-      emoji: '⭐️',
       title: 'Корзина со звездой',
       price: 70,
       photo: true,
@@ -290,7 +267,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'rug_cloud',
-      emoji: '☁️',
       title: 'Ковёр-облако',
       price: 110,
       photo: true,
@@ -298,7 +274,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'rug_heart',
-      emoji: '💗',
       title: 'Ковёр с сердцем',
       price: 110,
       photo: true,
@@ -311,49 +286,42 @@ abstract final class ItemCatalog {
   static const List<ShopItem> decor = <ShopItem>[
     ShopItem(
       id: 'wall_rose',
-      emoji: '🌸',
       title: 'Обои розовые',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'wall_sage',
-      emoji: '🌿',
       title: 'Обои зелёные',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'wall_sky',
-      emoji: '☁️',
       title: 'Обои небо',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'floor_wood',
-      emoji: '🟤',
       title: 'Пол дерево',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'floor_light',
-      emoji: '⬜️',
       title: 'Пол светлый',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'floor_carpet',
-      emoji: '🟩',
       title: 'Пол ковролин',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'pic_bear',
-      emoji: '🖼',
       title: 'Картина мишка',
       price: 55,
       photo: true,
@@ -362,7 +330,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_forest',
-      emoji: '🏞',
       title: 'Картина лес',
       price: 55,
       kind: ItemKind.decor,
@@ -370,21 +337,18 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_moon',
-      emoji: '🌙',
       title: 'Картина луна',
       price: 55,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'pillow_heart',
-      emoji: '💗',
       title: 'Подушка сердце',
       price: 30,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'pillow_star',
-      emoji: '⭐️',
       title: 'Подушка звезда',
       price: 30,
       photo: true,
@@ -393,7 +357,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant',
-      emoji: '🪴',
       title: 'Растение',
       price: 45,
       photo: true,
@@ -402,7 +365,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'cactus',
-      emoji: '🌵',
       title: 'Кактус',
       price: 45,
       kind: ItemKind.decor,
@@ -410,14 +372,12 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'garland',
-      emoji: '✨',
       title: 'Гирлянда',
       price: 65,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'clock',
-      emoji: '🕰',
       title: 'Часы',
       price: 70,
       kind: ItemKind.decor,
@@ -425,7 +385,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'poster',
-      emoji: '📜',
       title: 'Постер',
       price: 50,
       kind: ItemKind.decor,
@@ -433,7 +392,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_heart',
-      emoji: '🖼',
       title: 'Картина с сердцем',
       price: 60,
       photo: true,
@@ -441,7 +399,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant_ivy',
-      emoji: '🌿',
       title: 'Плющ на подставке',
       price: 55,
       photo: true,
@@ -449,7 +406,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant_bear',
-      emoji: '🐻',
       title: 'Цветок в кашпо-мишке',
       price: 65,
       photo: true,
@@ -457,7 +413,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_daisy',
-      emoji: '🌼',
       title: 'Ромашки в банке',
       price: 50,
       photo: true,
@@ -465,7 +420,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_orchid',
-      emoji: '🌺',
       title: 'Орхидея',
       price: 70,
       photo: true,
@@ -473,7 +427,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_euc',
-      emoji: '🍃',
       title: 'Эвкалипт в вазе',
       price: 55,
       photo: true,
@@ -486,7 +439,6 @@ abstract final class ItemCatalog {
   static const List<ShopItem> toys = <ShopItem>[
     ShopItem(
       id: 'ball',
-      emoji: '⚽️',
       title: 'Мячик',
       price: 40,
       kind: ItemKind.toy,
@@ -494,7 +446,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'teddy',
-      emoji: '🧸',
       title: 'Мишка',
       price: 90,
       photo: true,
@@ -502,7 +453,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'cubes',
-      emoji: '🧊',
       title: 'Кубики',
       price: 60,
       photo: true,
@@ -511,7 +461,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'car',
-      emoji: '🚗',
       title: 'Машинка',
       price: 70,
       kind: ItemKind.toy,
@@ -519,14 +468,12 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'duck',
-      emoji: '🦆',
       title: 'Уточка',
       price: 35,
       kind: ItemKind.toy,
     ),
     ShopItem(
       id: 'drum',
-      emoji: '🥁',
       title: 'Барабан',
       price: 80,
       kind: ItemKind.toy,
@@ -534,7 +481,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'puzzle',
-      emoji: '🧩',
       title: 'Пазл',
       price: 65,
       kind: ItemKind.toy,
@@ -542,7 +488,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'train',
-      emoji: '🚂',
       title: 'Паровозик',
       price: 95,
       kind: ItemKind.toy,
@@ -550,7 +495,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'kite',
-      emoji: '🪁',
       title: 'Воздушный змей',
       price: 55,
       kind: ItemKind.toy,
@@ -558,7 +502,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'rocket',
-      emoji: '🚀',
       title: 'Ракета',
       price: 85,
       kind: ItemKind.toy,
@@ -566,7 +509,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'teddy_cream',
-      emoji: '🧸',
       title: 'Мишка кремовый',
       price: 110,
       photo: true,
@@ -574,7 +516,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bunny',
-      emoji: '🐰',
       title: 'Зайчик',
       price: 110,
       photo: true,
@@ -582,7 +523,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bunny_pink',
-      emoji: '🎀',
       title: 'Зайчик розовый',
       price: 110,
       photo: true,
@@ -590,7 +530,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pyramid',
-      emoji: '🗼',
       title: 'Пирамидка',
       price: 80,
       photo: true,
@@ -599,7 +538,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'dollhouse',
-      emoji: '🏡',
       title: 'Кукольный домик',
       price: 220,
       photo: true,
@@ -608,7 +546,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'house_felt',
-      emoji: '🏠',
       title: 'Домик из фетра',
       price: 160,
       photo: true,
@@ -626,7 +563,6 @@ abstract final class ItemCatalog {
   static const List<ShopItem> clothes = <ShopItem>[
     ShopItem(
       id: 'out_yellow',
-      emoji: '🧥',
       title: 'Комплект жёлтый',
       price: 160,
       kind: ItemKind.outfit,
@@ -635,7 +571,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_sailor',
-      emoji: '👔',
       title: 'Комплект матрос',
       price: 180,
       kind: ItemKind.outfit,
@@ -644,7 +579,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_bear',
-      emoji: '🐻',
       title: 'Костюм мишки',
       price: 200,
       kind: ItemKind.outfit,
@@ -653,7 +587,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_berry',
-      emoji: '🍓',
       title: 'Костюм клубника',
       price: 220,
       kind: ItemKind.outfit,
@@ -662,7 +595,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_bee',
-      emoji: '🐝',
       title: 'Костюм пчёлка',
       price: 240,
       kind: ItemKind.outfit,
@@ -671,7 +603,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_glasses',
-      emoji: '👓',
       title: 'Комплект очкарик',
       price: 100,
       kind: ItemKind.outfit,
@@ -680,7 +611,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_winter',
-      emoji: '🧣',
       title: 'Комплект зимний',
       price: 190,
       kind: ItemKind.outfit,
@@ -689,7 +619,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_sport',
-      emoji: '🎽',
       title: 'Комплект спорт',
       price: 150,
       kind: ItemKind.outfit,
@@ -698,7 +627,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_rose',
-      emoji: '👕',
       title: 'Свитер розовый',
       price: 120,
       kind: ItemKind.top,
@@ -707,7 +635,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_sage',
-      emoji: '🥼',
       title: 'Кофта зелёная',
       price: 130,
       kind: ItemKind.top,
@@ -716,7 +643,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_blue',
-      emoji: '🧥',
       title: 'Толстовка голубая',
       price: 140,
       kind: ItemKind.top,
@@ -725,7 +651,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_yellow',
-      emoji: '🩳',
       title: 'Шорты жёлтые',
       price: 110,
       kind: ItemKind.bottom,
@@ -734,7 +659,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_blue',
-      emoji: '👖',
       title: 'Штаны синие',
       price: 120,
       kind: ItemKind.bottom,
@@ -743,7 +667,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_skirt',
-      emoji: '🩱',
       title: 'Юбка розовая',
       price: 125,
       kind: ItemKind.bottom,
@@ -752,7 +675,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'hat_cap',
-      emoji: '🎩',
       title: 'Шапка',
       price: 90,
       kind: ItemKind.headwear,
@@ -761,7 +683,6 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'acc_bow',
-      emoji: '🎀',
       title: 'Бантик',
       price: 60,
       kind: ItemKind.accessory,

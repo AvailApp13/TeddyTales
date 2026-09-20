@@ -8,6 +8,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../game/room_camera.dart';
 import '../theme/app_colors.dart';
+import 'item_picture.dart';
 
 /// По какую сторону от мишки лежит место.
 enum SlotDepth {
@@ -204,7 +205,7 @@ class _FilledSlot extends StatelessWidget {
               )
             : FittedBox(
                 fit: BoxFit.contain,
-                child: Text(item.emoji, style: const TextStyle(fontSize: 100)),
+                child: ItemPicture(item: item),
               ),
       ),
     );

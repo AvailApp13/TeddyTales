@@ -6,6 +6,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/item_picture.dart';
 import '../widgets/scene_label.dart';
 
 /// Магазин предметов (КП 11.2).
@@ -51,12 +52,6 @@ class _ShopScreenState extends State<ShopScreen> {
 
   /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
   /// продаётся в магазине.
-  /// Сортировка устойчивая: порядок каталога внутри групп сохраняется.
-  static List<ShopItem> _withPhotosFirst(List<ShopItem> items) => [
-    ...items.where((i) => i.photo),
-    ...items.where((i) => !i.photo),
-  ];
-
   static _ShopTab? _tabOf(String? itemId) {
     if (itemId == null) return null;
     for (final tab in _ShopTab.values) {
@@ -123,14 +118,14 @@ class _ShopScreenState extends State<ShopScreen> {
             // Позиции, на которые картинок ещё не прислали, показываются
             // значком, и вперемешку с фотографиями это читается как брак —
             // а собранные внизу они выглядят просто как «ещё не завезли».
-            final now = _withPhotosFirst([
+            final now = [
               for (final i in _tab.items)
                 if (i.suitsAt(stage)) i,
-            ]);
-            final later = _withPhotosFirst([
+            ];
+            final later = [
               for (final i in _tab.items)
                 if (!i.suitsAt(stage)) i,
-            ]);
+            ];
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -291,7 +286,21 @@ enum _ShopTab {
   /// декоре по несколько видов предметов (комплекты и раздельные вещи, обои,
   /// полы и мелкий декор), и разбивка на разделы — свойство каталога КП 10,
   /// а не следствие вида предмета.
-  List<ShopItem> get items => switch (this) {
+  /// Что показывает вкладка.
+  ///
+  /// Только вещи со своей картинкой. Остальные позиции каталога живы —
+  /// комната и гардероб их знают, — но в витрину не попадают: заказчик
+  /// 20.09 попросил убрать эмодзи, а карточка без картинки и без значка
+  /// продаёт пустое место.
+  List<ShopItem> get items => [
+    for (final item in _all)
+      if (item.photo) item,
+  ];
+
+  /// Есть ли что показать: вкладка без единой картинки не рисуется.
+  bool get isEmpty => items.isEmpty;
+
+  List<ShopItem> get _all => switch (this) {
     _ShopTab.clothes => ItemCatalog.clothes,
     _ShopTab.furniture => ItemCatalog.furniture,
     _ShopTab.decor => ItemCatalog.decor,
@@ -317,7 +326,7 @@ class _TabsRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (final tab in _ShopTab.values) ...[
+          for (final tab in _ShopTab.values.where((t) => !t.isEmpty)) ...[
             Expanded(
               child: _TabButton(
                 title: tab.title(context.l10n),
@@ -325,7 +334,8 @@ class _TabsRow extends StatelessWidget {
                 onTap: () => onSelected(tab),
               ),
             ),
-            if (tab != _ShopTab.values.last) const SizedBox(width: 6),
+            if (tab != _ShopTab.values.lastWhere((t) => !t.isEmpty))
+              const SizedBox(width: 6),
           ],
         ],
       ),
@@ -400,7 +410,6 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(22);
-    final image = item.image;
 
     return Opacity(
       // Купленное гасим, а не прячем: по КП 3.5 ребёнок должен видеть весь
@@ -442,21 +451,7 @@ class _ItemTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Center(
-                        child: image == null
-                            // Значок — для позиций, на которые картинки ещё
-                            // не прислали: вся одежда и часть декора.
-                            ? Text(
-                                item.emoji,
-                                style: const TextStyle(
-                                  fontSize: 44,
-                                  height: 1.1,
-                                ),
-                              )
-                            : Image.asset(
-                                image,
-                                fit: BoxFit.contain,
-                                filterQuality: FilterQuality.medium,
-                              ),
+                        child: ItemPicture(item: item),
                       ),
                     ),
                     const SizedBox(height: 6),
