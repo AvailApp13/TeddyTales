@@ -7,6 +7,26 @@ import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'room_scene_backdrop.dart';
+
+/// По какую сторону от мишки лежит место.
+enum SlotDepth {
+  /// Дальше мишки: задняя стена, стены, дальняя половина пола.
+  behind,
+
+  /// Ближе мишки: коврик и игрушки переднего плана.
+  front,
+}
+
+/// Считается по линии пола места, а не по полю `depth`.
+///
+/// `depth` — порядок отрисовки внутри захода (ковёр рисуется первым, потому
+/// что на нём стоят), а глубину в комнате задаёт то, на какой линии пола
+/// вещь стоит. Настенное всегда позади: стена дальше всего.
+SlotDepth slotDepth(RoomSlot slot) =>
+    slot.onWall || slot.y <= RoomSceneBackdrop.standLine
+    ? SlotDepth.behind
+    : SlotDepth.front;
 
 /// Комната по местам: что где стоит и куда можно поставить.
 ///
@@ -17,6 +37,12 @@ import '../theme/app_colors.dart';
 ///
 /// Свободные места подсвечиваются не все: пунктир по всей комнате прячет
 /// мишку за собой. Сколько показывать — решает [hintLimit].
+///
+/// Слой рисуется в два захода — [SlotDepth.behind] под мишкой и
+/// [SlotDepth.front] над ним. Один заход не годится: мишка стоит на трети
+/// глубины комнаты, и вещи у задней стены должны быть за ним, а коврик и
+/// корзина переднего плана — перед. Подсветка при этом считается по всем
+/// местам сразу, иначе каждый заход подсветил бы свои три.
 class RoomSlotLayer extends StatelessWidget {
   const RoomSlotLayer({
     super.key,
@@ -24,11 +50,15 @@ class RoomSlotLayer extends StatelessWidget {
     required this.room,
     required this.onTapItem,
     required this.onTapEmpty,
+    this.depth = SlotDepth.front,
     this.hintLimit = 3,
   });
 
   final GameState game;
   final RoomKind room;
+
+  /// Какой заход рисуем: дальние места или ближние.
+  final SlotDepth depth;
 
   /// Тап по стоящей вещи: открыть «убрать или заменить».
   final void Function(RoomSlot slot, ShopItem item) onTapItem;
@@ -73,15 +103,16 @@ class RoomSlotLayer extends StatelessWidget {
         return Stack(
           children: [
             for (final slot in slots)
-              _positioned(
-                slot: slot,
-                width: width,
-                height: height,
-                game: game,
-                hinted: hinted.contains(slot),
-                onTapItem: onTapItem,
-                onTapEmpty: onTapEmpty,
-              ),
+              if (slotDepth(slot) == depth)
+                _positioned(
+                  slot: slot,
+                  width: width,
+                  height: height,
+                  game: game,
+                  hinted: hinted.contains(slot),
+                  onTapItem: onTapItem,
+                  onTapEmpty: onTapEmpty,
+                ),
           ],
         );
       },

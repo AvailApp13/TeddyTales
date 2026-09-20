@@ -318,9 +318,12 @@ class _RoomScene extends StatelessWidget {
   /// Рост героя в долях высоты сцены.
   final double heroHeight;
 
-  /// Линия пола переднего плана: на ней стоит герой. Та же, к которой
-  /// привязаны места переднего плана в `room_slots.dart`.
-  static const double _floorLine = 0.92;
+  /// Где герой стоит на полу.
+  ///
+  /// Считается от камеры фона, а не подбирается на глаз: разбор в
+  /// [RoomSceneBackdrop.standLine]. У самого нижнего края кадра мишка
+  /// читался ростом в 66 см, и комната из-за этого казалась залом.
+  static const double _floorLine = RoomSceneBackdrop.standLine;
 
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
@@ -345,6 +348,28 @@ class _RoomScene extends StatelessWidget {
           // размерной сетки (room_layout.dart) — мебель мельче героя, как
           // задний план с перспективой на макете.
           Positioned.fill(child: RoomSceneBackdrop(room: room)),
+          // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
+          // мишкой. Мишка теперь лежит между двумя слоями мест, и будь тап
+          // на нём — он перехватывал бы касания по дальним вещам, которые
+          // рисуются под ним. Внизу же он проигрывает всему, что выше:
+          // сначала вещи, и только если тапнули мимо — поглаживание.
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: controller.petBear,
+            ),
+          ),
+          // Дальние места — под мишкой: он стоит на трети глубины комнаты,
+          // и кроватка у задней стены должна быть за ним, а не поперёк него.
+          Positioned.fill(
+            child: RoomSlotLayer(
+              game: game,
+              room: room,
+              depth: SlotDepth.behind,
+              onTapItem: (slot, _) => onSlotTap(slot),
+              onTapEmpty: onSlotTap,
+            ),
+          ),
           // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
           //
           // Решение заказчика 17.09 взамен прежнего «во весь экран»: мишка
@@ -364,11 +389,8 @@ class _RoomScene extends StatelessWidget {
                       left: 0,
                       right: 0,
                       height: c.maxHeight * heroHeight,
-                      // Тап по мишке — погладить: контроллер стреляет trg_pet,
-                      // риг проигрывает смех с подскоком (КП 7.6).
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: controller.petBear,
+                      // Касания мишка не ловит — их ловит слой под ним.
+                      child: IgnorePointer(
                         child: BearView(
                           controller: controller,
                           assetPath: riveAssetPath,
@@ -380,10 +402,9 @@ class _RoomScene extends StatelessWidget {
               },
             ),
           ),
-          // Места лежат ПОВЕРХ мишки, иначе он перехватывал бы тапы по ним:
-          // на главном экране он растянут во всю ширину сцены. Сам слой
-          // занимает только площадь мест, остальное прозрачно для касаний —
-          // погладить мишку по-прежнему можно где угодно.
+          // Ближние места — поверх мишки. Слой занимает только площадь мест,
+          // остальное прозрачно для касаний: погладить мишку по-прежнему
+          // можно где угодно.
           Positioned.fill(
             child: RoomSlotLayer(
               game: game,
