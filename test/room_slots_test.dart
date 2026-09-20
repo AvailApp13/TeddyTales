@@ -36,10 +36,16 @@ void main() {
       expect(ids.toSet().length, ids.length);
     });
 
-    test('в каждой комнате есть куда поставить', () {
-      for (final room in RoomKind.values) {
-        expect(slotsOf(room), isNotEmpty, reason: room.name);
-      }
+    test('без мест осталась только спальня, и то пока она заглушка', () {
+      // Спальня пришла 20.09 картинкой с уже уложенным мишкой — обставлять
+      // там пока нечего. Когда заказчик пришлёт её разметку, этот тест
+      // напомнит, что список надо сократить.
+      final empty = [
+        for (final room in RoomKind.values)
+          if (slotsOf(room).isEmpty) room,
+      ];
+
+      expect(empty, [RoomKind.bedroom]);
     });
 
     test('места не вылезают за кадр', () {

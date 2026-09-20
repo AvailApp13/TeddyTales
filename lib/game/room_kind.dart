@@ -26,9 +26,7 @@ import '../bear/bear_action.dart';
 RoomKind? roomForAction(BearAction action) => switch (action) {
   BearAction.feed => RoomKind.kitchen,
   BearAction.wash => RoomKind.bath,
-  // Спальни пока нет: заказчик решил 20.09, что сон получит свой фон с
-  // кроваткой, но арта ещё нет. До него спим дома.
-  BearAction.sleep => RoomKind.nursery,
+  BearAction.sleep => RoomKind.bedroom,
   BearAction.play => RoomKind.nursery,
   BearAction.pet ||
   BearAction.wake ||
@@ -39,6 +37,7 @@ RoomKind? roomForAction(BearAction action) => switch (action) {
 
 enum RoomKind {
   nursery('assets/rooms/nursery.jpg'),
+  bedroom('assets/rooms/bedroom.jpg'),
   kitchen('assets/rooms/kitchen.jpg'),
   bath('assets/rooms/bath.jpg');
 

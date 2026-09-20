@@ -15,10 +15,9 @@ void main() {
       expect(roomForAction(BearAction.wash), RoomKind.bath);
     });
 
-    test('уложить и поиграть — домой, в детскую', () {
-      // Спальня появится, когда будет её фон: заказчик решил 20.09, что сон
-      // получит свою комнату с кроваткой. До тех пор спим дома.
-      expect(roomForAction(BearAction.sleep), RoomKind.nursery);
+    test('уложить — в спальню, поиграть — домой, в детскую', () {
+      // Спальня пришла от заказчика 20.09 вместе с уже уложенным мишкой.
+      expect(roomForAction(BearAction.sleep), RoomKind.bedroom);
       expect(roomForAction(BearAction.play), RoomKind.nursery);
     });
 

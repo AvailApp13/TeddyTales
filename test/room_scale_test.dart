@@ -41,7 +41,7 @@ void main() {
           if (cameraOf(room).bearInArt) room,
       ];
 
-      expect(drawn, [RoomKind.kitchen]);
+      expect(drawn, [RoomKind.bedroom, RoomKind.kitchen]);
     });
 
     test('у самого нижнего края кадра то же тело читалось бы мельче', () {
@@ -186,10 +186,12 @@ void main() {
   group('Мебель переднего плана', () {
     const phone = Size(430, 932);
 
-    test('в кухне рига не рисуют вовсе', () {
-      // Мишка там нарисован на самой картинке. Поставь поверх него живого —
-      // на стуле окажется двое.
-      expect(RoomFrame.of(phone, RoomKind.kitchen).bearSlices, isEmpty);
+    test('где мишка нарисован, рига не ставят вовсе', () {
+      // Поставь поверх нарисованного живого — на стуле и в кровати окажется
+      // по двое.
+      for (final room in [RoomKind.kitchen, RoomKind.bedroom]) {
+        expect(RoomFrame.of(phone, room).bearSlices, isEmpty, reason: room.name);
+      }
     });
 
     test('в остальных комнатах мишка цел', () {
