@@ -99,6 +99,9 @@ class RoomFrame {
   /// фоне, то есть лежит под мишкой, и без этих полос его ноги оказались
   /// бы поверх столешницы, а сам он выглядел бы приклеенным к столу.
   List<({double top, double bottom})> get bearSlices {
+    // Мишка нарисован на самой картинке — живого поверх неё не надо.
+    if (camera.bearInArt) return const [];
+
     final front = camera.frontLine;
     if (front == null) return [(top: bearTop, bottom: standY)];
 
