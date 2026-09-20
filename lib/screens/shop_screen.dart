@@ -6,6 +6,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/scene_label.dart';
 
 /// Магазин предметов (КП 11.2).
 ///
@@ -46,10 +47,16 @@ class _ShopScreenState extends State<ShopScreen> {
   /// Первой открывается одежда — так же, как в прототипе: это самый крупный и
   /// самый понятный ребёнку раздел каталога. Если пришли за конкретной
   /// вещью, открывается её вкладка.
-  late _ShopTab _tab = _tabOf(widget.focusItemId) ?? _ShopTab.clothes;
+  late _ShopTab _tab = _tabOf(widget.focusItemId) ?? _ShopTab.furniture;
 
   /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
   /// продаётся в магазине.
+  /// Сортировка устойчивая: порядок каталога внутри групп сохраняется.
+  static List<ShopItem> _withPhotosFirst(List<ShopItem> items) => [
+    ...items.where((i) => i.photo),
+    ...items.where((i) => !i.photo),
+  ];
+
   static _ShopTab? _tabOf(String? itemId) {
     if (itemId == null) return null;
     for (final tab in _ShopTab.values) {
@@ -84,9 +91,20 @@ class _ShopScreenState extends State<ShopScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Нижняя граница обрезается: кнопка покупки прижата к краю экрана и
-      // должна расходиться с системным индикатором жестов.
-      body: SafeArea(
+      // Лист магазина не плоское полотно: кремовый уходит вниз в тёплый
+      // песочный, как потолок комнаты к полу. Плоская заливка рядом с
+      // фотографическими комнатами и читалась как чужая страница.
+      backgroundColor: Colors.transparent,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.surface, AppColors.background, Color(0xFFF3E7D2)],
+            stops: [0, 0.55, 1],
+          ),
+        ),
+        child: SafeArea(
         child: AnimatedBuilder(
           // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
           // переход может случиться прямо на этом экране.
@@ -101,14 +119,18 @@ class _ShopScreenState extends State<ShopScreen> {
             // должно (КП 11.2 не знает никаких ограничений на покупку) —
             // купить можно всё, но человеку с новорождённым первым должен
             // попадаться ночник, а не письменный стол.
-            final now = [
+            // Внутри каждой группы вперёд идут вещи со своей картинкой.
+            // Позиции, на которые картинок ещё не прислали, показываются
+            // значком, и вперемешку с фотографиями это читается как брак —
+            // а собранные внизу они выглядят просто как «ещё не завезли».
+            final now = _withPhotosFirst([
               for (final i in _tab.items)
                 if (i.suitsAt(stage)) i,
-            ];
-            final later = [
+            ]);
+            final later = _withPhotosFirst([
               for (final i in _tab.items)
                 if (!i.suitsAt(stage)) i,
-            ];
+            ]);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,6 +191,7 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             );
           },
+          ),
         ),
       ),
     );
@@ -212,14 +235,15 @@ class _ItemGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        // Три колонки: в магазине важнее охватить взглядом весь раздел
-        // (16 вещей в одежде и декоре), чем разглядеть отдельную карточку.
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
+        // Две колонки вместо трёх: с 20.09 у товаров есть свои картинки, и
+        // вещь должна быть видна, а не угадываться. Раздел теперь листают,
+        // зато сразу понятно, что покупаешь.
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
         // Фиксированная высота вместо пропорции: иначе на планшете карточка
         // растёт вслед за шириной и превращается в пустое поле.
-        mainAxisExtent: 108,
+        mainAxisExtent: 196,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -241,10 +265,14 @@ class _ItemGrid extends StatelessWidget {
 /// Порядок как в прототипе — от одежды к игрушкам; он же порядок разделов
 /// каталога по востребованности, а не по номеру пункта КП.
 enum _ShopTab {
-  clothes,
+  // Порядок вкладок = порядок на экране. Мебель впереди, потому что с
+  // 20.09 у неё, декора и игрушек есть настоящие картинки, а у одежды пока
+  // только значки: открывать магазин со вкладки без картинок значит
+  // показывать товар лицом в самый последний момент.
   furniture,
   decor,
-  toys;
+  toys,
+  clothes;
 
   /// Название вкладки.
   ///
@@ -318,16 +346,20 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppDimens.radiusChip);
+    // Капсула, а не прямоугольная плашка: тот же приём, что у кнопок в
+    // комнате и у подписей поверх сцены.
+    final radius = BorderRadius.circular(999);
 
     return Material(
       color: selected ? AppColors.sage : AppColors.surface,
       borderRadius: radius,
+      elevation: selected ? 3 : 0,
+      shadowColor: AppColors.sageDark.withValues(alpha: 0.5),
       child: InkWell(
         onTap: onTap,
         borderRadius: radius,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: radius,
             border: Border.all(
@@ -339,10 +371,10 @@ class _TabButton extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 12.5,
+            style: sceneText(
+              size: 12.5,
+              weight: selected ? 800 : 600,
               color: selected ? Colors.white : AppColors.textSecondary,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
             ),
           ),
         ),
@@ -351,7 +383,7 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-/// Карточка товара: значок, название и либо цена, либо «Куплено».
+/// Карточка товара: картинка, название и либо цена, либо «Куплено».
 class _ItemTile extends StatelessWidget {
   const _ItemTile({
     required this.item,
@@ -367,84 +399,96 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(AppDimens.radiusCard);
+    final radius = BorderRadius.circular(22);
+    final image = item.image;
 
     return Opacity(
       // Купленное гасим, а не прячем: по КП 3.5 ребёнок должен видеть весь
       // каталог целиком, но уже своя вещь не должна перетягивать внимание с
       // того, что ещё можно купить.
-      opacity: owned ? 0.45 : 1,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: radius,
-        child: InkWell(
-          onTap: owned ? null : onTap,
-          borderRadius: radius,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(
-                // Отобранное в корзину обводим зелёным: значок «+» в углу
-                // мелкий, а при трёх колонках набранное нужно находить
-                // взглядом, не вчитываясь в каждую карточку.
-                color: inCart ? AppColors.sage : AppColors.outline,
+      opacity: owned ? 0.5 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: owned ? null : onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            // Подушка, а не плоский прямоугольник: карточка лежит на
+            // кремовом листе, и без мягкой тени вещь кажется приклеенной.
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, AppColors.surface],
+            ),
+            border: Border.all(
+              // Отобранное в корзину обводим зелёным: значок в углу мелкий,
+              // а набранное нужно находить взглядом, не вчитываясь.
+              color: inCart ? AppColors.sage : AppColors.outline,
+              width: inCart ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.tan.withValues(alpha: 0.22),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 10,
+            ],
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: image == null
+                            // Значок — для позиций, на которые картинки ещё
+                            // не прислали: вся одежда и часть декора.
+                            ? Text(
+                                item.emoji,
+                                style: const TextStyle(
+                                  fontSize: 44,
+                                  height: 1.1,
+                                ),
+                              )
+                            : Image.asset(
+                                image,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
+                              ),
+                      ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // ЗАГЛУШКА: эмодзи вместо иллюстрации предмета.
-                        // Отрисовка 52 предметов — отдельная работа по КП 10,
-                        // эмодзи стоят из прототипа, чтобы карточки были
-                        // различимы.
-                        Text(
-                          item.emoji,
-                          style: const TextStyle(fontSize: 26, height: 1.1),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          shopItemName(context.l10n, item.id),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 10.5,
-                            height: 1.25,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        if (owned)
-                          Text(
-                            context.l10n.shopOwnedLabel,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontSize: 9.5,
-                              color: AppColors.sageDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          )
-                        else
-                          _Price(price: item.price),
-                      ],
+                    const SizedBox(height: 6),
+                    Text(
+                      shopItemName(context.l10n, item.id),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sceneText(size: 12.5, weight: 700),
                     ),
-                  ),
+                    const SizedBox(height: 5),
+                    if (owned)
+                      Text(
+                        context.l10n.shopOwnedLabel,
+                        style: sceneText(
+                          size: 11,
+                          weight: 700,
+                          color: AppColors.sageDark,
+                        ),
+                      )
+                    else
+                      _Price(price: item.price),
+                  ],
                 ),
-                if (owned || inCart)
-                  Positioned(
-                    top: 5,
-                    right: 5,
-                    child: _CornerBadge(icon: owned ? Icons.check : Icons.add),
-                  ),
-              ],
-            ),
+              ),
+              if (owned || inCart)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _CornerBadge(icon: owned ? Icons.check : Icons.add),
+                ),
+            ],
           ),
         ),
       ),
@@ -452,7 +496,7 @@ class _ItemTile extends StatelessWidget {
   }
 }
 
-/// Цена предмета: монета и число.
+/// Цена предмета: монета и число в тёплой капсуле.
 ///
 /// ЗАГЛУШКА: сами значения по КП 10.9 утверждаются отдельно и по 15.4 правятся
 /// из панели управления — здесь они просто показываются.
@@ -463,31 +507,31 @@ class _Price extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 11,
-          height: 11,
-          decoration: const BoxDecoration(
-            color: AppColors.coin,
-            shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 13,
+            height: 13,
+            decoration: const BoxDecoration(
+              color: AppColors.coin,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '$price',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Text('$price', style: sceneText(size: 12, weight: 800)),
+        ],
+      ),
     );
   }
 }
 
-/// Значок в углу карточки: галочка у купленного, плюс у отобранного в корзину.
 class _CornerBadge extends StatelessWidget {
   const _CornerBadge({required this.icon});
 
@@ -533,6 +577,10 @@ class _CartBar extends StatelessWidget {
       child: FilledButton(
         onPressed: enabled ? onTap : null,
         style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(54),
+          shape: const StadiumBorder(),
+          elevation: 4,
+          shadowColor: AppColors.sageDark.withValues(alpha: 0.55),
           // Погашенная кнопка остаётся зелёной, просто бледной: серый
           // «выключенный» вид из темы Material читается как поломка, а не как
           // «ещё ничего не выбрано».
@@ -542,19 +590,17 @@ class _CartBar extends StatelessWidget {
         child: count == 0
             ? Text(
                 context.l10n.shopCartEmpty,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: sceneText(size: 14, weight: 800, color: Colors.white),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     context.l10n.shopBuyFor(total),
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                    style: sceneText(
+                      size: 14,
+                      weight: 800,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -635,9 +681,7 @@ class _SheetHeader extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: sceneText(size: 17, weight: 800),
             ),
           ),
           const SizedBox(width: 10),
@@ -674,13 +718,7 @@ class _Purse extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 5),
-          Text(
-            '$coins',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('$coins', style: sceneText(size: 12.5, weight: 800)),
         ],
       ),
     );

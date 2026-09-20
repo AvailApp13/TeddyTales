@@ -1,4 +1,10 @@
-/// 52 предмета игры (КП 10): мебель 10, декор 16, игрушки 10, одежда 16.
+/// Каталог игры (КП 10).
+///
+/// Было 52 предмета: мебель 10, декор 16, игрушки 10, одежда 16. 20.09
+/// заказчик прислал для магазина настоящие картинки, и каталог вырос под
+/// них — к прежним позициям добавились кресла, полки, ковры, растения и
+/// игрушки, на которые картинки есть. Одежда осталась со значками: её в
+/// присланном наборе не было.
 
 library;
 
@@ -43,12 +49,25 @@ class ShopItem {
     required this.title,
     required this.price,
     required this.kind,
+    this.photo = false,
     this.slotValue,
     this.suitsFrom = BearStage.newborn,
   });
 
   final String id;
+
+  /// Запасной значок: показывается, пока у товара нет своей картинки.
+  ///
+  /// До 20.09 эмодзи были единственным изображением в магазине, и витрина
+  /// рядом с фотографическими комнатами выглядела чужой — заказчик: «это же
+  /// абсурд». Теперь заказчик присылает настоящие картинки; у позиций,
+  /// которых в присланном наборе не оказалось (вся одежда и часть декора),
+  /// значок пока остаётся.
   final String emoji;
+
+  /// Есть ли у товара своя картинка в `assets/shop/items`.
+  final bool photo;
+
   final String title;
 
   /// Цена в монетах.
@@ -74,6 +93,12 @@ class ShopItem {
   final BearStage suitsFrom;
 
   bool suitsAt(BearStage stage) => stage.riveValue >= suitsFrom.riveValue;
+
+  /// Путь к картинке товара или `null`, если её ещё не прислали.
+  ///
+  /// Имя файла выводится из [id], а не хранится отдельно: два источника
+  /// правды разъехались бы при первом же переименовании.
+  String? get image => photo ? 'assets/shop/items/$id.webp' : null;
 
   /// Применяет предмет к образу мишки.
   BearOutfit applyTo(BearOutfit outfit) {
@@ -117,6 +142,7 @@ abstract final class ItemCatalog {
       emoji: '🛏',
       title: 'Кроватка',
       price: 120,
+      photo: true,
       kind: ItemKind.furniture,
     ),
     ShopItem(
@@ -132,6 +158,7 @@ abstract final class ItemCatalog {
       emoji: '🪑',
       title: 'Стол',
       price: 90,
+      photo: true,
       kind: ItemKind.furniture,
       suitsFrom: BearStage.firstSteps,
     ),
@@ -148,6 +175,7 @@ abstract final class ItemCatalog {
       emoji: '📚',
       title: 'Книжная полка',
       price: 110,
+      photo: true,
       kind: ItemKind.furniture,
       suitsFrom: BearStage.growing,
     ),
@@ -156,6 +184,7 @@ abstract final class ItemCatalog {
       emoji: '🗄',
       title: 'Комод',
       price: 150,
+      photo: true,
       kind: ItemKind.furniture,
       suitsFrom: BearStage.growing,
     ),
@@ -164,6 +193,7 @@ abstract final class ItemCatalog {
       emoji: '🛋',
       title: 'Кресло',
       price: 130,
+      photo: true,
       kind: ItemKind.furniture,
       suitsFrom: BearStage.crawling,
     ),
@@ -172,6 +202,7 @@ abstract final class ItemCatalog {
       emoji: '🟫',
       title: 'Ковёр',
       price: 80,
+      photo: true,
       kind: ItemKind.furniture,
     ),
     ShopItem(
@@ -186,6 +217,91 @@ abstract final class ItemCatalog {
       emoji: '🧺',
       title: 'Корзина',
       price: 50,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'shelf_house',
+      emoji: '🏠',
+      title: 'Полка-домик',
+      price: 150,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'shelf_moon',
+      emoji: '🌙',
+      title: 'Полка-месяц',
+      price: 130,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'armchair_sage',
+      emoji: '🪑',
+      title: 'Кресло мятное',
+      price: 170,
+      photo: true,
+      kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'armchair_bean',
+      emoji: '🛋',
+      title: 'Кресло-пуф',
+      price: 150,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'armchair_flower',
+      emoji: '🌸',
+      title: 'Кресло-цветок',
+      price: 180,
+      photo: true,
+      kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'armchair_wing',
+      emoji: '👑',
+      title: 'Кресло с ушками',
+      price: 190,
+      photo: true,
+      kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'swing',
+      emoji: '🪺',
+      title: 'Подвесное кресло',
+      price: 200,
+      photo: true,
+      kind: ItemKind.furniture,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'basket_star',
+      emoji: '⭐️',
+      title: 'Корзина со звездой',
+      price: 70,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'rug_cloud',
+      emoji: '☁️',
+      title: 'Ковёр-облако',
+      price: 110,
+      photo: true,
+      kind: ItemKind.furniture,
+    ),
+    ShopItem(
+      id: 'rug_heart',
+      emoji: '💗',
+      title: 'Ковёр с сердцем',
+      price: 110,
+      photo: true,
       kind: ItemKind.furniture,
     ),
   ];
@@ -240,6 +356,7 @@ abstract final class ItemCatalog {
       emoji: '🖼',
       title: 'Картина мишка',
       price: 55,
+      photo: true,
       kind: ItemKind.decor,
       suitsFrom: BearStage.crawling,
     ),
@@ -270,6 +387,7 @@ abstract final class ItemCatalog {
       emoji: '⭐️',
       title: 'Подушка звезда',
       price: 30,
+      photo: true,
       kind: ItemKind.decor,
       suitsFrom: BearStage.crawling,
     ),
@@ -278,6 +396,7 @@ abstract final class ItemCatalog {
       emoji: '🪴',
       title: 'Растение',
       price: 45,
+      photo: true,
       kind: ItemKind.decor,
       suitsFrom: BearStage.crawling,
     ),
@@ -312,6 +431,54 @@ abstract final class ItemCatalog {
       kind: ItemKind.decor,
       suitsFrom: BearStage.growing,
     ),
+    ShopItem(
+      id: 'pic_heart',
+      emoji: '🖼',
+      title: 'Картина с сердцем',
+      price: 60,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'plant_ivy',
+      emoji: '🌿',
+      title: 'Плющ на подставке',
+      price: 55,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'plant_bear',
+      emoji: '🐻',
+      title: 'Цветок в кашпо-мишке',
+      price: 65,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'flowers_daisy',
+      emoji: '🌼',
+      title: 'Ромашки в банке',
+      price: 50,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'flowers_orchid',
+      emoji: '🌺',
+      title: 'Орхидея',
+      price: 70,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'flowers_euc',
+      emoji: '🍃',
+      title: 'Эвкалипт в вазе',
+      price: 55,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
   ];
 
   /// Игрушки — 10 (КП 10.4). Состав утверждается Заказчиком по таблице до
@@ -330,6 +497,7 @@ abstract final class ItemCatalog {
       emoji: '🧸',
       title: 'Мишка',
       price: 90,
+      photo: true,
       kind: ItemKind.toy,
     ),
     ShopItem(
@@ -337,6 +505,7 @@ abstract final class ItemCatalog {
       emoji: '🧊',
       title: 'Кубики',
       price: 60,
+      photo: true,
       kind: ItemKind.toy,
       suitsFrom: BearStage.crawling,
     ),
@@ -392,6 +561,57 @@ abstract final class ItemCatalog {
       emoji: '🚀',
       title: 'Ракета',
       price: 85,
+      kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'teddy_cream',
+      emoji: '🧸',
+      title: 'Мишка кремовый',
+      price: 110,
+      photo: true,
+      kind: ItemKind.toy,
+    ),
+    ShopItem(
+      id: 'bunny',
+      emoji: '🐰',
+      title: 'Зайчик',
+      price: 110,
+      photo: true,
+      kind: ItemKind.toy,
+    ),
+    ShopItem(
+      id: 'bunny_pink',
+      emoji: '🎀',
+      title: 'Зайчик розовый',
+      price: 110,
+      photo: true,
+      kind: ItemKind.toy,
+    ),
+    ShopItem(
+      id: 'pyramid',
+      emoji: '🗼',
+      title: 'Пирамидка',
+      price: 80,
+      photo: true,
+      kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'dollhouse',
+      emoji: '🏡',
+      title: 'Кукольный домик',
+      price: 220,
+      photo: true,
+      kind: ItemKind.toy,
+      suitsFrom: BearStage.growing,
+    ),
+    ShopItem(
+      id: 'house_felt',
+      emoji: '🏠',
+      title: 'Домик из фетра',
+      price: 160,
+      photo: true,
       kind: ItemKind.toy,
       suitsFrom: BearStage.growing,
     ),

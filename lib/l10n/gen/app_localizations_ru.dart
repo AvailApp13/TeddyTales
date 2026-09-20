@@ -627,6 +627,72 @@ class AppLocalizationsRu extends AppLocalizations {
   String get itemBasket => 'Корзина';
 
   @override
+  String get itemShelfHouse => 'Полка-домик';
+
+  @override
+  String get itemShelfMoon => 'Полка-месяц';
+
+  @override
+  String get itemArmchairSage => 'Кресло мятное';
+
+  @override
+  String get itemArmchairBean => 'Кресло-пуф';
+
+  @override
+  String get itemArmchairFlower => 'Кресло-цветок';
+
+  @override
+  String get itemArmchairWing => 'Кресло с ушками';
+
+  @override
+  String get itemSwing => 'Подвесное кресло';
+
+  @override
+  String get itemBasketStar => 'Корзина со звездой';
+
+  @override
+  String get itemRugCloud => 'Ковёр-облако';
+
+  @override
+  String get itemRugHeart => 'Ковёр с сердцем';
+
+  @override
+  String get itemPicHeart => 'Картина с сердцем';
+
+  @override
+  String get itemPlantIvy => 'Плющ на подставке';
+
+  @override
+  String get itemPlantBear => 'Цветок в кашпо-мишке';
+
+  @override
+  String get itemFlowersDaisy => 'Ромашки в банке';
+
+  @override
+  String get itemFlowersOrchid => 'Орхидея';
+
+  @override
+  String get itemFlowersEuc => 'Эвкалипт в вазе';
+
+  @override
+  String get itemTeddyCream => 'Мишка кремовый';
+
+  @override
+  String get itemBunny => 'Зайчик';
+
+  @override
+  String get itemBunnyPink => 'Зайчик розовый';
+
+  @override
+  String get itemPyramid => 'Пирамидка';
+
+  @override
+  String get itemDollhouse => 'Кукольный домик';
+
+  @override
+  String get itemHouseFelt => 'Домик из фетра';
+
+  @override
   String get itemBed => 'Кроватка';
 
   @override

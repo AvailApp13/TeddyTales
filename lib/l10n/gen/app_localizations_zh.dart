@@ -560,6 +560,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get itemBasket => '篮子';
 
   @override
+  String get itemShelfHouse => '小屋置物架';
+
+  @override
+  String get itemShelfMoon => '月亮置物架';
+
+  @override
+  String get itemArmchairSage => '薄荷绿扶手椅';
+
+  @override
+  String get itemArmchairBean => '豆袋椅';
+
+  @override
+  String get itemArmchairFlower => '花朵扶手椅';
+
+  @override
+  String get itemArmchairWing => '高背扶手椅';
+
+  @override
+  String get itemSwing => '吊椅';
+
+  @override
+  String get itemBasketStar => '星星收纳篮';
+
+  @override
+  String get itemRugCloud => '云朵地毯';
+
+  @override
+  String get itemRugHeart => '爱心地毯';
+
+  @override
+  String get itemPicHeart => '爱心画';
+
+  @override
+  String get itemPlantIvy => '常春藤';
+
+  @override
+  String get itemPlantBear => '小熊花盆';
+
+  @override
+  String get itemFlowersDaisy => '雏菊花瓶';
+
+  @override
+  String get itemFlowersOrchid => '兰花';
+
+  @override
+  String get itemFlowersEuc => '尤加利';
+
+  @override
+  String get itemTeddyCream => '奶油色小熊';
+
+  @override
+  String get itemBunny => '小兔子';
+
+  @override
+  String get itemBunnyPink => '粉色小兔';
+
+  @override
+  String get itemPyramid => '套圈玩具';
+
+  @override
+  String get itemDollhouse => '娃娃屋';
+
+  @override
+  String get itemHouseFelt => '毛毡小屋';
+
+  @override
   String get itemBed => '小床';
 
   @override

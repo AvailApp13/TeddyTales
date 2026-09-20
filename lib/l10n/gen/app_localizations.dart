@@ -1078,6 +1078,138 @@ abstract class AppLocalizations {
   /// **'Корзина'**
   String get itemBasket;
 
+  /// No description provided for @itemShelfHouse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полка-домик'**
+  String get itemShelfHouse;
+
+  /// No description provided for @itemShelfMoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полка-месяц'**
+  String get itemShelfMoon;
+
+  /// No description provided for @itemArmchairSage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло мятное'**
+  String get itemArmchairSage;
+
+  /// No description provided for @itemArmchairBean.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло-пуф'**
+  String get itemArmchairBean;
+
+  /// No description provided for @itemArmchairFlower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло-цветок'**
+  String get itemArmchairFlower;
+
+  /// No description provided for @itemArmchairWing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло с ушками'**
+  String get itemArmchairWing;
+
+  /// No description provided for @itemSwing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подвесное кресло'**
+  String get itemSwing;
+
+  /// No description provided for @itemBasketStar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Корзина со звездой'**
+  String get itemBasketStar;
+
+  /// No description provided for @itemRugCloud.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковёр-облако'**
+  String get itemRugCloud;
+
+  /// No description provided for @itemRugHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковёр с сердцем'**
+  String get itemRugHeart;
+
+  /// No description provided for @itemPicHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картина с сердцем'**
+  String get itemPicHeart;
+
+  /// No description provided for @itemPlantIvy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плющ на подставке'**
+  String get itemPlantIvy;
+
+  /// No description provided for @itemPlantBear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цветок в кашпо-мишке'**
+  String get itemPlantBear;
+
+  /// No description provided for @itemFlowersDaisy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ромашки в банке'**
+  String get itemFlowersDaisy;
+
+  /// No description provided for @itemFlowersOrchid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Орхидея'**
+  String get itemFlowersOrchid;
+
+  /// No description provided for @itemFlowersEuc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эвкалипт в вазе'**
+  String get itemFlowersEuc;
+
+  /// No description provided for @itemTeddyCream.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка кремовый'**
+  String get itemTeddyCream;
+
+  /// No description provided for @itemBunny.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зайчик'**
+  String get itemBunny;
+
+  /// No description provided for @itemBunnyPink.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зайчик розовый'**
+  String get itemBunnyPink;
+
+  /// No description provided for @itemPyramid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пирамидка'**
+  String get itemPyramid;
+
+  /// No description provided for @itemDollhouse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кукольный домик'**
+  String get itemDollhouse;
+
+  /// No description provided for @itemHouseFelt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Домик из фетра'**
+  String get itemHouseFelt;
+
   /// No description provided for @itemBed.
   ///
   /// In ru, this message translates to:

@@ -619,6 +619,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemBasket => 'Basket';
 
   @override
+  String get itemShelfHouse => 'House shelf';
+
+  @override
+  String get itemShelfMoon => 'Moon shelf';
+
+  @override
+  String get itemArmchairSage => 'Sage armchair';
+
+  @override
+  String get itemArmchairBean => 'Bean chair';
+
+  @override
+  String get itemArmchairFlower => 'Flower armchair';
+
+  @override
+  String get itemArmchairWing => 'Wing armchair';
+
+  @override
+  String get itemSwing => 'Hanging chair';
+
+  @override
+  String get itemBasketStar => 'Star basket';
+
+  @override
+  String get itemRugCloud => 'Cloud rug';
+
+  @override
+  String get itemRugHeart => 'Heart rug';
+
+  @override
+  String get itemPicHeart => 'Heart picture';
+
+  @override
+  String get itemPlantIvy => 'Ivy on a stand';
+
+  @override
+  String get itemPlantBear => 'Bear planter';
+
+  @override
+  String get itemFlowersDaisy => 'Daisies in a jar';
+
+  @override
+  String get itemFlowersOrchid => 'Orchid';
+
+  @override
+  String get itemFlowersEuc => 'Eucalyptus';
+
+  @override
+  String get itemTeddyCream => 'Cream teddy';
+
+  @override
+  String get itemBunny => 'Bunny';
+
+  @override
+  String get itemBunnyPink => 'Pink bunny';
+
+  @override
+  String get itemPyramid => 'Stacking rings';
+
+  @override
+  String get itemDollhouse => 'Dollhouse';
+
+  @override
+  String get itemHouseFelt => 'Felt house';
+
+  @override
   String get itemBed => 'Bed';
 
   @override
