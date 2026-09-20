@@ -16,6 +16,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../game/room_camera.dart';
 import '../game/room_kind.dart';
 import '../game/room_layout.dart';
 
@@ -23,16 +24,14 @@ import '../game/room_layout.dart';
 ///
 /// Появился, когда комната поехала на весь экран телефона (задача заказчика
 /// 20.09). До этого сцена была карточкой примерно той же формы, что и кадр
-/// фона, и доли кадра совпадали с долями сцены. На экране 9:19.5 они больше
-/// не совпадают: кадр 4:5, вписанный по ширине, закрывает только низ.
+/// фона, и доли кадра совпадали с долями сцены. На телефоне они не совпадают,
+/// и все числа — линия пола, точка схода, рост мишки — остались долями
+/// **кадра**, а не экрана. Иначе мишка менял бы размер от модели телефона.
 ///
-/// Вписывание именно по ширине — не вкусовое решение. Заказчик просил, чтобы
-/// мишка остался «влитым», то есть сохранил своё соотношение к комнате. Оно
-/// держится, только если комната масштабируется целиком, одним числом; а
-/// какое это число — задаёт ширина экрана, потому что по высоте кадр короче.
-/// Остаток сверху занимает потолок.
+/// Как кадр ложится на экран, зависит от того, нарисован ли на нём потолок
+/// ([RoomCamera.hasCeiling]).
 class RoomFrame {
-  const RoomFrame._(this.scene, this.rect);
+  const RoomFrame._(this.scene, this.rect, this.camera);
 
   /// Вся сцена — весь экран.
   final Size scene;
@@ -40,32 +39,55 @@ class RoomFrame {
   /// Кадр комнаты внутри неё.
   final Rect rect;
 
-  /// Высота кадра фона к его ширине (896 × 1120).
-  static const double aspect = 1120 / 896;
+  /// Чем снята эта комната.
+  final RoomCamera camera;
 
-  factory RoomFrame.of(Size scene) {
-    final height = scene.width * aspect;
-    // Прижат к низу: пол должен доходить до края экрана, иначе мишка будет
-    // стоять на полоске, под которой видно фон приложения.
+  factory RoomFrame.of(Size scene, RoomKind room) {
+    final camera = cameraOf(room);
+
+    if (camera.hasCeiling) {
+      // Потолок нарисован — кадр закрывает экран целиком, лишнее уходит за
+      // края. Прижат к низу: срезать можно потолок, но не пол, иначе мишка
+      // встанет ниже края экрана.
+      final scale = math.max(
+        scene.width / camera.artWidth,
+        scene.height / camera.artHeight,
+      );
+      final size = Size(camera.artWidth * scale, camera.artHeight * scale);
+      return RoomFrame._(
+        scene,
+        Rect.fromLTWH(
+          (scene.width - size.width) / 2,
+          scene.height - size.height,
+          size.width,
+          size.height,
+        ),
+        camera,
+      );
+    }
+
+    // Потолка на картинке нет: кадр вписывается по ширине и прижимается к
+    // низу, а полосу сверху занимает нарисованный потолок.
+    final height = scene.width * camera.artHeight / camera.artWidth;
     return RoomFrame._(
       scene,
       Rect.fromLTWH(0, scene.height - height, scene.width, height),
+      camera,
     );
   }
 
-  /// Полоса под потолок. Ноль, если экран ниже кадра — тогда у картинки
-  /// срезается верх, но пропорции и низ остаются на месте.
+  /// Полоса под нарисованный потолок. Ноль, если он есть на самой картинке.
   double get ceilingHeight => math.max(0, rect.top);
 
-  /// Точка схода в координатах сцены: по ней сходятся и доски пола на
+  /// Точка схода в координатах сцены: по ней сходятся и линии пола на
   /// картинке, и стыки нарисованного потолка.
-  double get vanishingY => rect.top + RoomSceneBackdrop.eyeLine * rect.height;
+  double get vanishingY => rect.top + camera.eyeLine * rect.height;
 
   /// Линия пола, на которой стоит мишка.
-  double get standY => rect.top + RoomSceneBackdrop.standLine * rect.height;
+  double get standY => rect.top + camera.standLine * rect.height;
 
   /// Рост мишки в пикселях — доля кадра комнаты, а не экрана.
-  double get bearHeight => RoomSceneBackdrop.heroHeight * rect.height;
+  double get bearHeight => camera.bearHeight * rect.height;
 
   /// Куда смотрит камера по горизонтали.
   double get centerX => rect.center.dx;
@@ -89,46 +111,10 @@ class RoomSceneBackdrop extends StatelessWidget {
   /// Рост мишки в долях высоты сцены — модуль, в котором меряются места.
   static const double defaultBearModule = 0.45;
 
-  /// Рост мишки в долях **кадра комнаты**.
-  ///
-  /// 45% было решением заказчика 17.09 взамен прежнего «во весь экран»,
-  /// 18.09 он попросил прибавить примерно 15% — вышло 52%. С 20.09 это доля
-  /// кадра комнаты, а не экрана: комната поехала на весь телефон, и считать
-  /// рост от высоты экрана значило бы менять размер мишки от модели
-  /// телефона.
-  static const double heroHeight = 0.52;
-
-  /// Линия горизонта: где задняя стена встречается с полом.
-  static const double horizon = 0.564;
-
   /// Вертикаль угла между левой и задней стеной, доля ширины.
+  ///
+  /// Нужна только запасному рисованному фону: у настоящих картинок угол свой.
   static const double cornerX = 0.27;
-
-  /// Точка схода: высота глаза камеры в кадре.
-  ///
-  /// Не на глаз — померено по швам досок пола в `assets/rooms/nursery.png`
-  /// (896×1120). Три шва сходятся в точке (617, 501), то есть на 0.447
-  /// высоты кадра. Верх стены на 0.079, стык с полом на 0.564, значит
-  /// камера стоит на 0.24 высоты стены: при потолке 2.5 м — 60 см над
-  /// полом. Низкая камера, вровень с ребёнком.
-  static const double eyeLine = 0.447;
-
-  /// Где мишка стоит на полу, доля высоты кадра.
-  ///
-  /// Это и есть «правильные пропорции»: на полу с перспективой рост
-  /// предмета читается не его величиной в кадре, а отношением этой величины
-  /// к расстоянию от его ног до точки схода. Мишка ростом 0.52 кадра,
-  /// стоящий у самого нижнего края (0.92), давал
-  /// 0.52 / (0.92 − 0.447) = 1.10 высоты камеры — 66 см против стены в
-  /// 2.5 м. Отсюда и ощущение гигантской комнаты: не стена велика, а мишка
-  /// стоял вплотную к зрителю, где всё кажется мельче своего масштаба.
-  ///
-  /// На 0.74 то же тело даёт 0.52 / (0.74 − 0.447) = 1.78 высоты камеры,
-  /// то есть 1.07 м: ростом с трёхлетку, как кот Томми в своей комнате.
-  /// Сам мишка при этом не изменился — заказчик утвердил 52% 18.09, и
-  /// трогать их не нужно: он просто отошёл от зрителя вглубь комнаты, на
-  /// треть её глубины.
-  static const double standLine = 0.74;
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +138,9 @@ class RoomSceneBackdrop extends StatelessWidget {
 }
 
 /// Угол комнаты: две стены, пол с глубиной, плинтус и окно на левой стене.
+/// Стык стены с полом у запасного рисованного фона.
+const double _fallbackHorizon = 0.564;
+
 class _RoomPainter extends CustomPainter {
   _RoomPainter(this.placed);
 
@@ -172,7 +161,7 @@ class _RoomPainter extends CustomPainter {
     final wall = _surface('wall_', 'wall_rose');
     final floor = _surface('floor_', 'floor_wood');
 
-    final horizon = RoomSceneBackdrop.horizon * size.height;
+    final horizon = _fallbackHorizon * size.height;
     final corner = RoomSceneBackdrop.cornerX * size.width;
 
     // Задняя стена — от угла вправо. Левая стена уходит к зрителю, поэтому

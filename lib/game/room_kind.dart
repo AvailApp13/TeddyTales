@@ -38,7 +38,7 @@ RoomKind? roomForAction(BearAction action) => switch (action) {
 };
 
 enum RoomKind {
-  nursery('assets/rooms/nursery.png'),
+  nursery('assets/rooms/nursery.jpg'),
   kitchen('assets/rooms/kitchen.png'),
   bath('assets/rooms/bath.png');
 

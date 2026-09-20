@@ -6,8 +6,8 @@ import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
+import '../game/room_camera.dart';
 import '../theme/app_colors.dart';
-import 'room_scene_backdrop.dart';
 
 /// По какую сторону от мишки лежит место.
 enum SlotDepth {
@@ -22,11 +22,22 @@ enum SlotDepth {
 ///
 /// `depth` — порядок отрисовки внутри захода (ковёр рисуется первым, потому
 /// что на нём стоят), а глубину в комнате задаёт то, на какой линии пола
-/// вещь стоит. Настенное всегда позади: стена дальше всего.
+/// вещь стоит. Линия, на которой стоит мишка, у каждой комнаты своя: она
+/// зависит от того, чем эта комната снята. Настенное всегда позади: стена
+/// дальше всего.
 SlotDepth slotDepth(RoomSlot slot) =>
-    slot.onWall || slot.y <= RoomSceneBackdrop.standLine
+    slot.onWall || slot.y <= cameraOf(slot.room).standLine
     ? SlotDepth.behind
     : SlotDepth.front;
+
+/// Показывать ли пунктирные рамки пустых мест.
+///
+/// Выключено по просьбе заказчика 20.09: «убери эти квадраты подсказки, куда
+/// можно добавить мебель, пока спрячь — не удаляй». Спрятана только
+/// подсветка: места остаются на своих координатах и по-прежнему нажимаются,
+/// поэтому обставить комнату можно и сейчас, просто без пунктира на виду.
+/// Вернуть — поменять на `true`.
+const bool showSlotHints = false;
 
 /// Комната по местам: что где стоит и куда можно поставить.
 ///
@@ -109,7 +120,7 @@ class RoomSlotLayer extends StatelessWidget {
                   width: width,
                   height: height,
                   game: game,
-                  hinted: hinted.contains(slot),
+                  hinted: showSlotHints && hinted.contains(slot),
                   onTapItem: onTapItem,
                   onTapEmpty: onTapEmpty,
                 ),

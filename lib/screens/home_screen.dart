@@ -334,7 +334,7 @@ class _RoomScene extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final frame = RoomFrame.of(Size(c.maxWidth, c.maxHeight));
+        final frame = RoomFrame.of(Size(c.maxWidth, c.maxHeight), room);
         return ClipRect(child: _build(context, frame));
       },
     );
