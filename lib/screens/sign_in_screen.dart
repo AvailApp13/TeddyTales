@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'sign_in_layout.dart';
 
 /// Экран входа — первое, что видит пользователь (КП 1.2, 1.3).
 ///
@@ -99,132 +100,163 @@ class _SignInScreenState extends State<SignInScreen>
     final l10n = context.l10n;
 
     return Scaffold(
-      // Фон под картинкой — цвет её нижнего края. Если экран окажется шире
-      // кадра и картинку придётся вписывать, по бокам будет не белая
-      // полоса, а продолжение сцены.
+      // Виден только в щелях при перестроении: сцена закрывает экран целиком.
       backgroundColor: _sceneEdge,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          // Присланная заказчиком сцена: логотип и оба мишки. Прижата к
-          // верху и вписана **по ширине**, а не cover. Cover на узком
-          // телефоне масштабирует кадр по высоте, то есть приближает его, —
-          // мишки съезжают вниз, и подписи ложатся им на морды. По ширине
-          // кадр всегда виден целиком, а остаток внизу закрашен цветом его
-          // же нижней строки.
-          image: DecorationImage(
-            image: AssetImage('assets/ui/signin_scene.jpg'),
-            fit: BoxFit.fitWidth,
-            alignment: Alignment.topCenter,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Мягкий переход от ковра к ровному низу: на коротком экране
-            // текст ложится на картинку, и без этого он читался бы по
-            // ворсинкам ковра.
-            const Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x00EAC6B9), Color(0x99F0DACE), _sceneEdge],
-                      stops: [0.60, 0.79, 0.93],
-                    ),
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final scene = Size(constraints.maxWidth, constraints.maxHeight);
+          final bottom = MediaQuery.paddingOf(context).bottom + 8;
+
+          // Сначала кадр под самую тесную панель — он говорит, где кончаются
+          // лапы, — и уже по этому месту считаются настоящие размеры кнопок.
+          final frame = SignInFrame.of(
+            scene,
+            panelHeight: SignInMetrics.tight.height,
+            bottomInset: bottom,
+          );
+          final metrics = SignInMetrics.of(
+            scene.height - frame.bearsBottomY - bottom,
+          );
+          final side = (scene.width * 0.09).clamp(20.0, 44.0);
+
+          return Stack(
+            children: [
+              // Сцена целиком, без заливок и градиентов: под кнопками
+              // должен быть тот же ковёр с листьями и звёздами, что на
+              // макете заказчика.
+              Positioned.fromRect(
+                rect: frame.rect,
+                child: const Image(
+                  image: AssetImage('assets/ui/signin_scene.jpg'),
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
                 ),
               ),
-            ),
-            SafeArea(
-              child: LayoutBuilder(
-                // `Spacer` внутри прокручиваемой области не работает:
-                // высота там не ограничена, и распределять между гибкими
-                // детьми нечего — всё схлопывается кверху. Поэтому колонке
-                // задаём минимальную высоту в экран и растягиваем её
-                // `IntrinsicHeight`: только тогда `spaceBetween` разводит
-                // шапку, кнопки и подпись по своим местам, а на маленьком
-                // экране остаётся прокрутка.
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 14),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - 30,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Верх отдан сцене: логотип и мишки нарисованы на
-                          // фоне, повторять их виджетами незачем.
-                          const Spacer(),
-                          Text(
-                            l10n.signInTagline,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 15.5,
-                              height: 1.35,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          Text(
-                            l10n.signInPrompt,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              letterSpacing: 0.4,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          for (final method in _SignInMethod.values) ...[
-                            _MethodButton(
-                              method: method,
-                              label: method.label(l10n),
-                              busy: _pending == method,
-                              onTap: () => _tap(method),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                          const SizedBox(height: 2),
-                          TextButton(
-                            onPressed: () => _tap(_SignInMethod.apple),
-                            child: Text(
-                              l10n.signInSkip,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            l10n.signInLegal,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11,
-                              height: 1.45,
-                              color: AppColors.textSecondary.withValues(
-                                alpha: 0.8,
-                              ),
-                            ),
-                          ),
-                        ],
+              // Подзаголовок стоит в просвете между логотипом и капюшоном —
+              // единственном месте сверху, где он никого не закрывает.
+              Positioned(
+                left: side,
+                right: side,
+                top: frame.taglineCenterY - frame.taglineBand / 2,
+                height: frame.taglineBand,
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      l10n.signInTagline,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (_pending != null)
-              _SoonBanner(animation: _banner, method: _pending!),
-          ],
-        ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: bottom,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: side),
+                      child: _SignInPanel(
+                        metrics: metrics,
+                        pending: _pending,
+                        onTap: _tap,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (_pending != null)
+                _SoonBanner(animation: _banner, method: _pending!),
+            ],
+          );
+        },
       ),
+    );
+  }
+}
+
+/// Нижняя половина экрана: подпись, пять кнопок входа и две служебные
+/// строки. Размеры приходят готовыми — их считает [SignInMetrics] по тому,
+/// сколько места осталось под мишками.
+class _SignInPanel extends StatelessWidget {
+  const _SignInPanel({
+    required this.metrics,
+    required this.pending,
+    required this.onTap,
+  });
+
+  final SignInMetrics metrics;
+  final _SignInMethod? pending;
+  final ValueChanged<_SignInMethod> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.signInPrompt,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: metrics.promptSize,
+            letterSpacing: 0.4,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        SizedBox(height: metrics.gap),
+        for (final method in _SignInMethod.values) ...[
+          _MethodButton(
+            method: method,
+            label: method.label(l10n),
+            height: metrics.buttonHeight,
+            busy: pending == method,
+            onTap: () => onTap(method),
+          ),
+          if (method != _SignInMethod.values.last)
+            SizedBox(height: metrics.gap),
+        ],
+        TextButton(
+          onPressed: () => onTap(_SignInMethod.apple),
+          style: TextButton.styleFrom(
+            minimumSize: Size.fromHeight(metrics.skipHeight),
+            padding: EdgeInsets.zero,
+          ),
+          child: Text(
+            l10n.signInSkip,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: metrics.promptSize + 1,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          l10n.signInLegal,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: metrics.legalSize,
+            height: 1.4,
+            color: AppColors.textSecondary.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -234,12 +266,14 @@ class _MethodButton extends StatelessWidget {
   const _MethodButton({
     required this.method,
     required this.label,
+    required this.height,
     required this.busy,
     required this.onTap,
   });
 
   final _SignInMethod method;
   final String label;
+  final double height;
   final bool busy;
   final VoidCallback onTap;
 
@@ -248,55 +282,73 @@ class _MethodButton extends StatelessWidget {
     // Белая кнопка Google на кремовом фоне без обводки теряется — это её
     // фирменный вид, менять цвет нельзя, поэтому обводим.
     final needsOutline = method.background.computeLuminance() > 0.8;
+    // Скругление от высоты: на макете кнопки почти капсулы, и при сжатии
+    // столбика они должны оставаться такими же на вид.
+    final radius = BorderRadius.circular(height * 0.34);
 
     return Semantics(
       button: true,
       label: label,
       child: Material(
         color: method.background,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: radius,
         elevation: busy ? 0 : 1.5,
         shadowColor: AppColors.tan.withValues(alpha: 0.4),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: radius,
           child: Container(
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            height: height,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: radius,
               border: needsOutline
                   ? Border.all(color: const Color(0xFFDADCE0))
                   : null,
             ),
-            child: Row(
+            // Знак слева, подпись по центру кнопки — как на макете. В ряд их
+            // не поставить: подпись тогда центрируется по остатку строки и
+            // на кнопках с разной шириной знака съезжает.
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                SizedBox(
-                  width: 24,
-                  child: FaIcon(
-                    method.icon,
-                    size: 20,
-                    color: method.foreground,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 30,
+                    child: Center(
+                      child: FaIcon(
+                        method.icon,
+                        size: height * 0.38,
+                        color: method.foreground,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 34),
                   child: Text(
                     label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 15.5,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: method.foreground,
                     ),
                   ),
                 ),
                 if (busy)
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(method.foreground),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(method.foreground),
+                      ),
                     ),
                   ),
               ],

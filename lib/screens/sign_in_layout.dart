@@ -1,0 +1,155 @@
+/// Геометрия экрана входа: где на присланной сцене кончается логотип, где
+/// сидят мишки и сколько места остаётся кнопкам.
+///
+/// Раньше экран был обычной колонкой, прижатой к низу: сцена лежала фоном, а
+/// подписи вставали там, где останется место. На коротком экране места не
+/// оставалось, и строка «Плюшевый малыш…» ложилась мишкам на лапы —
+/// заказчик 20.09: «на мишки есть наложения текста, сделай как на втором
+/// скрине».
+///
+/// Поэтому текст теперь ставится не от края экрана, а от самой картинки: в
+/// просвет между подписью «IRINA LEKAREVA» и капюшоном, а кнопки — ниже лап.
+/// Числа сняты с `assets/ui/signin_scene.jpg` и меряются в долях её высоты.
+library;
+
+import 'dart:math' as math;
+import 'dart:ui';
+
+/// Размер присланной сцены в пикселях.
+const double signInArtWidth = 941;
+const double signInArtHeight = 1672;
+
+/// Низ логотипа — нижний край строки «IRINA LEKAREVA».
+const double signInLogoBottom = 0.197;
+
+/// Верх мишек — макушка голубого капюшона.
+const double signInBearsTop = 0.245;
+
+/// Низ мишек: лапы кончаются на 0.525, ещё немного берём на тень.
+const double signInBearsBottom = 0.535;
+
+/// Насколько кадр разрешено утянуть вверх, когда кнопкам не хватает места.
+///
+/// Над логотипом в кадре пустое поле; срезать его незаметно, а мишкам это
+/// даёт отступить от кнопок. Больше этой доли трогать нельзя — начнёт
+/// срезаться ветка с фонариком.
+const double signInLiftLimit = 0.035;
+
+/// Кадр сцены на конкретном экране и места, за которые цепляются подписи.
+class SignInFrame {
+  const SignInFrame._(this.rect);
+
+  /// Куда рисуется картинка. Может выходить за экран: сцена показывается
+  /// «cover», то есть закрывает экран целиком, а лишнее уходит за край.
+  ///
+  /// Вписывать её по ширине с заливкой снизу (как было до 20.09) нельзя:
+  /// низ экрана тогда — плоская полоса краски, а на макете заказчика под
+  /// кнопками виден тот же ковёр с листьями и звёздами.
+  final Rect rect;
+
+  /// Кадр для экрана [scene]; [panelHeight] — сколько по-хорошему нужно
+  /// кнопкам, [bottomInset] — вырез под системную полосу снизу.
+  factory SignInFrame.of(
+    Size scene, {
+    double panelHeight = 0,
+    double bottomInset = 0,
+  }) {
+    final plain = SignInFrame._fit(scene, 0);
+    if (panelHeight <= scene.height - plain.bearsBottomY - bottomInset) {
+      return plain;
+    }
+
+    // Сколько тянуть вверх — считаем сразу начисто, а не «на глаз».
+    // Подъём тянет за собой масштаб (кадр должен по-прежнему доставать до
+    // низа экрана), масштаб опускает лапы, и подъём на глазок съедается сам
+    // собой. Отсюда равенство: свободное место под лапами равно высоте
+    // панели, из него и выражена доля подъёма.
+    final free = (scene.height - bottomInset - panelHeight) / scene.height;
+    final lift = ((signInBearsBottom - free) / (1 - free)).clamp(
+      0.0,
+      signInLiftLimit,
+    );
+
+    return SignInFrame._fit(scene, lift);
+  }
+
+  /// Кадр, закрывающий экран целиком и утянутый вверх на долю [lift].
+  ///
+  /// Масштаб учитывает этот сдвиг: иначе поднятый кадр оторвался бы от
+  /// нижнего края и под кнопками появилась бы полоса краски.
+  static SignInFrame _fit(Size scene, double lift) {
+    final scale = math.max(
+      scene.width / signInArtWidth,
+      scene.height / (signInArtHeight * (1 - lift)),
+    );
+    final size = Size(signInArtWidth * scale, signInArtHeight * scale);
+
+    return SignInFrame._(
+      Rect.fromLTWH(
+        (scene.width - size.width) / 2,
+        -lift * size.height,
+        size.width,
+        size.height,
+      ),
+    );
+  }
+
+  /// Середина просвета между логотипом и мишками — туда встаёт подзаголовок.
+  double get taglineCenterY =>
+      rect.top + (signInLogoBottom + signInBearsTop) / 2 * rect.height;
+
+  /// Высота этого просвета: если подпись в него не влезает, она наедет либо
+  /// на логотип, либо на капюшон.
+  double get taglineBand => (signInBearsTop - signInLogoBottom) * rect.height;
+
+  /// Линия, ниже которой мишек уже нет. Всё, что рисуется поверх сцены,
+  /// начинается отсюда.
+  double get bearsBottomY => rect.top + signInBearsBottom * rect.height;
+}
+
+/// Размеры панели входа под доступное место.
+///
+/// Пять кнопок, подпись над ними и две служебные строки под ними должны
+/// уместиться между лапами мишек и нижним краем экрана. Все размеры растут
+/// и сжимаются вместе, одной ручкой [room]: тогда при любом экране панель
+/// выглядит одной и той же, просто крупнее или мельче, — а не так, что
+/// кнопки сплющились, а подписи остались прежними.
+///
+/// Нижний предел выбран по пальцу: кнопка 42 — это уже минимум, ниже
+/// которого в неё начинают промахиваться. Верхний — по виду: кнопка во всю
+/// ладонь читается как заглушка.
+class SignInMetrics {
+  const SignInMetrics._(this.room);
+
+  /// Насколько просторно: 0 — теснее некуда, 1 — как на макете.
+  final double room;
+
+  double get buttonHeight => 42 + 12 * room;
+  double get gap => 7 + 3 * room;
+  double get promptSize => 12 + room;
+  double get skipHeight => 30 + 10 * room;
+  double get legalSize => 10.5 + 0.5 * room;
+
+  /// Всё, кроме самих кнопок: подпись сверху, «Пропустить» и условия в две
+  /// строки снизу.
+  double get chrome => promptSize * 1.32 + skipHeight + legalSize * 2.8;
+
+  /// Сколько места займёт панель целиком. Пять просветов, а не четыре:
+  /// один уходит под подпись.
+  double get height => 5 * buttonHeight + 5 * gap + chrome;
+
+  /// Панель, ужатая до предела: по ней считается, надо ли тянуть кадр вверх.
+  static const SignInMetrics tight = SignInMetrics._(0);
+
+  /// Панель в полный рост.
+  static const SignInMetrics roomy = SignInMetrics._(1);
+
+  /// Под [available] пикселей свободного места.
+  factory SignInMetrics.of(double available) {
+    final span = roomy.height - tight.height;
+
+    return SignInMetrics._(
+      ((available - tight.height) / span).clamp(0.0, 1.0),
+    );
+  }
+}

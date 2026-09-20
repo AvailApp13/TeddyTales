@@ -1,0 +1,150 @@
+import 'dart:ui' show Size;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/screens/sign_in_layout.dart';
+
+/// Экран входа: подписи не должны ложиться на мишек.
+///
+/// Заказчик 20.09 прислал скриншот, где строка «Плюшевый малыш…» легла
+/// мишкам на лапы, и макет, как должно быть. Раньше подписи вставали от
+/// края экрана и о картинке ничего не знали; теперь они привязаны к самой
+/// сцене — вот эта привязка здесь и проверяется.
+void main() {
+  // Телефон заказчика, он же с открытой панелью просмотра (там экран ниже),
+  // короткий Android и планшет.
+  const phone = Size(390, 844);
+  const viewer = Size(390, 682);
+  const small = Size(360, 640);
+  const tablet = Size(820, 1180);
+  const all = [phone, viewer, small, tablet];
+
+  SignInFrame frameOf(Size scene, {double bottomInset = 8}) => SignInFrame.of(
+    scene,
+    panelHeight: SignInMetrics.tight.height,
+    bottomInset: bottomInset,
+  );
+
+  group('Кадр сцены', () {
+    test('закрывает экран целиком, сколько бы его ни тянули вверх', () {
+      // Иначе под кнопками появится полоса краски вместо ковра.
+      for (final scene in all) {
+        final rect = frameOf(scene).rect;
+
+        expect(rect.left, lessThanOrEqualTo(0.01), reason: '$scene');
+        expect(rect.right, greaterThanOrEqualTo(scene.width - 0.01),
+            reason: '$scene');
+        expect(rect.top, lessThanOrEqualTo(0.01), reason: '$scene');
+        expect(rect.bottom, greaterThanOrEqualTo(scene.height - 0.01),
+            reason: '$scene');
+      }
+    });
+
+    test('сохраняет пропорции присланной картинки', () {
+      for (final scene in all) {
+        final rect = frameOf(scene).rect;
+
+        expect(
+          rect.height / rect.width,
+          closeTo(signInArtHeight / signInArtWidth, 0.001),
+          reason: '$scene',
+        );
+      }
+    });
+
+    test('вверх тянется не больше, чем есть пустого поля над логотипом', () {
+      for (final scene in all) {
+        final rect = frameOf(scene).rect;
+
+        expect(
+          -rect.top / rect.height,
+          lessThanOrEqualTo(signInLiftLimit + 0.001),
+          reason: '$scene',
+        );
+      }
+    });
+  });
+
+  group('Подзаголовок', () {
+    test('стоит в просвете между логотипом и капюшоном', () {
+      for (final scene in all) {
+        final frame = frameOf(scene);
+        final logo = frame.rect.top + signInLogoBottom * frame.rect.height;
+        final bears = frame.rect.top + signInBearsTop * frame.rect.height;
+
+        expect(frame.taglineCenterY, greaterThan(logo), reason: '$scene');
+        expect(frame.taglineCenterY, lessThan(bears), reason: '$scene');
+        // И просвет вообще есть: строке нужно куда-то встать.
+        expect(frame.taglineBand, greaterThan(16), reason: '$scene');
+      }
+    });
+
+    test('виден на экране, а не уехал за верхний край', () {
+      for (final scene in all) {
+        final frame = frameOf(scene);
+
+        expect(
+          frame.taglineCenterY - frame.taglineBand / 2,
+          greaterThan(0),
+          reason: '$scene',
+        );
+      }
+    });
+  });
+
+  group('Панель входа', () {
+    test('не залезает мишкам на лапы', () {
+      // Главная просьба заказчика. Допуск в пиксель — на округление: кадр
+      // тянут вверх ровно настолько, сколько панели не хватает.
+      for (final scene in [phone, viewer, tablet]) {
+        final frame = frameOf(scene);
+        final free = scene.height - frame.bearsBottomY - 8;
+        final panel = SignInMetrics.of(free).height;
+
+        expect(panel, lessThanOrEqualTo(free + 1), reason: '$scene');
+      }
+    });
+
+    test('на совсем коротком экране уступают мишки, а не кнопки', () {
+      // 360 × 640 — предел, дальше которого честного места нет: пять кнопок
+      // по пальцу с подписями просто не умещаются под лапами. Тогда панель
+      // ужимается до предела и заходит на нижний край сцены, но не настолько,
+      // чтобы закрыть мишек, — и кнопка остаётся кнопкой, а не полоской.
+      final frame = frameOf(small);
+      final free = small.height - frame.bearsBottomY - 8;
+      final metrics = SignInMetrics.of(free);
+
+      expect(metrics.room, 0);
+      expect(metrics.height - free, lessThan(24));
+    });
+
+    test('кнопка нигде не мельче пальца', () {
+      for (final scene in all) {
+        final frame = frameOf(scene);
+        final metrics = SignInMetrics.of(
+          scene.height - frame.bearsBottomY - 8,
+        );
+
+        expect(metrics.buttonHeight, greaterThanOrEqualTo(42), reason: '$scene');
+        expect(metrics.buttonHeight, lessThanOrEqualTo(54), reason: '$scene');
+      }
+    });
+
+    test('на просторном экране разворачивается в полный рост', () {
+      // Там, где места вдоволь, панель должна выглядеть как на макете, а не
+      // растягиваться дальше по экрану.
+      expect(SignInMetrics.of(1000).room, 1);
+      expect(SignInMetrics.of(0).room, 0);
+    });
+
+    test('чем теснее, тем мельче всё сразу, а не одни кнопки', () {
+      final tight = SignInMetrics.tight;
+      final roomy = SignInMetrics.roomy;
+
+      expect(roomy.buttonHeight, greaterThan(tight.buttonHeight));
+      expect(roomy.gap, greaterThan(tight.gap));
+      expect(roomy.promptSize, greaterThan(tight.promptSize));
+      expect(roomy.skipHeight, greaterThan(tight.skipHeight));
+      expect(roomy.legalSize, greaterThan(tight.legalSize));
+    });
+  });
+}
