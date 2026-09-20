@@ -52,8 +52,9 @@ const bool kStageLocksOnStats = false;
 /// ему не нужно: в отличие от четырёх остальных, оно никуда не вело — ласка
 /// происходит там, где мишка стоит.
 ///
-/// Проценты цифрами убраны совсем: заливка кольца и так показывает долю, а
-/// число рядом с ней — то же самое второй раз.
+/// Проценты заказчик просил сохранить, но мелко: подпись и число стоят
+/// одной строкой под кольцом, число — светлее и на пункт меньше. Двумя
+/// строками, как раньше, ряд получался громоздким.
 class CareStatsPanel extends StatefulWidget {
   const CareStatsPanel({
     super.key,
@@ -85,10 +86,12 @@ class CareStatsPanel extends StatefulWidget {
 
 class _CareStatsPanelState extends State<CareStatsPanel>
     with SingleTickerProviderStateMixin {
+  // Тот же ход, что у лапы внизу справа: заказчик 20.09 — «нужно сделать
+  // анимацию такую же, чтобы как она выпрыгивала».
   late final AnimationController _slide = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 280),
-    reverseDuration: const Duration(milliseconds: 220),
+    duration: const Duration(milliseconds: 460),
+    reverseDuration: const Duration(milliseconds: 260),
   );
 
   /// Открыт ли ряд. Отдельным полем, а не по значению анимации: в кадр
@@ -175,8 +178,10 @@ class _CareStatsPanelState extends State<CareStatsPanel>
                   top: 0,
                   child: Center(
                     child: _TotalButton(
+                      key: const ValueKey('care.toggle'),
                       value: CareStatsPanel.totalCare(widget.stats),
                       open: _open,
+                      squash: math.sin(_slide.value * math.pi) * 0.12,
                       onTap: _toggle,
                     ),
                   ),
@@ -191,33 +196,42 @@ class _CareStatsPanelState extends State<CareStatsPanel>
 
   /// Одно кольцо на своём месте в ряду — или сложенное под кнопкой.
   List<Widget> _ring(CareStat tile, int index, double slot, double closed) {
-    // Ближнее к кнопке кольцо трогается первым, дальнее последним: ряд
-    // разворачивается веером, а не едет одной плитой.
-    final t = CurvedAnimation(
-      parent: _slide,
-      curve: Interval(0.08 * (3 - index), 1, curve: Curves.easeOutCubic),
-      reverseCurve: Interval(0.08 * index, 1, curve: Curves.easeInCubic),
-    ).value;
+    // Почерк лапы: каждое следующее кольцо стартует чуть позже предыдущего,
+    // на вылете проскакивает своё место и возвращается, на сборе — просто
+    // уезжает: назад вещи не пружинят.
+    // Ближнее к кнопке кольцо трогается первым: очередь читается как вылет
+    // из-под кнопки, а не как гонка, где дальний стартовал раньше всех.
+    final start = (3 - index) * 0.12;
+    final local = ((_slide.value - start) / (1 - start)).clamp(0.0, 1.0);
+    final eased = _slide.status == AnimationStatus.reverse
+        ? Curves.easeInCubic.transform(local)
+        : Curves.easeOutBack.transform(local);
 
     // Пока ряд сложен, колец в дереве нет вовсе: иначе под кнопкой остаются
     // четыре прозрачных кружка, и скринридер читает спрятанное меню.
-    if (t <= 0) return const [];
+    if (local <= 0) return const [];
 
     return [
       Positioned(
-        left: closed + (index * slot - closed) * t,
+        left: closed + (index * slot - closed) * eased,
         width: slot,
         top: 0,
-        child: Opacity(
-          opacity: t.clamp(0, 1),
-          child: Center(
-            child: _StatRing(
-              stat: tile,
-              enabled:
-                  widget.onAction != null &&
-                  (!kStageLocksOnStats ||
-                      tile.action.isAvailableOn(widget.stage)),
-              onTap: () => _pick(tile.action),
+        child: IgnorePointer(
+          ignoring: local < 0.35,
+          child: Opacity(
+            opacity: local,
+            child: Transform.scale(
+              scale: 0.55 + 0.45 * local,
+              child: Center(
+                child: _StatRing(
+                  stat: tile,
+                  enabled:
+                      widget.onAction != null &&
+                      (!kStageLocksOnStats ||
+                          tile.action.isAvailableOn(widget.stage)),
+                  onTap: () => _pick(tile.action),
+                ),
+              ),
             ),
           ),
         ),
@@ -229,18 +243,27 @@ class _CareStatsPanelState extends State<CareStatsPanel>
 /// Кнопка с тремя полосками: общий уход на обводке, ряд колец внутри.
 class _TotalButton extends StatelessWidget {
   const _TotalButton({
+    super.key,
     required this.value,
     required this.open,
+    required this.squash,
     required this.onTap,
   });
 
   final double value;
   final bool open;
+
+  /// Приседание: в начале нажатия кнопка уходит вниз и сжимается, потом
+  /// возвращается. Считается от того же хода, что и вылет колец, поэтому
+  /// прыжок и разлёт — одно движение, а не два наложенных.
+  final double squash;
+
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
 
     return Semantics(
       button: true,
@@ -248,34 +271,110 @@ class _TotalButton extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: SizedBox(
-          width: CareStatsPanel._ringSize,
-          height: CareStatsPanel._ringSize,
-          child: CustomPaint(
-            painter: _RingPainter(
-              value: value.clamp(0, 100) / 100,
-              color: AppColors.sageDark,
-            ),
-            child: Center(
-              child: Container(
-                width: CareStatsPanel._ringSize - 13,
-                height: CareStatsPanel._ringSize - 13,
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  open ? Icons.close_rounded : Icons.menu_rounded,
-                  size: 24,
-                  color: AppColors.sageDark,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform.translate(
+              offset: Offset(0, squash * 22),
+              child: Transform.scale(
+                scaleX: 1 + squash * 0.7,
+                scaleY: 1 - squash * 0.7,
+                child: SizedBox(
+                  width: CareStatsPanel._ringSize,
+                  height: CareStatsPanel._ringSize,
+                  child: CustomPaint(
+                    painter: _RingPainter(
+                      value: value.clamp(0, 100) / 100,
+                      color: AppColors.sageDark,
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: CareStatsPanel._ringSize - 13,
+                        height: CareStatsPanel._ringSize - 13,
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        // Полоски рисуем сами: у материаловской иконки они
+                        // толще и в кружке выглядят тяжело.
+                        child: CustomPaint(
+                          painter: _BarsPainter(
+                            open: open,
+                            color: AppColors.sageDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 4),
+            // Общий уход стоит подписью под кнопкой — на одной строке с
+            // подписями колец, мелко и без слова «всего».
+            _Caption(
+              text: '${value.round()}%',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.sageDark,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// Три полоски, а в открытом виде — косой крест.
+///
+/// Переход между ними идёт по тому же ходу, что и вылет колец: средняя
+/// полоска тает, верхняя и нижняя сходятся в крест.
+class _BarsPainter extends CustomPainter {
+  _BarsPainter({required this.open, required this.color});
+
+  final bool open;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+
+    final center = size.center(Offset.zero);
+    const half = 8.0;
+    const step = 5.0;
+
+    if (open) {
+      canvas.drawLine(
+        center + const Offset(-6, -6),
+        center + const Offset(6, 6),
+        paint,
+      );
+      canvas.drawLine(
+        center + const Offset(6, -6),
+        center + const Offset(-6, 6),
+        paint,
+      );
+      return;
+    }
+
+    for (final dy in [-step, 0.0, step]) {
+      canvas.drawLine(
+        center + Offset(-half, dy),
+        center + Offset(half, dy),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarsPainter old) =>
+      old.open != open || old.color != color;
 }
 
 class _StatRing extends StatelessWidget {
@@ -323,9 +422,13 @@ class _StatRing extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
+            // Подпись и процент одной строкой: заказчик просил проценты
+            // сохранить, но мелко и не громоздко. Двумя строками, как было
+            // до 20.09, ряд занимал треть потолка комнаты.
             _Caption(
-              text: stat.label,
+              text: '${stat.label} ${stat.value.round()}%',
               style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10.5,
                 fontWeight: FontWeight.w700,
               ),
             ),

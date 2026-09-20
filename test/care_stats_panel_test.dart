@@ -13,8 +13,9 @@ import 'package:teddy_tales/widgets/care_stats_panel.dart';
 /// проверяется само поведение: что кольца достижимы, что сами они не
 /// разворачиваются и не сворачиваются, что любви среди них больше нет и что
 /// её показатель при этом не потерялся — он в общем проценте на кнопке.
-final button = find.byIcon(Icons.menu_rounded);
-final closeButton = find.byIcon(Icons.close_rounded);
+// Полоски и крест на кнопке рисуются кистью, а не иконкой, — ищем её по
+// ключу. Открыта она или нет, видно по самим кольцам.
+final button = find.byKey(const ValueKey('care.toggle'));
 final food = find.byIcon(Icons.restaurant);
 final love = find.byIcon(Icons.favorite);
 
@@ -59,9 +60,8 @@ void main() {
       await tester.tap(button);
       await tester.pumpAndSettle();
       expect(food, findsOneWidget);
-      expect(closeButton, findsOneWidget);
 
-      await tester.tap(closeButton);
+      await tester.tap(button);
       await tester.pumpAndSettle();
       expect(food, findsNothing);
       expect(button, findsOneWidget);
@@ -106,19 +106,33 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(love, findsNothing);
-      expect(find.text('Любовь'), findsNothing);
+      expect(find.textContaining('Любовь'), findsNothing);
     });
 
-    testWidgets('подписи остались, а процентов цифрами больше нет', (
-      tester,
-    ) async {
-      await pump(tester, tapped: []);
+    testWidgets('подпись и процент стоят одной строкой', (tester) async {
+      // Заказчик 20.09: проценты сохраняем, но мелко и не громоздко.
+      await pump(tester, tapped: [], stats: const BearCareStats(food: 60));
 
       await tester.tap(button);
       await tester.pumpAndSettle();
 
-      expect(find.text('Еда'), findsWidgets);
-      expect(find.textContaining('%'), findsNothing);
+      expect(find.textContaining('Еда 60%'), findsWidgets);
+    });
+
+    testWidgets('общий уход подписан под самой кнопкой', (tester) async {
+      await pump(
+        tester,
+        tapped: [],
+        stats: const BearCareStats(
+          food: 100,
+          hygiene: 100,
+          sleep: 100,
+          play: 100,
+          love: 0,
+        ),
+      );
+
+      expect(find.textContaining('80%'), findsWidgets);
     });
   });
 
