@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'scene_label.dart';
 
 /// Шапка главного экрана: монеты, имя питомца с возрастом, вход в профиль
 /// (КП 3.3).
@@ -33,71 +34,30 @@ class PetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Row(
       children: [
         _CoinBalance(coins: profile.coins),
-        // Имя не в плашке, а прямо на потолке: обводка по букве держит его
-        // читаемым на любом фоне комнаты, от розовой детской до голубой
-        // ванной, и не отнимает у комнаты полосу во всю ширину.
+        // Имя с возрастом — одной капсулой, как подписи колец и лепестков.
+        // Обводка по букве, стоявшая здесь до 20.09, на светлом потолке
+        // сливалась с фоном, а на тёмном давала ореол.
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _Outlined(
-                  text: petDisplayName(context.l10n, profile.name),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            child: Center(
+              child: SceneLabel(
+                text: petDisplayName(context.l10n, profile.name),
+                trailing: formatAge(context.l10n, age),
+                size: 13.5,
+                weight: 800,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 5,
                 ),
-                _Outlined(
-                  text: formatAge(context.l10n, age),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
         _ProfileButton(profile: profile, onTap: onOpenProfile),
-      ],
-    );
-  }
-}
-
-/// Текст со светлой обводкой — чтобы читался поверх комнаты.
-///
-/// Две копии одна поверх другой: нижняя обведена цветом фона приложения,
-/// верхняя залита. Тень тут не годится — она читается как объём и на
-/// светлом потолке превращается в грязь.
-class _Outlined extends StatelessWidget {
-  const _Outlined({required this.text, required this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: style?.copyWith(
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 3.5
-              ..strokeJoin = StrokeJoin.round
-              ..color = AppColors.background,
-          ),
-        ),
-        Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
       ],
     );
   }

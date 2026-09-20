@@ -7,6 +7,7 @@ import '../bear/bear_rig_spec.dart';
 import '../bear/bear_stats.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'scene_label.dart';
 
 /// Один показатель.
 class CareStat {
@@ -263,7 +264,6 @@ class _TotalButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
 
     return Semantics(
       button: true,
@@ -309,16 +309,13 @@ class _TotalButton extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             // Общий уход стоит подписью под кнопкой — на одной строке с
             // подписями колец, мелко и без слова «всего».
-            _Caption(
+            SceneLabel(
               text: '${value.round()}%',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.sageDark,
-              ),
+              size: 10,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
             ),
           ],
         ),
@@ -390,8 +387,6 @@ class _StatRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Opacity(
       opacity: enabled ? 1 : 0.45,
       child: GestureDetector(
@@ -421,51 +416,28 @@ class _StatRing extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 4),
-            // Подпись и процент одной строкой: заказчик просил проценты
-            // сохранить, но мелко и не громоздко. Двумя строками, как было
-            // до 20.09, ряд занимал треть потолка комнаты.
-            _Caption(
-              text: '${stat.label} ${stat.value.round()}%',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
+            const SizedBox(height: 5),
+            // Подпись и процент одной строкой в капсуле: проценты заказчик
+            // просил сохранить, но мелко. Двумя строками, как было до 20.09,
+            // ряд занимал треть потолка комнаты.
+            // Самая длинная подпись — «Гигиена 100%» — в своё место в ряду
+            // не влезает и обрезалась многоточием. Ужимаем её целиком, а не
+            // режем: процент в ней важнее красоты кегля.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SceneLabel(
+                text: stat.label,
+                trailing: '${stat.value.round()}%',
+                size: 10,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2.5,
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Подпись со светлой обводкой: кольца лежат поверх комнаты, и на тёмном
-/// участке обоев простой текст пропадёт.
-class _Caption extends StatelessWidget {
-  const _Caption({required this.text, required this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: style?.copyWith(
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 3
-              ..strokeJoin = StrokeJoin.round
-              ..color = AppColors.background,
-          ),
-        ),
-        Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
-      ],
     );
   }
 }

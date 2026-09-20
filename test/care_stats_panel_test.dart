@@ -116,7 +116,8 @@ void main() {
       await tester.tap(button);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Еда 60%'), findsWidgets);
+      expect(find.textContaining('Еда'), findsWidgets);
+      expect(find.textContaining('60%'), findsWidgets);
     });
 
     testWidgets('общий уход подписан под самой кнопкой', (tester) async {

@@ -8,6 +8,7 @@ import '../game/app_section.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
+import 'scene_label.dart';
 
 /// Кнопка-лапа и разлетающиеся из неё разделы.
 ///
@@ -330,20 +331,7 @@ class _PetalButton extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 5),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: AppColors.textPrimary.withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                sectionTitle(context.l10n, section),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+            SceneLabel(text: sectionTitle(context.l10n, section), size: 10.5),
           ],
         ),
       ),
