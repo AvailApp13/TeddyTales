@@ -56,6 +56,12 @@ enum _SignInMethod {
 
 class _SignInScreenState extends State<SignInScreen>
     with SingleTickerProviderStateMixin {
+  /// Цвет самой нижней строки присланной сцены — снят с картинки.
+  ///
+  /// Кадр вписан по ширине, поэтому ниже него остаётся полоса. Залитая этим
+  /// цветом, она продолжает ковёр без шва.
+  static const Color _sceneEdge = Color(0xFFEAC6B9);
+
   /// Сколько уведомление висит, прежде чем пустить внутрь. Полторы секунды —
   /// столько нужно, чтобы прочитать две строки и не заскучать.
   static const Duration _readTime = Duration(milliseconds: 1600);
@@ -93,18 +99,43 @@ class _SignInScreenState extends State<SignInScreen>
     final l10n = context.l10n;
 
     return Scaffold(
-      body: Container(
+      // Фон под картинкой — цвет её нижнего края. Если экран окажется шире
+      // кадра и картинку придётся вписывать, по бокам будет не белая
+      // полоса, а продолжение сцены.
+      backgroundColor: _sceneEdge,
+      body: DecoratedBox(
         decoration: const BoxDecoration(
-          // Мягкий переход от кремового к пудровому: фирменные свотчи 3 и 2.
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.background, AppColors.cream, Color(0xFFF3D9D2)],
-            stops: [0.0, 0.55, 1.0],
+          // Присланная заказчиком сцена: логотип и оба мишки. Прижата к
+          // верху и вписана **по ширине**, а не cover. Cover на узком
+          // телефоне масштабирует кадр по высоте, то есть приближает его, —
+          // мишки съезжают вниз, и подписи ложатся им на морды. По ширине
+          // кадр всегда виден целиком, а остаток внизу закрашен цветом его
+          // же нижней строки.
+          image: DecorationImage(
+            image: AssetImage('assets/ui/signin_scene.jpg'),
+            fit: BoxFit.fitWidth,
+            alignment: Alignment.topCenter,
           ),
         ),
         child: Stack(
           children: [
+            // Мягкий переход от ковра к ровному низу: на коротком экране
+            // текст ложится на картинку, и без этого он читался бы по
+            // ворсинкам ковра.
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x00EAC6B9), Color(0x99F0DACE), _sceneEdge],
+                      stops: [0.60, 0.79, 0.93],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             SafeArea(
               child: LayoutBuilder(
                 // `Spacer` внутри прокручиваемой области не работает:
@@ -115,70 +146,62 @@ class _SignInScreenState extends State<SignInScreen>
                 // шапку, кнопки и подпись по своим местам, а на маленьком
                 // экране остаётся прокрутка.
                 builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 14),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - 36,
+                      minHeight: constraints.maxHeight - 30,
                     ),
                     child: IntrinsicHeight(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const SizedBox(height: 24),
-                              const _Wordmark(),
-                              const SizedBox(height: 14),
-                              Text(
-                                l10n.signInTagline,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  height: 1.4,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          // Верх отдан сцене: логотип и мишки нарисованы на
+                          // фоне, повторять их виджетами незачем.
+                          const Spacer(),
+                          Text(
+                            l10n.signInTagline,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              height: 1.35,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                l10n.signInPrompt,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  letterSpacing: 0.4,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              for (final method in _SignInMethod.values) ...[
-                                _MethodButton(
-                                  method: method,
-                                  label: method.label(l10n),
-                                  busy: _pending == method,
-                                  onTap: () => _tap(method),
-                                ),
-                                const SizedBox(height: 10),
-                              ],
-                              const SizedBox(height: 6),
-                              TextButton(
-                                onPressed: () => _tap(_SignInMethod.apple),
-                                child: Text(
-                                  l10n.signInSkip,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 18),
+                          Text(
+                            l10n.signInPrompt,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              letterSpacing: 0.4,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
+                          const SizedBox(height: 14),
+                          for (final method in _SignInMethod.values) ...[
+                            _MethodButton(
+                              method: method,
+                              label: method.label(l10n),
+                              busy: _pending == method,
+                              onTap: () => _tap(method),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          const SizedBox(height: 2),
+                          TextButton(
+                            onPressed: () => _tap(_SignInMethod.apple),
+                            child: Text(
+                              l10n.signInSkip,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
                           Text(
                             l10n.signInLegal,
                             textAlign: TextAlign.center,
@@ -186,7 +209,7 @@ class _SignInScreenState extends State<SignInScreen>
                               fontSize: 11,
                               height: 1.45,
                               color: AppColors.textSecondary.withValues(
-                                alpha: 0.75,
+                                alpha: 0.8,
                               ),
                             ),
                           ),
@@ -202,47 +225,6 @@ class _SignInScreenState extends State<SignInScreen>
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Название приложения в кружке — пока вместо логотипа из брендбука.
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 84,
-          height: 84,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.tan.withValues(alpha: 0.28),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: const Text('🧸', style: TextStyle(fontSize: 40)),
-        ),
-        const SizedBox(height: 18),
-        const Text(
-          'TeddyTales',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -279,7 +261,7 @@ class _MethodButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Container(
-            height: 54,
+            height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),

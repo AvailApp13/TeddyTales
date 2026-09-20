@@ -44,6 +44,7 @@ flutter:
     - assets/rive/
     - assets/images/
     - assets/rooms/
+    - assets/ui/
 
   fonts:
     # Семейство обязано называться буквально «Roboto».
