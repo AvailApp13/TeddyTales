@@ -64,10 +64,21 @@ class RoomSlotLayer extends StatelessWidget {
     required this.onTapEmpty,
     this.depth = SlotDepth.front,
     this.hintLimit = 3,
+    this.hint = false,
+    this.accepts,
   });
 
   final GameState game;
   final RoomKind room;
+
+  /// Показывать ли свободные места. Постоянной подсветки в комнате нет —
+  /// заказчик 20.09: «убери эти квадраты подсказки»; она включается только
+  /// на время обустройства.
+  final bool hint;
+
+  /// Если вещь уже выбрана, подсвечиваются только места, которые её примут:
+  /// кроватку некуда вешать на стену, и предлагать это место незачем.
+  final ItemKind? accepts;
 
   /// Какой заход рисуем: дальние места или ближние.
   final SlotDepth depth;
@@ -105,7 +116,10 @@ class RoomSlotLayer extends StatelessWidget {
           if (hasA != hasB) return hasA ? -1 : 1;
           return (b.maxW * b.maxH).compareTo(a.maxW * a.maxH);
         });
-    final hinted = empty.take(hintLimit).toSet();
+    // В обустройстве лимит не нужен: человек пришёл ставить вещи и должен
+    // видеть все места сразу. Лимит был про подсказку «попробуй сюда» на
+    // обычном экране, а это другой разговор.
+    final hinted = hint ? empty.toSet() : empty.take(hintLimit).toSet();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -121,7 +135,11 @@ class RoomSlotLayer extends StatelessWidget {
                   width: width,
                   height: height,
                   game: game,
-                  hinted: showSlotHints && hinted.contains(slot),
+                  hinted:
+                      hint &&
+                      (accepts == null
+                          ? hinted.contains(slot)
+                          : slot.accepts.contains(accepts)),
                   onTapItem: onTapItem,
                   onTapEmpty: onTapEmpty,
                 ),

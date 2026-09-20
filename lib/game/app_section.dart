@@ -31,7 +31,7 @@ import '../bear/bear_rig_spec.dart';
 /// стоит первым. Закрытая дверь злит, витрина с «пока рано» — продаёт.
 enum AppSection {
   home('Главная', Icons.home_rounded, BearStage.newborn),
-  room('Комната', Icons.chair_rounded, BearStage.newborn),
+  room('Обставить', Icons.auto_fix_high_rounded, BearStage.newborn),
   shop('Магазин', Icons.storefront_rounded, BearStage.newborn),
   learning('Обучение', Icons.school_rounded, BearStage.newborn),
   catalog('Мишки', Icons.card_giftcard_rounded, BearStage.newborn),

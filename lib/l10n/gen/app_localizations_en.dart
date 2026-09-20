@@ -1051,7 +1051,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSectionProfile => 'Profile';
 
   @override
-  String get navSectionRoom => 'Room';
+  String get navSectionRoom => 'Decorate';
 
   @override
   String get navSectionShop => 'Shop';
@@ -1310,6 +1310,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopNotEnoughCoins => 'Not enough coins';
+
+  @override
+  String get furnishPickItem => 'Pick a thing';
+
+  @override
+  String get furnishPickSlot => 'Now pick a spot';
+
+  @override
+  String get furnishDone => 'Done';
+
+  @override
+  String get furnishBuyMore => 'Buy more';
+
+  @override
+  String furnishPlaced(String name) {
+    return '$name is in place';
+  }
+
+  @override
+  String furnishRemoved(String name) {
+    return '$name taken away';
+  }
+
+  @override
+  String get furnishNoSlot => 'No spot for this here';
 
   @override
   String get shopAddToCart => 'Add to cart';

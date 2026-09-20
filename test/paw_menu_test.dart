@@ -54,7 +54,9 @@ void main() {
     await tester.tap(paw);
     await tester.pumpAndSettle();
 
-    for (final title in ['Комната', 'Магазин', 'Обучение', 'Мишки']) {
+    // «Обставить» вместо прежней «Комнаты»: с 20.09 это не отдельный экран
+    // со списком и ценами, а режим прямо на сцене.
+    for (final title in ['Обставить', 'Магазин', 'Обучение', 'Мишки']) {
       expect(find.text(title), findsOneWidget, reason: title);
     }
     // Лапа превратилась в крестик: второй тап собирает меню обратно.

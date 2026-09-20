@@ -1849,7 +1849,7 @@ abstract class AppLocalizations {
   /// No description provided for @navSectionRoom.
   ///
   /// In ru, this message translates to:
-  /// **'Комната'**
+  /// **'Обставить'**
   String get navSectionRoom;
 
   /// No description provided for @navSectionShop.
@@ -2319,6 +2319,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не хватает монет'**
   String get shopNotEnoughCoins;
+
+  /// No description provided for @furnishPickItem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери вещь'**
+  String get furnishPickItem;
+
+  /// No description provided for @furnishPickSlot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теперь выбери место'**
+  String get furnishPickSlot;
+
+  /// No description provided for @furnishDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get furnishDone;
+
+  /// No description provided for @furnishBuyMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купить ещё'**
+  String get furnishBuyMore;
+
+  /// No description provided for @furnishPlaced.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} на месте'**
+  String furnishPlaced(String name);
+
+  /// No description provided for @furnishRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} убрали'**
+  String furnishRemoved(String name);
+
+  /// No description provided for @furnishNoSlot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для этой вещи здесь нет места'**
+  String get furnishNoSlot;
 
   /// No description provided for @shopAddToCart.
   ///

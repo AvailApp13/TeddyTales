@@ -984,7 +984,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSectionProfile => '我的';
 
   @override
-  String get navSectionRoom => '房间';
+  String get navSectionRoom => '布置';
 
   @override
   String get navSectionShop => '商店';
@@ -1240,6 +1240,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shopNotEnoughCoins => '金币不够';
+
+  @override
+  String get furnishPickItem => '选一件物品';
+
+  @override
+  String get furnishPickSlot => '再选一个位置';
+
+  @override
+  String get furnishDone => '完成';
+
+  @override
+  String get furnishBuyMore => '再买一些';
+
+  @override
+  String furnishPlaced(String name) {
+    return '$name已就位';
+  }
+
+  @override
+  String furnishRemoved(String name) {
+    return '已收起$name';
+  }
+
+  @override
+  String get furnishNoSlot => '这里没有合适的位置';
 
   @override
   String get shopAddToCart => '加入购物车';

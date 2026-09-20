@@ -7,10 +7,13 @@ import '../game/game_state.dart';
 import '../game/pet_name.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
+import '../game/shop_items.dart';
+import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/care_stats_panel.dart';
+import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
@@ -26,7 +29,6 @@ import 'feed_screen.dart';
 import 'growth_screen.dart';
 import 'learning_screen.dart';
 import 'profile_screen.dart';
-import 'room_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
 
@@ -136,10 +138,65 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openSheet(Widget screen) =>
       showSectionSheet(context: context, builder: (_) => screen);
 
+  /// Включён ли режим обустройства и какая вещь сейчас в руках.
+  ///
+  /// Заказчик 20.09 согласился развести магазин и комнату: магазин — касса,
+  /// комната — только «куда поставить». Расстановка живёт прямо здесь, на
+  /// сцене, а не на отдельном экране: расстановка — это примерка, а уйти
+  /// на другой экран, выбрать вещь вслепую и вернуться смотреть — уже не
+  /// примерка.
+  bool _furnishing = false;
+  ShopItem? _picked;
+
+  void _startFurnishing() => setState(() {
+    _furnishing = true;
+    _picked = null;
+  });
+
+  void _stopFurnishing() => setState(() {
+    _furnishing = false;
+    _picked = null;
+  });
+
+  /// Тап по месту в режиме обустройства.
+  void _useSlot(RoomSlot slot) {
+    final game = widget.game;
+    final l10n = context.l10n;
+    final picked = _picked;
+
+    if (picked != null) {
+      if (!slot.accepts.contains(picked.kind)) {
+        _toastFurnish(l10n.furnishNoSlot);
+        return;
+      }
+      game.placeInSlot(slot.id, picked.id);
+      _toastFurnish(l10n.furnishPlaced(shopItemName(l10n, picked.id)));
+      setState(() => _picked = null);
+      return;
+    }
+
+    // Вещь не выбрана: тап по занятому месту убирает вещь обратно к себе.
+    final standing = game.itemInSlot(slot.id);
+    if (standing == null) return;
+
+    game.clearSlot(slot.id);
+    _toastFurnish(l10n.furnishRemoved(shopItemName(l10n, standing)));
+    setState(() {});
+  }
+
+  void _toastFurnish(String text) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
+      );
+  }
+
   void _openSection(AppSection section) {
     switch (section) {
+      // «Комната» больше не список с ценами, а режим прямо на сцене.
       case AppSection.room:
-        _openSheet(RoomScreen(game: widget.game));
+        _startFurnishing();
       case AppSection.shop:
         _openSheet(ShopScreen(game: widget.game));
       case AppSection.learning:
@@ -270,7 +327,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   onAcceptInitiative: _runAction,
                   riveAssetPath: widget.riveAssetPath,
                   game: widget.game,
-                  onSlotTap: _openSlotSheet,
+                  onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
+                  furnishing: _furnishing,
+                  picked: _picked,
                   room: _room,
                   onRoomChanged: (kind) => setState(() => _room = kind),
                   onOpenFeed: _openFeed,
@@ -292,6 +351,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Слой управления: шапка и кольца показателей вверху, над
               // потолком. Пустота под ними касания не ловит — погладить
               // мишку можно прямо через неё.
+              //
+              // В режиме обустройства его не видно: комната должна быть
+              // видна целиком, иначе не разглядеть, что получается.
+              if (!_furnishing)
               SafeArea(
                 bottom: false,
                 child: Padding(
@@ -342,12 +405,28 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               // Разделы. Лежат выше всего: разлетевшиеся кружки должны
               // перекрывать и комнату, и кольца показателей.
-              PawMenu(stage: state.stage, onSelected: _openSection),
+              if (!_furnishing)
+                PawMenu(stage: state.stage, onSelected: _openSection),
+              if (_furnishing)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FurnishBar(
+                    game: widget.game,
+                    room: _room,
+                    picked: _picked,
+                    onPick: (item) => setState(() => _picked = item),
+                    onShop: () {
+                      _stopFurnishing();
+                      _openSheet(ShopScreen(game: widget.game));
+                    },
+                    onDone: _stopFurnishing,
+                  ),
+                ),
             ],
           ),
           // Дев-панель уехала влево: справа внизу теперь лапа.
           floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-          floatingActionButton: widget.onOpenDevPanel == null
+          floatingActionButton: _furnishing || widget.onOpenDevPanel == null
               ? null
               : FloatingActionButton.small(
                   onPressed: () => widget.onOpenDevPanel!(context),
@@ -369,6 +448,8 @@ class _RoomScene extends StatelessWidget {
     required this.onOpenCare,
     required this.game,
     required this.onSlotTap,
+    required this.furnishing,
+    required this.picked,
     required this.room,
     required this.onRoomChanged,
     required this.onOpenFeed,
@@ -385,6 +466,13 @@ class _RoomScene extends StatelessWidget {
 
   /// Тап по месту — занятому или свободному.
   final ValueChanged<RoomSlot> onSlotTap;
+
+  /// Идёт ли обустройство: тогда свободные места подсвечены, а занятые
+  /// отдают вещь обратно по тапу.
+  final bool furnishing;
+
+  /// Вещь в руках: подсвечиваются только те места, куда она встанет.
+  final ShopItem? picked;
 
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
@@ -456,6 +544,8 @@ class _RoomScene extends StatelessWidget {
             game: game,
             room: room,
             depth: SlotDepth.behind,
+            hint: furnishing,
+            accepts: picked?.kind,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,
           ),
@@ -502,6 +592,8 @@ class _RoomScene extends StatelessWidget {
           child: RoomSlotLayer(
             game: game,
             room: room,
+            hint: furnishing,
+            accepts: picked?.kind,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,
           ),

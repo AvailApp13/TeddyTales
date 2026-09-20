@@ -582,7 +582,7 @@
   "navSectionHome": "Главная",
   "navSectionLearning": "Обучение",
   "navSectionProfile": "Профиль",
-  "navSectionRoom": "Комната",
+  "navSectionRoom": "Обставить",
   "navSectionShop": "Магазин",
   "petDefaultName": "Мой малыш",
   "profileAgeLabel": "Возраст",
@@ -706,6 +706,19 @@
   "shopGroupLater": "Пригодится, когда подрастёт",
   "shopGroupNow": "Малышу сейчас",
   "shopNotEnoughCoins": "Не хватает монет",
+  "furnishPickItem": "Выбери вещь",
+  "furnishPickSlot": "Теперь выбери место",
+  "furnishDone": "Готово",
+  "furnishBuyMore": "Купить ещё",
+  "furnishPlaced": "{name} на месте",
+  "furnishRemoved": "{name} убрали",
+  "furnishNoSlot": "Для этой вещи здесь нет места",
+  "@furnishPlaced": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "@furnishRemoved": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "shopAddToCart": "В корзину",
   "shopRemoveFromCart": "Убрать из корзины",
   "shopZoom": "Рассмотреть",

@@ -1060,7 +1060,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navSectionProfile => 'Профиль';
 
   @override
-  String get navSectionRoom => 'Комната';
+  String get navSectionRoom => 'Обставить';
 
   @override
   String get navSectionShop => 'Магазин';
@@ -1319,6 +1319,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shopNotEnoughCoins => 'Не хватает монет';
+
+  @override
+  String get furnishPickItem => 'Выбери вещь';
+
+  @override
+  String get furnishPickSlot => 'Теперь выбери место';
+
+  @override
+  String get furnishDone => 'Готово';
+
+  @override
+  String get furnishBuyMore => 'Купить ещё';
+
+  @override
+  String furnishPlaced(String name) {
+    return '$name на месте';
+  }
+
+  @override
+  String furnishRemoved(String name) {
+    return '$name убрали';
+  }
+
+  @override
+  String get furnishNoSlot => 'Для этой вещи здесь нет места';
 
   @override
   String get shopAddToCart => 'В корзину';
