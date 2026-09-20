@@ -80,58 +80,60 @@ class RoomSlot {
 /// Тридцать мест дали бы витрину склада, а не комнату.
 const List<RoomSlot> roomSlots = [
   // --- Детская ------------------------------------------------------------
-  // Крупная мебель у левой стены, под окном: самое заметное место кадра и
-  // первое, которое обставляет игрок — кроватка входит в бесплатный набор.
-  RoomSlot(
-    id: 'nursery.floor_left',
-    room: RoomKind.nursery,
-    x: 0.17,
-    // Место стоит НА ПОЛУ и не поднимается выше плинтуса. Высокая рамка
-    // здесь залезала прямо на окно — заказчик увидел это первым: «ты прям
-    // на окно поставил что-то». Высота ограничена так, чтобы верх вещи
-    // оставался ниже подоконника.
-    y: 0.82,
-    // Ширина подобрана по кадру: мишка стоит по центру и занимает примерно
-    // треть. Место шире 0.34 начинает заезжать на него, и рамка читается
-    // как перечёркнутый герой.
-    maxW: 0.32,
-    maxH: 0.17,
-    accepts: {ItemKind.furniture},
-    depth: 4,
-  ),
-  // Задняя стена слева: высокое место под шкаф или полку.
+  //
+  // Перемерено 20.09 по пустой комнате, которую прислал заказчик. Прежняя
+  // разметка обходила нарисованную мебель — кресло, комод, ковёр были частью
+  // фона, и места лепились по остаткам. Теперь комната пустая, и места
+  // расставлены как в настоящей детской: крупная мебель вдоль задней стены,
+  // мягкое — по углам, ковёр под ногами, картины на стене.
+  //
+  // Стык стены с полом на 0.525, у левой стены он уходит вниз до 0.60.
+  // Мишка стоит по центру на 0.80 и занимает примерно от 0.33 до 0.67
+  // ширины — центральные напольные места этой полосы избегают, иначе рамка
+  // перечёркивает ему лицо.
+
+  // Задняя стена, левее центра: кроватка, комод, стеллаж.
   RoomSlot(
     id: 'nursery.back_left',
     room: RoomKind.nursery,
-    // Мишка вырос до 52% высоты и занимает по центру примерно от 0.33 до
-    // 0.67 ширины. Всё, что попадает в эту полосу, перечёркивает ему лицо,
-    // поэтому напольные места живут по краям кадра, а не по центру.
-    x: 0.30,
-    y: 0.62,
-    maxW: 0.17,
-    maxH: 0.26,
-    accepts: {ItemKind.furniture},
-    depth: 2,
-  ),
-  // Задняя стена справа: стол, комод.
-  RoomSlot(
-    id: 'nursery.back_right',
-    room: RoomKind.nursery,
-    x: 0.80,
-    y: 0.64,
-    maxW: 0.24,
+    x: 0.29,
+    y: 0.585,
+    maxW: 0.27,
     maxH: 0.24,
     accepts: {ItemKind.furniture},
     depth: 2,
   ),
-  // Правый угол: кресло, растение, корзина.
+  // Задняя стена, правее центра.
+  RoomSlot(
+    id: 'nursery.back_right',
+    room: RoomKind.nursery,
+    x: 0.71,
+    y: 0.585,
+    maxW: 0.27,
+    maxH: 0.24,
+    accepts: {ItemKind.furniture},
+    depth: 2,
+  ),
+  // У окна слева. Высота ограничена подоконником: высокая вещь здесь лезет
+  // на окно — заказчик поймал это первым ещё на старом фоне.
+  RoomSlot(
+    id: 'nursery.floor_left',
+    room: RoomKind.nursery,
+    x: 0.13,
+    y: 0.70,
+    maxW: 0.25,
+    maxH: 0.22,
+    accepts: {ItemKind.furniture, ItemKind.decor},
+    depth: 4,
+  ),
+  // Правый угол: кресло, качели, растение.
   RoomSlot(
     id: 'nursery.corner_right',
     room: RoomKind.nursery,
-    x: 0.92,
+    x: 0.87,
     y: 0.72,
-    maxW: 0.20,
-    maxH: 0.22,
+    maxW: 0.26,
+    maxH: 0.26,
     accepts: {ItemKind.furniture, ItemKind.decor},
     depth: 3,
   ),
@@ -140,85 +142,74 @@ const List<RoomSlot> roomSlots = [
     id: 'nursery.rug',
     room: RoomKind.nursery,
     x: 0.50,
-    y: 0.95,
-    maxW: 0.46,
-    maxH: 0.09,
+    y: 0.92,
+    maxW: 0.54,
+    maxH: 0.15,
     accepts: {ItemKind.furniture},
     depth: 1,
   ),
-  // Три места под игрушки: слева от мишки, справа и ближе к зрителю.
+  // Три места под игрушки: по бокам от мишки и ближе к зрителю.
   RoomSlot(
     id: 'nursery.toy_left',
     room: RoomKind.nursery,
-    x: 0.16,
+    x: 0.15,
     y: 0.88,
-    maxW: 0.15,
-    maxH: 0.13,
+    maxW: 0.17,
+    maxH: 0.15,
     accepts: {ItemKind.toy},
     depth: 6,
   ),
   RoomSlot(
     id: 'nursery.toy_right',
     room: RoomKind.nursery,
-    x: 0.84,
+    x: 0.85,
     y: 0.88,
-    maxW: 0.15,
-    maxH: 0.13,
+    maxW: 0.17,
+    maxH: 0.15,
     accepts: {ItemKind.toy},
     depth: 6,
   ),
   RoomSlot(
     id: 'nursery.toy_front',
     room: RoomKind.nursery,
-    x: 0.66,
-    y: 0.97,
-    maxW: 0.17,
-    maxH: 0.14,
+    x: 0.63,
+    y: 0.99,
+    maxW: 0.19,
+    maxH: 0.16,
     accepts: {ItemKind.toy},
     depth: 7,
   ),
-  // Стены. Левая — над кроваткой; задняя — два места; под потолком гирлянда.
-  RoomSlot(
-    id: 'nursery.wall_left',
-    room: RoomKind.nursery,
-    x: 0.13,
-    y: 0.30,
-    maxW: 0.14,
-    maxH: 0.16,
-    accepts: {ItemKind.decor},
-    onWall: true,
-  ),
+  // Стены. Задняя — два места под картины и полки, левая у окна — одно.
   RoomSlot(
     id: 'nursery.wall_back_left',
     room: RoomKind.nursery,
-    x: 0.45,
-    y: 0.28,
-    maxW: 0.16,
-    maxH: 0.18,
+    x: 0.36,
+    y: 0.31,
+    maxW: 0.20,
+    maxH: 0.17,
     accepts: {ItemKind.decor},
     onWall: true,
   ),
   RoomSlot(
     id: 'nursery.wall_back_right',
     room: RoomKind.nursery,
-    x: 0.78,
-    y: 0.28,
-    maxW: 0.16,
-    maxH: 0.18,
+    x: 0.68,
+    y: 0.31,
+    maxW: 0.20,
+    maxH: 0.17,
     accepts: {ItemKind.decor},
     onWall: true,
   ),
   RoomSlot(
-    id: 'nursery.wall_top',
+    id: 'nursery.wall_left',
     room: RoomKind.nursery,
-    x: 0.62,
-    y: 0.12,
-    maxW: 0.46,
-    maxH: 0.09,
+    x: 0.14,
+    y: 0.25,
+    maxW: 0.15,
+    maxH: 0.15,
     accepts: {ItemKind.decor},
     onWall: true,
   ),
-
   // --- Кухня ---------------------------------------------------------------
   // Мест меньше: кухня не обставляется игроком, она пока смена обстановки.
   // Четыре места — чтобы было куда поставить купленное, если человек
