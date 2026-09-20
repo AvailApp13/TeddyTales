@@ -15,6 +15,7 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
 import '../widgets/room_item_sheet.dart';
+import '../widgets/room_ceiling.dart';
 import '../widgets/room_slot_layer.dart';
 import '../widgets/room_switcher.dart';
 import '../widgets/room_scene_backdrop.dart';
@@ -83,19 +84,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// Рост мишки в долях высоты сцены.
+  /// Высота нижнего меню, под которое уходит комната.
   ///
-  /// 45% было решением заказчика от 17.09 взамен прежнего «во весь экран».
-  /// На живом фоне комната оказалась просторнее расчётной, и мишка в ней
-  /// потерялся — 18.09 заказчик попросил прибавить примерно 15%.
-  static const double _heroHeight = 0.52;
-
-  /// Модуль мебели равен росту героя — как и должно быть по размерной сетке.
-  ///
-  /// Костыль «мебель мельче героя» больше не нужен: глубину теперь даёт не
-  /// заниженный модуль, а план, на котором стоит предмет
-  /// (`docs/room-design-v1.md`). Шкаф у задней стены мельче кроватки не
-  /// потому, что мы его уменьшили, а потому, что он дальше.
+  /// Меню по решению заказчика 20.09 в итоге исчезнет — разделы переедут в
+  /// кнопку-лапу. Пока оно на месте, показателям нужно знать, сколько под
+  /// ними занято, иначе они лягут прямо на вкладки.
+  static const double _bottomNavHeight = 80;
 
   AppSection _section = AppSection.home;
 
@@ -225,51 +219,63 @@ class _HomeScreenState extends State<HomeScreen> {
         final age = widget.calendar.ageAt(profile.birthAt);
 
         return Scaffold(
-          body: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.pagePadding,
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  PetHeader(profile: profile, age: age),
-                  const SizedBox(height: AppDimens.gap),
-                  Expanded(
-                    child: _RoomScene(
+          // Комната занимает весь телефон, включая полосу под нижним меню
+          // (решение заказчика 20.09). Шапка и показатели лежат поверх неё
+          // отдельными слоями, а не делят с ней высоту колонкой.
+          extendBody: true,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: _RoomScene(
+                  controller: widget.controller,
+                  language: widget.language,
+                  onAcceptInitiative: _runAction,
+                  riveAssetPath: widget.riveAssetPath,
+                  game: widget.game,
+                  onSlotTap: _openSlotSheet,
+                  room: _room,
+                  onRoomChanged: (kind) => setState(() => _room = kind),
+                  onOpenCare: () => _open(
+                    CareScreen(
                       controller: widget.controller,
-                      language: widget.language,
-                      onAcceptInitiative: _runAction,
-                      riveAssetPath: widget.riveAssetPath,
-                      game: widget.game,
-                      onSlotTap: _openSlotSheet,
-                      room: _room,
-                      onRoomChanged: (kind) => setState(() => _room = kind),
-                      heroHeight: _heroHeight,
-                      onOpenCare: () => _open(
-                        CareScreen(
+                      onOpenFeed: () => _open(
+                        FeedScreen(
                           controller: widget.controller,
-                          onOpenFeed: () => _open(
-                            FeedScreen(
-                              controller: widget.controller,
-                              game: widget.game,
-                            ),
-                          ),
+                          game: widget.game,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppDimens.gap),
-                  CareStatsPanel(
-                    stats: state.stats,
-                    stage: state.stage,
-                    onAction: _runAction,
-                  ),
-                  const SizedBox(height: AppDimens.gap),
-                ],
+                ),
               ),
-            ),
+              // Слой управления. Пустоты в нём касания не ловят: между
+              // шапкой и показателями стоит распорка, а она прозрачна для
+              // пальца — погладить мишку можно через неё.
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimens.pagePadding,
+                    8,
+                    AppDimens.pagePadding,
+                    // Место под нижнее меню: оно ещё на своём месте, но
+                    // комната уже уходит под него.
+                    _bottomNavHeight + AppDimens.gap,
+                  ),
+                  child: Column(
+                    children: [
+                      PetHeader(profile: profile, age: age),
+                      const Spacer(),
+                      CareStatsPanel(
+                        stats: state.stats,
+                        stage: state.stage,
+                        onAction: _runAction,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           floatingActionButton: widget.onOpenDevPanel == null
               ? null
@@ -301,7 +307,6 @@ class _RoomScene extends StatelessWidget {
     required this.onSlotTap,
     required this.room,
     required this.onRoomChanged,
-    this.heroHeight = RoomSceneBackdrop.defaultBearModule,
   });
 
   final BearController controller;
@@ -315,16 +320,6 @@ class _RoomScene extends StatelessWidget {
   /// Тап по месту — занятому или свободному.
   final ValueChanged<RoomSlot> onSlotTap;
 
-  /// Рост героя в долях высоты сцены.
-  final double heroHeight;
-
-  /// Где герой стоит на полу.
-  ///
-  /// Считается от камеры фона, а не подбирается на глаз: разбор в
-  /// [RoomSceneBackdrop.standLine]. У самого нижнего края кадра мишка
-  /// читался ростом в 66 см, и комната из-за этого казалась залом.
-  static const double _floorLine = RoomSceneBackdrop.standLine;
-
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
   final ValueChanged<RoomKind> onRoomChanged;
@@ -336,108 +331,118 @@ class _RoomScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.outline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Габаритная сборка комнаты: фон и мебель каталога в масштабе
-          // размерной сетки (room_layout.dart) — мебель мельче героя, как
-          // задний план с перспективой на макете.
-          Positioned.fill(child: RoomSceneBackdrop(room: room)),
-          // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
-          // мишкой. Мишка теперь лежит между двумя слоями мест, и будь тап
-          // на нём — он перехватывал бы касания по дальним вещам, которые
-          // рисуются под ним. Внизу же он проигрывает всему, что выше:
-          // сначала вещи, и только если тапнули мимо — поглаживание.
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: controller.petBear,
-            ),
-          ),
-          // Дальние места — под мишкой: он стоит на трети глубины комнаты,
-          // и кроватка у задней стены должна быть за ним, а не поперёк него.
-          Positioned.fill(
-            child: RoomSlotLayer(
-              game: game,
-              room: room,
-              depth: SlotDepth.behind,
-              onTapItem: (slot, _) => onSlotTap(slot),
-              onTapEmpty: onSlotTap,
-            ),
-          ),
-          // Герой стоит на линии пола и занимает [heroHeight] высоты сцены.
-          //
-          // Решение заказчика 17.09 взамен прежнего «во весь экран»: мишка
-          // во весь кадр не оставлял места комнате, мебель рядом с ним была
-          // неразличима, а покупать неразличимое незачем.
+    return LayoutBuilder(
+      builder: (context, c) {
+        final frame = RoomFrame.of(Size(c.maxWidth, c.maxHeight));
+        return ClipRect(child: _build(context, frame));
+      },
+    );
+  }
+
+  Widget _build(BuildContext context, RoomFrame frame) {
+    return Stack(
+      children: [
+        // Потолок — всё, что выше кадра комнаты. Рисуется кодом, пока нет
+        // арта, и сходится в ту же точку, что и доски пола на картинке.
+        if (frame.ceilingHeight > 0)
           Positioned(
             left: 0,
             right: 0,
             top: 0,
-            bottom: 0,
-            child: LayoutBuilder(
-              builder: (context, c) {
-                return Stack(
-                  children: [
-                    Positioned(
-                      bottom: c.maxHeight * (1 - _floorLine),
-                      left: 0,
-                      right: 0,
-                      height: c.maxHeight * heroHeight,
-                      // Касания мишка не ловит — их ловит слой под ним.
-                      child: IgnorePointer(
-                        child: BearView(
-                          controller: controller,
-                          assetPath: riveAssetPath,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          // Ближние места — поверх мишки. Слой занимает только площадь мест,
-          // остальное прозрачно для касаний: погладить мишку по-прежнему
-          // можно где угодно.
-          Positioned.fill(
-            child: RoomSlotLayer(
-              game: game,
+            height: frame.ceilingHeight,
+            child: RoomCeiling(
               room: room,
-              onTapItem: (slot, _) => onSlotTap(slot),
-              onTapEmpty: onSlotTap,
+              vanishingY: frame.vanishingY,
+              centerX: frame.centerX,
             ),
           ),
-          Positioned(top: 12, right: 12, child: _CareButton(onTap: onOpenCare)),
-          Positioned(
-            left: 12,
-            bottom: 12,
-            child: RoomSwitcher(current: room, onSelect: onRoomChanged),
+        // Кадр комнаты: фон прижат к низу, чтобы пол доходил до края
+        // экрана.
+        Positioned.fromRect(
+          rect: frame.rect,
+          child: RoomSceneBackdrop(room: room),
+        ),
+        // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
+        // мишкой. Мишка лежит между двумя слоями мест, и будь тап на нём —
+        // он перехватывал бы касания по дальним вещам, которые рисуются
+        // под ним. Внизу же он проигрывает всему, что выше: сначала вещи,
+        // и только если тапнули мимо — поглаживание.
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: controller.petBear,
           ),
-          // Пузырь — в левом верхнем углу, зеркально кнопке «Что будем
-          // делать?» справа (решение заказчика). Внизу он закрывал мишке
-          // ноги, по центру сверху — упирался в капюшон. Правая граница
-          // оставляет место кнопке ухода.
-          Positioned(
-            left: 12,
-            right: 172,
-            top: 12,
-            child: PetSpeechBubble(
-              mood: controller.state.mood,
-              initiative: controller.initiative,
-              language: language,
-              onTap: onAcceptInitiative,
-            ),
+        ),
+        // Дальние места — под мишкой: он стоит на трети глубины комнаты,
+        // и кроватка у задней стены должна быть за ним, а не поперёк него.
+        // Оба слоя мест лежат ровно в кадре комнаты: их координаты —
+        // доли кадра, а не экрана.
+        Positioned.fromRect(
+          rect: frame.rect,
+          child: RoomSlotLayer(
+            game: game,
+            room: room,
+            depth: SlotDepth.behind,
+            onTapItem: (slot, _) => onSlotTap(slot),
+            onTapEmpty: onSlotTap,
           ),
-        ],
-      ),
+        ),
+        // Герой стоит на линии пола комнаты и занимает свою долю её кадра.
+        // Касания не ловит — их ловит слой под ним.
+        Positioned(
+          left: frame.bearCenterX - frame.rect.width / 2,
+          top: frame.standY - frame.bearHeight,
+          width: frame.rect.width,
+          height: frame.bearHeight,
+          child: IgnorePointer(
+            child: BearView(controller: controller, assetPath: riveAssetPath),
+          ),
+        ),
+        // Ближние места — поверх мишки. Слой занимает только площадь мест,
+        // остальное прозрачно для касаний: погладить мишку по-прежнему
+        // можно где угодно.
+        Positioned.fromRect(
+          rect: frame.rect,
+          child: RoomSlotLayer(
+            game: game,
+            room: room,
+            onTapItem: (slot, _) => onSlotTap(slot),
+            onTapEmpty: onSlotTap,
+          ),
+        ),
+        // Кнопка ухода и пузырь опущены под шапку: сцена больше не
+        // начинается под ней, а лежит во весь экран, и прежние «12 от
+        // верха» попали бы прямо на имя питомца.
+        Positioned(
+          top: _hudTop,
+          right: 16,
+          child: _CareButton(onTap: onOpenCare),
+        ),
+        Positioned(
+          left: 16,
+          bottom: 210,
+          child: RoomSwitcher(current: room, onSelect: onRoomChanged),
+        ),
+        // Пузырь — слева, зеркально кнопке «Что будем делать?» справа
+        // (решение заказчика). Внизу он закрывал мишке ноги, по центру
+        // сверху — упирался в капюшон.
+        Positioned(
+          left: 16,
+          right: 176,
+          top: _hudTop,
+          child: PetSpeechBubble(
+            mood: controller.state.mood,
+            initiative: controller.initiative,
+            language: language,
+            onTap: onAcceptInitiative,
+          ),
+        ),
+      ],
     );
   }
+
+  /// Верх свободной зоны: ниже шапки, но ещё на потолке.
+  static const double _hudTop = 132;
 }
 
 /// Кнопка перехода к списку действий ухода.

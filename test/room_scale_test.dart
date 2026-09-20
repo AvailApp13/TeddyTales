@@ -1,3 +1,5 @@
+import 'dart:ui' show Size;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/game/room_kind.dart';
 import 'package:teddy_tales/game/room_slots.dart';
@@ -25,7 +27,7 @@ void main() {
   double metres(double bodyHeight, double standLine) =>
       heightInCameras(bodyHeight, standLine) * cameraOverWall * 2.5;
 
-  const bear = 0.52; // утверждено заказчиком 18.09, не трогаем
+  const bear = RoomSceneBackdrop.heroHeight; // утверждено 18.09, не трогаем
 
   group('Мишка в комнате', () {
     test('камера стоит низко — вровень с ребёнком', () {
@@ -49,6 +51,64 @@ void main() {
         greaterThan(RoomSceneBackdrop.horizon),
       );
       expect(RoomSceneBackdrop.standLine, lessThan(1.0));
+    });
+  });
+
+  group('Кадр комнаты на весь экран', () {
+    // Заказчик 20.09: комната на весь телефон, сверху потолок, а мишка
+    // остаётся «влитым» — то есть его соотношение к комнате не зависит от
+    // того, какой у человека телефон.
+    const phone = Size(430, 932);
+    const tall = Size(430, 1100);
+    const short = Size(430, 500);
+
+    test('кадр вписан по ширине и прижат к низу', () {
+      final frame = RoomFrame.of(phone);
+
+      expect(frame.rect.width, phone.width);
+      expect(frame.rect.bottom, phone.height);
+      expect(frame.rect.height, closeTo(430 * 1120 / 896, 0.01));
+    });
+
+    test('рост мишки не зависит от высоты телефона', () {
+      // Главное обещание заказчику: «он как будто влитой».
+      expect(RoomFrame.of(phone).bearHeight, RoomFrame.of(tall).bearHeight);
+      expect(RoomFrame.of(phone).bearHeight, RoomFrame.of(short).bearHeight);
+    });
+
+    test('чем выше телефон, тем больше полоса под потолок', () {
+      expect(
+        RoomFrame.of(tall).ceilingHeight,
+        greaterThan(RoomFrame.of(phone).ceilingHeight),
+      );
+      // На коротком экране потолка нет вовсе: у картинки срезается верх, но
+      // пол и мишка остаются на месте.
+      expect(RoomFrame.of(short).ceilingHeight, 0);
+      expect(RoomFrame.of(short).rect.bottom, short.height);
+    });
+
+    test('мишка стоит правее центра, как просил заказчик', () {
+      final frame = RoomFrame.of(phone);
+
+      expect(frame.bearCenterX, greaterThan(frame.centerX));
+      expect(
+        (frame.bearCenterX - frame.centerX) / frame.rect.width,
+        closeTo(0.10, 0.001),
+      );
+    });
+
+    test('ноги на линии пола, голова выше стыка со стеной', () {
+      final frame = RoomFrame.of(phone);
+      final head = frame.standY - frame.bearHeight;
+
+      expect(frame.standY, greaterThan(frame.vanishingY));
+      expect(frame.standY, lessThanOrEqualTo(phone.height));
+      // Голова выше линии пола у задней стены — иначе мишка читался бы
+      // стоящим не в комнате, а на полоске пола перед ней.
+      expect(
+        head,
+        lessThan(frame.rect.top + RoomSceneBackdrop.horizon * frame.rect.height),
+      );
     });
   });
 
