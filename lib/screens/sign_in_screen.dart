@@ -224,16 +224,21 @@ class _SignInPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (metrics.showPrompt) ...[
+          // Просвет между лапами и подписью: без него панель начиналась ровно
+          // по линию лап и подпись ложилась на них.
+          SizedBox(height: metrics.pawGap),
           Text(
             l10n.signInPrompt,
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            // Тёмным, как подзаголовок наверху: под подписью не плашка, а
+            // ковёр со звёздами и листьями, и блёклый серый на нём тонет.
             style: TextStyle(
               fontSize: metrics.promptSize,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
+              color: AppColors.textPrimary,
             ),
           ),
           SizedBox(height: metrics.gap),

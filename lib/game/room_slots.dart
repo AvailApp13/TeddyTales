@@ -92,7 +92,14 @@ class RoomSlot {
   }
 }
 
-/// Все места всех комнат.
+/// Все места всех комнат — то есть все места детской.
+///
+/// Обставляется только она. Заказчик 21.09: «кухня и ванна остаются без
+/// таких решений, они статичны; на кухне будет меняться только еда на столе
+/// при покупке, спальня будет меняться от возраста». Так что кухня и ванная
+/// — это снятые кадры, а не сцены с расстановкой, и мест в них нет: кресло
+/// посреди ванной нужно было бы разрешать, объяснять и проверять, а смысла
+/// в нём нет никакого.
 ///
 /// В детской девять мест. Их не больше, чем нужно: комната на присланном
 /// заказчиком обставленном фоне собрана ровно из этого — кресло у окна,
@@ -214,91 +221,6 @@ const List<RoomSlot> roomSlots = [
     y: 0.245,
     fit: ItemFit.wall,
     metres: 0.55,
-    maxMetres: 0.7,
-  ),
-
-  // --- Кухня ---------------------------------------------------------------
-  // Мест меньше: кухня не обставляется игроком, она пока смена обстановки.
-  // Камера у неё померена по обставленному фону и перемеряна не была —
-  // числа прикидочные, до пустого фона от заказчика.
-  RoomSlot(
-    id: 'kitchen.floor_left',
-    room: RoomKind.kitchen,
-    x: 0.30,
-    y: 0.72,
-    fit: ItemFit.floor,
-    metres: 0.85,
-    maxMetres: 0.85,
-    depth: 4,
-  ),
-  RoomSlot(
-    id: 'kitchen.back_right',
-    room: RoomKind.kitchen,
-    x: 0.69,
-    y: 0.66,
-    fit: ItemFit.floor,
-    metres: 0.95,
-    maxMetres: 1.1,
-    depth: 2,
-  ),
-  RoomSlot(
-    id: 'kitchen.toy_front',
-    room: RoomKind.kitchen,
-    x: 0.75,
-    y: 0.92,
-    fit: ItemFit.floor,
-    metres: 0.36,
-    maxMetres: 0.36,
-    depth: 7,
-  ),
-  RoomSlot(
-    id: 'kitchen.wall_back',
-    room: RoomKind.kitchen,
-    x: 0.66,
-    y: 0.26,
-    fit: ItemFit.wall,
-    metres: 0.55,
-    maxMetres: 1.0,
-  ),
-
-  // --- Ванная --------------------------------------------------------------
-  RoomSlot(
-    id: 'bath.floor_left',
-    room: RoomKind.bath,
-    x: 0.33,
-    y: 0.70,
-    fit: ItemFit.floor,
-    metres: 0.55,
-    maxMetres: 0.60,
-    depth: 4,
-  ),
-  RoomSlot(
-    id: 'bath.corner_right',
-    room: RoomKind.bath,
-    x: 0.72,
-    y: 0.68,
-    fit: ItemFit.floor,
-    metres: 0.45,
-    maxMetres: 0.55,
-    depth: 3,
-  ),
-  RoomSlot(
-    id: 'bath.toy_front',
-    room: RoomKind.bath,
-    x: 0.70,
-    y: 0.82,
-    fit: ItemFit.floor,
-    metres: 0.36,
-    maxMetres: 0.36,
-    depth: 7,
-  ),
-  RoomSlot(
-    id: 'bath.wall_back',
-    room: RoomKind.bath,
-    x: 0.60,
-    y: 0.28,
-    fit: ItemFit.wall,
-    metres: 0.50,
     maxMetres: 0.7,
   ),
 ];

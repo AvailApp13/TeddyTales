@@ -149,6 +149,11 @@ class _HomeScreenState extends State<HomeScreen> {
   ShopItem? _picked;
 
   void _startFurnishing() => setState(() {
+    // Обставляется только детская: кухня и ванная — снятые кадры, мест в них
+    // нет (заказчик 21.09: «они статичны»). Нажать «Обставить», стоя на
+    // кухне, человек может — и попадёт туда, где обставлять есть что, а не
+    // в пустую ленту без единого места.
+    if (slotsOf(_room).isEmpty) _room = RoomKind.nursery;
     _furnishing = true;
     _picked = null;
   });

@@ -126,6 +126,30 @@ void main() {
       }
     });
 
+    test('подпись отступает от лап, а не жмётся к ним', () {
+      // Заказчик 21.09: «надпись „Выберите способ входа“ не видна, так как
+      // она легла на ноги мишек». Панель вставала ровно по линию лап, и
+      // подпись — первая строка панели — оказывалась вплотную к ним.
+      for (final scene in [phone, tablet, Size(430, 821)]) {
+        final frame = frameOf(scene);
+        final metrics = SignInMetrics.of(
+          scene.height - frame.bearsBottomY - 8,
+        );
+
+        expect(metrics.showPrompt, isTrue, reason: '$scene');
+        expect(metrics.pawGap, greaterThanOrEqualTo(8), reason: '$scene');
+
+        // Верх подписи — низ экрана минус панель плюс просвет.
+        final promptTop =
+            scene.height - 8 - metrics.height + metrics.pawGap;
+        expect(
+          promptTop - frame.bearsBottomY,
+          greaterThanOrEqualTo(8),
+          reason: '$scene',
+        );
+      }
+    });
+
     test('на совсем коротком экране уходит подпись, а не размер кнопок', () {
       // 360 × 640 — предел, дальше которого честного места нет: пять кнопок
       // по пальцу и обе служебные строки под лапами уже не умещаются. Тогда

@@ -216,11 +216,16 @@ void main() {
       }
     });
 
-    test('задняя стена позади, коврик и игрушки впереди', () {
-      expect(slotDepth(slotById('nursery.floor_left')!), SlotDepth.behind);
-      expect(slotDepth(slotById('nursery.floor_right')!), SlotDepth.behind);
-      expect(slotDepth(slotById('kitchen.toy_front')!), SlotDepth.front);
-      expect(slotDepth(slotById('bath.toy_front')!), SlotDepth.front);
+    test('всё, что дальше мишки, рисуется за ним', () {
+      // В детской все места лежат за линией, на которой он стоит: перед ним
+      // остаётся узкая полоса пола между ним и нижним краем, и вещь там либо
+      // закрывала бы ему ноги, либо обрезалась бы краем экрана. Ковёр —
+      // ровно на его линии: он на нём и стоит.
+      final camera = cameraOf(RoomKind.nursery);
+      for (final slot in slotsOf(RoomKind.nursery)) {
+        expect(slotDepth(slot), SlotDepth.behind, reason: slot.id);
+        expect(slot.y, lessThanOrEqualTo(camera.standLine), reason: slot.id);
+      }
     });
   });
 
