@@ -166,7 +166,7 @@ const List<RoomSlot> roomSlots = [
     x: 0.50,
     y: 0.78,
     fit: ItemFit.rug,
-    metres: 1.05,
+    metres: 0.95,
     maxMetres: 1.1,
     depth: 1,
   ),
