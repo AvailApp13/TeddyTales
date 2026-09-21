@@ -141,6 +141,12 @@ class RoomSlotLayer extends StatelessWidget {
                       (picked == null
                           ? hinted.contains(slot)
                           : slot.takes(picked!)),
+                  // Места перекрываются: ковёр лежит под ногами почти во всю
+                  // ширину, а поверх него — места игрушек, ближе к зрителю.
+                  // Пока вещь в руках, чужое место не должно ловить тап:
+                  // заказчик 21.09 жал в подсвеченную рамку ковра и получал
+                  // «для этой вещи здесь нет места» — тап забирала игрушка.
+                  deaf: picked != null && !slot.takes(picked!),
                   onTapItem: onTapItem,
                   onTapEmpty: onTapEmpty,
                 ),
@@ -165,6 +171,7 @@ class RoomSlotLayer extends StatelessWidget {
     required double height,
     required GameState game,
     required bool hinted,
+    required bool deaf,
     required void Function(RoomSlot, ShopItem) onTapItem,
     required ValueChanged<RoomSlot> onTapEmpty,
   }) {
@@ -185,22 +192,25 @@ class RoomSlotLayer extends StatelessWidget {
       top: box.top * height,
       width: box.width * width,
       height: box.height * height,
-      child: item != null
-          ? _FilledSlot(
-              item: item,
-              // Занятое место, куда выбранная вещь тоже встанет, обводится
-              // пунктиром: иначе человек с кроваткой в руках не видит на
-              // экране ни одной подсказки — единственное место, где она
-              // помещается, уже занято комодом, — и упирается в тупик.
-              replaceable: hinted,
-              onTap: () => onTapItem(slot, item),
-            )
-          : hinted
-          ? _EmptySlot(slot: slot, onTap: () => onTapEmpty(slot))
-          // Неподсвеченное свободное место всё равно нажимается: человек,
-          // который уже понял правило, не должен ждать, пока игра
-          // соблаговолит подсветить именно это место.
-          : _QuietSlot(onTap: () => onTapEmpty(slot)),
+      child: IgnorePointer(
+        ignoring: deaf,
+        child: item != null
+            ? _FilledSlot(
+                item: item,
+                // Занятое место, куда выбранная вещь тоже встанет, обводится
+                // пунктиром: иначе человек с кроваткой в руках не видит на
+                // экране ни одной подсказки — единственное место, где она
+                // помещается, уже занято комодом, — и упирается в тупик.
+                replaceable: hinted,
+                onTap: () => onTapItem(slot, item),
+              )
+            : hinted
+            ? _EmptySlot(slot: slot, onTap: () => onTapEmpty(slot))
+            // Неподсвеченное свободное место всё равно нажимается: человек,
+            // который уже понял правило, не должен ждать, пока игра
+            // соблаговолит подсветить именно это место.
+            : _QuietSlot(onTap: () => onTapEmpty(slot)),
+      ),
     );
   }
 }
@@ -252,6 +262,10 @@ class _EmptySlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      // Нажимается вся рамка, а не «плюс» в её середине. Без этого палец
+      // попадал в подсвеченное место и не попадал никуда: у рамки ковра
+      // отзывались полтора сантиметра посередине.
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: CustomPaint(
         painter: _DashedFrame(),
