@@ -32,13 +32,55 @@ def width_per_metre(y: float) -> float:
     return (y - EYE) / CAMERA_M * ART_H / ART_W
 
 
-def metrics() -> dict[str, tuple[float, float, str]]:
-    text = (ROOT / 'lib/game/item_metrics.dart').read_text()
+def groups() -> dict[str, tuple[str, str | None, float | None]]:
+    """Подкатегории: название, повадка, ширина в метрах."""
+    text = (ROOT / 'lib/game/item_groups.dart').read_text()
     found = re.findall(
-        r"'([a-z_]+)': ItemMetrics\(([0-9.]+), ([0-9.]+), ItemFit\.([a-z]+)\)",
+        r"\n  ([a-z]+)\('([^']+)', (?:ItemFit\.([a-z]+)|null), "
+        r"(?:([0-9.]+)|null)\)",
         text,
     )
-    return {i: (float(w), float(a), fit) for i, w, a, fit in found}
+    return {
+        name: (title, fit or None, float(m) if m else None)
+        for name, title, fit, m in found
+    }
+
+
+def metrics() -> dict[str, tuple[float, float, str, str]]:
+    """Ширина, пропорция, повадка и подкатегория каждой вещи с картинкой."""
+    text = (ROOT / 'lib/game/item_metrics.dart').read_text()
+    own = dict(
+        re.findall(
+            r"'([a-z_0-9]+)': ([0-9.]+),",
+            text.split('_ownWidth = {')[1].split('};')[0],
+        )
+    )
+    aspects = dict(
+        re.findall(
+            r"'([a-z_0-9]+)': ([0-9.]+),",
+            text.split('_aspects = {')[1].split('};')[0],
+        )
+    )
+
+    catalog = (ROOT / 'lib/game/shop_items.dart').read_text()
+    item_group = dict(
+        re.findall(
+            r"id: '([a-z_0-9]+)',\s*\n\s*group: ItemGroup\.([a-z]+),",
+            catalog,
+        )
+    )
+
+    known = groups()
+    out = {}
+    for item_id, aspect in aspects.items():
+        group = item_group[item_id]
+        _, fit, metres = known[group]
+        if fit is None:
+            continue
+        out[item_id] = (
+            float(own.get(item_id, metres)), float(aspect), fit, group,
+        )
+    return out
 
 
 def slots() -> list[dict]:
@@ -120,12 +162,31 @@ def main() -> int:
     for slot in places:
         fits = [
             names.get(i, i)
-            for i, (w, _, fit) in sorted(items.items())
+            for i, (w, _, fit, _g) in sorted(items.items())
             if fit == slot['fit'] and w <= slot['max'] + 1e-9
         ]
         lines.append(
             f"| `{slot['id'].split('.')[1]}` | {SLOT_NAMES.get(slot['id'], '')} "
             f"| {slot['y']:.3f} | {slot['max']:.2f} м | {len(fits)} вещей |"
+        )
+
+    known = groups()
+    lines += [
+        '',
+        '## Подкатегории',
+        '',
+        'Размер задаёт род вещи, а не сама вещь: прислали новую картинку —',
+        'завели строку в каталоге с нужной подкатегорией, и вещь уже',
+        'правильного размера. Подгонять руками больше нечего.',
+        '',
+        '| Подкатегория | Держится | Ширина | Вещей с картинкой |',
+        '|---|---|---|---|',
+    ]
+    for name, (title, fit, metres) in known.items():
+        count = len([1 for v in items.values() if v[3] == name])
+        lines.append(
+            f"| {title} | {fit or '—'} "
+            f"| {f'{metres:.2f} м' if metres else '—'} | {count} |"
         )
 
     lines += [
@@ -135,12 +196,12 @@ def main() -> int:
         'Ширина и высота — настоящие, в метрах. «На экране» — какую долю',
         'ширины кадра вещь займёт в своём месте (для стен — на стене).',
         '',
-        '| Вещь | id | Ш × В, м | Держится | Места | На экране |',
+        '| Вещь | id | Подкатегория | Ш × В, м | Места | На экране |',
         '|---|---|---|---|---|---|',
     ]
 
-    order = sorted(items.items(), key=lambda kv: (kv[1][2], -kv[1][0]))
-    for item_id, (w, aspect, fit) in order:
+    order = sorted(items.items(), key=lambda kv: (kv[1][3], -kv[1][0]))
+    for item_id, (w, aspect, fit, group) in order:
         homes = [s for s in places if s['fit'] == fit and w <= s['max'] + 1e-9]
         if not homes:
             share = '—'
@@ -153,7 +214,8 @@ def main() -> int:
             )
         lines.append(
             f"| {names.get(item_id, item_id)} | `{item_id}` "
-            f"| {w:.2f} × {w * aspect:.2f} | {fit} | {where} | {share} |"
+            f"| {groups()[group][0]} | {w:.2f} × {w * aspect:.2f} "
+            f"| {where} | {share} |"
         )
 
     lines.append('')

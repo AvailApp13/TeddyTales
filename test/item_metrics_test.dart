@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/game/item_groups.dart';
 import 'package:teddy_tales/game/item_metrics.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 
@@ -28,6 +29,63 @@ void main() {
     for (final id in itemMetrics.keys) {
       expect(ids, contains(id));
     }
+  });
+
+  group('Размер задаёт подкатегория', () {
+    test('все ковры одного размера, и это размер подкатегории', () {
+      // Главная просьба заказчика 21.09: «последующие добавленные ковры
+      // должны быть ровно такого же размера, чтобы они ложились всегда и мы
+      // их каждый раз не подгоняли». Ковёр, которому размер подогнали руками,
+      // — это возвращение к тому, с чего начали.
+      final rugs = [
+        for (final item in ItemCatalog.all)
+          if (item.group == ItemGroup.rugs && metricsOf(item.id) != null) item,
+      ];
+
+      expect(rugs, isNotEmpty);
+      for (final rug in rugs) {
+        expect(
+          metricsOf(rug.id)!.metres,
+          ItemGroup.rugs.metres,
+          reason: '${rug.id} подогнан руками',
+        );
+        expect(metricsOf(rug.id)!.fit, ItemFit.rug, reason: rug.id);
+      }
+    });
+
+    test('новая вещь получает размер своего рода', () {
+      // Проверка обещания целиком: у всех вещей, кроме считанных исключений,
+      // ширина — это ширина подкатегории. Значит, прислали картинку, завели
+      // строку в каталоге — и вещь уже нужного размера.
+      final own = [
+        for (final item in ItemCatalog.all)
+          if (metricsOf(item.id) != null &&
+              metricsOf(item.id)!.metres != item.group.metres)
+            item.id,
+      ];
+
+      expect(own..sort(), ['armchair_bean', 'armchair_wing', 'shelf_house']);
+    });
+
+    test('у каждой подкатегории, куда что-то ставят, есть размер', () {
+      for (final group in ItemGroup.values) {
+        expect(
+          group.metres != null,
+          group.placeable,
+          reason: 'у ${group.name} размер и повадка разошлись',
+        );
+      }
+    });
+
+    test('вещи из одной подкатегории держатся одинаково', () {
+      // Иначе подкатегория перестаёт что-либо обещать: «ковёр» — это вещь,
+      // которая лежит, а не иногда лежит, а иногда висит.
+      for (final item in ItemCatalog.all) {
+        final size = metricsOf(item.id);
+        if (size == null) continue;
+        expect(size.fit, item.group.fit, reason: item.id);
+      }
+    });
   });
 
   test('пропорция в таблице — это пропорция картинки', () async {

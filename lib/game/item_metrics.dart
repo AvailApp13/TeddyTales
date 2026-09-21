@@ -17,17 +17,21 @@
 ///
 /// ## Откуда числа
 ///
-/// Ширина — по присланной картинке, с оглядкой на настоящие детские вещи:
-/// кресло-мешок 0.95 м, прикроватный столик 0.50 м, плюшевый заяц 0.36 м.
-/// Проверка — тот самый обставленный фон: кресло на нём выходит 0.85 × 0.80 м,
-/// ковёр-мордочка — метр в поперечнике, рамка картины — 0.55 м. Эти же числа
-/// стоят здесь.
+/// **Ширину задаёт подкатегория** ([ItemGroup]), а не сама вещь. Ковёр есть
+/// ковёр: заказчик 21.09 просил закрепить размер за родом вещи, «чтобы они
+/// ложились всегда и мы их каждый раз не подгоняли». Новая картинка — это
+/// строка в каталоге с нужной подкатегорией, и размер у неё сразу верный.
 ///
-/// Высота отдельно не задаётся: её даёт сама картинка. Поэтому картинки
-/// обрезаны впритык к вещи (`tool/pack_shop.py`) — край файла и есть край
-/// вещи, и пропорция [ItemMetrics.aspect] честно её описывает. Сходимость
-/// таблицы с картинками проверяет `test/item_metrics_test.dart`.
+/// Исключения собраны в [_ownWidth]: их три, и каждое объяснено на месте.
+/// Ковров они не касаются вовсе.
+///
+/// **Высоту задаёт картинка.** Она обрезана впритык к вещи
+/// (`tool/pack_shop.py`), поэтому её пропорция и есть пропорция вещи.
+/// Сходимость таблицы с картинками проверяет `test/item_metrics_test.dart`.
 library;
+
+import 'item_groups.dart';
+import 'shop_items.dart';
 
 /// Как вещь держится в комнате.
 enum ItemFit {
@@ -58,67 +62,89 @@ class ItemMetrics {
   double get heightMetres => metres * aspect;
 }
 
-/// Размеры всех вещей, у которых есть картинка.
+/// Размер вещи или `null`, если её нельзя поставить в комнату.
 ///
-/// Вещи без картинки сюда не попадают и в комнату не ставятся: рисовать
-/// нечем. Каталог их держит — ждут отрисовки.
-const Map<String, ItemMetrics> itemMetrics = {
+/// Нельзя — это либо род без размера (обои, полы, одежда), либо вещь, на
+/// которую ещё не прислали картинку: рисовать её в комнате нечем.
+ItemMetrics? metricsOf(String itemId) {
+  final aspect = _aspects[itemId];
+  if (aspect == null) return null;
+
+  final group = ItemCatalog.byId(itemId).group;
+  final fit = group.fit;
+  if (fit == null) return null;
+
+  return ItemMetrics(_ownWidth[itemId] ?? group.metres!, aspect, fit);
+}
+
+/// Все вещи, у которых есть размер. Для проверок и для документа.
+Map<String, ItemMetrics> get itemMetrics => {
+  for (final id in _aspects.keys)
+    if (metricsOf(id) != null) id: metricsOf(id)!,
+};
+
+/// Вещи, которым размер своего рода не годится.
+///
+/// Это исключение, а не правило: каждая строка — вещь, нарисованная заметно
+/// у́же или шире соседок по роду. Ковров тут нет и быть не должно — их размер
+/// закреплён за родом целиком (см. `test/item_metrics_test.dart`).
+const Map<String, double> _ownWidth = {
+  // Мешок шире кресла, кресло с ушами — уже и выше.
+  'armchair_bean': 0.95,
+  'armchair_wing': 0.75,
+  // Полка-домик высокая: на общей ширине полок она упёрлась бы в карниз.
+  'shelf_house': 0.72,
+};
+
+/// Пропорция картинки каждой вещи: высота, делённая на ширину.
+///
+/// Единственное, что у вещи своё, — и не выдумка, а свойство файла. Меняется
+/// картинка — меняется строка; расхождение ловит тест.
+const Map<String, double> _aspects = {
   // --- Мебель --------------------------------------------------------------
-  'bed': ItemMetrics(1.30, 0.895, ItemFit.floor),
-  'dresser': ItemMetrics(1.20, 1.034, ItemFit.floor),
-  'table': ItemMetrics(0.50, 1.438, ItemFit.floor),
-  'basket': ItemMetrics(0.48, 0.895, ItemFit.floor),
-  'basket_star': ItemMetrics(0.40, 1.376, ItemFit.floor),
-  // Кресла. Ширина — по посадочному месту: детское кресло 0.75–0.85 м,
-  // мешок шире, с ушами — уже и выше.
-  'armchair': ItemMetrics(0.85, 0.750, ItemFit.floor),
-  'armchair_sage': ItemMetrics(0.85, 1.030, ItemFit.floor),
-  'armchair_flower': ItemMetrics(0.90, 0.725, ItemFit.floor),
-  'armchair_bean': ItemMetrics(0.95, 0.954, ItemFit.floor),
-  'armchair_wing': ItemMetrics(0.75, 1.384, ItemFit.floor),
+  'bed': 0.895,
+  'dresser': 1.034,
+  'table': 1.438,
+  'basket': 0.895,
+  'basket_star': 1.376,
+  'armchair': 0.750,
+  'armchair_sage': 1.030,
+  'armchair_flower': 0.725,
+  'armchair_bean': 0.954,
+  'armchair_wing': 1.384,
   // Подвесное кресло нарисовано вместе со стойкой, поэтому стоит на полу,
   // а не висит: на экране 20.09 оно парило именно потому, что про стойку
   // никто не знал.
-  'swing': ItemMetrics(0.95, 1.180, ItemFit.floor),
+  'swing': 1.180,
 
   // --- Ковры ---------------------------------------------------------------
-  //
-  // Метр в поперечнике — столько выходило по обставленному фону, и столько
-  // же занимает настоящий круглый детский коврик. На экране он всё равно
-  // оказался велик: лежит у самых ног, то есть в самом крупном месте кадра,
-  // и заполнял его почти целиком. Заказчик 21.09: «очень большой коврик,
-  // сделай его на 10% меньше». Уменьшены все три разом — лежат они в одном
-  // месте, и порознь читались бы вразнобой.
-  'rug': ItemMetrics(0.945, 0.604, ItemFit.rug),
-  'rug_cloud': ItemMetrics(0.99, 0.564, ItemFit.rug),
-  'rug_heart': ItemMetrics(0.90, 0.639, ItemFit.rug),
+  'rug': 0.604,
+  'rug_cloud': 0.564,
+  'rug_heart': 0.639,
 
   // --- На стену ------------------------------------------------------------
-  'shelf': ItemMetrics(0.90, 0.723, ItemFit.wall),
-  'shelf_house': ItemMetrics(0.72, 1.064, ItemFit.wall),
-  'shelf_moon': ItemMetrics(0.85, 0.617, ItemFit.wall),
-  'pic_bear': ItemMetrics(0.55, 1.237, ItemFit.wall),
-  'pic_heart': ItemMetrics(0.50, 1.320, ItemFit.wall),
+  'shelf': 0.723,
+  'shelf_house': 1.064,
+  'shelf_moon': 0.617,
+  'pic_bear': 1.237,
+  'pic_heart': 1.320,
 
   // --- Декор на полу -------------------------------------------------------
-  'plant': ItemMetrics(0.42, 1.570, ItemFit.floor),
-  'plant_ivy': ItemMetrics(0.50, 1.236, ItemFit.floor),
-  'plant_bear': ItemMetrics(0.38, 0.931, ItemFit.floor),
-  'flowers_daisy': ItemMetrics(0.28, 1.284, ItemFit.floor),
-  'flowers_orchid': ItemMetrics(0.30, 1.189, ItemFit.floor),
-  'flowers_euc': ItemMetrics(0.28, 1.098, ItemFit.floor),
-  'pillow_star': ItemMetrics(0.45, 0.936, ItemFit.floor),
+  'plant': 1.570,
+  'plant_ivy': 1.236,
+  'plant_bear': 0.931,
+  'flowers_daisy': 1.284,
+  'flowers_orchid': 1.189,
+  'flowers_euc': 1.098,
+  'pillow_star': 0.936,
 
   // --- Игрушки -------------------------------------------------------------
-  'teddy': ItemMetrics(0.36, 1.172, ItemFit.floor),
-  'teddy_cream': ItemMetrics(0.34, 1.225, ItemFit.floor),
-  'bunny': ItemMetrics(0.36, 1.036, ItemFit.floor),
-  'bunny_pink': ItemMetrics(0.34, 0.938, ItemFit.floor),
-  'cubes': ItemMetrics(0.34, 1.092, ItemFit.floor),
-  'pyramid': ItemMetrics(0.26, 1.510, ItemFit.floor),
-  'dollhouse': ItemMetrics(0.70, 0.975, ItemFit.floor),
-  'house_felt': ItemMetrics(0.62, 1.004, ItemFit.floor),
+  'teddy': 1.172,
+  'teddy_cream': 1.225,
+  'bunny': 1.036,
+  'bunny_pink': 0.938,
+  'cubes': 1.092,
+  'pyramid': 1.510,
+  'dollhouse': 0.975,
+  'house_felt': 1.004,
 };
-
-/// Размер вещи или `null`, если картинки у неё нет.
-ItemMetrics? metricsOf(String itemId) => itemMetrics[itemId];

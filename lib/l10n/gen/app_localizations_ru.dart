@@ -1551,4 +1551,88 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get zodiacVirgo => 'Дева';
+
+  @override
+  String get shopGroupAll => 'Все';
+
+  @override
+  String get shopGroupBeds => 'Кроватки';
+
+  @override
+  String get shopGroupChairs => 'Кресла';
+
+  @override
+  String get shopGroupDressers => 'Комоды';
+
+  @override
+  String get shopGroupTables => 'Столики';
+
+  @override
+  String get shopGroupBaskets => 'Корзины для игрушек';
+
+  @override
+  String get shopGroupShelves => 'Настенные полки';
+
+  @override
+  String get shopGroupLamps => 'Светильники';
+
+  @override
+  String get shopGroupRugs => 'Ковры';
+
+  @override
+  String get shopGroupPictures => 'Картины';
+
+  @override
+  String get shopGroupPlants => 'Растения';
+
+  @override
+  String get shopGroupFlowers => 'Цветы';
+
+  @override
+  String get shopGroupPillows => 'Подушки';
+
+  @override
+  String get shopGroupWalls => 'Обои';
+
+  @override
+  String get shopGroupFloors => 'Полы';
+
+  @override
+  String get shopGroupPlush => 'Мягкие игрушки';
+
+  @override
+  String get shopGroupHouses => 'Домики';
+
+  @override
+  String get shopGroupToys => 'Игрушки';
+
+  @override
+  String get shopGroupOutfits => 'Комплекты';
+
+  @override
+  String get shopGroupTops => 'Верх';
+
+  @override
+  String get shopGroupBottoms => 'Низ';
+
+  @override
+  String get shopGroupHats => 'Головные уборы';
+
+  @override
+  String get shopGroupShoes => 'Обувь';
+
+  @override
+  String get shopGroupExtras => 'Аксессуары';
+
+  @override
+  String get shopGroupSeats => 'Стулья';
+
+  @override
+  String get shopGroupWardrobes => 'Шкафы';
+
+  @override
+  String get shopGroupClocks => 'Часы';
+
+  @override
+  String get shopGroupGarlands => 'Гирлянды';
 }

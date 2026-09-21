@@ -1459,4 +1459,88 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get zodiacVirgo => '处女座';
+
+  @override
+  String get shopGroupAll => '全部';
+
+  @override
+  String get shopGroupBeds => '婴儿床';
+
+  @override
+  String get shopGroupChairs => '扶手椅';
+
+  @override
+  String get shopGroupDressers => '抽屉柜';
+
+  @override
+  String get shopGroupTables => '小桌';
+
+  @override
+  String get shopGroupBaskets => '玩具收纳篮';
+
+  @override
+  String get shopGroupShelves => '壁挂架';
+
+  @override
+  String get shopGroupLamps => '灯具';
+
+  @override
+  String get shopGroupRugs => '地毯';
+
+  @override
+  String get shopGroupPictures => '挂画';
+
+  @override
+  String get shopGroupPlants => '植物';
+
+  @override
+  String get shopGroupFlowers => '鲜花';
+
+  @override
+  String get shopGroupPillows => '抱枕';
+
+  @override
+  String get shopGroupWalls => '墙纸';
+
+  @override
+  String get shopGroupFloors => '地板';
+
+  @override
+  String get shopGroupPlush => '毛绒玩具';
+
+  @override
+  String get shopGroupHouses => '小屋';
+
+  @override
+  String get shopGroupToys => '玩具';
+
+  @override
+  String get shopGroupOutfits => '套装';
+
+  @override
+  String get shopGroupTops => '上衣';
+
+  @override
+  String get shopGroupBottoms => '下装';
+
+  @override
+  String get shopGroupHats => '帽子';
+
+  @override
+  String get shopGroupShoes => '鞋子';
+
+  @override
+  String get shopGroupExtras => '配饰';
+
+  @override
+  String get shopGroupSeats => '椅子';
+
+  @override
+  String get shopGroupWardrobes => '衣柜';
+
+  @override
+  String get shopGroupClocks => '挂钟';
+
+  @override
+  String get shopGroupGarlands => '彩灯';
 }

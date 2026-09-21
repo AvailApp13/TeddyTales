@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
+import '../game/item_groups.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
@@ -50,6 +51,21 @@ class _ShopScreenState extends State<ShopScreen> {
   /// самый понятный ребёнку раздел каталога. Если пришли за конкретной
   /// вещью, открывается её вкладка.
   late _ShopTab _tab = _tabOf(widget.focusItemId) ?? _ShopTab.furniture;
+
+  /// Выбранная подкатегория внутри вкладки. `null` — показываем всё.
+  ///
+  /// Заказчик 21.09: «открываешь декор, а ниже подкатегория „ковёр“».
+  /// Вкладок четыре на весь каталог, и внутри декора вперемешку лежат ковры,
+  /// картины, растения и подушки — найти в этой куче нужное можно только
+  /// перебором.
+  ItemGroup? _group;
+
+  void _openTab(_ShopTab tab) => setState(() {
+    _tab = tab;
+    // Подкатегории у каждой вкладки свои: остаться с «Коврами» на мебели
+    // значило бы показать пустую витрину.
+    _group = null;
+  });
 
   /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
   /// продаётся в магазине.
@@ -119,12 +135,19 @@ class _ShopScreenState extends State<ShopScreen> {
             // Позиции, на которые картинок ещё не прислали, показываются
             // значком, и вперемешку с фотографиями это читается как брак —
             // а собранные внизу они выглядят просто как «ещё не завезли».
-            final now = [
+            // Подкатегории вкладки — в том порядке, в каком они объявлены в
+            // каталоге: сначала крупное, потом мелочь.
+            final groups = _tab.groups;
+            final shown = [
               for (final i in _tab.items)
+                if (_group == null || i.group == _group) i,
+            ];
+            final now = [
+              for (final i in shown)
                 if (i.suitsAt(stage)) i,
             ];
             final later = [
-              for (final i in _tab.items)
+              for (final i in shown)
                 if (!i.suitsAt(stage)) i,
             ];
             // Порядок показа раздела целиком: по нему листают в просмотре.
@@ -134,10 +157,15 @@ class _ShopScreenState extends State<ShopScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _SheetHeader(title: context.l10n.shopTitle, coins: game.coins),
-                _TabsRow(
-                  current: _tab,
-                  onSelected: (tab) => setState(() => _tab = tab),
-                ),
+                _TabsRow(current: _tab, onSelected: _openTab),
+                // Второй ряд — подкатегории этой вкладки. Один род вещей
+                // делить не на что, поэтому ряд появляется от двух.
+                if (groups.length > 1)
+                  _GroupsRow(
+                    groups: groups,
+                    current: _group,
+                    onSelected: (group) => setState(() => _group = group),
+                  ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -328,6 +356,18 @@ enum _ShopTab {
   /// Есть ли что показать: вкладка без единой картинки не рисуется.
   bool get isEmpty => items.isEmpty;
 
+  /// Подкатегории вкладки — в порядке каталога, без повторов.
+  ///
+  /// Считаются по товарам, а не берутся списком: подкатегория без единой
+  /// картинки — это пустой чип, который ведёт в пустоту.
+  List<ItemGroup> get groups {
+    final found = <ItemGroup>[];
+    for (final item in items) {
+      if (!found.contains(item.group)) found.add(item.group);
+    }
+    return found;
+  }
+
   List<ShopItem> get _all => switch (this) {
     _ShopTab.clothes => ItemCatalog.clothes,
     _ShopTab.furniture => ItemCatalog.furniture,
@@ -366,6 +406,99 @@ class _TabsRow extends StatelessWidget {
               const SizedBox(width: 6),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Ряд подкатегорий внутри вкладки.
+///
+/// Прокручивается вбок, а не переносится: в мебели родов вещей восемь, и
+/// второй ряд чипов съел бы половину витрины. Первый чип — «Все»: без него
+/// из подкатегории некуда вернуться, кроме как через соседнюю вкладку.
+class _GroupsRow extends StatelessWidget {
+  const _GroupsRow({
+    required this.groups,
+    required this.current,
+    required this.onSelected,
+  });
+
+  final List<ItemGroup> groups;
+  final ItemGroup? current;
+  final ValueChanged<ItemGroup?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(AppDimens.pagePadding, 0, 8, 0),
+        children: [
+          _GroupChip(
+            title: context.l10n.shopGroupAll,
+            selected: current == null,
+            onTap: () => onSelected(null),
+          ),
+          for (final group in groups)
+            _GroupChip(
+              title: shopGroupName(context.l10n, group),
+              selected: group == current,
+              onTap: () => onSelected(group),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Чип одной подкатегории. Мельче и тише вкладки: это второй уровень, и
+/// спорить за внимание с вкладками ему нечем.
+class _GroupChip extends StatelessWidget {
+  const _GroupChip({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(999);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 6, bottom: 8),
+      child: Material(
+        color: selected ? AppColors.sageSoft : AppColors.surface,
+        borderRadius: radius,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(
+                color: selected ? AppColors.sage : AppColors.outline,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(
+              title,
+              style: sceneText(
+                size: 12.5,
+                weight: selected ? 800 : 600,
+                color: selected
+                    ? AppColors.sageDark
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

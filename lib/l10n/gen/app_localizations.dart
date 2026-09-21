@@ -2745,6 +2745,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Дева'**
   String get zodiacVirgo;
+
+  /// No description provided for @shopGroupAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get shopGroupAll;
+
+  /// No description provided for @shopGroupBeds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кроватки'**
+  String get shopGroupBeds;
+
+  /// No description provided for @shopGroupChairs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресла'**
+  String get shopGroupChairs;
+
+  /// No description provided for @shopGroupDressers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комоды'**
+  String get shopGroupDressers;
+
+  /// No description provided for @shopGroupTables.
+  ///
+  /// In ru, this message translates to:
+  /// **'Столики'**
+  String get shopGroupTables;
+
+  /// No description provided for @shopGroupBaskets.
+  ///
+  /// In ru, this message translates to:
+  /// **'Корзины для игрушек'**
+  String get shopGroupBaskets;
+
+  /// No description provided for @shopGroupShelves.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настенные полки'**
+  String get shopGroupShelves;
+
+  /// No description provided for @shopGroupLamps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Светильники'**
+  String get shopGroupLamps;
+
+  /// No description provided for @shopGroupRugs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковры'**
+  String get shopGroupRugs;
+
+  /// No description provided for @shopGroupPictures.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картины'**
+  String get shopGroupPictures;
+
+  /// No description provided for @shopGroupPlants.
+  ///
+  /// In ru, this message translates to:
+  /// **'Растения'**
+  String get shopGroupPlants;
+
+  /// No description provided for @shopGroupFlowers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цветы'**
+  String get shopGroupFlowers;
+
+  /// No description provided for @shopGroupPillows.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подушки'**
+  String get shopGroupPillows;
+
+  /// No description provided for @shopGroupWalls.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои'**
+  String get shopGroupWalls;
+
+  /// No description provided for @shopGroupFloors.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полы'**
+  String get shopGroupFloors;
+
+  /// No description provided for @shopGroupPlush.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мягкие игрушки'**
+  String get shopGroupPlush;
+
+  /// No description provided for @shopGroupHouses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Домики'**
+  String get shopGroupHouses;
+
+  /// No description provided for @shopGroupToys.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игрушки'**
+  String get shopGroupToys;
+
+  /// No description provided for @shopGroupOutfits.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплекты'**
+  String get shopGroupOutfits;
+
+  /// No description provided for @shopGroupTops.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верх'**
+  String get shopGroupTops;
+
+  /// No description provided for @shopGroupBottoms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низ'**
+  String get shopGroupBottoms;
+
+  /// No description provided for @shopGroupHats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Головные уборы'**
+  String get shopGroupHats;
+
+  /// No description provided for @shopGroupShoes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обувь'**
+  String get shopGroupShoes;
+
+  /// No description provided for @shopGroupExtras.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аксессуары'**
+  String get shopGroupExtras;
+
+  /// No description provided for @shopGroupSeats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стулья'**
+  String get shopGroupSeats;
+
+  /// No description provided for @shopGroupWardrobes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шкафы'**
+  String get shopGroupWardrobes;
+
+  /// No description provided for @shopGroupClocks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часы'**
+  String get shopGroupClocks;
+
+  /// No description provided for @shopGroupGarlands.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гирлянды'**
+  String get shopGroupGarlands;
 }
 
 class _AppLocalizationsDelegate

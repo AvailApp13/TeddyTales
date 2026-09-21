@@ -714,10 +714,18 @@
   "furnishRemoved": "{name} убрали",
   "furnishNoSlot": "Для этой вещи здесь нет места",
   "@furnishPlaced": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "@furnishRemoved": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "shopAddToCart": "В корзину",
   "shopRemoveFromCart": "Убрать из корзины",
@@ -789,5 +797,33 @@
   "zodiacSagittarius": "Стрелец",
   "zodiacScorpio": "Скорпион",
   "zodiacTaurus": "Телец",
-  "zodiacVirgo": "Дева"
+  "zodiacVirgo": "Дева",
+  "shopGroupAll": "Все",
+  "shopGroupBeds": "Кроватки",
+  "shopGroupChairs": "Кресла",
+  "shopGroupDressers": "Комоды",
+  "shopGroupTables": "Столики",
+  "shopGroupBaskets": "Корзины для игрушек",
+  "shopGroupShelves": "Настенные полки",
+  "shopGroupLamps": "Светильники",
+  "shopGroupRugs": "Ковры",
+  "shopGroupPictures": "Картины",
+  "shopGroupPlants": "Растения",
+  "shopGroupFlowers": "Цветы",
+  "shopGroupPillows": "Подушки",
+  "shopGroupWalls": "Обои",
+  "shopGroupFloors": "Полы",
+  "shopGroupPlush": "Мягкие игрушки",
+  "shopGroupHouses": "Домики",
+  "shopGroupToys": "Игрушки",
+  "shopGroupOutfits": "Комплекты",
+  "shopGroupTops": "Верх",
+  "shopGroupBottoms": "Низ",
+  "shopGroupHats": "Головные уборы",
+  "shopGroupShoes": "Обувь",
+  "shopGroupExtras": "Аксессуары",
+  "shopGroupSeats": "Стулья",
+  "shopGroupWardrobes": "Шкафы",
+  "shopGroupClocks": "Часы",
+  "shopGroupGarlands": "Гирлянды"
 }

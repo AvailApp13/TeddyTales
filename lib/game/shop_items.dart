@@ -10,6 +10,7 @@ library;
 
 import '../bear/bear_rig_spec.dart';
 import '../bear/bear_state.dart';
+import 'item_groups.dart';
 
 /// Куда предмет попадает в магазине и в комнате.
 enum ItemKind {
@@ -45,6 +46,7 @@ enum ItemKind {
 class ShopItem {
   const ShopItem({
     required this.id,
+    required this.group,
     required this.title,
     required this.price,
     required this.kind,
@@ -54,6 +56,15 @@ class ShopItem {
   });
 
   final String id;
+
+  /// Род вещи: ковёр, картина, кресло. Отсюда берутся и подкатегория в
+  /// магазине, и размер вещи в комнате — см. [ItemGroup].
+  ///
+  /// Заказчик 21.09: «я тебе его отправляю, ты понимаешь, что это ковёр, и
+  /// делаешь его не огромным размером, а тем, который сейчас задан». Новая
+  /// картинка — это одна строка здесь с нужной подкатегорией; подгонять
+  /// размер руками больше не нужно.
+  final ItemGroup group;
 
   /// Есть ли у товара своя картинка в `assets/shop/items`.
   ///
@@ -134,6 +145,7 @@ abstract final class ItemCatalog {
   static const List<ShopItem> furniture = <ShopItem>[
     ShopItem(
       id: 'bed',
+      group: ItemGroup.beds,
       title: 'Кроватка',
       price: 120,
       photo: true,
@@ -141,6 +153,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'wardrobe',
+      group: ItemGroup.wardrobes,
       title: 'Шкаф',
       price: 140,
       kind: ItemKind.furniture,
@@ -148,6 +161,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'table',
+      group: ItemGroup.tables,
       title: 'Стол',
       price: 90,
       photo: true,
@@ -156,6 +170,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'chair',
+      group: ItemGroup.seats,
       title: 'Стул',
       price: 70,
       kind: ItemKind.furniture,
@@ -163,6 +178,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf',
+      group: ItemGroup.shelves,
       title: 'Книжная полка',
       price: 110,
       photo: true,
@@ -171,6 +187,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'dresser',
+      group: ItemGroup.dressers,
       title: 'Комод',
       price: 150,
       photo: true,
@@ -179,6 +196,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair',
+      group: ItemGroup.chairs,
       title: 'Кресло',
       price: 130,
       photo: true,
@@ -186,20 +204,15 @@ abstract final class ItemCatalog {
       suitsFrom: BearStage.crawling,
     ),
     ShopItem(
-      id: 'rug',
-      title: 'Ковёр',
-      price: 80,
-      photo: true,
-      kind: ItemKind.furniture,
-    ),
-    ShopItem(
       id: 'lamp',
+      group: ItemGroup.lamps,
       title: 'Светильник',
       price: 60,
       kind: ItemKind.furniture,
     ),
     ShopItem(
       id: 'basket',
+      group: ItemGroup.baskets,
       title: 'Корзина',
       price: 50,
       photo: true,
@@ -207,6 +220,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf_house',
+      group: ItemGroup.shelves,
       title: 'Полка-домик',
       price: 150,
       photo: true,
@@ -214,6 +228,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'shelf_moon',
+      group: ItemGroup.shelves,
       title: 'Полка-месяц',
       price: 130,
       photo: true,
@@ -221,6 +236,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_sage',
+      group: ItemGroup.chairs,
       title: 'Кресло мятное',
       price: 170,
       photo: true,
@@ -229,6 +245,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_bean',
+      group: ItemGroup.chairs,
       title: 'Кресло-пуф',
       price: 150,
       photo: true,
@@ -236,6 +253,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_flower',
+      group: ItemGroup.chairs,
       title: 'Кресло-цветок',
       price: 180,
       photo: true,
@@ -244,6 +262,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'armchair_wing',
+      group: ItemGroup.chairs,
       title: 'Кресло с ушками',
       price: 190,
       photo: true,
@@ -252,6 +271,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'swing',
+      group: ItemGroup.chairs,
       title: 'Подвесное кресло',
       price: 200,
       photo: true,
@@ -260,68 +280,88 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'basket_star',
+      group: ItemGroup.baskets,
       title: 'Корзина со звездой',
       price: 70,
-      photo: true,
-      kind: ItemKind.furniture,
-    ),
-    ShopItem(
-      id: 'rug_cloud',
-      title: 'Ковёр-облако',
-      price: 110,
-      photo: true,
-      kind: ItemKind.furniture,
-    ),
-    ShopItem(
-      id: 'rug_heart',
-      title: 'Ковёр с сердцем',
-      price: 110,
       photo: true,
       kind: ItemKind.furniture,
     ),
   ];
 
   /// Декор — 16 (КП 10.3): обои 3, полы 3, картины 3, подушки 2, растения 2,
-  /// гирлянда, часы, постер.
+  /// гирлянда, часы, постер. С 21.09 здесь же ковры: «он вообще, в принципе,
+  /// относится к декору» — заказчик.
   static const List<ShopItem> decor = <ShopItem>[
+    // Ковры.
+    ShopItem(
+      id: 'rug',
+      group: ItemGroup.rugs,
+      title: 'Ковёр',
+      price: 80,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'rug_cloud',
+      group: ItemGroup.rugs,
+      title: 'Ковёр-облако',
+      price: 110,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
+    ShopItem(
+      id: 'rug_heart',
+      group: ItemGroup.rugs,
+      title: 'Ковёр с сердцем',
+      price: 110,
+      photo: true,
+      kind: ItemKind.decor,
+    ),
     ShopItem(
       id: 'wall_rose',
+      group: ItemGroup.walls,
       title: 'Обои розовые',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'wall_sage',
+      group: ItemGroup.walls,
       title: 'Обои зелёные',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'wall_sky',
+      group: ItemGroup.walls,
       title: 'Обои небо',
       price: 40,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'floor_wood',
+      group: ItemGroup.floors,
       title: 'Пол дерево',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'floor_light',
+      group: ItemGroup.floors,
       title: 'Пол светлый',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'floor_carpet',
+      group: ItemGroup.floors,
       title: 'Пол ковролин',
       price: 35,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'pic_bear',
+      group: ItemGroup.pictures,
       title: 'Картина мишка',
       price: 55,
       photo: true,
@@ -330,6 +370,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_forest',
+      group: ItemGroup.pictures,
       title: 'Картина лес',
       price: 55,
       kind: ItemKind.decor,
@@ -337,18 +378,21 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_moon',
+      group: ItemGroup.pictures,
       title: 'Картина луна',
       price: 55,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'pillow_heart',
+      group: ItemGroup.pillows,
       title: 'Подушка сердце',
       price: 30,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'pillow_star',
+      group: ItemGroup.pillows,
       title: 'Подушка звезда',
       price: 30,
       photo: true,
@@ -357,6 +401,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant',
+      group: ItemGroup.plants,
       title: 'Растение',
       price: 45,
       photo: true,
@@ -365,6 +410,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'cactus',
+      group: ItemGroup.plants,
       title: 'Кактус',
       price: 45,
       kind: ItemKind.decor,
@@ -372,12 +418,14 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'garland',
+      group: ItemGroup.garlands,
       title: 'Гирлянда',
       price: 65,
       kind: ItemKind.decor,
     ),
     ShopItem(
       id: 'clock',
+      group: ItemGroup.clocks,
       title: 'Часы',
       price: 70,
       kind: ItemKind.decor,
@@ -385,6 +433,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'poster',
+      group: ItemGroup.pictures,
       title: 'Постер',
       price: 50,
       kind: ItemKind.decor,
@@ -392,6 +441,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pic_heart',
+      group: ItemGroup.pictures,
       title: 'Картина с сердцем',
       price: 60,
       photo: true,
@@ -399,6 +449,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant_ivy',
+      group: ItemGroup.plants,
       title: 'Плющ на подставке',
       price: 55,
       photo: true,
@@ -406,6 +457,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'plant_bear',
+      group: ItemGroup.plants,
       title: 'Цветок в кашпо-мишке',
       price: 65,
       photo: true,
@@ -413,6 +465,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_daisy',
+      group: ItemGroup.flowers,
       title: 'Ромашки в банке',
       price: 50,
       photo: true,
@@ -420,6 +473,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_orchid',
+      group: ItemGroup.flowers,
       title: 'Орхидея',
       price: 70,
       photo: true,
@@ -427,6 +481,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'flowers_euc',
+      group: ItemGroup.flowers,
       title: 'Эвкалипт в вазе',
       price: 55,
       photo: true,
@@ -439,6 +494,7 @@ abstract final class ItemCatalog {
   static const List<ShopItem> toys = <ShopItem>[
     ShopItem(
       id: 'ball',
+      group: ItemGroup.toys,
       title: 'Мячик',
       price: 40,
       kind: ItemKind.toy,
@@ -446,6 +502,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'teddy',
+      group: ItemGroup.plush,
       title: 'Мишка',
       price: 90,
       photo: true,
@@ -453,6 +510,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'cubes',
+      group: ItemGroup.toys,
       title: 'Кубики',
       price: 60,
       photo: true,
@@ -461,6 +519,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'car',
+      group: ItemGroup.toys,
       title: 'Машинка',
       price: 70,
       kind: ItemKind.toy,
@@ -468,12 +527,14 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'duck',
+      group: ItemGroup.toys,
       title: 'Уточка',
       price: 35,
       kind: ItemKind.toy,
     ),
     ShopItem(
       id: 'drum',
+      group: ItemGroup.toys,
       title: 'Барабан',
       price: 80,
       kind: ItemKind.toy,
@@ -481,6 +542,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'puzzle',
+      group: ItemGroup.toys,
       title: 'Пазл',
       price: 65,
       kind: ItemKind.toy,
@@ -488,6 +550,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'train',
+      group: ItemGroup.toys,
       title: 'Паровозик',
       price: 95,
       kind: ItemKind.toy,
@@ -495,6 +558,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'kite',
+      group: ItemGroup.toys,
       title: 'Воздушный змей',
       price: 55,
       kind: ItemKind.toy,
@@ -502,6 +566,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'rocket',
+      group: ItemGroup.toys,
       title: 'Ракета',
       price: 85,
       kind: ItemKind.toy,
@@ -509,6 +574,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'teddy_cream',
+      group: ItemGroup.plush,
       title: 'Мишка кремовый',
       price: 110,
       photo: true,
@@ -516,6 +582,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bunny',
+      group: ItemGroup.plush,
       title: 'Зайчик',
       price: 110,
       photo: true,
@@ -523,6 +590,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bunny_pink',
+      group: ItemGroup.plush,
       title: 'Зайчик розовый',
       price: 110,
       photo: true,
@@ -530,6 +598,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'pyramid',
+      group: ItemGroup.toys,
       title: 'Пирамидка',
       price: 80,
       photo: true,
@@ -538,6 +607,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'dollhouse',
+      group: ItemGroup.houses,
       title: 'Кукольный домик',
       price: 220,
       photo: true,
@@ -546,6 +616,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'house_felt',
+      group: ItemGroup.houses,
       title: 'Домик из фетра',
       price: 160,
       photo: true,
@@ -563,6 +634,7 @@ abstract final class ItemCatalog {
   static const List<ShopItem> clothes = <ShopItem>[
     ShopItem(
       id: 'out_yellow',
+      group: ItemGroup.outfits,
       title: 'Комплект жёлтый',
       price: 160,
       kind: ItemKind.outfit,
@@ -571,6 +643,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_sailor',
+      group: ItemGroup.outfits,
       title: 'Комплект матрос',
       price: 180,
       kind: ItemKind.outfit,
@@ -579,6 +652,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_bear',
+      group: ItemGroup.outfits,
       title: 'Костюм мишки',
       price: 200,
       kind: ItemKind.outfit,
@@ -587,6 +661,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_berry',
+      group: ItemGroup.outfits,
       title: 'Костюм клубника',
       price: 220,
       kind: ItemKind.outfit,
@@ -595,6 +670,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_bee',
+      group: ItemGroup.outfits,
       title: 'Костюм пчёлка',
       price: 240,
       kind: ItemKind.outfit,
@@ -603,6 +679,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_glasses',
+      group: ItemGroup.outfits,
       title: 'Комплект очкарик',
       price: 100,
       kind: ItemKind.outfit,
@@ -611,6 +688,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_winter',
+      group: ItemGroup.outfits,
       title: 'Комплект зимний',
       price: 190,
       kind: ItemKind.outfit,
@@ -619,6 +697,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'out_sport',
+      group: ItemGroup.outfits,
       title: 'Комплект спорт',
       price: 150,
       kind: ItemKind.outfit,
@@ -627,6 +706,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_rose',
+      group: ItemGroup.tops,
       title: 'Свитер розовый',
       price: 120,
       kind: ItemKind.top,
@@ -635,6 +715,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_sage',
+      group: ItemGroup.tops,
       title: 'Кофта зелёная',
       price: 130,
       kind: ItemKind.top,
@@ -643,6 +724,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'top_blue',
+      group: ItemGroup.tops,
       title: 'Толстовка голубая',
       price: 140,
       kind: ItemKind.top,
@@ -651,6 +733,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_yellow',
+      group: ItemGroup.bottoms,
       title: 'Шорты жёлтые',
       price: 110,
       kind: ItemKind.bottom,
@@ -659,6 +742,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_blue',
+      group: ItemGroup.bottoms,
       title: 'Штаны синие',
       price: 120,
       kind: ItemKind.bottom,
@@ -667,6 +751,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'bot_skirt',
+      group: ItemGroup.bottoms,
       title: 'Юбка розовая',
       price: 125,
       kind: ItemKind.bottom,
@@ -675,6 +760,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'hat_cap',
+      group: ItemGroup.hats,
       title: 'Шапка',
       price: 90,
       kind: ItemKind.headwear,
@@ -683,6 +769,7 @@ abstract final class ItemCatalog {
     ),
     ShopItem(
       id: 'acc_bow',
+      group: ItemGroup.extras,
       title: 'Бантик',
       price: 60,
       kind: ItemKind.accessory,

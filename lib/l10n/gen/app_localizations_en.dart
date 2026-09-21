@@ -1542,4 +1542,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zodiacVirgo => 'Virgo';
+
+  @override
+  String get shopGroupAll => 'All';
+
+  @override
+  String get shopGroupBeds => 'Beds';
+
+  @override
+  String get shopGroupChairs => 'Armchairs';
+
+  @override
+  String get shopGroupDressers => 'Dressers';
+
+  @override
+  String get shopGroupTables => 'Tables';
+
+  @override
+  String get shopGroupBaskets => 'Toy baskets';
+
+  @override
+  String get shopGroupShelves => 'Wall shelves';
+
+  @override
+  String get shopGroupLamps => 'Lamps';
+
+  @override
+  String get shopGroupRugs => 'Rugs';
+
+  @override
+  String get shopGroupPictures => 'Pictures';
+
+  @override
+  String get shopGroupPlants => 'Plants';
+
+  @override
+  String get shopGroupFlowers => 'Flowers';
+
+  @override
+  String get shopGroupPillows => 'Pillows';
+
+  @override
+  String get shopGroupWalls => 'Wallpaper';
+
+  @override
+  String get shopGroupFloors => 'Floors';
+
+  @override
+  String get shopGroupPlush => 'Plush toys';
+
+  @override
+  String get shopGroupHouses => 'Playhouses';
+
+  @override
+  String get shopGroupToys => 'Toys';
+
+  @override
+  String get shopGroupOutfits => 'Outfits';
+
+  @override
+  String get shopGroupTops => 'Tops';
+
+  @override
+  String get shopGroupBottoms => 'Bottoms';
+
+  @override
+  String get shopGroupHats => 'Hats';
+
+  @override
+  String get shopGroupShoes => 'Shoes';
+
+  @override
+  String get shopGroupExtras => 'Accessories';
+
+  @override
+  String get shopGroupSeats => 'Chairs';
+
+  @override
+  String get shopGroupWardrobes => 'Wardrobes';
+
+  @override
+  String get shopGroupClocks => 'Clocks';
+
+  @override
+  String get shopGroupGarlands => 'Garlands';
 }

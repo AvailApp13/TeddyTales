@@ -4,6 +4,7 @@
 /// экраны берут отображаемые названия только через эти функции.
 library;
 
+import '../game/item_groups.dart';
 import '../game/shop_items.dart';
 import 'gen/app_localizations.dart';
 
@@ -109,6 +110,39 @@ String shopCategoryTitle(AppLocalizations l10n, ItemKind kind) =>
       ItemKind.headwear => l10n.categoryHeadwear,
       ItemKind.shoes => l10n.categoryShoes,
       ItemKind.accessory => l10n.categoryAccessory,
+    };
+
+/// Локализованное название подкатегории [ItemGroup] — подписи на чипах
+/// внутри вкладки магазина.
+String shopGroupName(AppLocalizations l10n, ItemGroup group) =>
+    switch (group) {
+      ItemGroup.beds => l10n.shopGroupBeds,
+      ItemGroup.chairs => l10n.shopGroupChairs,
+      ItemGroup.seats => l10n.shopGroupSeats,
+      ItemGroup.dressers => l10n.shopGroupDressers,
+      ItemGroup.wardrobes => l10n.shopGroupWardrobes,
+      ItemGroup.tables => l10n.shopGroupTables,
+      ItemGroup.baskets => l10n.shopGroupBaskets,
+      ItemGroup.shelves => l10n.shopGroupShelves,
+      ItemGroup.lamps => l10n.shopGroupLamps,
+      ItemGroup.rugs => l10n.shopGroupRugs,
+      ItemGroup.pictures => l10n.shopGroupPictures,
+      ItemGroup.clocks => l10n.shopGroupClocks,
+      ItemGroup.garlands => l10n.shopGroupGarlands,
+      ItemGroup.plants => l10n.shopGroupPlants,
+      ItemGroup.flowers => l10n.shopGroupFlowers,
+      ItemGroup.pillows => l10n.shopGroupPillows,
+      ItemGroup.walls => l10n.shopGroupWalls,
+      ItemGroup.floors => l10n.shopGroupFloors,
+      ItemGroup.plush => l10n.shopGroupPlush,
+      ItemGroup.houses => l10n.shopGroupHouses,
+      ItemGroup.toys => l10n.shopGroupToys,
+      ItemGroup.outfits => l10n.shopGroupOutfits,
+      ItemGroup.tops => l10n.shopGroupTops,
+      ItemGroup.bottoms => l10n.shopGroupBottoms,
+      ItemGroup.hats => l10n.shopGroupHats,
+      ItemGroup.shoes => l10n.shopGroupShoes,
+      ItemGroup.extras => l10n.shopGroupExtras,
     };
 
 /// Русское название из каталога — фолбэк для id, которого нет в переводах.
