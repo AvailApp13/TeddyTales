@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
+import '../game/item_metrics.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
@@ -27,7 +28,7 @@ enum SlotDepth {
 /// зависит от того, чем эта комната снята. Настенное всегда позади: стена
 /// дальше всего.
 SlotDepth slotDepth(RoomSlot slot) =>
-    slot.onWall || slot.y <= cameraOf(slot.room).standLine
+    slot.fit == ItemFit.wall || slot.y <= cameraOf(slot.room).standLine
     ? SlotDepth.behind
     : SlotDepth.front;
 
@@ -65,7 +66,7 @@ class RoomSlotLayer extends StatelessWidget {
     this.depth = SlotDepth.front,
     this.hintLimit = 3,
     this.hint = false,
-    this.accepts,
+    this.picked,
   });
 
   final GameState game;
@@ -78,7 +79,7 @@ class RoomSlotLayer extends StatelessWidget {
 
   /// Если вещь уже выбрана, подсвечиваются только места, которые её примут:
   /// кроватку некуда вешать на стену, и предлагать это место незачем.
-  final ItemKind? accepts;
+  final ShopItem? picked;
 
   /// Какой заход рисуем: дальние места или ближние.
   final SlotDepth depth;
@@ -114,7 +115,7 @@ class RoomSlotLayer extends StatelessWidget {
           final hasA = _hasItemFor(game, a);
           final hasB = _hasItemFor(game, b);
           if (hasA != hasB) return hasA ? -1 : 1;
-          return (b.maxW * b.maxH).compareTo(a.maxW * a.maxH);
+          return b.metres.compareTo(a.metres);
         });
     // В обустройстве лимит не нужен: человек пришёл ставить вещи и должен
     // видеть все места сразу. Лимит был про подсказку «попробуй сюда» на
@@ -137,9 +138,9 @@ class RoomSlotLayer extends StatelessWidget {
                   game: game,
                   hinted:
                       hint &&
-                      (accepts == null
+                      (picked == null
                           ? hinted.contains(slot)
-                          : slot.accepts.contains(accepts)),
+                          : slot.takes(picked!)),
                   onTapItem: onTapItem,
                   onTapEmpty: onTapEmpty,
                 ),
@@ -168,25 +169,32 @@ class RoomSlotLayer extends StatelessWidget {
     required ValueChanged<RoomSlot> onTapEmpty,
   }) {
     final itemId = game.itemInSlot(slot.id);
-    final item = itemId == null ? null : ItemCatalog.byId(itemId);
+    // Вещь без картинки нарисовать нечем: в комнате она не стоит, хотя в
+    // сохранении может остаться — каталог держит такие позиции до отрисовки.
+    final item = itemId == null || metricsOf(itemId) == null
+        ? null
+        : ItemCatalog.byId(itemId);
 
-    // Размер занятого места — по вещи, вписанной в габарит; пустого — по
-    // самому габариту. Иначе рамка пустого места прыгала бы в зависимости
-    // от того, что в неё поставят.
-    final size = item == null
-        ? (w: slot.maxW, h: slot.maxH)
-        : fitIntoSlot(slot, item);
-
-    final w = size.w * width;
-    final h = size.h * height;
+    // Размер занятой вещи — её собственный, с поправкой на глубину; пустого
+    // места — по тому, что здесь ожидается. Иначе рамка пустого места
+    // прыгала бы в зависимости от того, что в неё поставят.
+    final box = item == null ? boxOfHint(slot) : boxOf(slot, item);
 
     return Positioned(
-      left: (slot.x * width - w / 2).clamp(0.0, (width - w).clamp(0.0, width)),
-      top: slot.onWall ? slot.y * height - h / 2 : slot.y * height - h,
-      width: w,
-      height: h,
+      left: box.left * width,
+      top: box.top * height,
+      width: box.width * width,
+      height: box.height * height,
       child: item != null
-          ? _FilledSlot(item: item, onTap: () => onTapItem(slot, item))
+          ? _FilledSlot(
+              item: item,
+              // Занятое место, куда выбранная вещь тоже встанет, обводится
+              // пунктиром: иначе человек с кроваткой в руках не видит на
+              // экране ни одной подсказки — единственное место, где она
+              // помещается, уже занято комодом, — и упирается в тупик.
+              replaceable: hinted,
+              onTap: () => onTapItem(slot, item),
+            )
           : hinted
           ? _EmptySlot(slot: slot, onTap: () => onTapEmpty(slot))
           // Неподсвеченное свободное место всё равно нажимается: человек,
@@ -197,11 +205,20 @@ class RoomSlotLayer extends StatelessWidget {
   }
 }
 
-/// Стоящая вещь: заглушка-эмодзи, растянутая по габариту места.
+/// Стоящая вещь: картинка ровно того размера, каким вещь видна с этой
+/// глубины.
 class _FilledSlot extends StatelessWidget {
-  const _FilledSlot({required this.item, required this.onTap});
+  const _FilledSlot({
+    required this.item,
+    required this.onTap,
+    this.replaceable = false,
+  });
 
   final ShopItem item;
+
+  /// Сюда встанет и то, что сейчас в руках: тап заменит одно другим.
+  final bool replaceable;
+
   final VoidCallback onTap;
 
   @override
@@ -212,19 +229,14 @@ class _FilledSlot extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: item.id == 'rug'
-            // Ковёр — не эмодзи, а мягкое пятно под ногами: так он и
-            // читается в макете.
-            ? const DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Color(0xCCEFC9BC),
-                  borderRadius: BorderRadius.all(Radius.elliptical(200, 40)),
-                ),
-              )
-            : FittedBox(
-                fit: BoxFit.contain,
+        // Ни FittedBox, ни отступов: прямоугольник уже посчитан по
+        // пропорциям самой картинки, и вещь занимает его целиком.
+        child: replaceable
+            ? CustomPaint(
+                foregroundPainter: _DashedFrame(fill: false),
                 child: ItemPicture(item: item),
-              ),
+              )
+            : ItemPicture(item: item),
       ),
     );
   }
@@ -277,6 +289,12 @@ class _QuietSlot extends StatelessWidget {
 /// предмет, заливка — как пятно на полу. Прерывистая рамка во всех
 /// интерфейсах означает одно — «здесь пусто, можно положить».
 class _DashedFrame extends CustomPainter {
+  _DashedFrame({this.fill = true});
+
+  /// Подложка внутри рамки. У пустого места она нужна — рамка читается как
+  /// свободное пятно; поверх стоящей вещи её нет, иначе вещь выцветает.
+  final bool fill;
+
   static const double _dash = 5;
   static const double _gap = 4;
 
@@ -287,10 +305,12 @@ class _DashedFrame extends CustomPainter {
       const Radius.circular(10),
     );
 
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = AppColors.surface.withValues(alpha: 0.35),
-    );
+    if (fill) {
+      canvas.drawRRect(
+        rrect,
+        Paint()..color = AppColors.surface.withValues(alpha: 0.35),
+      );
+    }
 
     final paint = Paint()
       ..color = AppColors.textSecondary.withValues(alpha: 0.7)
@@ -311,5 +331,5 @@ class _DashedFrame extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedFrame old) => false;
+  bool shouldRepaint(_DashedFrame old) => old.fill != fill;
 }

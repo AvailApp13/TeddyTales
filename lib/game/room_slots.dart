@@ -8,29 +8,43 @@
 /// (КП 10.7) существовал только на бумаге. Вторая: размер вещи задавала сама
 /// вещь, поэтому кроватка в 1.7 роста занимала полкадра и накрывала мишку.
 ///
-/// Решение заказчика (18.09): комната размечается местами, а размеры вещей
-/// подгоняются под место. Слот принимает **любой предмет своей категории** —
-/// в место у левой стены встанет кроватка, или кресло, или комод, что игрок
-/// туда поставит. Комнаты у разных людей получаются разные, а художник
-/// рисует каждую вещь под известный максимальный габарит.
+/// Решение заказчика (18.09): комната размечается местами, а игрок решает,
+/// что где стоит. Место принимает любую вещь, которая в нём держится и в
+/// него помещается: в место у левой стены встанет кроватка, или кресло, или
+/// комод — что игрок туда поставит.
 ///
-/// Плата за это — размерный ряд перестаёт быть правдивым: шкаф не будет
-/// вдвое выше мишки, его подгонит слот. Размен осознанный: в кадре важнее
-/// композиция, чем сантиметры. Настоящие пропорции каталога остались в
-/// `docs/interior-size-guide.md` для дизайнера.
+/// ## Место — это точка на полу, а не рамка
+///
+/// Сначала место было рамкой `maxW × maxH`, и вещь в неё вписывалась. 20.09
+/// заказчик увидел, что из этого выходит: кресла разного размера, подвесное
+/// кресло парит, кресло-цветок за краем экрана — «только картины попали».
+/// Причина в самой рамке: она назначала размер вещи вместо того, чтобы его
+/// узнать.
+///
+/// Теперь место говорит только одно — **где** вещь стоит: точка на полу и
+/// глубина, на которой эта точка лежит. А **каким размером** вещь встанет,
+/// считается из её настоящей ширины в метрах ([ItemMetrics]) и перспективы
+/// комнаты ([RoomCamera.widthPerMetre]). Кресло у задней стены выходит
+/// мельче того же кресла посреди комнаты — как на фоне, который заказчик
+/// нарисовал обставленным.
+///
+/// От рамки осталось одно число — [RoomSlot.maxMetres]: насколько широкую
+/// вещь место вообще принимает. Это не размер, а вместимость: кроватку в
+/// полтора метра некуда ставить в угол, и место честно говорит «не встанет».
 ///
 /// ## Координаты
 ///
-/// Всё в долях кадра сцены. `x` — центр места по горизонтали, `y` — линия,
-/// на которой вещь стоит (для настенных — центр по вертикали). `maxW` и
-/// `maxH` — наибольший габарит: вещь вписывается в него по своим пропорциям
-/// и никогда не выходит за края.
+/// Всё в долях кадра сцены. `x` — центр места по горизонтали, `y` — линия
+/// пола, на которой вещь стоит; для настенных вещей `y` — центр по вертикали,
+/// а глубина у них всегда одна — сама стена.
 ///
-/// Разметка сделана по сгенерированным фонам, а не по расчёту: угол стен,
-/// линия плинтуса и окно на каждой картинке свои, и места привязаны к тому,
-/// что реально нарисовано.
+/// Кадр шире экрана: телефон вытянут сильнее картинки, и по краям она
+/// срезается (см. `RoomFrame`). Поэтому места держатся внутри 0.10–0.90 по
+/// ширине — за этой полосой вещь начнёт обрезаться на вытянутых экранах.
 library;
 
+import 'item_metrics.dart';
+import 'room_camera.dart';
 import 'room_kind.dart';
 import 'shop_items.dart';
 
@@ -41,10 +55,9 @@ class RoomSlot {
     required this.room,
     required this.x,
     required this.y,
-    required this.maxW,
-    required this.maxH,
-    required this.accepts,
-    this.onWall = false,
+    required this.fit,
+    required this.metres,
+    required this.maxMetres,
     this.depth = 1,
   });
 
@@ -53,195 +66,189 @@ class RoomSlot {
 
   final RoomKind room;
 
-  /// Центр по горизонтали и линия пола (или центр по вертикали для стен).
+  /// Центр по горизонтали и линия пола (для настенных — центр по вертикали).
   final double x;
   final double y;
 
-  /// Наибольший габарит вещи в долях кадра.
-  final double maxW;
-  final double maxH;
+  /// Что здесь держится: пол, ковёр или стена.
+  final ItemFit fit;
 
-  /// Какие категории каталога сюда становятся.
-  final Set<ItemKind> accepts;
+  /// Какой ширины вещь здесь ожидается. Размер вещи от этого не зависит —
+  /// по этому числу рисуется только пунктир пустого места.
+  final double metres;
 
-  final bool onWall;
+  /// Самая широкая вещь, которая сюда встанет.
+  final double maxMetres;
 
-  /// Порядок отрисовки: больше — ближе к зрителю. Мишка стоит между 5 и 6,
-  /// поэтому игрушки на переднем плане (depth 6+) рисуются перед ним.
+  /// Порядок отрисовки: больше — ближе к зрителю. Мишка стоит между
+  /// дальними и ближними местами (см. [slotDepth]).
   final int depth;
 
-  bool takes(ShopItem item) => accepts.contains(item.kind);
+  /// Встанет ли вещь сюда: держится так же и не шире места.
+  bool takes(ShopItem item) {
+    final size = metricsOf(item.id);
+    if (size == null) return false;
+    return size.fit == fit && size.metres <= maxMetres + 0.001;
+  }
 }
 
 /// Все места всех комнат.
 ///
-/// В детской двенадцать мест: этого хватает, чтобы комната выглядела
-/// обжитой, и мало настолько, чтобы каждая купленная вещь была заметна.
-/// Тридцать мест дали бы витрину склада, а не комнату.
+/// В детской девять мест. Их не больше, чем нужно: комната на присланном
+/// заказчиком обставленном фоне собрана ровно из этого — кресло у окна,
+/// комод у задней стены, растение в углу, ковёр под ногами, две игрушки по
+/// бокам, полка и две картины на стене. Тридцать мест дали бы витрину
+/// склада, а не комнату.
 const List<RoomSlot> roomSlots = [
   // --- Детская ------------------------------------------------------------
   //
-  // Перемерено 20.09 по пустой комнате, которую прислал заказчик. Прежняя
-  // разметка обходила нарисованную мебель — кресло, комод, ковёр были частью
-  // фона, и места лепились по остаткам. Теперь комната пустая, и места
-  // расставлены как в настоящей детской: крупная мебель вдоль задней стены,
-  // мягкое — по углам, ковёр под ногами, картины на стене.
+  // Размечено 21.09 по двум картинкам сразу: по пустой комнате (где мерены
+  // стены и пол) и по прежней обставленной (где видно, что и на какой
+  // глубине в этой комнате стояло). Числа — оттуда:
   //
-  // Стык стены с полом на 0.525, у левой стены он уходит вниз до 0.60.
-  // Мишка стоит по центру на 0.80 и занимает примерно от 0.33 до 0.67
-  // ширины — центральные напольные места этой полосы избегают, иначе рамка
-  // перечёркивает ему лицо.
+  //   кресло       стоит на 0.60, центр 0.31 — на фоне 0.598 и 0.33
+  //   комод        стоит на 0.55, центр 0.71 — на фоне 0.545 и 0.75
+  //   ковёр        середина на 0.80          — на фоне 0.82
+  //   картины      центр на 0.245            — на фоне 0.31 и 0.32
+  //   полка        центр на 0.215            — на фоне 0.22
+  //
+  // Расхождения — поправка на срез по краям: кадр на телефоне у́же картинки,
+  // и то, что на фоне стояло у самого края (столик под окном, пальма в
+  // правом углу), сдвинуто внутрь.
 
-  // Задняя стена, левее центра: кроватка, комод, стеллаж.
-  RoomSlot(
-    id: 'nursery.back_left',
-    room: RoomKind.nursery,
-    x: 0.29,
-    y: 0.585,
-    maxW: 0.27,
-    maxH: 0.24,
-    accepts: {ItemKind.furniture},
-    depth: 2,
-  ),
-  // Задняя стена, правее центра.
-  RoomSlot(
-    id: 'nursery.back_right',
-    room: RoomKind.nursery,
-    x: 0.71,
-    y: 0.585,
-    maxW: 0.27,
-    maxH: 0.24,
-    accepts: {ItemKind.furniture},
-    depth: 2,
-  ),
-  // У окна слева. Высота ограничена подоконником: высокая вещь здесь лезет
-  // на окно — заказчик поймал это первым ещё на старом фоне.
+  // Кресло у окна — главная вещь левой половины.
   RoomSlot(
     id: 'nursery.floor_left',
     room: RoomKind.nursery,
-    x: 0.13,
-    y: 0.70,
-    maxW: 0.25,
-    maxH: 0.22,
-    accepts: {ItemKind.furniture, ItemKind.decor},
-    depth: 4,
+    x: 0.31,
+    y: 0.60,
+    fit: ItemFit.floor,
+    metres: 0.85,
+    maxMetres: 1.0,
+    depth: 3,
   ),
-  // Правый угол: кресло, качели, растение.
+  // Задняя стена справа: комод, стеллаж, кроватка, кукольный домик. Самое
+  // вместительное место комнаты — и самое дальнее, поэтому даже кроватка в
+  // полтора метра занимает здесь меньше половины ширины кадра.
+  RoomSlot(
+    id: 'nursery.floor_right',
+    room: RoomKind.nursery,
+    x: 0.70,
+    y: 0.55,
+    fit: ItemFit.floor,
+    metres: 1.10,
+    maxMetres: 1.3,
+    depth: 2,
+  ),
+  // Правый угол, ближе к зрителю: растение, корзина, цветы. На обставленном
+  // фоне здесь стояла пальма.
   RoomSlot(
     id: 'nursery.corner_right',
     room: RoomKind.nursery,
-    x: 0.87,
-    y: 0.72,
-    maxW: 0.26,
-    maxH: 0.26,
-    accepts: {ItemKind.furniture, ItemKind.decor},
-    depth: 3,
+    x: 0.765,
+    y: 0.665,
+    fit: ItemFit.floor,
+    metres: 0.45,
+    maxMetres: 0.52,
+    depth: 4,
   ),
   // Ковёр под ногами мишки — единственное место, где вещь лежит, а не стоит.
   RoomSlot(
     id: 'nursery.rug',
     room: RoomKind.nursery,
     x: 0.50,
-    y: 0.92,
-    maxW: 0.54,
-    maxH: 0.15,
-    accepts: {ItemKind.furniture},
+    y: 0.78,
+    fit: ItemFit.rug,
+    metres: 1.05,
+    maxMetres: 1.1,
     depth: 1,
   ),
-  // Три места под игрушки: по бокам от мишки и ближе к зрителю.
+  // Две игрушки по бокам от мишки, чуть дальше него: прямо перед ним они
+  // закрывали бы ему ноги, а у самого края — обрезались бы.
   RoomSlot(
     id: 'nursery.toy_left',
     room: RoomKind.nursery,
-    x: 0.15,
-    y: 0.88,
-    maxW: 0.17,
-    maxH: 0.15,
-    accepts: {ItemKind.toy},
-    depth: 6,
+    x: 0.23,
+    y: 0.755,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.40,
+    depth: 5,
   ),
   RoomSlot(
     id: 'nursery.toy_right',
     room: RoomKind.nursery,
-    x: 0.85,
-    y: 0.88,
-    maxW: 0.17,
-    maxH: 0.15,
-    accepts: {ItemKind.toy},
-    depth: 6,
+    x: 0.77,
+    y: 0.755,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.40,
+    depth: 5,
+  ),
+  // Стена. На обставленном фоне картины висели ниже, на уровне глаз — но
+  // там, где теперь стоит мишка: он занимает середину кадра от 0.30 вниз и
+  // закрывал бы их собой. Поэтому вся настенная тройка поднята над его
+  // головой, а полка осталась над комодом, где и была.
+  RoomSlot(
+    id: 'nursery.wall_shelf',
+    room: RoomKind.nursery,
+    x: 0.74,
+    y: 0.215,
+    fit: ItemFit.wall,
+    metres: 0.90,
+    maxMetres: 1.0,
   ),
   RoomSlot(
-    id: 'nursery.toy_front',
+    id: 'nursery.wall_pic_left',
     room: RoomKind.nursery,
-    x: 0.63,
-    y: 0.99,
-    maxW: 0.19,
-    maxH: 0.16,
-    accepts: {ItemKind.toy},
-    depth: 7,
-  ),
-  // Стены. Задняя — два места под картины и полки, левая у окна — одно.
-  RoomSlot(
-    id: 'nursery.wall_back_left',
-    room: RoomKind.nursery,
-    x: 0.36,
-    y: 0.31,
-    maxW: 0.20,
-    maxH: 0.17,
-    accepts: {ItemKind.decor},
-    onWall: true,
+    x: 0.33,
+    y: 0.245,
+    fit: ItemFit.wall,
+    metres: 0.55,
+    maxMetres: 0.7,
   ),
   RoomSlot(
-    id: 'nursery.wall_back_right',
+    id: 'nursery.wall_pic_right',
     room: RoomKind.nursery,
-    x: 0.68,
-    y: 0.31,
-    maxW: 0.20,
-    maxH: 0.17,
-    accepts: {ItemKind.decor},
-    onWall: true,
+    x: 0.52,
+    y: 0.245,
+    fit: ItemFit.wall,
+    metres: 0.55,
+    maxMetres: 0.7,
   ),
-  RoomSlot(
-    id: 'nursery.wall_left',
-    room: RoomKind.nursery,
-    x: 0.14,
-    y: 0.25,
-    maxW: 0.15,
-    maxH: 0.15,
-    accepts: {ItemKind.decor},
-    onWall: true,
-  ),
+
   // --- Кухня ---------------------------------------------------------------
   // Мест меньше: кухня не обставляется игроком, она пока смена обстановки.
-  // Четыре места — чтобы было куда поставить купленное, если человек
-  // захочет обжить и её.
+  // Камера у неё померена по обставленному фону и перемеряна не была —
+  // числа прикидочные, до пустого фона от заказчика.
   RoomSlot(
     id: 'kitchen.floor_left',
     room: RoomKind.kitchen,
-    x: 0.22,
-    y: 0.78,
-    maxW: 0.34,
-    maxH: 0.24,
-    accepts: {ItemKind.furniture},
+    x: 0.30,
+    y: 0.72,
+    fit: ItemFit.floor,
+    metres: 0.85,
+    maxMetres: 0.85,
     depth: 4,
   ),
   RoomSlot(
     id: 'kitchen.back_right',
     room: RoomKind.kitchen,
-    x: 0.72,
+    x: 0.69,
     y: 0.66,
-    maxW: 0.28,
-    maxH: 0.26,
-    accepts: {ItemKind.furniture},
+    fit: ItemFit.floor,
+    metres: 0.95,
+    maxMetres: 1.1,
     depth: 2,
   ),
   RoomSlot(
     id: 'kitchen.toy_front',
     room: RoomKind.kitchen,
-    x: 0.80,
-    y: 0.94,
-    maxW: 0.16,
-    maxH: 0.14,
-    accepts: {ItemKind.toy},
+    x: 0.75,
+    y: 0.92,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.36,
     depth: 7,
   ),
   RoomSlot(
@@ -249,41 +256,40 @@ const List<RoomSlot> roomSlots = [
     room: RoomKind.kitchen,
     x: 0.66,
     y: 0.26,
-    maxW: 0.16,
-    maxH: 0.18,
-    accepts: {ItemKind.decor},
-    onWall: true,
+    fit: ItemFit.wall,
+    metres: 0.55,
+    maxMetres: 1.0,
   ),
 
   // --- Ванная --------------------------------------------------------------
   RoomSlot(
     id: 'bath.floor_left',
     room: RoomKind.bath,
-    x: 0.24,
-    y: 0.80,
-    maxW: 0.32,
-    maxH: 0.22,
-    accepts: {ItemKind.furniture},
+    x: 0.33,
+    y: 0.70,
+    fit: ItemFit.floor,
+    metres: 0.55,
+    maxMetres: 0.60,
     depth: 4,
   ),
   RoomSlot(
     id: 'bath.corner_right',
     room: RoomKind.bath,
-    x: 0.88,
-    y: 0.74,
-    maxW: 0.20,
-    maxH: 0.22,
-    accepts: {ItemKind.furniture, ItemKind.decor},
+    x: 0.72,
+    y: 0.68,
+    fit: ItemFit.floor,
+    metres: 0.45,
+    maxMetres: 0.55,
     depth: 3,
   ),
   RoomSlot(
     id: 'bath.toy_front',
     room: RoomKind.bath,
     x: 0.70,
-    y: 0.95,
-    maxW: 0.16,
-    maxH: 0.14,
-    accepts: {ItemKind.toy},
+    y: 0.82,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.36,
     depth: 7,
   ),
   RoomSlot(
@@ -291,10 +297,9 @@ const List<RoomSlot> roomSlots = [
     room: RoomKind.bath,
     x: 0.60,
     y: 0.28,
-    maxW: 0.16,
-    maxH: 0.18,
-    accepts: {ItemKind.decor},
-    onWall: true,
+    fit: ItemFit.wall,
+    metres: 0.50,
+    maxMetres: 0.7,
   ),
 ];
 
@@ -305,7 +310,9 @@ List<RoomSlot> slotsOf(RoomKind room) =>
         if (slot.room == room) slot,
     ]..sort((a, b) {
       // Настенное всегда позади напольного: оно висит на стене.
-      if (a.onWall != b.onWall) return a.onWall ? -1 : 1;
+      final aWall = a.fit == ItemFit.wall;
+      final bWall = b.fit == ItemFit.wall;
+      if (aWall != bWall) return aWall ? -1 : 1;
       return a.depth.compareTo(b.depth);
     });
 
@@ -316,57 +323,45 @@ RoomSlot? slotById(String id) {
   return null;
 }
 
-/// Во сколько раз уменьшить вещь, чтобы она влезла в место.
+/// Прямоугольник в долях кадра: где и каким размером рисовать.
+typedef SlotBox = ({double left, double top, double width, double height});
+
+/// Куда встаёт вещь [item] в месте [slot].
 ///
-/// Вписывание по меньшей стороне, а не растяжение: пропорции вещи — это её
-/// узнаваемость. Кроватка, растянутая под квадратное место, перестаёт быть
-/// кроваткой.
-({double w, double h}) fitIntoSlot(RoomSlot slot, ShopItem item) {
-  final placement = _aspect(item.id);
-  final byWidth = slot.maxW / placement.w;
-  final byHeight = slot.maxH / placement.h;
-  final k = byWidth < byHeight ? byWidth : byHeight;
-  return (w: placement.w * k, h: placement.h * k);
+/// Размер берётся из настоящей ширины вещи в метрах и глубины места, а не из
+/// самого места. Высота — следствие пропорций картинки; поэтому картинки
+/// обрезаны впритык к вещи.
+SlotBox boxOf(RoomSlot slot, ShopItem item) {
+  final size = metricsOf(item.id);
+  if (size == null) return boxOfHint(slot);
+  return _box(slot, size.metres, size.aspect);
 }
 
-/// Пропорции вещи берём из размерной сетки: там честные габариты каталога.
-/// Слот решает, насколько крупно вещь показать, сетка — какой она формы.
-({double w, double h}) _aspect(String itemId) {
-  for (final p in _proportions) {
-    if (p.$1 == itemId) return (w: p.$2, h: p.$3);
-  }
-  return (w: 1, h: 1);
-}
+/// Пунктир пустого места: та же геометрия, но по ожидаемому размеру вещи.
+///
+/// Ковёр рисуется приплюснутым, остальное — квадратом: рамка обещает размер,
+/// а не форму, и форма у неё самая спокойная.
+SlotBox boxOfHint(RoomSlot slot) =>
+    _box(slot, slot.metres, slot.fit == ItemFit.rug ? 0.6 : 1.0);
 
-const List<(String, double, double)> _proportions = [
-  ('wardrobe', 1.15, 1.9),
-  ('shelf', 0.95, 1.75),
-  ('bed', 1.7, 1.0),
-  ('dresser', 1.0, 1.05),
-  ('table', 1.1, 0.85),
-  ('chair', 0.6, 0.95),
-  ('armchair', 1.05, 1.05),
-  ('lamp', 0.5, 1.5),
-  ('basket', 0.65, 0.55),
-  ('rug', 2.4, 0.45),
-  ('pic_bear', 0.55, 0.55),
-  ('pic_forest', 0.55, 0.55),
-  ('pic_moon', 0.5, 0.5),
-  ('clock', 0.42, 0.42),
-  ('poster', 0.52, 0.72),
-  ('garland', 2.2, 0.22),
-  ('plant', 0.55, 0.85),
-  ('cactus', 0.35, 0.5),
-  ('pillow_heart', 0.45, 0.35),
-  ('pillow_star', 0.45, 0.35),
-  ('teddy', 0.42, 0.5),
-  ('ball', 0.35, 0.35),
-  ('cubes', 0.5, 0.36),
-  ('duck', 0.3, 0.3),
-  ('drum', 0.45, 0.36),
-  ('car', 0.5, 0.3),
-  ('train', 0.7, 0.32),
-  ('puzzle', 0.5, 0.14),
-  ('rocket', 0.38, 0.6),
-  ('kite', 0.6, 0.7),
-];
+SlotBox _box(RoomSlot slot, double metres, double aspect) {
+  final camera = cameraOf(slot.room);
+
+  // Глубина, на которой меряется ширина. У стены она одна на все вещи —
+  // сама стена; у ковра середина, потому что дальняя его половина мельче
+  // ближней; у стоящей вещи — линия, на которой она касается пола.
+  final depthLine = slot.fit == ItemFit.wall ? camera.floorLine : slot.y;
+
+  final width = metres * camera.widthPerMetre(depthLine);
+  // Из доли ширины в долю высоты: пиксель квадратный, стороны кадра разные.
+  final height = width * aspect * camera.artWidth / camera.artHeight;
+
+  return (
+    left: slot.x - width / 2,
+    // Стоящая вещь нижним краем на линии пола, лежащая и висящая — серединой
+    // на своей линии.
+    top: slot.fit == ItemFit.floor ? slot.y - height : slot.y - height / 2,
+    width: width,
+    height: height,
+  );
+}

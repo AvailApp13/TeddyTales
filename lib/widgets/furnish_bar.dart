@@ -43,15 +43,27 @@ class FurnishBar extends StatelessWidget {
   final VoidCallback onDone;
 
   /// Купленные вещи, которым в этой комнате есть куда встать.
+  ///
+  /// Уже поставленных в ленте нет. Заказчик 21.09: «если расстановку сделали,
+  /// например, двух картин — они из списка должны исчезнуть, а они остаются,
+  /// будто одну и ту же вещь можно поставить дважды». Вещь одна, и она либо
+  /// в комнате, либо в ленте. Забрать её обратно в ленту можно тапом по ней
+  /// же в комнате.
+  ///
+  /// Вещей без картинки здесь тоже нет: рисовать их нечем, и в ленте они
+  /// выглядели серыми коробками.
   List<ShopItem> get items {
-    final kinds = {
+    final here = [
       for (final slot in roomSlots)
-        if (slot.room == room) ...slot.accepts,
-    };
+        if (slot.room == room) slot,
+    ];
 
     return [
       for (final item in ItemCatalog.all)
-        if (game.isOwned(item.id) && kinds.contains(item.kind)) item,
+        if (game.isOwned(item.id) &&
+            game.slotOf(item.id) == null &&
+            here.any((slot) => slot.takes(item)))
+          item,
     ];
   }
 
@@ -122,7 +134,6 @@ class FurnishBar extends StatelessWidget {
                   return _ItemCard(
                     item: item,
                     chosen: item.id == picked?.id,
-                    placed: game.slotOf(item.id) != null,
                     onTap: () => onPick(item),
                   );
                 },
@@ -140,7 +151,6 @@ class _ItemCard extends StatelessWidget {
   const _ItemCard({
     required this.item,
     required this.chosen,
-    required this.placed,
     required this.onTap,
   });
 
@@ -148,9 +158,6 @@ class _ItemCard extends StatelessWidget {
 
   /// Выбрана сейчас: подсвечена, и подходящие места ждут её.
   final bool chosen;
-
-  /// Уже стоит в комнате. Не гасим: её можно переставить в другое место.
-  final bool placed;
 
   final VoidCallback onTap;
 
@@ -181,8 +188,8 @@ class _ItemCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: sceneText(
                 size: 10,
-                weight: placed ? 800 : 600,
-                color: placed ? AppColors.sageDark : AppColors.textPrimary,
+                weight: chosen ? 800 : 600,
+                color: chosen ? AppColors.sageDark : AppColors.textPrimary,
               ),
             ),
           ],

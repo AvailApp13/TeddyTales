@@ -165,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final picked = _picked;
 
     if (picked != null) {
-      if (!slot.accepts.contains(picked.kind)) {
+      if (!slot.takes(picked)) {
         _toastFurnish(l10n.furnishNoSlot);
         return;
       }
@@ -545,7 +545,7 @@ class _RoomScene extends StatelessWidget {
             room: room,
             depth: SlotDepth.behind,
             hint: furnishing,
-            accepts: picked?.kind,
+            picked: picked,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,
           ),
@@ -593,7 +593,7 @@ class _RoomScene extends StatelessWidget {
             game: game,
             room: room,
             hint: furnishing,
-            accepts: picked?.kind,
+            picked: picked,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,
           ),

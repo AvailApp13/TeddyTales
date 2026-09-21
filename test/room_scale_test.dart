@@ -1,6 +1,7 @@
 import 'dart:ui' show Size;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/game/item_metrics.dart';
 import 'package:teddy_tales/game/room_camera.dart';
 import 'package:teddy_tales/game/room_kind.dart';
 import 'package:teddy_tales/game/room_slots.dart';
@@ -210,14 +211,14 @@ void main() {
 
   group('Что рисуется за мишкой', () {
     test('стены всегда позади', () {
-      for (final slot in roomSlots.where((s) => s.onWall)) {
+      for (final slot in roomSlots.where((s) => s.fit == ItemFit.wall)) {
         expect(slotDepth(slot), SlotDepth.behind, reason: slot.id);
       }
     });
 
     test('задняя стена позади, коврик и игрушки впереди', () {
-      expect(slotDepth(slotById('nursery.back_left')!), SlotDepth.behind);
-      expect(slotDepth(slotById('nursery.back_right')!), SlotDepth.behind);
+      expect(slotDepth(slotById('nursery.floor_left')!), SlotDepth.behind);
+      expect(slotDepth(slotById('nursery.floor_right')!), SlotDepth.behind);
       expect(slotDepth(slotById('kitchen.toy_front')!), SlotDepth.front);
       expect(slotDepth(slotById('bath.toy_front')!), SlotDepth.front);
     });

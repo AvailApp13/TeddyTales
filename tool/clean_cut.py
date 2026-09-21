@@ -49,7 +49,9 @@ def cleaned_image(
 
     labels, count = ndimage.label(solid)
     if count <= 1:
-        return (image, count, 0)
+        # Убирать нечего, но обрезать поля всё равно надо: край картинки —
+        # это край вещи, по нему комната считает её размер.
+        return (_cropped(image), count, 0)
 
     sizes = ndimage.sum_labels(solid, labels, range(1, count + 1))
     main = int(np.argmax(sizes)) + 1
@@ -79,12 +81,15 @@ def cleaned_image(
     edge = ndimage.binary_dilation(mask, iterations=2)
     data[..., 3] = np.where(edge, data[..., 3], 0)
 
-    result = Image.fromarray(data)
-    box = result.split()[-1].point(lambda v: 255 if v > 8 else 0).getbbox()
-    if box:
-        result = result.crop(box)
+    result = _cropped(Image.fromarray(data))
 
     return (result, count, count - len(keep_labels))
+
+
+def _cropped(image: Image.Image) -> Image.Image:
+    """Обрезает прозрачные поля до самой вещи."""
+    box = image.split()[-1].point(lambda v: 255 if v > 8 else 0).getbbox()
+    return image.crop(box) if box else image
 
 
 def main() -> int:
