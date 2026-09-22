@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — спальня по слоям: третья партия</title>
+<style>
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+
+  :root {
+    --ink: #1A202E;
+    --ink-soft: #6C7789;
+    --line: #DCE2EB;
+    --paper: #F6F8FB;
+    --red: #C9432F;
+    --red-soft: #FBEDEA;
+    --green: #2E8A5E;
+    --green-soft: #EAF5EF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1 { font-size: 22pt; font-weight: 800; margin: 0 0 1.5mm; line-height: 1.12; letter-spacing: -0.01em; }
+  .lead { color: var(--ink-soft); font-size: 11pt; margin: 0 0 5mm; max-width: 150mm; }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 5mm 0 2.5mm;
+    padding-bottom: 1.2mm;
+    border-bottom: 1.5pt solid var(--ink);
+    break-after: avoid;
+  }
+
+  h3 { font-size: 11.5pt; font-weight: 800; margin: 4mm 0 2mm; break-after: avoid; }
+
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.2mm; }
+
+  .page-break { break-before: page; }
+
+  figure { margin: 0 0 4mm; break-inside: avoid; }
+  figure img { display: block; margin: 0 auto; max-width: 100%; max-height: 225mm; }
+  figure.tight img { max-height: 72mm; }
+
+  figcaption { font-size: 9pt; color: var(--ink-soft); margin-top: 1.5mm; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4mm;
+    break-inside: avoid;
+  }
+
+  th, td { text-align: left; padding: 1.8mm 2.5mm; border-bottom: 0.6pt solid var(--line); }
+  th { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); border-bottom: 1pt solid var(--ink); }
+  td.num { font-weight: 700; }
+
+  .task {
+    border: 1.2pt solid var(--ink);
+    border-radius: 2.5mm;
+    padding: 4mm 4.5mm;
+    margin-bottom: 4mm;
+  }
+
+  .task > h3 { margin-top: 0; }
+
+  .task .num {
+    display: inline-block;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 800;
+    font-size: 9pt;
+    padding: 0.6mm 2.2mm;
+    border-radius: 1.2mm;
+    margin-right: 2mm;
+    vertical-align: 0.4mm;
+  }
+
+  .rule { margin: 3mm 0 0; }
+  .rule dt { font-weight: 800; margin-top: 2mm; }
+  .rule dd { margin: 0.6mm 0 0; }
+
+  .stop {
+    background: var(--red-soft);
+    border-left: 2pt solid var(--red);
+    padding: 2.5mm 3mm;
+    margin: 3mm 0 0;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .stop b { color: var(--red); }
+
+  .keep {
+    background: var(--green-soft);
+    border-left: 2pt solid var(--green);
+    padding: 2.5mm 3mm;
+    margin: 3mm 0 0;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .keep b { color: var(--green); }
+
+  code {
+    font-family: ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-size: 9.5pt;
+    background: var(--paper);
+    padding: 0.3mm 1mm;
+    border-radius: 1mm;
+  }
+
+  .files { font-size: 10pt; }
+  .files td:first-child { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; white-space: nowrap; }
+
+  footer {
+    break-before: avoid;
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 0.6pt solid var(--line);
+    font-size: 9pt;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<h1>Спальня по слоям: третья партия</h1>
+<p class="lead">
+  Мишка в спальне уже дышит, моргает и засыпает. Чтобы он стал ещё живее,
+  нужны две вещи: уши отдельными слоями — тогда они смогут вздрагивать —
+  и варианты взгляда в сторону, чтобы перед тем, как задремать, он сонно
+  повёл глазами. Всё это — правки одного файла, который прилагается.
+</p>
+
+<h2>Исходник этого раунда</h2>
+
+<p>
+  На этот раз исходник — не картинка комнаты, а готовый файл мишки с
+  открытыми глазами: <code>bear_open_941.png</code>, 941 × 1672 точки,
+  прозрачный фон. Он собран у нас из присланных раньше слоёв, и все
+  остальные лица мишки сделаны на той же морде. Поэтому правило одно на
+  все задания: <b>файл открывается и правится, а не рисуется заново</b>.
+  Всё, что вне указанных зон, остаётся точка в точку.
+</p>
+
+<figure>
+  <img src="bedroom-brief/v3-source.jpg" alt="Исходник с зонами правок">
+  <figcaption>
+    Зелёным — уши, красным — глаза. Координаты — точки этого файла, отсчёт
+    от левого верхнего угла.
+  </figcaption>
+</figure>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Задание 1 — уши отдельно</h2>
+
+<figure class="tight">
+  <img src="bedroom-brief/v3-ears.jpg" alt="Уши крупно">
+  <figcaption>
+    Уши торчат из-под капюшона: капюшон лежит поверх них. Поэтому в слое
+    уха каждое ухо надо продлить под капюшон ещё на 25 точек — когда ухо
+    чуть шевельнётся, из-под края капюшона не должно показаться пустоты.
+  </figcaption>
+</figure>
+
+<div class="task">
+  <h3><span class="num">1</span> Три файла из <code>bear_open_941.png</code></h3>
+
+  <table class="files">
+    <tbody>
+      <tr><td>ear_left.png</td><td>только левое ухо на прозрачном фоне; зона 75–250 по ширине, 680–900 по высоте; ухо продлено под капюшон на 25 точек</td></tr>
+      <tr><td>ear_right.png</td><td>только правое ухо; зона 690–900 по ширине, 610–860 по высоте; продлено под капюшон на 25 точек</td></tr>
+      <tr><td>head_no_ears.png</td><td>тот же мишка, у которого уши стёрты в прозрачность; край капюшона, из-под которого они торчали, не тронут</td></tr>
+    </tbody>
+  </table>
+
+  <dl class="rule">
+    <dt>Холст и место</dt>
+    <dd>У всех трёх файлов холст ровно 941 × 1672, содержимое ровно там, где
+      оно в исходнике. Не обрезать по контуру, не центрировать, не
+      масштабировать.</dd>
+
+    <dt>Край меха</dt>
+    <dd>Уши вырезать мягко, по волоску, с полупрозрачными кончиками ворса —
+      как они и нарисованы. Никакой каймы.</dd>
+
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом.</dd>
+  </dl>
+
+  <div class="stop">
+    <b>Нельзя рисовать уши заново.</b> Это должны быть те же самые уши, что в
+    исходнике, вырезанные из него: та же шерсть, тот же свет. Если ухо
+    будет нарисовано с нуля, оно не совпадёт с местом, откуда его стёрли.
+  </div>
+
+  <div class="keep">
+    <b>Как это будет работать.</b> Слои складываются так: уши сзади → голова
+    без ушей → лапы → одеяло. Ухо чуть вздрагивает раз в десяток секунд —
+    капюшон при этом лежит сверху и всё прячет.
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Задание 2 — взгляд в сторону</h2>
+
+<figure class="tight">
+  <img src="bedroom-brief/v3-eyes.jpg" alt="Глаза крупно">
+  <figcaption>
+    Синий круг — глаз, зелёная точка — куда уходит зрачок. Веки, мех вокруг,
+    нос и рот не меняются вовсе.
+  </figcaption>
+</figure>
+
+<div class="task">
+  <h3><span class="num">2</span> Три файла из <code>bear_open_941.png</code></h3>
+
+  <table class="files">
+    <tbody>
+      <tr><td>eyes_left.png</td><td>оба зрачка сдвинуты на 10 точек влево (для зрителя), блик уходит вместе со зрачком</td></tr>
+      <tr><td>eyes_right.png</td><td>оба зрачка сдвинуты на 10 точек вправо</td></tr>
+      <tr><td>eyes_down.png</td><td>оба зрачка сдвинуты на 8 точек вниз — сонный взгляд в одеяло</td></tr>
+    </tbody>
+  </table>
+
+  <dl class="rule">
+    <dt>Что можно менять</dt>
+    <dd>Только пиксели внутри двух красных прямоугольников: левый глаз
+      355–430 по ширине, 945–1020 по высоте; правый 548–622 по ширине,
+      913–988 по высоте. Всё вне их — точка в точку как в исходнике.</dd>
+
+    <dt>Ориентиры</dt>
+    <dd>Левый зрачок сейчас в точке 392, 982, правый — 585, 950, оба около
+      22 точек радиусом. Голова слегка наклонена, поэтому правый глаз выше
+      левого на 32 точки — этот наклон сохраняется сам собой, если не
+      трогать веки.</dd>
+
+    <dt>Как двигать</dt>
+    <dd>Тёмный зрачок с бликом уходит в сторону, открывая с противоположной
+      стороны чуть больше глазного яблока — оно у мишки такое же тёмное, с
+      мягким отблеском. Разрез глаза и веки не меняются.</dd>
+
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом, холст 941 × 1672, фигура на том же месте.</dd>
+  </dl>
+
+  <div class="stop">
+    <b>Нельзя генерировать новое лицо.</b> Если морда будет перерисована,
+    сдвинутся нос, рот и мех — и при переключении взгляда мишка дёрнется
+    всей головой. Открыть файл и сдвинуть два зрачка — вот всё задание.
+  </div>
+</div>
+
+<h2>Проверка перед отправкой</h2>
+
+<ul>
+  <li>Файлов шесть: <code>ear_left.png</code>, <code>ear_right.png</code>,
+      <code>head_no_ears.png</code>, <code>eyes_left.png</code>,
+      <code>eyes_right.png</code>, <code>eyes_down.png</code>.</li>
+  <li>У всех холст 941 × 1672, как у исходника, и содержимое на том же месте.</li>
+  <li>Если наложить <code>head_no_ears.png</code> на исходник — совпадает всё,
+      кроме двух ушей. Если наложить <code>eyes_left.png</code> — всё, кроме
+      двух зрачков.</li>
+  <li>Фон прозрачный, каймы нет.</li>
+  <li>Отдать файлами, а не картинками в переписке.</li>
+</ul>
+
+<footer>
+  TeddyTales · спальня по слоям, третья партия. Исходник —
+  <code>bear_open_941.png</code>, прилагается. Все координаты — точки этого
+  файла, отсчёт от левого верхнего угла.
+</footer>
+
+</body>
+</html>
