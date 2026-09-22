@@ -92,6 +92,19 @@ class _HomeScreenState extends State<HomeScreen> {
   /// куда человек сейчас смотрит. Уходить на сервер здесь нечему.
   RoomKind _room = RoomKind.nursery;
 
+  /// Картинки спальни раскодированы заранее — один раз на экран.
+  bool _bedroomWarm = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_bedroomWarm) return;
+    _bedroomWarm = true;
+    // Сцена сна собрана из десятка картинок; если грузить их в момент
+    // открытия, мишка появляется по частям. Греем, пока человек на главной.
+    BedroomScene.warmUp(context);
+  }
+
   void _runAction(BearAction action) {
     final controller = widget.controller;
 

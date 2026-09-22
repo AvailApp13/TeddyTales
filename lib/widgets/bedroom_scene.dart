@@ -81,6 +81,30 @@ class BedroomScene extends StatefulWidget {
   /// пульсировать целиком.
   static const Duration lampBreath = Duration(milliseconds: 5500);
 
+  /// Все картинки сцены.
+  static const List<String> assets = [
+    'assets/rooms/bedroom/bear_open.png',
+    'assets/rooms/bedroom/bear_left.png',
+    'assets/rooms/bedroom/bear_right.png',
+    'assets/rooms/bedroom/bear_down.png',
+    _closedAsset,
+    'assets/rooms/bedroom/bear_paws.png',
+    'assets/rooms/bedroom/ear_left.png',
+    'assets/rooms/bedroom/ear_right.png',
+    'assets/rooms/bedroom/blanket_front.png',
+    'assets/rooms/bedroom/lamp_glow.png',
+  ];
+
+  /// Заранее раскодировать картинки — ещё до того, как открыли «Сон».
+  ///
+  /// Иначе при первом открытии голова появлялась на долю секунды позже
+  /// ушей и лап: её картинки крупнее и декодируются дольше. А в версии 47
+  /// от того же мишка «моргал» целиком: лицо переключалось на ещё не
+  /// раскодированную картинку, и слой на миг пустел.
+  static Future<void> warmUp(BuildContext context) => Future.wait([
+        for (final asset in assets) precacheImage(AssetImage(asset), context),
+      ]);
+
   @override
   State<BedroomScene> createState() => _BedroomSceneState();
 }
