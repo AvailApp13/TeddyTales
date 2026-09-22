@@ -22,9 +22,10 @@ class SleepThought extends StatefulWidget {
   final bool shown;
 
   /// Сколько длится появление целиком, и когда стартует каждый шаг —
-  /// в долях этого времени.
-  static const Duration grow = Duration(milliseconds: 1500);
-  static const List<double> starts = [0.0, 0.28, 0.52];
+  /// в долях этого времени. Медленно: это уже сон, и заказчик 22.09
+  /// просил «плавнее и мягче, а то оно прям выскакивает».
+  static const Duration grow = Duration(milliseconds: 3800);
+  static const List<double> starts = [0.0, 0.26, 0.50];
 
   @override
   State<SleepThought> createState() => _SleepThoughtState();
@@ -70,12 +71,12 @@ class _SleepThoughtState extends State<SleepThought>
   }
 
   /// Насколько вырос шаг [index]: 0 — его ещё нет, 1 — на месте.
-  /// С перелётом: `easeOutBack` уходит выше единицы и возвращается.
+  /// Без перелёта: выплывает и садится, как выдох, а не как пружина.
   double _step(int index) {
     final start = SleepThought.starts[index];
-    final span = index == 2 ? 0.48 : 0.30;
+    final span = index == 2 ? 0.50 : 0.36;
     final t = ((_grow.value - start) / span).clamp(0.0, 1.0);
-    return Curves.easeOutBack.transform(t);
+    return Curves.easeInOutSine.transform(t);
   }
 
   @override
@@ -148,23 +149,42 @@ class _ThoughtPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final fill = Paint()..color = AppColors.surface;
-    final rim = Paint()
-      ..color = AppColors.outline
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    void bubble(Offset center, double radius, double grown) {
-      if (grown <= 0) return;
-      final path = Path()
-        ..addOval(Rect.fromCircle(center: center, radius: radius * grown));
-      canvas.drawShadow(path, const Color(0xFF203040), 6, true);
-      canvas.drawPath(path, fill);
-      canvas.drawPath(path, rim);
+    // Каждый шаг не только растёт, но и проступает: так он выплывает из
+    // ничего, а не появляется точкой и раздувается.
+    void draw(Path path, double grown, double shadow) {
+      final alpha = grown.clamp(0.0, 1.0);
+      canvas.drawShadow(
+          path, Color.fromRGBO(32, 48, 64, alpha), shadow * alpha, true);
+      canvas.drawPath(
+          path, Paint()..color = AppColors.surface.withValues(alpha: alpha));
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = AppColors.outline.withValues(alpha: alpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
     }
 
-    bubble(one, oneRadius, steps[0]);
-    bubble(two, twoRadius, steps[1]);
+    // Пузырьки чуть неровные — овал с наклоном: ровный кружок выглядит
+    // кнопкой. Заказчик 22.09: «маленькая белая точечка неровная».
+    void bubble(Offset center, double radius, double grown, double tilt) {
+      if (grown <= 0) return;
+      final path = Path()
+        ..addOval(Rect.fromCenter(
+          center: Offset.zero,
+          width: 2 * radius * grown,
+          height: 1.72 * radius * grown,
+        ));
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(tilt);
+      draw(path, grown, 6);
+      canvas.restore();
+    }
+
+    bubble(one, oneRadius, steps[0], -0.5);
+    bubble(two, twoRadius, steps[1], 0.35);
 
     final grown = steps[2];
     if (grown <= 0) return;
@@ -173,13 +193,9 @@ class _ThoughtPainter extends CustomPainter {
     final anchor = cloud.bottomRight;
     canvas.save();
     canvas.translate(anchor.dx, anchor.dy);
-    canvas.scale(grown);
+    canvas.scale(0.6 + 0.4 * grown);
     canvas.translate(-anchor.dx, -anchor.dy);
-
-    final path = _cloudPath(cloud);
-    canvas.drawShadow(path, const Color(0xFF203040), 8, true);
-    canvas.drawPath(path, fill);
-    canvas.drawPath(path, rim);
+    draw(_cloudPath(cloud), grown, 8);
     canvas.restore();
   }
 

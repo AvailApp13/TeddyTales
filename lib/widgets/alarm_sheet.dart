@@ -48,54 +48,45 @@ class _AlarmSheetState extends State<_AlarmSheet> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Компактно: одна строка сверху, колесо, две кнопки — заказчик
+            // 22.09 про циферблат: «очень громоздкий, давай в 50%».
             Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 32,
+                  height: 32,
                   decoration: const BoxDecoration(
                     color: AppColors.statSleep,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.alarm_outlined,
-                    size: 21,
+                    size: 18,
                     color: AppColors.surface,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.bedroomWakeTogether,
-                        style: text.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        l10n.bedroomAlarmHelp,
-                        style: text.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    l10n.bedroomAlarmHelp,
+                    style: text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // Колесо в кремовой рамке: барабан сам по себе прозрачный, и
             // без подложки выделенная строка теряется на светлом листе.
             Container(
-              height: 190,
+              height: 150,
               decoration: BoxDecoration(
                 color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(20),
