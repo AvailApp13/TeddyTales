@@ -12,6 +12,7 @@
     assets/rooms/bedroom/bear_half.png    полуприкрытые глаза
     assets/rooms/bedroom/bear_closed.png  глаза закрыты
     assets/rooms/bedroom/bear_yawn.png    зевок
+    assets/rooms/bedroom/bear_paws.png    лапы отдельно, поверх головы
     assets/rooms/bedroom/blanket_front.png передний край одеяла
     assets/rooms/bedroom/lamp_glow.png    свет ночника
 
@@ -24,7 +25,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'assets' / 'rooms' / 'bedroom'
@@ -47,7 +48,12 @@ MOUTH = (405, 1030, 560, 1180)
 # с остальными по контуру, и подменять его целиком нельзя. Зато сами глаза
 # у него на месте: пересаживаем только их в базовый файл, двумя пятнами
 # по векам. Координаты — в файле полуприкрытых (941 × 1672).
-EYES = ((348, 944, 440, 1020), (538, 912, 632, 996))
+EYES = ((348, 944, 440, 1020), (535, 905, 648, 1000))
+
+# Лапы — отдельный слой поверх головы: когда мишка, засыпая, клюёт носом,
+# голова двигается, а лапы лежат на одеяле, где лежали. Два пятна в файле
+# полуприкрытых; их край перекрывает капюшон, потому и с растушёвкой.
+PAWS = ((95, 1120, 305, 1330), (665, 1115, 890, 1330))
 
 
 def cut(image, floor=8):
@@ -97,12 +103,26 @@ def open_face(folder):
     return Image.composite(aligned, half, mask.filter(ImageFilter.GaussianBlur(8)))
 
 
-def put_bear(image, name):
-    """Привести фигуру к её месту на фоне и сохранить."""
-    figure, _ = cut(image)
+def paws_only(folder):
+    """Только лапы, всё остальное прозрачно."""
+    half = Image.open(folder / '02-half.png').convert('RGBA')
+    mask = Image.new('L', half.size, 0)
+    for paw in PAWS:
+        ImageDraw.Draw(mask).ellipse(list(paw), fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(6))
+    half.putalpha(ImageChops.multiply(half.getchannel('A'), mask))
+    return half
+
+
+def put_bear(image, box, name):
+    """Вырезать фигуру по общей рамке и сохранить в размере ассета.
+
+    Рамка у всех слоёв мишки одна — иначе лапы, вырезанные по своему
+    содержимому, сели бы не туда, где лежат на голове.
+    """
     size = (BEAR[2] * BEAR_SCALE, BEAR[3] * BEAR_SCALE)
     path = OUT / name
-    figure.resize(size, Image.LANCZOS).save(path, optimize=True)
+    image.crop(box).resize(size, Image.LANCZOS).save(path, optimize=True)
     print(f'{path.name:22} {size[0]} × {size[1]}, {path.stat().st_size / 1024:.0f} КБ')
 
 
@@ -122,10 +142,13 @@ def main() -> int:
     print(f'{room_path.name:22} {room.size[0]} × {room.size[1]}, '
           f'{room_path.stat().st_size / 1024:.0f} КБ')
 
-    put_bear(open_face(args.second), 'bear_open.png')
-    put_bear(Image.open(args.second / '02-half.png').convert('RGBA'), 'bear_half.png')
-    put_bear(Image.open(args.second / '01-yawn.png').convert('RGBA'), 'bear_yawn.png')
-    put_bear(closed_face(args.second), 'bear_closed.png')
+    half = Image.open(args.second / '02-half.png').convert('RGBA')
+    _, box = cut(half)
+    put_bear(open_face(args.second), box, 'bear_open.png')
+    put_bear(half, box, 'bear_half.png')
+    put_bear(Image.open(args.second / '01-yawn.png').convert('RGBA'), box, 'bear_yawn.png')
+    put_bear(closed_face(args.second), box, 'bear_closed.png')
+    put_bear(paws_only(args.second), box, 'bear_paws.png')
 
     left, top, width, height = BEAR
     print(f'  мишка: {share((left, top, left + width, top + height))}')
