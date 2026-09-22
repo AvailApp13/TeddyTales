@@ -21,6 +21,7 @@ import '../widgets/room_item_sheet.dart';
 import '../widgets/room_ceiling.dart';
 import '../widgets/room_slot_layer.dart';
 import '../widgets/room_scene_backdrop.dart';
+import '../widgets/sleep_zzz.dart';
 import '../widgets/section_sheet.dart';
 import 'care_screen.dart';
 import 'catalog_screen.dart';
@@ -528,6 +529,10 @@ class _RoomScene extends StatelessWidget {
           rect: frame.rect,
           child: RoomSceneBackdrop(room: room),
         ),
+        // Сонные буквы над кроватью — единственное, что в спальне живое:
+        // мишка там нарисован на фоне, шевелиться ему нечем (см. SleepZzz).
+        if (room == RoomKind.bedroom)
+          Positioned.fromRect(rect: frame.rect, child: const SleepZzz()),
         // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
         // мишкой. Мишка лежит между двумя слоями мест, и будь тап на нём —
         // он перехватывал бы касания по дальним вещам, которые рисуются
