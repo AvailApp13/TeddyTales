@@ -12,15 +12,15 @@ import 'package:flutter/material.dart';
 /// анимацию дыхания и моргания глаз, будто он хочет спать». Дальше по
 /// версиям 22.09: глаза открыты, а прикрытые — эпизоды; дышать должно
 /// одеяло, а не голова; одеяло — «только в районе мишки… как будто укрылся
-/// человек, и вот тут он дышит»; и засыпать быстро — «2–3 раза, чтобы он
-/// моргнул медленно, и как бы засыпал».
+/// человек, и вот тут он дышит»; засыпать быстро — «2–3 раза, чтобы он
+/// моргнул медленно, и как бы засыпал»; и веки — плавно, а не «покадрово».
 ///
 /// По ТЗ аниматора это `act_sleep`: «укладывается, засыпает, сопит» — риг в
 /// Rive. Позы «лёжа» в риге нет, и заказчик прислал спальню картинкой вместо
 /// неё. Картинка разобрана на слои (`tool/cut_bedroom_layers.py`), и из них
 /// здесь собрано то, что из `act_sleep` можно собрать без рига: сопение,
-/// моргание, засыпание с покачиванием головы. Укладывание и потягивание при
-/// пробуждении — уже только риг.
+/// моргание, взгляд по сторонам, засыпание с покачиванием головы.
+/// Укладывание и потягивание при пробуждении — уже только риг.
 ///
 /// Слои снизу вверх: комната без мишки (фон комнаты, рисуется не здесь) →
 /// уши → голова с лицом → лапы → передний край одеяла → свет ночника. Уши
@@ -35,16 +35,22 @@ class BedroomScene extends StatefulWidget {
   /// Числа печатает `tool/cut_bedroom_layers.py`: он же режет сами файлы,
   /// так что менять их вручную не надо — пересобрать и переписать.
   static const Rect bear = Rect.fromLTWH(0.381509, 0.412679, 0.238045, 0.157297);
-  static const Rect earLeft = Rect.fromLTWH(0.385233, 0.464521, 0.049270, 0.030751);
-  static const Rect earRight = Rect.fromLTWH(0.560544, 0.455505, 0.054713, 0.033327);
+  static const Rect earLeft = Rect.fromLTWH(0.385233, 0.464521, 0.057864, 0.036547);
+  static const Rect earRight = Rect.fromLTWH(0.553382, 0.455505, 0.061874, 0.037835);
   static const Rect blanket = Rect.fromLTWH(0, 0.544258, 1, 0.310407);
   static const Rect glow = Rect.fromLTWH(0.420829, 0.199761, 0.579171, 0.459928);
 
+  /// Зоны глаз — в долях слоя головы. По ним опускается веко.
+  static const List<Rect> eyes = [
+    Rect.fromLTWH(0.3225, 0.5834, 0.1324, 0.1024),
+    Rect.fromLTWH(0.5764, 0.5589, 0.1324, 0.1024),
+  ];
+
   /// Корень уха — где оно уходит под капюшон, в долях своего слоя.
-  /// Вокруг него ухо и дёргается; снято по основе, где ухо уходит под край
-  /// капюшона.
-  static const Alignment earLeftRoot = Alignment(0.83, 0.58);
-  static const Alignment earRightRoot = Alignment(-0.84, 0.71);
+  /// Вокруг него ухо и дёргается: у левого корень внизу справа, у правого
+  /// внизу слева.
+  static const Alignment earLeftRoot = Alignment(0.72, 0.74);
+  static const Alignment earRightRoot = Alignment(-0.74, 0.78);
 
   /// На сколько ухо вздрагивает — радианы. Вверх и чуть внутрь: так
   /// прядёт ухом зверь, которого что-то задело сквозь сон.
@@ -79,27 +85,37 @@ class BedroomScene extends StatefulWidget {
   State<BedroomScene> createState() => _BedroomSceneState();
 }
 
-/// Какой вариант лица показан.
+/// Куда смотрит мишка. Картинки отличаются только глазами, и между ними
+/// можно перетекать.
 ///
-/// Взгляды в стороны и вниз — с основы 22.09 («гладкий капюшон»); зевка у
-/// неё нет, да он и не читался: без движения головы открытый рот — просто
-/// «непонятно, что там происходит» (заказчик 22.09).
-enum _Face {
+/// Веко — не вариант взгляда, а шторка: см. [_FacePainter]. Зевка в наборе
+/// нет: без движения головы открытый рот не читался как зевок —
+/// заказчик 22.09: «непонятно, что там происходит».
+enum _Gaze {
   open('assets/rooms/bedroom/bear_open.png'),
-  half('assets/rooms/bedroom/bear_half.png'),
-  closed('assets/rooms/bedroom/bear_closed.png'),
   left('assets/rooms/bedroom/bear_left.png'),
   right('assets/rooms/bedroom/bear_right.png'),
   down('assets/rooms/bedroom/bear_down.png');
 
-  const _Face(this.asset);
+  const _Gaze(this.asset);
 
   final String asset;
 }
 
-/// Один шаг сценария: показать лицо, перетекая к нему за [fade], держать
-/// его [hold] и, если сказано, начать или прекратить клевать носом.
-typedef _Step = ({_Face face, Duration fade, Duration hold, bool? nod});
+/// Из этой картинки берётся веко — глаза здесь закрыты.
+const String _closedAsset = 'assets/rooms/bedroom/bear_closed.png';
+
+/// Один шаг сценария: за [move] перевести взгляд на [gaze] и/или веко в
+/// положение [lid] (0 — открыто, 1 — закрыто), держать [hold] и, если
+/// сказано, начать или прекратить клевать носом.
+typedef _Step = ({
+  _Gaze? gaze,
+  double? lid,
+  Curve curve,
+  Duration move,
+  Duration hold,
+  bool? nod,
+});
 
 class _BedroomSceneState extends State<BedroomScene>
     with TickerProviderStateMixin {
@@ -113,10 +129,18 @@ class _BedroomSceneState extends State<BedroomScene>
     duration: BedroomScene.lampBreath,
   );
 
+  /// Перетекание взгляда: 0 — ещё прежний, 1 — уже новый.
   late final AnimationController _fade = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 140),
     value: 1,
+  );
+
+  /// Веко: 0 — глаза открыты, 1 — закрыты. Идёт непрерывно, потому и
+  /// без кадров: заказчик 22.09 — «как будто покадрово, тык-тык-тык».
+  late final AnimationController _lid = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 100),
   );
 
   /// Голова: 0 — прямо, 1 — свесилась. Вперёд медленно, а обратно
@@ -165,20 +189,28 @@ class _BedroomSceneState extends State<BedroomScene>
     ),
   ]).animate(_breath);
 
-  /// Что показано сейчас и из чего перетекаем.
-  _Face _face = _Face.open;
-  _Face _under = _Face.open;
+  /// Куда смотрит сейчас и откуда перетекаем.
+  _Gaze _gaze = _Gaze.open;
+  _Gaze _under = _Gaze.open;
 
   final math.Random _dice = math.Random();
   final Queue<_Step> _plan = Queue();
   Timer? _next;
   Timer? _earNext;
 
-  /// Картинка одеяла — нужна как `ui.Image`, потому что одеяло рисуется
-  /// сеткой, а не целиком: дышит только его кусок над грудью.
-  ui.Image? _blanket;
-  ImageStream? _blanketStream;
-  ImageStreamListener? _blanketListener;
+  /// Картинки лица и одеяла — как `ui.Image`: они рисуются не целиком.
+  /// Лицо — со шторкой века по зонам глаз, одеяло — сеткой, чтобы дышал
+  /// только его кусок над грудью.
+  late final _Pictures _pictures = _Pictures(
+    [
+      for (final gaze in _Gaze.values) gaze.asset,
+      _closedAsset,
+      'assets/rooms/bedroom/blanket_front.png',
+    ],
+    onChange: () {
+      if (mounted) setState(() {});
+    },
+  );
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
   /// со значением по умолчанию и анимации не запустились бы вовсе.
@@ -189,7 +221,7 @@ class _BedroomSceneState extends State<BedroomScene>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadBlanket();
+    _pictures.load(context);
 
     // Системная настройка «убрать анимацию» — для тех, кому от движения
     // на экране плохо. Тогда мишка просто лежит с открытыми глазами.
@@ -200,17 +232,11 @@ class _BedroomSceneState extends State<BedroomScene>
       _next?.cancel();
       _earNext?.cancel();
       _plan.clear();
-      _breath.stop();
-      _lamp.stop();
-      _nodDrive.stop();
-      _earLeft.stop();
-      _earRight.stop();
-      _breath.value = 0;
-      _lamp.value = 0;
-      _nodDrive.value = 0;
-      _earLeft.value = 0;
-      _earRight.value = 0;
-      _show(_Face.open, Duration.zero);
+      for (final drive in [_breath, _lamp, _nodDrive, _earLeft, _earRight, _lid]) {
+        drive.stop();
+        drive.value = 0;
+      }
+      _look(_Gaze.open, Duration.zero);
     } else {
       _breath.repeat();
       _lamp.repeat(reverse: true);
@@ -219,40 +245,23 @@ class _BedroomSceneState extends State<BedroomScene>
     }
   }
 
-  void _loadBlanket() {
-    final stream = const AssetImage('assets/rooms/bedroom/blanket_front.png')
-        .resolve(createLocalImageConfiguration(context));
-    if (stream.key == _blanketStream?.key) return;
-    _dropBlanket();
-    _blanketStream = stream;
-    _blanketListener = ImageStreamListener((info, _) {
-      if (!mounted) return;
-      setState(() => _blanket = info.image);
-    });
-    stream.addListener(_blanketListener!);
-  }
-
-  void _dropBlanket() {
-    if (_blanketListener != null) {
-      _blanketStream?.removeListener(_blanketListener!);
-    }
-    _blanketStream = null;
-    _blanketListener = null;
-  }
-
   @override
   void dispose() {
     _next?.cancel();
     _earNext?.cancel();
-    _dropBlanket();
+    _pictures.dispose();
     _breath.dispose();
     _lamp.dispose();
     _fade.dispose();
+    _lid.dispose();
     _nodDrive.dispose();
     _earLeft.dispose();
     _earRight.dispose();
     super.dispose();
   }
+
+  Duration _ms(int base, [int spread = 0]) =>
+      Duration(milliseconds: base + (spread == 0 ? 0 : _dice.nextInt(spread)));
 
   /// Уши живут своим расписанием, не в ногу с глазами: одно вздрогнет,
   /// иногда дважды, изредка оба. Не чаще, чем раз в несколько секунд —
@@ -283,9 +292,6 @@ class _BedroomSceneState extends State<BedroomScene>
     await ear.reverse();
   }
 
-  Duration _ms(int base, [int spread = 0]) =>
-      Duration(milliseconds: base + (spread == 0 ? 0 : _dice.nextInt(spread)));
-
   /// Полежать с открытыми глазами, потом — что-нибудь сделать.
   ///
   /// Паузы нарочно неровные: ровный интервал глаз ловит сразу и читает как
@@ -295,7 +301,17 @@ class _BedroomSceneState extends State<BedroomScene>
     _next = Timer(_ms(2200, 1800), _act);
   }
 
-  /// Один круг: обычное моргание, потом два-три медленных — и заснул.
+  _Step _go({
+    _Gaze? gaze,
+    double? lid,
+    Curve curve = Curves.easeInOutSine,
+    required Duration move,
+    Duration hold = Duration.zero,
+    bool? nod,
+  }) =>
+      (gaze: gaze, lid: lid, curve: curve, move: move, hold: hold, nod: nod);
+
+  /// Один круг: моргнул, огляделся, два-три медленных — и заснул.
   ///
   /// Заказчик 22.09: «нужно 2–3 раза, чтобы он моргнул медленно, и как бы
   /// засыпал» — и чтобы ждать этого не приходилось. Круг целиком занимает
@@ -303,57 +319,50 @@ class _BedroomSceneState extends State<BedroomScene>
   void _act() {
     if (!mounted || _still) return;
 
-    // Обычное моргание в три фазы через полуприкрытые: щелчок без
-    // промежуточного кадра выглядит как сбой картинки.
+    // Обычное моргание: веко падает быстро, поднимается чуть медленнее.
     _plan.addAll([
-      (face: _Face.half, fade: _ms(55), hold: Duration.zero, nod: null),
-      (face: _Face.closed, fade: _ms(55), hold: _ms(90, 60), nod: null),
-      (face: _Face.half, fade: _ms(70), hold: Duration.zero, nod: null),
-      (face: _Face.open, fade: _ms(110), hold: _ms(1600, 1400), nod: null),
+      _go(lid: 1, move: _ms(90), hold: _ms(50, 50), curve: Curves.easeIn),
+      _go(lid: 0, move: _ms(170), hold: _ms(1600, 1400), curve: Curves.easeOut),
     ]);
 
     // Посмотрел в сторону — что там? — и обратно. В какую, решает жребий:
     // одна и та же сторона каждый круг выдаёт запись.
     _plan.addAll([
-      (
-        face: _dice.nextBool() ? _Face.left : _Face.right,
-        fade: _ms(170),
+      _go(
+        gaze: _dice.nextBool() ? _Gaze.left : _Gaze.right,
+        move: _ms(170),
         hold: _ms(900, 700),
-        nod: null,
       ),
-      (face: _Face.open, fade: _ms(200), hold: _ms(600, 500), nod: null),
+      _go(gaze: _Gaze.open, move: _ms(200), hold: _ms(600, 500)),
     ]);
 
     // Первое медленное: веки тяжёлые, но ещё открывает до конца.
     _plan.addAll([
-      (face: _Face.half, fade: _ms(420), hold: Duration.zero, nod: null),
-      (face: _Face.closed, fade: _ms(480), hold: _ms(320, 200), nod: null),
-      (face: _Face.half, fade: _ms(520), hold: Duration.zero, nod: null),
-      (face: _Face.open, fade: _ms(520), hold: _ms(1300, 900), nod: null),
+      _go(lid: 1, move: _ms(560, 200), hold: _ms(300, 200)),
+      _go(lid: 0, move: _ms(640), hold: _ms(1300, 900)),
     ]);
 
-    // Глаза опустились — уже не смотрит, а дремлет. Отсюда и второе
-    // медленное: ещё медленнее, голова пошла вниз, глаза поднимаются только
-    // до полуприкрытых.
+    // Глаза опустились — уже не смотрит, а дремлет. Отсюда второе
+    // медленное: ещё медленнее, голова пошла вниз, веки поднимаются только
+    // наполовину.
     _plan.addAll([
-      (face: _Face.down, fade: _ms(380), hold: _ms(600, 400), nod: null),
-      (face: _Face.half, fade: _ms(560), hold: Duration.zero, nod: true),
-      (face: _Face.closed, fade: _ms(640), hold: _ms(520, 300), nod: null),
-      (face: _Face.half, fade: _ms(700), hold: _ms(900, 500), nod: null),
+      _go(gaze: _Gaze.down, lid: 0.15, move: _ms(380), hold: _ms(600, 400)),
+      _go(lid: 1, move: _ms(820, 200), hold: _ms(500, 300), nod: true),
+      _go(lid: 0.55, move: _ms(900), hold: _ms(900, 500)),
     ]);
 
-    // Иногда третье — открыл до конца, будто борется со сном.
+    // Иногда третье — открыл почти до конца, будто борется со сном.
     if (_dice.nextBool()) {
       _plan.addAll([
-        (face: _Face.open, fade: _ms(600), hold: _ms(700, 500), nod: null),
-        (face: _Face.half, fade: _ms(700), hold: _ms(400, 300), nod: null),
+        _go(lid: 0.1, move: _ms(700), hold: _ms(700, 500)),
+        _go(lid: 0.6, move: _ms(800), hold: _ms(400, 300)),
       ]);
     }
 
     // Заснул. Через несколько секунд спохватывается и открывает глаза.
     _plan.addAll([
-      (face: _Face.closed, fade: _ms(900), hold: _ms(4500, 3000), nod: null),
-      (face: _Face.open, fade: _ms(260), hold: Duration.zero, nod: false),
+      _go(lid: 1, move: _ms(1100), hold: _ms(4500, 3000)),
+      _go(gaze: _Gaze.open, lid: 0, move: _ms(280), curve: Curves.easeOut, nod: false),
     ]);
     _step();
   }
@@ -366,7 +375,10 @@ class _BedroomSceneState extends State<BedroomScene>
       return;
     }
     final step = _plan.removeFirst();
-    _show(step.face, step.fade);
+    if (step.gaze != null) _look(step.gaze!, step.move);
+    if (step.lid != null) {
+      _lid.animateTo(step.lid!, duration: step.move, curve: step.curve);
+    }
     switch (step.nod) {
       case true:
         _nodDrive.forward();
@@ -376,15 +388,15 @@ class _BedroomSceneState extends State<BedroomScene>
         break;
     }
     _next?.cancel();
-    _next = Timer(step.fade + step.hold, _step);
+    _next = Timer(step.move + step.hold, _step);
   }
 
-  /// Показать вариант лица, перетекая из текущего за [fade].
-  void _show(_Face face, Duration fade) {
-    if (face == _face) return;
+  /// Перевести взгляд, перетекая из текущего за [fade].
+  void _look(_Gaze gaze, Duration fade) {
+    if (gaze == _gaze) return;
     setState(() {
-      _under = _face;
-      _face = face;
+      _under = _gaze;
+      _gaze = gaze;
     });
     if (fade == Duration.zero) {
       _fade.value = 1;
@@ -419,7 +431,7 @@ class _BedroomSceneState extends State<BedroomScene>
     );
   }
 
-  /// Голова: плечи дышат, лицо меняется, уши вздрагивают, засыпая —
+  /// Голова: плечи дышат, взгляд и веки живут, уши вздрагивают, засыпая —
   /// клюёт носом. Уши внутри головы, чтобы ходить вместе с ней.
   Widget _headLayer(double w, double h) {
     final box = BedroomScene.bear;
@@ -427,7 +439,7 @@ class _BedroomSceneState extends State<BedroomScene>
     final height = box.height * h;
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_breath, _fade, _nodDrive]),
+      animation: Listenable.merge([_breath, _fade, _lid, _nodDrive]),
       builder: (context, ears) {
         final wave = _wave.value;
         final nod = _nod.value;
@@ -449,13 +461,7 @@ class _BedroomSceneState extends State<BedroomScene>
                 fit: StackFit.expand,
                 children: [
                   ears!,
-                  // Нижний слой держит кадр целиком, верхний проступает
-                  // сквозь него: так между вариантами не мелькает фон.
-                  Image.asset(_under.asset, fit: BoxFit.fill),
-                  Opacity(
-                    opacity: _fade.value,
-                    child: Image.asset(_face.asset, fit: BoxFit.fill),
-                  ),
+                  _face(),
                 ],
               ),
             ),
@@ -465,52 +471,90 @@ class _BedroomSceneState extends State<BedroomScene>
       child: Stack(
         fit: StackFit.expand,
         children: [
+          // Под каждым ухом — его же неподвижная копия. В голове на месте
+          // уха дыра, и когда ухо вздрагивает, с одной стороны она
+          // открывалась бы до комнаты. Копия закрывает её ворсом.
+          _ear(width, height, BedroomScene.earLeft, 'assets/rooms/bedroom/ear_left.png'),
+          _ear(width, height, BedroomScene.earRight, 'assets/rooms/bedroom/ear_right.png'),
           _ear(
             width,
             height,
             BedroomScene.earLeft,
-            BedroomScene.earLeftRoot,
-            _earLeftFlick,
             'assets/rooms/bedroom/ear_left.png',
+            root: BedroomScene.earLeftRoot,
+            flick: _earLeftFlick,
             // Кончик левого уха — выше и левее корня: по часовой он идёт
             // вверх и внутрь. Правое зеркально — против часовой.
-            BedroomScene.earTwitch,
+            twitch: BedroomScene.earTwitch,
           ),
           _ear(
             width,
             height,
             BedroomScene.earRight,
-            BedroomScene.earRightRoot,
-            _earRightFlick,
             'assets/rooms/bedroom/ear_right.png',
-            -BedroomScene.earTwitch,
+            root: BedroomScene.earRightRoot,
+            flick: _earRightFlick,
+            twitch: -BedroomScene.earTwitch,
           ),
         ],
       ),
     );
   }
 
-  /// Ухо на своём месте внутри слоя головы, крутится вокруг корня.
+  /// Лицо: взгляд, перетекающий из прежнего, и веко-шторка поверх.
+  ///
+  /// Пока картинки не загрузились — просто открытые глаза: секунда без
+  /// моргания незаметна, а пустое место на подушке — нет.
+  Widget _face() {
+    final under = _pictures[_under.asset];
+    final face = _pictures[_gaze.asset];
+    final closed = _pictures[_closedAsset];
+    if (under == null || face == null || closed == null) {
+      return Image.asset(_Gaze.open.asset, fit: BoxFit.fill);
+    }
+    return CustomPaint(
+      painter: _FacePainter(
+        under: under,
+        face: face,
+        blend: _fade.value,
+        closed: closed,
+        lid: _lid.value,
+      ),
+    );
+  }
+
+  /// Ухо на своём месте внутри слоя головы; с [flick] крутится вокруг
+  /// корня [root], без него лежит.
   ///
   /// [place] — доли кадра комнаты, как и у остальных слоёв; здесь они
   /// переводятся в точки внутри слоя головы размером [w] × [h].
-  Widget _ear(double w, double h, Rect place, Alignment root,
-      Animation<double> flick, String asset, double twitch) {
+  Widget _ear(
+    double w,
+    double h,
+    Rect place,
+    String asset, {
+    Alignment root = Alignment.center,
+    Animation<double>? flick,
+    double twitch = 0,
+  }) {
     final bear = BedroomScene.bear;
+    final image = Image.asset(asset, fit: BoxFit.fill);
     return Positioned(
       left: (place.left - bear.left) / bear.width * w,
       top: (place.top - bear.top) / bear.height * h,
       width: place.width / bear.width * w,
       height: place.height / bear.height * h,
-      child: AnimatedBuilder(
-        animation: flick,
-        builder: (context, child) => Transform.rotate(
-          angle: twitch * flick.value,
-          alignment: root,
-          child: child,
-        ),
-        child: Image.asset(asset, fit: BoxFit.fill),
-      ),
+      child: flick == null
+          ? image
+          : AnimatedBuilder(
+              animation: flick,
+              builder: (context, child) => Transform.rotate(
+                angle: twitch * flick.value,
+                alignment: root,
+                child: child,
+              ),
+              child: image,
+            ),
     );
   }
 
@@ -519,7 +563,7 @@ class _BedroomSceneState extends State<BedroomScene>
   /// Пока картинка не загрузилась, лежит как есть: секунда без дыхания
   /// незаметна, а пустое место на кровати — нет.
   Widget _blanketLayer() {
-    final image = _blanket;
+    final image = _pictures['assets/rooms/bedroom/blanket_front.png'];
     if (image == null) {
       return Image.asset('assets/rooms/bedroom/blanket_front.png',
           fit: BoxFit.fill);
@@ -557,6 +601,128 @@ class _BedroomSceneState extends State<BedroomScene>
       child: child,
     );
   }
+}
+
+/// Картинки из ассетов в виде `ui.Image` — для тех слоёв, что рисуются
+/// не целиком. Грузятся раз, живут, пока жив экран.
+class _Pictures {
+  _Pictures(this.assets, {required this.onChange});
+
+  final List<String> assets;
+  final VoidCallback onChange;
+
+  final Map<String, ui.Image> _images = {};
+  final Map<String, (ImageStream, ImageStreamListener)> _streams = {};
+
+  ui.Image? operator [](String asset) => _images[asset];
+
+  void load(BuildContext context) {
+    final configuration = createLocalImageConfiguration(context);
+    for (final asset in assets) {
+      final stream = AssetImage(asset).resolve(configuration);
+      if (stream.key == _streams[asset]?.$1.key) continue;
+      _drop(asset);
+      final listener = ImageStreamListener((info, _) {
+        _images[asset] = info.image;
+        onChange();
+      });
+      stream.addListener(listener);
+      _streams[asset] = (stream, listener);
+    }
+  }
+
+  void _drop(String asset) {
+    final entry = _streams.remove(asset);
+    if (entry != null) entry.$1.removeListener(entry.$2);
+  }
+
+  void dispose() {
+    for (final asset in assets) {
+      _drop(asset);
+    }
+  }
+}
+
+/// Лицо мишки: взгляд и веко.
+///
+/// Взгляд — две картинки, отличающиеся только глазами: нижняя целиком,
+/// верхняя проступает на [blend]. Веко — шторка: над каждым глазом зона из
+/// картинки с закрытыми глазами, открытая сверху вниз на [lid] с мягким
+/// краем. Так веко опускается непрерывно, а не тремя кадрами: заказчик
+/// 22.09 — «не плавно они закрываются».
+class _FacePainter extends CustomPainter {
+  const _FacePainter({
+    required this.under,
+    required this.face,
+    required this.blend,
+    required this.closed,
+    required this.lid,
+  });
+
+  final ui.Image under;
+  final ui.Image face;
+  final double blend;
+  final ui.Image closed;
+  final double lid;
+
+  /// Где в зоне глаза веко начинает и заканчивает путь — в долях высоты
+  /// зоны: сам глаз занимает её середину, а не всю.
+  static const double lidFrom = 0.06;
+  static const double lidTo = 0.96;
+
+  /// Ширина мягкого края века — в долях высоты зоны.
+  static const double lidFeather = 0.14;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dst = Offset.zero & size;
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+
+    canvas.drawImageRect(under, _whole(under), dst, paint);
+    if (blend > 0 && face != under) {
+      canvas.drawImageRect(face, _whole(face), dst,
+          paint..color = Color.fromRGBO(0, 0, 0, blend.clamp(0, 1)));
+    }
+    if (lid <= 0) return;
+
+    for (final eye in BedroomScene.eyes) {
+      final zone = Rect.fromLTWH(eye.left * size.width, eye.top * size.height,
+          eye.width * size.width, eye.height * size.height);
+      final source = Rect.fromLTWH(
+          eye.left * closed.width,
+          eye.top * closed.height,
+          eye.width * closed.width,
+          eye.height * closed.height);
+      final edge = zone.top + zone.height * (lidFrom + (lidTo - lidFrom) * lid);
+      final feather = zone.height * lidFeather;
+
+      canvas.saveLayer(zone, Paint());
+      canvas.drawImageRect(closed, source, zone,
+          Paint()..filterQuality = FilterQuality.medium);
+      canvas.drawRect(
+        zone,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = ui.Gradient.linear(
+            Offset(zone.left, edge - feather),
+            Offset(zone.left, edge + feather),
+            const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+          ),
+      );
+      canvas.restore();
+    }
+  }
+
+  Rect _whole(ui.Image image) =>
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+
+  @override
+  bool shouldRepaint(_FacePainter old) =>
+      old.under != under ||
+      old.face != face ||
+      old.blend != blend ||
+      old.closed != closed ||
+      old.lid != lid;
 }
 
 /// Одеяло, натянутое на сетку: узлы над грудью приподняты, остальные лежат.
