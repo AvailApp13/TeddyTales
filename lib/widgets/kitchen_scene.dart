@@ -209,6 +209,22 @@ class _KitchenSceneState extends State<KitchenScene>
   late final AnimationController _lookX = _drive(value: 0.5);
   late final AnimationController _lookY = _drive(value: 0.5);
 
+  /// Действие целиком — одна непрерывная кривая времени: еда или эмоция.
+  /// Все её движения (наклон, челюсть, жевание, взгляд, лапы) считаются
+  /// из одного времени гладкими функциями, а не цепочкой отдельных
+  /// движений со своими стартами и остановками — иначе на стыках рывки.
+  /// Заказчик 22.09: «наклон к еде смотрится рывками… рот как у робота».
+  late final AnimationController _act = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 1),
+  );
+  _Motion Function(double t)? _motionOf;
+  double _actSeconds = 1;
+
+  /// Текущее движение действия; вне действия — покой.
+  _Motion get _m =>
+      _motionOf == null ? const _Motion() : _motionOf!(_act.value * _actSeconds);
+
   /// Веко: 0 — глаза открыты, 1 — закрыты. Шторка, как в спальне: моргание
   /// идёт непрерывно, а не щелчком двух картинок.
   late final AnimationController _lid = AnimationController(
@@ -236,7 +252,12 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Картинки ушей и глаз как `ui.Image`: уши рисуются сеткой, глаза —
   /// со шторкой века.
   late final _Pictures _pictures = _Pictures(
-    [KitchenScene.assets[2], KitchenScene.assets[3], for (final e in _Eyes.values) e.asset],
+    [
+      KitchenScene.assets[2],
+      KitchenScene.assets[3],
+      for (final e in _Eyes.values) e.asset,
+      for (final m in _Mouth.values) m.asset,
+    ],
     onChange: () {
       if (mounted) setState(() {});
     },
@@ -266,6 +287,8 @@ class _KitchenSceneState extends State<KitchenScene>
       _breath.stop();
       _breath.value = 0;
       _lid.value = 0;
+      _act.stop();
+      _motionOf = null;
       _reset();
     } else {
       _breath.repeat();
@@ -293,6 +316,7 @@ class _KitchenSceneState extends State<KitchenScene>
     }
     _breath.dispose();
     _lid.dispose();
+    _act.dispose();
     _hearts.dispose();
     super.dispose();
   }
@@ -461,58 +485,109 @@ class _KitchenSceneState extends State<KitchenScene>
     _earRest();
   }
 
-  // --- Еда ---------------------------------------------------------------
+  // --- Еда и эмоции: непрерывные кривые ------------------------------------
 
-  /// `act_eat`: увидел еду, наклонился к столу и ест, как из миски —
-  /// два захода с жеванием, между ними поднял голову. Лапы на столе чуть
-  /// подбираются, будто держат миску. Потом эмоция по настроению и снова
-  /// покой.
+  /// Прогресс 0…1 между моментами [a] и [b] секунд по кривой [curve].
+  static double _ramp(double t, double a, double b,
+      [Curve curve = Curves.easeInOutSine]) {
+    if (t <= a) return 0;
+    if (t >= b) return 1;
+    return curve.transform((t - a) / (b - a));
+  }
+
+  /// Проиграть кривую [motion] длиной [seconds]. Функция должна
+  /// возвращать покой в начале и в конце, тогда стыков нет.
+  Future<void> _play(int run, double seconds, _Motion Function(double) motion) async {
+    setState(() {
+      _motionOf = motion;
+      _actSeconds = seconds;
+    });
+    _act.duration = Duration(milliseconds: (seconds * 1000).round());
+    _act.forward(from: 0);
+    try {
+      await _wait(run, (seconds * 1000).round());
+    } finally {
+      if (mounted && run == _run) setState(() => _motionOf = null);
+    }
+  }
+
+  /// Сделать что-то в нужный момент кривой, не останавливая её.
+  void _at(int run, int ms, Future<void> Function() what) {
+    Future<void>(() async {
+      await _wait(run, ms);
+      await what();
+    }).catchError((Object _) {});
+  }
+
+  /// `act_eat`: увидел еду → к столу, рот раскрывается по пути, откусил,
+  /// жуёт с покачиванием головы, поднял голову, ещё раз → выпрямился.
+  /// Руки на столе (заказчик 22.09), ест как из миски (ТЗ: из миски).
+  static _Motion _eatMotion(double t) {
+    var bow = 0.0, jaw = 0.0, chew = 0.0, lookY = 0.0;
+    // Увидел: взгляд вниз, лапы подобрал; в конце всё обратно.
+    lookY += _ramp(t, 0, 0.5);
+    final paws = _ramp(t, 0, 0.6) - _ramp(t, 6.1, 6.8);
+    for (final s in [0.5, 3.45]) {
+      final second = s > 1;
+      // К столу (второй раз — с половины), рот раскрывается на подходе.
+      bow += (second ? 0.45 : 1.0) * _ramp(t, s, s + 0.75, Curves.easeInOutCubic);
+      jaw += _ramp(t, s + 0.45, s + 0.85, Curves.easeOutCubic) -
+          _ramp(t, s + 0.85, s + 1.1, Curves.easeInCubic);
+      // Откусил — голову назад наполовину, взгляд перед собой, жуёт.
+      bow -= 0.45 * _ramp(t, s + 1.1, s + 1.5);
+      lookY -= 0.6 * _ramp(t, s + 1.1, s + 1.45);
+      final c0 = s + 1.45, c1 = s + 2.65;
+      chew += _ramp(t, c0, c0 + 0.2) - _ramp(t, c1 - 0.25, c1);
+      if (t >= c0 && t <= c1) {
+        final u = t - c0;
+        final env = (1 - _ramp(u, 0.85, 1.2)) * _ramp(u, 0, 0.15);
+        final phase = 2 * math.pi * 2.3 * u;
+        jaw += 0.32 * (0.5 - 0.5 * math.cos(phase)) * env;
+        bow += 0.05 * math.sin(phase) * env;
+      }
+      // Перед вторым заходом снова посмотрел на еду.
+      if (!second) lookY += 0.6 * _ramp(t, 3.1, 3.45);
+    }
+    // Наелся: выпрямился.
+    bow -= 0.55 * _ramp(t, 6.1, 6.85);
+    lookY -= 0.4 * _ramp(t, 6.1, 6.7);
+    return _Motion(bow: bow, jaw: jaw.clamp(0.0, 1.0), chew: chew.clamp(0.0, 1.0),
+        lookY: lookY.clamp(0.0, 1.0), paws: paws.clamp(0.0, 1.0));
+  }
+
+  /// `emo_happy_burst`: три подскока головы с затуханием, лапы попеременно
+  /// похлопывают по столу, ножки болтаются, уши вверх.
+  static _Motion _happyMotion(double t) {
+    final env = math.exp(-0.75 * t) * (1 - _ramp(t, 2.3, 2.9));
+    final w = 2 * math.pi * 1.6 * t;
+    final hop = math.sin(w / 2);
+    return _Motion(
+      bow: -0.32 * hop * hop * env,
+      pat: math.sin(w) * env,
+      feet: math.sin(w + math.pi / 2) * env,
+      ears: _ramp(t, 0, 0.35, Curves.easeOutCubic) - _ramp(t, 2.6, 3.3),
+    );
+  }
+
+  /// `emo_love`: голова медленно клонится набок, уши мягко опускаются.
+  static _Motion _loveMotion(double t) => _Motion(
+        side: _ramp(t, 0, 1.3) - _ramp(t, 2.7, 3.7),
+        ears: -0.6 * (_ramp(t, 0.1, 1.2) - _ramp(t, 2.7, 3.6)),
+      );
+
+  /// `emo_surprise`: голова отшатнулась, уши торчком, потом отпустило.
+  static _Motion _surpriseMotion(double t) => _Motion(
+        bow: -0.5 * (_ramp(t, 0, 0.28, Curves.easeOutBack) - _ramp(t, 1.05, 1.6)),
+        ears: _ramp(t, 0, 0.2, Curves.easeOutCubic) - _ramp(t, 1.1, 1.6),
+      );
+
   Future<void> _eat(int run, KitchenMood mood) async {
     try {
       await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
       _to(_side, 0.5, 300);
       _to(_earLeft, 0.5, 300);
       _to(_earRight, 0.5, 300);
-
-      // Увидел еду: глаза вниз, лапы подобрал.
-      _to(_lookY, 1, 220);
-      _to(_pawLeft, 1, 400);
-      _to(_pawRight, 1, 400);
-      await _wait(run, 350);
-
-      for (var bite = 0; bite < 2; bite++) {
-        // К столу: голова опускается, рот открывается по пути.
-        _to(_bow, 1, 620, Curves.easeInOutCubic);
-        await _wait(run, 380);
-        _face(mouth: _Mouth.open);
-        await _wait(run, 380);
-        // Откусил: рот закрылся, жуёт, голова чуть покачивается.
-        _face(mouth: _Mouth.chew);
-        _to(_bow, 0.55, 300);
-        _to(_lookY, 0.5, 300);
-        await _wait(run, 300);
-        for (var chew = 0; chew < 3; chew++) {
-          _to(_bow, 0.42, 190, Curves.easeInOut);
-          _face(mouth: chew == 1 ? _Mouth.neutral : _Mouth.chew);
-          await _wait(run, 190);
-          _to(_bow, 0.58, 210, Curves.easeInOut);
-          _face(mouth: _Mouth.chew);
-          await _wait(run, 210);
-        }
-        _face(mouth: _Mouth.neutral);
-        if (bite == 0) {
-          _to(_lookY, 1, 200);
-          await _wait(run, 250);
-        }
-      }
-
-      // Наелся: выпрямился, лапы легли.
-      _to(_bow, 0, 500);
-      _to(_lookY, 0.5, 300);
-      _to(_pawLeft, 0, 400);
-      _to(_pawRight, 0, 400);
-      await _wait(run, 450);
-
+      await _play(run, 6.9, _eatMotion);
       switch (mood) {
         case KitchenMood.happy:
           await _happy(run);
@@ -523,71 +598,30 @@ class _KitchenSceneState extends State<KitchenScene>
           await _happy(run);
       }
       _settle();
-      await _wait(run, 450);
+      await _wait(run, 500);
       await _idle(run);
     } on _Stopped {
       // Сценарий сменили.
     }
   }
 
-  /// `emo_happy_burst`: зажмурился, заулыбался, голова подпрыгивает,
-  /// лапы на столе похлопывают попеременно, ножки болтаются под столом.
-  /// Руки остаются на столе — заказчик 22.09.
   Future<void> _happy(int run) async {
     await _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile);
-    _to(_earLeft, 1, 260, Curves.easeOutCubic);
-    _to(_earRight, 1, 260, Curves.easeOutCubic);
-    for (var i = 0; i < 3; i++) {
-      final left = i.isEven;
-      _to(_bow, -0.35, 240, Curves.easeOutCubic);
-      _to(_armLeft, left ? 1 : 0, 240, Curves.easeOutCubic);
-      _to(_armRight, left ? 0 : 1, 240, Curves.easeOutCubic);
-      _to(_pawLeft, left ? 1 : 0, 240, Curves.easeOutCubic);
-      _to(_pawRight, left ? 0 : 1, 240, Curves.easeOutCubic);
-      _to(_footLeft, left ? 1 : 0, 300, Curves.easeInOutSine);
-      _to(_footRight, left ? 0 : 1, 300, Curves.easeInOutSine);
-      await _wait(run, 240);
-      _to(_bow, 0, 300, Curves.easeInOutSine);
-      await _wait(run, 300);
-    }
-    for (final d in [_armLeft, _armRight, _pawLeft, _pawRight]) {
-      _to(d, 0, 400);
-    }
-    _to(_footLeft, 0.5, 500);
-    _to(_footRight, 0.5, 500);
-    _to(_earLeft, 0.5, 500);
-    _to(_earRight, 0.5, 500);
-    await _wait(run, 1100);
-    await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
+    _at(run, 2500, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+    await _play(run, 3.4, _happyMotion);
   }
 
-  /// `emo_love`: прикрыл глаза, тихо улыбнулся, склонил голову набок,
-  /// над головой сердечки.
   Future<void> _love(int run) async {
     await _eyesTo(run, _Eyes.happy, mouth: _Mouth.neutral);
-    _to(_side, 1, 900);
-    _to(_earLeft, 0.25, 700);
-    _to(_earRight, 0.25, 700);
-    _hearts.forward(from: 0);
-    await _wait(run, 2300);
-    _to(_side, 0.5, 700);
-    _to(_earLeft, 0.5, 500);
-    _to(_earRight, 0.5, 500);
-    await _wait(run, 700);
-    await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
+    _at(run, 200, () async => _hearts.forward(from: 0));
+    _at(run, 3000, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+    await _play(run, 3.8, _loveMotion);
   }
 
-  /// `emo_surprise`: глаза во всю бусину, рот кружком, голова назад, уши
-  /// торчком.
   Future<void> _surprise(int run) async {
     // Удивление — единственное, что бьёт без моргания: глаза распахиваются.
     _face(eyes: _Eyes.wide, mouth: _Mouth.o);
-    _to(_bow, -0.5, 220, Curves.easeOutCubic);
-    _to(_earLeft, 1, 160, Curves.easeOutCubic);
-    _to(_earRight, 1, 160, Curves.easeOutCubic);
-    await _wait(run, 1000);
-    _to(_bow, 0, 400, Curves.easeInOutSine);
-    await _wait(run, 400);
+    await _play(run, 1.7, _surpriseMotion);
   }
 
   // --- Отрисовка ---------------------------------------------------------
@@ -600,7 +634,7 @@ class _KitchenSceneState extends State<KitchenScene>
           final w = constraints.maxWidth;
           final h = constraints.maxHeight;
           return AnimatedBuilder(
-            animation: Listenable.merge([_breath, ..._drives, _lid, _hearts]),
+            animation: Listenable.merge([_breath, ..._drives, _lid, _act, _hearts]),
             builder: (context, _) => Stack(
               children: [
                 _foot(w, h, KitchenScene.footLeft, 'foot_left', _footLeft, 1),
@@ -672,7 +706,7 @@ class _KitchenSceneState extends State<KitchenScene>
       w,
       h,
       Transform.rotate(
-        angle: sign * KitchenScene.footSwing * (swing.value - 0.5) * 2,
+        angle: sign * KitchenScene.footSwing * ((swing.value - 0.5) * 2 + _m.feet),
         alignment: Alignment.topCenter,
         child: _image(name),
       ),
@@ -719,7 +753,7 @@ class _KitchenSceneState extends State<KitchenScene>
 
   /// Туловище: наклоняясь к столу, чуть подаётся вперёд вместе с головой.
   Widget _torso(double w, double h) {
-    final bow = _bow.value;
+    final bow = _bow.value + _m.bow;
     return _place(
       KitchenScene.torso,
       w,
@@ -737,8 +771,8 @@ class _KitchenSceneState extends State<KitchenScene>
   Widget _head(double w, double h) {
     final box = KitchenScene.head;
     final wave = _wave.value;
-    final bow = _bow.value;
-    final side = (_side.value - 0.5) * 2;
+    final bow = _bow.value + _m.bow;
+    final side = (_side.value - 0.5) * 2 + _m.side;
     final width = box.width * w;
     final height = box.height * h;
     final neck = _pivot(KitchenScene.neck, box);
@@ -775,8 +809,7 @@ class _KitchenSceneState extends State<KitchenScene>
                       KitchenScene.earRightRoot, KitchenScene.earRightTip, _earRight, -1)),
               _image('head'),
               _eyesLayer(width, height),
-              _sprite(width, height, KitchenScene.mouth, _mouth.asset,
-                  switchMs: 140),
+              _mouthLayer(width, height),
             ],
           ),
         ),
@@ -795,7 +828,8 @@ class _KitchenSceneState extends State<KitchenScene>
     final closed = _pictures[_Eyes.closed.asset];
     return Positioned(
       left: (place.left - head.left) / head.width * w + (_lookX.value - 0.5) * 0.06 * width,
-      top: (place.top - head.top) / head.height * h + (_lookY.value - 0.5) * 0.08 * height,
+      top: (place.top - head.top) / head.height * h +
+          ((_lookY.value - 0.5) + 0.5 * _m.lookY) * 0.08 * height,
       width: width,
       height: height,
       child: base == null || closed == null
@@ -806,22 +840,26 @@ class _KitchenSceneState extends State<KitchenScene>
     );
   }
 
-  /// Спрайт рта на своём месте внутри головы; подменяется с перетеканием
-  /// за [switchMs], чтобы смена не щёлкала.
-  Widget _sprite(double w, double h, Rect place, String asset,
-      {required int switchMs}) {
+  /// Рот: базовое выражение (меняется под веком вместе с глазами) плюс
+  /// челюсть — открытый рот раскрывается от верхней губы на [_Motion.jaw],
+  /// и жевание — сжатые губы на [_Motion.chew].
+  Widget _mouthLayer(double w, double h) {
     final head = KitchenScene.head;
+    final place = KitchenScene.mouth;
+    final base = _pictures[_mouth.asset];
+    final open = _pictures[_Mouth.open.asset];
+    final chew = _pictures[_Mouth.chew.asset];
     return Positioned(
       left: (place.left - head.left) / head.width * w,
       top: (place.top - head.top) / head.height * h,
       width: place.width / head.width * w,
       height: place.height / head.height * h,
-      child: AnimatedSwitcher(
-        duration: Duration(milliseconds: switchMs),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        child: Image.asset(asset, key: ValueKey(asset), fit: BoxFit.fill),
-      ),
+      child: base == null || open == null || chew == null
+          ? Image.asset(_mouth.asset, fit: BoxFit.fill)
+          : CustomPaint(
+              painter: _MouthPainter(
+                  base: base, open: open, chew: chew, jaw: _m.jaw, chewing: _m.chew),
+            ),
     );
   }
 
@@ -829,10 +867,12 @@ class _KitchenSceneState extends State<KitchenScene>
   Widget _arm(double w, double h, Rect box, String name, Offset shoulder,
       AnimationController lift, Offset? wrist, AnimationController? bend,
       double sign) {
+    // Похлопывание: плюс — левая лапа, минус — правая.
+    final pat = (sign > 0 ? _m.pat : -_m.pat).clamp(0.0, 1.0);
     Widget child = _image(name);
     if (wrist != null && bend != null) {
       child = Transform.rotate(
-        angle: sign * KitchenScene.wristBend * bend.value,
+        angle: sign * KitchenScene.wristBend * (bend.value + _m.paws + pat),
         alignment: _pivot(wrist, box),
         child: child,
       );
@@ -842,7 +882,7 @@ class _KitchenSceneState extends State<KitchenScene>
       w,
       h,
       Transform.rotate(
-        angle: sign * KitchenScene.armLift * lift.value,
+        angle: sign * KitchenScene.armLift * (lift.value + pat),
         alignment: _pivot(shoulder, box),
         child: child,
       ),
@@ -860,7 +900,7 @@ class _KitchenSceneState extends State<KitchenScene>
         image: image,
         root: Offset((root.dx - box.left) / box.width, (root.dy - box.top) / box.height),
         tip: Offset((tip.dx - box.left) / box.width, (tip.dy - box.top) / box.height),
-        angle: sign * KitchenScene.earTwitch * (bend.value - 0.5) * 2,
+        angle: sign * KitchenScene.earTwitch * ((bend.value - 0.5) * 2 + _m.ears),
       ),
     );
   }
@@ -907,6 +947,88 @@ class _KitchenSceneState extends State<KitchenScene>
 /// Сценарий прерван: сцену повёл другой.
 class _Stopped implements Exception {
   const _Stopped();
+}
+
+/// Движение действия в один момент времени — добавки к покою.
+class _Motion {
+  const _Motion({
+    this.bow = 0,
+    this.jaw = 0,
+    this.chew = 0,
+    this.lookY = 0,
+    this.paws = 0,
+    this.pat = 0,
+    this.side = 0,
+    this.ears = 0,
+    this.feet = 0,
+  });
+
+  /// Наклон головы к столу: 0 прямо, 1 у стола, минус — назад.
+  final double bow;
+
+  /// Челюсть: 0 закрыт, 1 открыт. Жевание: 0 нет, 1 губы сжаты.
+  final double jaw;
+  final double chew;
+
+  /// Взгляд вниз 0…1; лапы подобраны 0…1; похлопывание −1 (правая) … 1 (левая).
+  final double lookY;
+  final double paws;
+  final double pat;
+
+  /// Наклон набок −1…1, уши −1 (вниз) … 1 (вверх), ножки −1…1.
+  final double side;
+  final double ears;
+  final double feet;
+}
+
+/// Рот: базовое выражение, поверх — сжатые губы на [chewing] и открытый
+/// рот на [jaw]. Открытый рот раскрывается от верхней губы: растёт по
+/// высоте вместе с прозрачностью, а не появляется готовым.
+class _MouthPainter extends CustomPainter {
+  const _MouthPainter({
+    required this.base,
+    required this.open,
+    required this.chew,
+    required this.jaw,
+    required this.chewing,
+  });
+
+  final ui.Image base;
+  final ui.Image open;
+  final ui.Image chew;
+  final double jaw;
+  final double chewing;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final zone = Offset.zero & size;
+    final openness = Curves.easeOut.transform(jaw.clamp(0.0, 1.0));
+    final pressed = chewing.clamp(0.0, 1.0) * (1 - openness);
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+
+    // Базовая вышивка тает, когда рот открывается или губы сжимаются.
+    canvas.drawImageRect(base, _whole(base), zone,
+        paint..color = Color.fromRGBO(0, 0, 0, (1 - math.max<double>(openness, pressed)).clamp(0.0, 1.0)));
+    if (pressed > 0) {
+      canvas.drawImageRect(chew, _whole(chew), zone,
+          paint..color = Color.fromRGBO(0, 0, 0, pressed));
+    }
+    if (openness > 0) {
+      // Верхняя губа на месте, нижняя опускается: масштаб по высоте от верха.
+      final height = size.height * (0.3 + 0.7 * openness);
+      final top = size.height * 0.12;
+      canvas.drawImageRect(open, _whole(open),
+          Rect.fromLTWH(0, top, size.width, height),
+          paint..color = Color.fromRGBO(0, 0, 0, openness));
+    }
+  }
+
+  Rect _whole(ui.Image image) =>
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+
+  @override
+  bool shouldRepaint(_MouthPainter old) =>
+      old.jaw != jaw || old.chewing != chewing || old.base != base;
 }
 
 /// Веко-шторка. Голова под глазами — сплошной ворс, а спрайты глаз — одни
