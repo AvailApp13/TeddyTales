@@ -11,6 +11,7 @@ import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/kitchen_scene.dart';
 
 /// Подсказка от характера питомца (КП 8.1 — «подсказка от характера»).
 ///
@@ -128,12 +129,16 @@ class _FeedScreenState extends State<FeedScreen> {
       return;
     }
 
+    // Любимое блюдо — нежность, остальное — радость: реакция мишки в
+    // сцене кухни, ТЗ 7.4.
+    final favourite = _favouriteDish[widget.controller.state.trait] == dish.id;
     _closeWith(
       l10n.feedEatResult(
         dishName(l10n, dish.id),
         dish.foodGain.round(),
         dish.price,
       ),
+      favourite ? KitchenMood.love : KitchenMood.happy,
     );
   }
 
@@ -189,12 +194,14 @@ class _FeedScreenState extends State<FeedScreen> {
 
     widget.game.completeRecipe(recipe);
     final l10n = context.l10n;
+    // Сам приготовил — удивление, потом радость.
     _closeWith(
       l10n.feedCookResult(
         recipeName(l10n, recipe.id),
         recipe.reward,
         recipe.foodGain.round(),
       ),
+      KitchenMood.surprise,
     );
   }
 
@@ -209,11 +216,12 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   /// Покормили — экран закрывается, а результат показывается поверх комнаты:
-  /// мишка ест именно там, смотреть надо на него.
-  void _closeWith(String text) {
+  /// мишка ест именно там, смотреть надо на него. [mood] уходит наружу
+  /// результатом листа: по нему сцена кухни играет еду и эмоцию.
+  void _closeWith(String text, KitchenMood mood) {
     // Мессенджер берём до pop: сам экран к этому моменту уже уходит со стека.
     final messenger = ScaffoldMessenger.of(context);
-    Navigator.maybePop(context);
+    Navigator.maybePop(context, mood);
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(

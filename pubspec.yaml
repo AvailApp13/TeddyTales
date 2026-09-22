@@ -49,6 +49,7 @@ flutter:
     # мишка, передний край одеяла и свет ночника лежат отдельно от фона.
     - assets/rooms/bedroom/
     - assets/rooms/bedroom/dreams/
+    - assets/rooms/kitchen/
     - assets/ui/
     # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.

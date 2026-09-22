@@ -14,6 +14,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_sheet.dart';
 import '../widgets/bedroom_scene.dart';
+import '../widgets/kitchen_scene.dart';
 import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
@@ -140,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Сцена сна собрана из десятка картинок; если грузить их в момент
     // открытия, мишка появляется по частям. Греем, пока человек на главной.
     BedroomScene.warmUp(context);
+    KitchenScene.warmUp(context);
   }
 
   void _runAction(BearAction action) {
@@ -190,8 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Раздел открывается листом поверх комнаты, а не отдельным экраном
   /// (решение заказчика 20.09). Мишка при этом остаётся виден над листом —
   /// покупка и обучение происходят при нём, а не вместо него.
-  Future<void> _openSheet(Widget screen) =>
-      showSectionSheet(context: context, builder: (_) => screen);
+  Future<T?> _openSheet<T>(Widget screen) =>
+      showSectionSheet<T>(context: context, builder: (_) => screen);
 
   /// Включён ли режим обустройства и какая вещь сейчас в руках.
   ///
@@ -341,14 +343,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
   }
 
-  /// Открыть кормление с кухни, на нужной вкладке (КП 8.1).
-  void _openFeed(FeedTab tab) => _openSheet(
-    FeedScreen(
-      controller: widget.controller,
-      game: widget.game,
-      initialTab: tab,
-    ),
-  );
+  /// Последнее кормление: по нему мишка на кухне ест и радуется.
+  KitchenMeal? _meal;
+  int _meals = 0;
+
+  /// Открыть кормление с кухни, на нужной вкладке (КП 8.1). Лист
+  /// возвращает настроение после еды — и сцена кухни играет её.
+  Future<void> _openFeed(FeedTab tab) async {
+    final mood = await _openSheet<KitchenMood>(
+      FeedScreen(
+        controller: widget.controller,
+        game: widget.game,
+        initialTab: tab,
+      ),
+    );
+    if (mood == null || !mounted) return;
+    setState(() => _meal = KitchenMeal(id: ++_meals, mood: mood));
+  }
 
   void _notImplemented(BearAction action) {
     ScaffoldMessenger.of(context)
@@ -393,6 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   room: _room,
                   onRoomChanged: _showRoom,
                   asleep: _asleep,
+                  meal: _meal,
                   onPutToBed: _putToBed,
                   onWake: _wake,
                   alarm: _alarm,
@@ -524,6 +536,7 @@ class _RoomScene extends StatelessWidget {
     required this.room,
     required this.onRoomChanged,
     required this.asleep,
+    required this.meal,
     required this.onPutToBed,
     required this.onWake,
     required this.alarm,
@@ -557,6 +570,9 @@ class _RoomScene extends StatelessWidget {
   /// Спит ли мишка, как уложить и как разбудить: кнопки на ковре спальни.
   final bool asleep;
   final VoidCallback onPutToBed;
+
+  /// Последнее кормление — мишка на кухне ест и показывает эмоцию.
+  final KitchenMeal? meal;
   final VoidCallback onWake;
 
   /// Будильник «проснёмся вместе»: на какое время стоит и как поменять.
@@ -611,6 +627,17 @@ class _RoomScene extends StatelessWidget {
         // Спальня живая: мишка лежит отдельным слоем поверх комнаты, дышит
         // и моргает, а передний край одеяла и свет ночника идут над ним.
         // Буквы z рисуются последними — они выше всего, в просвете стены.
+        // Кухня живая так же: мишка за столом собран из частей, дышит,
+        // моргает, ест и радуется. Голоден — иногда грустит (ТЗ:
+        // `idle_hungry`).
+        if (room == RoomKind.kitchen)
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: KitchenScene(
+              meal: meal,
+              hungry: controller.state.stats.food < 30,
+            ),
+          ),
         if (room == RoomKind.bedroom) ...[
           // Окно живёт под мишкой: луна и звёзды мерцают, звёзды падают.
           Positioned.fromRect(rect: frame.rect, child: const NightWindow()),
