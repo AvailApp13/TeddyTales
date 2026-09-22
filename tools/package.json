@@ -10,6 +10,8 @@
     "tree": "node bin/teddy.mjs tree",
     "doctor": "node bin/teddy.mjs doctor",
     "gen:dart": "node bin/teddy.mjs gen:dart",
+    "gen:rml": "node bin/teddy.mjs gen:rml",
+    "build:riv": "node bin/teddy.mjs build:riv",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {

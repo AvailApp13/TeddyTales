@@ -4,10 +4,14 @@ import { resolve } from 'node:path';
 import { loadRig, renderTree, artistLayers, repoRoot, rigPath } from '../lib/rig.mjs';
 import { extractLayerNames, checkLayers, formatReport } from '../lib/check_layers.mjs';
 import { generateDartContract, generateLabSpec } from '../lib/gen_dart.mjs';
+import { generateRiveProject, loadCatalog } from '../lib/gen_rml.mjs';
+import { mkdirSync, copyFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { serveLab } from '../lib/serve.mjs';
 
 const DART_OUT = resolve(repoRoot, 'app', 'lib', 'src', 'bear_rig_contract.dart');
 const LAB_SPEC_OUT = resolve(repoRoot, 'lab', 'rig_spec.generated.js');
+const RIVE_PROJECT_DIR = resolve(repoRoot, 'rive', 'bear');
 
 const USAGE = `teddy - TeddyTales bear rig workbench
 
@@ -17,6 +21,8 @@ const USAGE = `teddy - TeddyTales bear rig workbench
   teddy check <file>             check delivered layer names against the rig spec
                                  (.svg | .json | .txt - one name per line)
   teddy gen:dart                 regenerate the Dart contract + lab spec from rig/bear_rig.json
+  teddy gen:rml                  regenerate the Rive CLI project (rive/bear) from the spec + clip catalogue
+  teddy build:riv                gen:rml -> rive --verify -> rive inspect -> rive --once -> app/assets/rive/bear.riv
   teddy doctor                   validate the spec and report what is still blocked
   teddy lab [--port 4321]        serve the local Rive lab
 `;
@@ -40,6 +46,10 @@ function main() {
       return cmdCheck();
     case 'gen:dart':
       return cmdGenDart();
+    case 'gen:rml':
+      return cmdGenRml();
+    case 'build:riv':
+      return cmdBuildRiv();
     case 'doctor':
       return cmdDoctor();
     case 'lab':
@@ -147,6 +157,69 @@ function cmdGenDart() {
   writeFileSync(LAB_SPEC_OUT, generateLabSpec(rig));
   process.stdout.write(`Wrote ${DART_OUT.replace(repoRoot + '/', '')}\n`);
   process.stdout.write(`Wrote ${LAB_SPEC_OUT.replace(repoRoot + '/', '')}\n`);
+  return 0;
+}
+
+function cmdGenRml() {
+  const rig = loadRig();
+  const catalog = loadCatalog();
+  const { rml, yaml } = generateRiveProject(rig, catalog);
+  mkdirSync(RIVE_PROJECT_DIR, { recursive: true });
+  writeFileSync(resolve(RIVE_PROJECT_DIR, 'scene.rml'), rml);
+  writeFileSync(resolve(RIVE_PROJECT_DIR, 'rive.yaml'), yaml);
+  process.stdout.write(`Wrote rive/bear/scene.rml (${rml.split('\n').length} lines)\nWrote rive/bear/rive.yaml\n`);
+  process.stdout.write('Next: rive rive/bear --verify && rive inspect rive/bear --summary\n');
+  return 0;
+}
+
+/**
+ * Полный цикл спека -> .riv. Каждый шаг останавливает цикл при ошибке, чтобы в
+ * app/assets никогда не попал файл, который не прошёл inspect.
+ */
+function cmdBuildRiv() {
+  const rig = loadRig();
+  if (cmdGenRml() !== 0) return 1;
+
+  const run = (label, args) => {
+    process.stdout.write(`\n> rive ${args.join(' ')}\n`);
+    const result = spawnSync('rive', args, { cwd: repoRoot, encoding: 'utf8' });
+    if (result.error) {
+      process.stderr.write(`rive CLI not found (${result.error.message}). Install: docs/rive-cli-workflow.md\n`);
+      return null;
+    }
+    process.stdout.write((result.stdout ?? '') + (result.stderr ?? ''));
+    if (result.status !== 0) {
+      process.stderr.write(`${label} failed (exit ${result.status})\n`);
+      return null;
+    }
+    return result.stdout ?? '';
+  };
+
+  if (run('verify', ['rive/bear', '--verify']) === null) return 1;
+
+  const inspect = run('inspect', ['inspect', 'rive/bear', '--summary']);
+  if (inspect === null) return 1;
+  let problems = [];
+  try {
+    problems = JSON.parse(inspect).problems ?? [];
+  } catch {
+    process.stderr.write('could not parse `rive inspect` output\n');
+    return 1;
+  }
+  const errors = problems.filter((p) => p.severity === 'error');
+  if (errors.length) {
+    process.stderr.write(`inspect reported ${errors.length} error(s); not writing the .riv\n`);
+    return 1;
+  }
+
+  if (run('build', ['rive/bear', '--once']) === null) return 1;
+
+  const built = resolve(RIVE_PROJECT_DIR, 'build', 'bear.riv');
+  const target = resolve(repoRoot, rig.runtime.riveAssetPath);
+  mkdirSync(resolve(target, '..'), { recursive: true });
+  copyFileSync(built, target);
+  process.stdout.write(`\nCopied -> ${rig.runtime.riveAssetPath}\n`);
+  process.stdout.write(`${problems.length} inspect warning(s). Next: npm run lab -> "Load from repo"\n`);
   return 0;
 }
 

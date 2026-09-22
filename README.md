@@ -19,7 +19,8 @@
 rig/bear_rig.json          единый источник истины: кости, control-узлы,
                            свойства View Model, состояния
 rig/animation_catalog.json каталог 108 клипов из раздела 4 КП
-tools/                     CLI: дерево рига, проверка слоёв, кодогенерация, лаборатория
+rive/bear/                 проект Rive CLI (RML), генерируется из спеки
+tools/                     CLI: дерево рига, проверка слоёв, кодогенерация, сборка .riv, лаборатория
 lab/                       лаборатория .riv в браузере
 app/                       Flutter-модуль: BearView + BearController
 docs/                      конвенция именования, MCP, бриф художнику, открытые вопросы
@@ -35,6 +36,7 @@ cd tools && npm install
 node bin/teddy.mjs doctor     # состояние проекта одним экраном
 node bin/teddy.mjs tree       # дерево рига
 node bin/teddy.mjs clips      # каталог клипов против обещаний КП
+npm run build:riv             # спека -> RML -> .riv -> app/assets (нужен Rive CLI)
 npm run lab                   # лаборатория: http://127.0.0.1:4321
 ```
 
@@ -90,13 +92,17 @@ node tools/bin/teddy.mjs check handoff/incoming/bear.svg
 
 ## Порядок работ по ригу
 
-1. Проверить именование присланных слоёв.
-2. Кости и control-узлы поставить **руками** в Rive Editor по
-   `rig/bear_rig.json` — MCP этого надёжно не умеет
-   (`docs/rive-mcp-setup.md`).
-3. Подключить MCP на View Model, State Machine и логику поверх готового рига.
-4. Экспортировать в `app/assets/rive/bear.riv`.
-5. Прогнать через лабораторию до зелёного контракта.
+Скелет, View Model и State Machine **не собираются руками** — они генерируются
+из спеки в RML и собираются Rive CLI в `.riv` (`docs/rive-cli-workflow.md`):
+
+1. `cd tools && npm run build:riv` — каркас мишки в `app/assets/rive/bear.riv`.
+2. `npm run lab` → «Load from repo»: контракт зелёный, в логе — смены
+   состояний при изменении `mood`, `stage`, по триггерам.
+3. `rive login && rive rive/bear --once --rev=bear.rev` — файл для редактора.
+4. В Rive Editor: заменить плейсхолдеры артом, покрасить веса, поставить IK,
+   довести тайминг клипов.
+5. Экспортировать `.rev` обратно → `rive create --from-rev` → сверка со спекой
+   лабораторией.
 6. `cd app && flutter analyze && flutter test`.
 
 ## Важное про API

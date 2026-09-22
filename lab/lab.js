@@ -48,6 +48,7 @@ const session = {
   numberControls: [],
   simTimer: null,
   simLast: 0,
+  lastStates: [],
 };
 
 ui.specVersion.textContent = `rig spec v${rigSpec.specVersion} · ${rigSpec.viewModel}`;
@@ -147,6 +148,18 @@ function loadBuffer(buffer, label, { artboard, stateMachine } = {}) {
     stateMachine,
     layout: new Rive.Layout({ fit: ui.fit.value, alignment: Rive.Alignment.Center }),
     onLoad: () => {
+      // Без явного stateMachine рантайм играет первый линейный таймлайн, а
+      // State Machine стоит: ни data binding, ни листенеры не работают, хотя
+      // картинка есть. Имена известны только после загрузки, поэтому первый
+      // раз перезагружаемся с настоящим именем.
+      if (!stateMachine && instance.stateMachineNames.length) {
+        const preferred = instance.stateMachineNames.includes(rigSpec.stateMachine)
+          ? rigSpec.stateMachine
+          : instance.stateMachineNames[0];
+        instance.cleanup();
+        loadBuffer(buffer, label, { artboard, stateMachine: preferred });
+        return;
+      }
       instance.resizeDrawingSurfaceToCanvas();
       session.riveInstance = instance;
       ui.reload.disabled = false;
@@ -156,6 +169,11 @@ function loadBuffer(buffer, label, { artboard, stateMachine } = {}) {
         ui.fps.textContent = `${fps.toFixed(0)} fps`;
       });
       onLoaded(instance, label);
+    },
+    onStateChange: (event) => {
+      const names = Array.isArray(event?.data) ? event.data : [event?.data];
+      for (const name of names.filter(Boolean)) log(`state \u2192 ${name}`, 'ok');
+      session.lastStates = names.filter(Boolean);
     },
     onLoadError: (error) => {
       log(`Failed to load ${label}: ${describeError(error)}`, 'bad');

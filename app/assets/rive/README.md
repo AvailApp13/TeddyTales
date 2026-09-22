@@ -1,18 +1,14 @@
-# Rive assets
+# Rive-ассеты
 
-`bear.riv` belongs here. It is not in git yet because the rig has not been
-exported from the Rive Editor.
+`bear.riv` — **сгенерированный каркас**, не финальный мишка. Собран из
+`rive/bear/` (RML) командой `cd tools && npm run build:riv`. Внутри: скелет по
+спеке, View Model на 26 свойств, State Machine с переходами по данным,
+заготовки всех клипов и плейсхолдер-манекен вместо арта.
 
-Export it from the Rive Editor as `bear.riv` and drop it in this directory:
+Он нужен, чтобы приложение и лаборатория работали до того, как готов настоящий
+арт: контракт совпадает с `rig/bear_rig.json` один в один.
 
-    app/assets/rive/bear.riv
+Когда из редактора придёт настоящий файл — положить его сюда с тем же именем и
+прогнать через лабораторию: контракт должен остаться зелёным.
 
-Then check it against the rig spec before wiring it into the app:
-
-    cd tools && npm run lab     # open http://127.0.0.1:4321 -> "Load from repo"
-
-The lab's Contract panel reports every name the app expects and whether the
-file provides it. Green across the board means the Flutter side will bind.
-
-`.riv` is a binary artifact. Keep it small (the whole point of choosing Rive)
-and re-export rather than committing intermediate variants.
+    cd tools && npm run lab     # http://127.0.0.1:4321 → «Load from repo»

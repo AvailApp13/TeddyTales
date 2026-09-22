@@ -30,3 +30,6 @@ app/web/
 # Промежуточные выгрузки от художника кладём сюда, в репозиторий не тянем
 handoff/incoming/*
 !handoff/incoming/.gitkeep
+
+# Сборка Rive CLI; сам .riv живёт в app/assets/rive/
+rive/bear/build/
