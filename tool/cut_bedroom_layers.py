@@ -1,20 +1,33 @@
-"""Готовит слои спальни для приложения из того, что прислал подрядчик.
+"""Готовит слои спальни для приложения из присланных подрядчиком файлов.
 
 Спальня раньше была одной плоской картинкой вместе с мишкой. Чтобы он дышал
 и моргал, картинка разобрана на слои; здесь они приводятся к виду, в котором
 их грузит приложение.
 
-    python3 tool/cut_bedroom_layers.py <папка-первой-партии> <папка-второй>
+    python3 tool/cut_bedroom_layers.py <папка-мишки> [--room <папка-комнаты>]
 
-На выходе:
-    assets/rooms/bedroom.jpg              комната без мишки
-    assets/rooms/bedroom/bear_open.png    глаза открыты (глаза пересажены)
-    assets/rooms/bedroom/bear_half.png    полуприкрытые глаза
-    assets/rooms/bedroom/bear_closed.png  глаза закрыты
-    assets/rooms/bedroom/bear_yawn.png    зевок
-    assets/rooms/bedroom/bear_paws.png    лапы отдельно, поверх головы
-    assets/rooms/bedroom/blanket_front.png передний край одеяла
-    assets/rooms/bedroom/lamp_glow.png    свет ночника
+Папка мишки (основа 22.09, «гладкий капюшон»):
+    base.png        мишка без ушей, глаза открыты, 941 × 1672, фон прозрачный
+    ear_l.png       левое ухо (для зрителя) в той же рамке
+    ear_r.png       правое ухо
+    eyes/r<N><L|R>.jpg
+                    зоны глаз из Higgsfield: N — правка (1–2 закрыты,
+                    3–4 полуприкрыты, 5 влево, 6 вправо, 7 вниз), L/R — глаз.
+                    Кропы ровно по EYES, в координатах основы.
+
+Папка комнаты (первая партия): room.png, blanket_front.png, lamp_glow.png.
+Без неё комната, одеяло и свет не пересобираются — они уже в ассетах.
+
+На выходе в assets/rooms/bedroom/:
+    bear_open.png    глаза открыты (основа как есть)
+    bear_half.png    полуприкрытые
+    bear_closed.png  закрыты
+    bear_left.png    взгляд влево (для зрителя)
+    bear_right.png   взгляд вправо
+    bear_down.png    взгляд вниз
+    bear_paws.png    лапы отдельно, поверх головы
+    ear_left.png     левое ухо, слой за головой
+    ear_right.png    правое ухо
 
 Скрипт печатает доли кадра для каждого слоя — их же держит
 `lib/widgets/bedroom_scene.dart`. Если пересобираешь слои, сверь числа.
@@ -32,33 +45,27 @@ OUT = ROOT / 'assets' / 'rooms' / 'bedroom'
 
 W, H = 941, 1672
 
-# Куда встаёт мишка на картинке комнаты. Снято подгонкой присланной фигуры
-# к тому мишке, который был впечатан в фон: см. docs/bedroom-brief.pdf.
-BEAR = (354, 690, 234, 263)
+# Куда встаёт мишка на картинке комнаты: высота снята подгонкой присланной
+# фигуры к тому мишке, который был впечатан в фон (docs/bedroom-brief.pdf),
+# ширина — по пропорциям основы, чтобы её не сплющивать.
+BEAR = (359, 690, 224, 263)
 
 # Мишку кладём вдвое крупнее, чем он занимает на фоне: фон и так мягкий,
 # а морда — единственное, что зритель разглядывает вблизи.
 BEAR_SCALE = 2
 
-# Рот берём у полуприкрытых, глаза у зевка — выходит «глаза закрыты».
-# Работает потому, что эти два файла сделаны из одного.
-MOUTH = (405, 1030, 560, 1180)
+# Зоны глаз в основе. Higgsfield отдаёт всю картинку, но брать из неё можно
+# только глаза: остальной ворс он перерисовывает по-своему.
+EYES = ((333, 957, 443, 1057), (544, 933, 654, 1033))
 
-# «Глаза открыты» подрядчик нарисовал отдельным рисунком — он не совпадает
-# с остальными по контуру, и подменять его целиком нельзя. Зато сами глаза
-# у него на месте: пересаживаем только их в базовый файл, двумя пятнами
-# по векам. Координаты — в файле полуприкрытых (941 × 1672).
-EYES = ((348, 944, 440, 1020), (535, 917, 648, 1012))
-
-# Правый открытый глаз у подрядчика нарисован выше и правее, чем веко у
-# полуприкрытых, и при моргании глаз «съезжал». Сдвигаем сам глаз к веку:
-# веко — то, что общее у трёх остальных лиц, ему и верить.
-EYE_R_SHIFT = (-5, 12)
+# Какая правка Higgsfield идёт на какое лицо. Из двух закрытых и двух
+# полуприкрытых выбраны те, где веки ровнее и глаза симметричнее.
+FACES = {'closed': 1, 'half': 3, 'left': 5, 'right': 6, 'down': 7}
 
 # Лапы — отдельный слой поверх головы: когда мишка, засыпая, клюёт носом,
-# голова двигается, а лапы лежат на одеяле, где лежали. Два пятна в файле
-# полуприкрытых; их край перекрывает капюшон, потому и с растушёвкой.
-PAWS = ((95, 1120, 305, 1330), (665, 1115, 890, 1330))
+# голова двигается, а лапы лежат на одеяле, где лежали. Два пятна в основе;
+# их край перекрывает капюшон, потому и с растушёвкой.
+PAWS = ((45, 1140, 265, 1375), (650, 1140, 895, 1375))
 
 
 def cut(image, floor=8):
@@ -79,50 +86,44 @@ def share(box):
             f'width: {(right - left) / W:.6f}, height: {(bottom - top) / H:.6f}')
 
 
-def closed_face(folder):
-    """Собрать «глаза закрыты» из полуприкрытых и зевка."""
-    half = Image.open(folder / '02-half.png').convert('RGBA')
-    yawn = Image.open(folder / '01-yawn.png').convert('RGBA')
-    mask = Image.new('L', half.size, 0)
-    ImageDraw.Draw(mask).ellipse(list(MOUTH), fill=255)
-    return Image.composite(half, yawn, mask.filter(ImageFilter.GaussianBlur(9)))
+def to_room(point, figure):
+    """Точка основы → точка кадра комнаты: фигура вписана в BEAR."""
+    left, top, width, height = BEAR
+    x0, y0, x1, y1 = figure
+    return (left + (point[0] - x0) * width / (x1 - x0),
+            top + (point[1] - y0) * height / (y1 - y0))
 
 
-def open_face(folder):
-    """Собрать «глаза открыты»: глаза из чужого рисунка на нашей морде.
-
-    Чужой рисунок сначала подгоняется под фигуру базового файла по
-    габаритам — они расходятся на десяток точек, — и только потом из него
-    вырезаются два пятна с глазами.
-    """
-    half = Image.open(folder / '02-half.png').convert('RGBA')
-    other = Image.open(folder / '03-open.png').convert('RGBA')
-    _, box = cut(half, floor=64)
-    figure, _ = cut(other, floor=64)
-    aligned = Image.new('RGBA', half.size, (0, 0, 0, 0))
-    aligned.paste(figure.resize((box[2] - box[0], box[3] - box[1]), Image.LANCZOS),
-                  (box[0], box[1]))
-    left, right = EYES
-    mask = Image.new('L', half.size, 0)
-    ImageDraw.Draw(mask).ellipse(list(left), fill=255)
-    result = Image.composite(aligned, half, mask.filter(ImageFilter.GaussianBlur(8)))
-
-    shifted = Image.new('RGBA', half.size, (0, 0, 0, 0))
-    shifted.paste(aligned, EYE_R_SHIFT)
-    mask = Image.new('L', half.size, 0)
-    ImageDraw.Draw(mask).ellipse(list(right), fill=255)
-    return Image.composite(shifted, result, mask.filter(ImageFilter.GaussianBlur(8)))
+def eye_mask(size, box):
+    """Мягкое пятно по глазу — внутри кропа, чтобы шов не вылезал за него."""
+    mask = Image.new('L', size, 0)
+    x0, y0, x1, y1 = box
+    ImageDraw.Draw(mask).ellipse((x0 + 16, y0 + 16, x1 - 16, y1 - 16), fill=255)
+    return mask.filter(ImageFilter.GaussianBlur(5))
 
 
-def paws_only(folder):
+def face(base, folder, round_no):
+    """Основа с пересаженными глазами из правки Higgsfield."""
+    result = base
+    for box, side in zip(EYES, 'LR'):
+        crop = Image.open(folder / 'eyes' / f'r{round_no}{side}.jpg').convert('RGBA')
+        layer = Image.new('RGBA', base.size, (0, 0, 0, 0))
+        layer.paste(crop, box[:2])
+        result = Image.composite(layer, result, eye_mask(base.size, box))
+    # Альфа — от основы: у кропов её нет, а край фигуры глаза не задевают.
+    result.putalpha(base.getchannel('A'))
+    return result
+
+
+def paws_only(base):
     """Только лапы, всё остальное прозрачно."""
-    half = Image.open(folder / '02-half.png').convert('RGBA')
-    mask = Image.new('L', half.size, 0)
+    mask = Image.new('L', base.size, 0)
     for paw in PAWS:
         ImageDraw.Draw(mask).ellipse(list(paw), fill=255)
     mask = mask.filter(ImageFilter.GaussianBlur(6))
-    half.putalpha(ImageChops.multiply(half.getchannel('A'), mask))
-    return half
+    result = base.copy()
+    result.putalpha(ImageChops.multiply(base.getchannel('A'), mask))
+    return result
 
 
 def put_bear(image, box, name):
@@ -137,35 +138,53 @@ def put_bear(image, box, name):
     print(f'{path.name:22} {size[0]} × {size[1]}, {path.stat().st_size / 1024:.0f} КБ')
 
 
+def put_ear(image, figure, name):
+    """Ухо — по своему содержимому, в том же масштабе, что и мишка."""
+    ear, box = cut(image)
+    scale = BEAR[2] * BEAR_SCALE / (figure[2] - figure[0])
+    size = (round(ear.size[0] * scale), round(ear.size[1] * scale))
+    path = OUT / name
+    ear.resize(size, Image.LANCZOS).save(path, optimize=True)
+    print(f'{path.name:22} {size[0]} × {size[1]}, {path.stat().st_size / 1024:.0f} КБ')
+    x0, y0 = to_room(box[:2], figure)
+    x1, y1 = to_room(box[2:], figure)
+    print(f'  {name}: {share((x0, y0, x1, y1))}')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('first', type=Path, help='папка первой партии')
-    parser.add_argument('second', type=Path, help='папка второй партии')
+    parser.add_argument('bear', type=Path, help='папка с основой, ушами и глазами')
+    parser.add_argument('--room', type=Path, help='папка первой партии: комната, одеяло, свет')
     args = parser.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
 
+    base = Image.open(args.bear / 'base.png').convert('RGBA')
+    _, figure = cut(base, floor=64)
+    put_bear(base, figure, 'bear_open.png')
+    for name, round_no in FACES.items():
+        put_bear(face(base, args.bear, round_no), figure, f'bear_{name}.png')
+    put_bear(paws_only(base), figure, 'bear_paws.png')
+
+    left, top, width, height = BEAR
+    print(f'  мишка: {share((left, top, left + width, top + height))}')
+
+    put_ear(Image.open(args.bear / 'ear_l.png').convert('RGBA'), figure, 'ear_left.png')
+    put_ear(Image.open(args.bear / 'ear_r.png').convert('RGBA'), figure, 'ear_right.png')
+
+    if args.room is None:
+        return 0
+
     # Комната без мишки. Альфа ей не нужна — это самый нижний слой, и в
     # JPEG она весит вчетверо меньше.
-    room = Image.open(args.first / 'room.png').convert('RGB')
+    room = Image.open(args.room / 'room.png').convert('RGB')
     room_path = ROOT / 'assets' / 'rooms' / 'bedroom.jpg'
     room.save(room_path, quality=92, subsampling=0, optimize=True)
     print(f'{room_path.name:22} {room.size[0]} × {room.size[1]}, '
           f'{room_path.stat().st_size / 1024:.0f} КБ')
 
-    half = Image.open(args.second / '02-half.png').convert('RGBA')
-    _, box = cut(half)
-    put_bear(open_face(args.second), box, 'bear_open.png')
-    put_bear(half, box, 'bear_half.png')
-    put_bear(Image.open(args.second / '01-yawn.png').convert('RGBA'), box, 'bear_yawn.png')
-    put_bear(closed_face(args.second), box, 'bear_closed.png')
-    put_bear(paws_only(args.second), box, 'bear_paws.png')
-
-    left, top, width, height = BEAR
-    print(f'  мишка: {share((left, top, left + width, top + height))}')
-
     # Передний край одеяла — как есть, он ложится ровно на свой кусок фона.
-    blanket, box = cut(Image.open(args.first / 'blanket_front.png').convert('RGBA'))
+    blanket, box = cut(Image.open(args.room / 'blanket_front.png').convert('RGBA'))
     path = OUT / 'blanket_front.png'
     blanket.save(path, optimize=True)
     print(f'{path.name:22} {blanket.size[0]} × {blanket.size[1]}, '
@@ -175,7 +194,7 @@ def main() -> int:
     # Свет ночника — мягкое пятно без единой резкой границы, так что
     # половинного разрешения ему хватает с запасом.
     # Порог ниже: у свечения край и должен уходить в ничто плавно.
-    glow, box = cut(Image.open(args.first / 'lamp_glow.png').convert('RGBA'), floor=3)
+    glow, box = cut(Image.open(args.room / 'lamp_glow.png').convert('RGBA'), floor=3)
     glow = glow.resize((glow.size[0] // 2, glow.size[1] // 2), Image.LANCZOS)
     path = OUT / 'lamp_glow.png'
     glow.save(path, optimize=True)

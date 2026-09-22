@@ -23,8 +23,9 @@ import 'package:flutter/material.dart';
 /// пробуждении — уже только риг.
 ///
 /// Слои снизу вверх: комната без мишки (фон комнаты, рисуется не здесь) →
-/// голова с лицом → лапы → передний край одеяла → свет ночника. Лапы отдельно,
-/// чтобы лежать на месте, пока голова клюёт носом. Одеяло поверх, чтобы низ
+/// уши → голова с лицом → лапы → передний край одеяла → свет ночника. Уши
+/// за головой, чтобы дёргаться, не трогая капюшон. Лапы отдельно, чтобы
+/// лежать на месте, пока голова клюёт носом. Одеяло поверх, чтобы низ
 /// фигуры уходил под него — и чтобы дышать могло оно, а не мишка.
 class BedroomScene extends StatefulWidget {
   const BedroomScene({super.key});
@@ -33,9 +34,21 @@ class BedroomScene extends StatefulWidget {
   ///
   /// Числа печатает `tool/cut_bedroom_layers.py`: он же режет сами файлы,
   /// так что менять их вручную не надо — пересобрать и переписать.
-  static const Rect bear = Rect.fromLTWH(0.376196, 0.412679, 0.248672, 0.157297);
+  static const Rect bear = Rect.fromLTWH(0.381509, 0.412679, 0.238045, 0.157297);
+  static const Rect earLeft = Rect.fromLTWH(0.385233, 0.464521, 0.049270, 0.030751);
+  static const Rect earRight = Rect.fromLTWH(0.560544, 0.455505, 0.054713, 0.033327);
   static const Rect blanket = Rect.fromLTWH(0, 0.544258, 1, 0.310407);
   static const Rect glow = Rect.fromLTWH(0.420829, 0.199761, 0.579171, 0.459928);
+
+  /// Корень уха — где оно уходит под капюшон, в долях своего слоя.
+  /// Вокруг него ухо и дёргается; снято по основе, где ухо уходит под край
+  /// капюшона.
+  static const Alignment earLeftRoot = Alignment(0.83, 0.58);
+  static const Alignment earRightRoot = Alignment(-0.84, 0.71);
+
+  /// На сколько ухо вздрагивает — радианы. Вверх и чуть внутрь: так
+  /// прядёт ухом зверь, которого что-то задело сквозь сон.
+  static const double earTwitch = 0.10;
 
   /// Вдох-выдох. Четыре с небольшим секунды на цикл — темп спящего
   /// ребёнка; на взрослых трёх секундах мишка выглядит встревоженным.
@@ -68,13 +81,16 @@ class BedroomScene extends StatefulWidget {
 
 /// Какой вариант лица показан.
 ///
-/// Зевок в файлах есть, но в сценарии его нет: без движения головы
-/// открытый рот не читается как зевок — заказчик 22.09: «непонятно, что
-/// там происходит».
+/// Взгляды в стороны и вниз — с основы 22.09 («гладкий капюшон»); зевка у
+/// неё нет, да он и не читался: без движения головы открытый рот — просто
+/// «непонятно, что там происходит» (заказчик 22.09).
 enum _Face {
   open('assets/rooms/bedroom/bear_open.png'),
   half('assets/rooms/bedroom/bear_half.png'),
-  closed('assets/rooms/bedroom/bear_closed.png');
+  closed('assets/rooms/bedroom/bear_closed.png'),
+  left('assets/rooms/bedroom/bear_left.png'),
+  right('assets/rooms/bedroom/bear_right.png'),
+  down('assets/rooms/bedroom/bear_down.png');
 
   const _Face(this.asset);
 
@@ -117,6 +133,25 @@ class _BedroomSceneState extends State<BedroomScene>
     reverseCurve: Curves.easeOutBack,
   );
 
+  /// Уши: 0 — лежит, 1 — вздёрнуто. Вздрагивает резко, опускается мягко.
+  late final AnimationController _earLeft = _earDrive();
+  late final AnimationController _earRight = _earDrive();
+
+  AnimationController _earDrive() => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 90),
+        reverseDuration: const Duration(milliseconds: 260),
+      );
+
+  late final Animation<double> _earLeftFlick = _flickOf(_earLeft);
+  late final Animation<double> _earRightFlick = _flickOf(_earRight);
+
+  Animation<double> _flickOf(AnimationController ear) => CurvedAnimation(
+        parent: ear,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInOutSine,
+      );
+
   /// Вдох короче выдоха: так дышат во сне. Ровная синусоида читается как
   /// качание, а не как дыхание.
   late final Animation<double> _wave = TweenSequence<double>([
@@ -137,6 +172,7 @@ class _BedroomSceneState extends State<BedroomScene>
   final math.Random _dice = math.Random();
   final Queue<_Step> _plan = Queue();
   Timer? _next;
+  Timer? _earNext;
 
   /// Картинка одеяла — нужна как `ui.Image`, потому что одеяло рисуется
   /// сеткой, а не целиком: дышит только его кусок над грудью.
@@ -162,18 +198,24 @@ class _BedroomSceneState extends State<BedroomScene>
     _stillSetting = still;
     if (still) {
       _next?.cancel();
+      _earNext?.cancel();
       _plan.clear();
       _breath.stop();
       _lamp.stop();
       _nodDrive.stop();
+      _earLeft.stop();
+      _earRight.stop();
       _breath.value = 0;
       _lamp.value = 0;
       _nodDrive.value = 0;
+      _earLeft.value = 0;
+      _earRight.value = 0;
       _show(_Face.open, Duration.zero);
     } else {
       _breath.repeat();
       _lamp.repeat(reverse: true);
       _rest();
+      _earRest();
     }
   }
 
@@ -201,12 +243,44 @@ class _BedroomSceneState extends State<BedroomScene>
   @override
   void dispose() {
     _next?.cancel();
+    _earNext?.cancel();
     _dropBlanket();
     _breath.dispose();
     _lamp.dispose();
     _fade.dispose();
     _nodDrive.dispose();
+    _earLeft.dispose();
+    _earRight.dispose();
     super.dispose();
+  }
+
+  /// Уши живут своим расписанием, не в ногу с глазами: одно вздрогнет,
+  /// иногда дважды, изредка оба. Не чаще, чем раз в несколько секунд —
+  /// чаще уже читается как нервный тик.
+  void _earRest() {
+    _earNext?.cancel();
+    _earNext = Timer(_ms(3500, 6000), _earTwitch);
+  }
+
+  Future<void> _earTwitch() async {
+    if (!mounted || _still) return;
+    final ear = _dice.nextBool() ? _earLeft : _earRight;
+    final both = _dice.nextInt(5) == 0;
+    final twice = _dice.nextBool();
+    for (var i = 0; i < (twice ? 2 : 1); i++) {
+      await Future.wait([
+        _flick(ear),
+        if (both) _flick(ear == _earLeft ? _earRight : _earLeft),
+      ]);
+      if (!mounted || _still) return;
+    }
+    _earRest();
+  }
+
+  Future<void> _flick(AnimationController ear) async {
+    await ear.forward(from: 0);
+    if (!mounted || _still) return;
+    await ear.reverse();
   }
 
   Duration _ms(int base, [int spread = 0]) =>
@@ -238,6 +312,18 @@ class _BedroomSceneState extends State<BedroomScene>
       (face: _Face.open, fade: _ms(110), hold: _ms(1600, 1400), nod: null),
     ]);
 
+    // Посмотрел в сторону — что там? — и обратно. В какую, решает жребий:
+    // одна и та же сторона каждый круг выдаёт запись.
+    _plan.addAll([
+      (
+        face: _dice.nextBool() ? _Face.left : _Face.right,
+        fade: _ms(170),
+        hold: _ms(900, 700),
+        nod: null,
+      ),
+      (face: _Face.open, fade: _ms(200), hold: _ms(600, 500), nod: null),
+    ]);
+
     // Первое медленное: веки тяжёлые, но ещё открывает до конца.
     _plan.addAll([
       (face: _Face.half, fade: _ms(420), hold: Duration.zero, nod: null),
@@ -246,9 +332,11 @@ class _BedroomSceneState extends State<BedroomScene>
       (face: _Face.open, fade: _ms(520), hold: _ms(1300, 900), nod: null),
     ]);
 
-    // Второе: ещё медленнее, голова пошла вниз, глаза поднимаются только
+    // Глаза опустились — уже не смотрит, а дремлет. Отсюда и второе
+    // медленное: ещё медленнее, голова пошла вниз, глаза поднимаются только
     // до полуприкрытых.
     _plan.addAll([
+      (face: _Face.down, fade: _ms(380), hold: _ms(600, 400), nod: null),
       (face: _Face.half, fade: _ms(560), hold: Duration.zero, nod: true),
       (face: _Face.closed, fade: _ms(640), hold: _ms(520, 300), nod: null),
       (face: _Face.half, fade: _ms(700), hold: _ms(900, 500), nod: null),
@@ -331,21 +419,23 @@ class _BedroomSceneState extends State<BedroomScene>
     );
   }
 
-  /// Голова: плечи дышат, лицо меняется, засыпая — клюёт носом.
+  /// Голова: плечи дышат, лицо меняется, уши вздрагивают, засыпая —
+  /// клюёт носом. Уши внутри головы, чтобы ходить вместе с ней.
   Widget _headLayer(double w, double h) {
     final box = BedroomScene.bear;
+    final width = box.width * w;
     final height = box.height * h;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_breath, _fade, _nodDrive]),
-      builder: (context, _) {
+      builder: (context, ears) {
         final wave = _wave.value;
         final nod = _nod.value;
 
         return Positioned(
           left: box.left * w,
           top: box.top * h + height * BedroomScene.nodDrop * nod,
-          width: box.width * w,
+          width: width,
           height: height,
           // Всё от нижнего края: он под одеялом, и ему двигаться нельзя.
           child: Transform.rotate(
@@ -358,6 +448,7 @@ class _BedroomSceneState extends State<BedroomScene>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
+                  ears!,
                   // Нижний слой держит кадр целиком, верхний проступает
                   // сквозь него: так между вариантами не мелькает фон.
                   Image.asset(_under.asset, fit: BoxFit.fill),
@@ -371,6 +462,55 @@ class _BedroomSceneState extends State<BedroomScene>
           ),
         );
       },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _ear(
+            width,
+            height,
+            BedroomScene.earLeft,
+            BedroomScene.earLeftRoot,
+            _earLeftFlick,
+            'assets/rooms/bedroom/ear_left.png',
+            // Кончик левого уха — выше и левее корня: по часовой он идёт
+            // вверх и внутрь. Правое зеркально — против часовой.
+            BedroomScene.earTwitch,
+          ),
+          _ear(
+            width,
+            height,
+            BedroomScene.earRight,
+            BedroomScene.earRightRoot,
+            _earRightFlick,
+            'assets/rooms/bedroom/ear_right.png',
+            -BedroomScene.earTwitch,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Ухо на своём месте внутри слоя головы, крутится вокруг корня.
+  ///
+  /// [place] — доли кадра комнаты, как и у остальных слоёв; здесь они
+  /// переводятся в точки внутри слоя головы размером [w] × [h].
+  Widget _ear(double w, double h, Rect place, Alignment root,
+      Animation<double> flick, String asset, double twitch) {
+    final bear = BedroomScene.bear;
+    return Positioned(
+      left: (place.left - bear.left) / bear.width * w,
+      top: (place.top - bear.top) / bear.height * h,
+      width: place.width / bear.width * w,
+      height: place.height / bear.height * h,
+      child: AnimatedBuilder(
+        animation: flick,
+        builder: (context, child) => Transform.rotate(
+          angle: twitch * flick.value,
+          alignment: root,
+          child: child,
+        ),
+        child: Image.asset(asset, fit: BoxFit.fill),
+      ),
     );
   }
 
