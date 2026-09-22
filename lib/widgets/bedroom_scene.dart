@@ -1,17 +1,19 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 /// Живые слои спальни: мишка сопит, моргает и засыпает под одеялом.
 ///
 /// Заказчик 21.09: «во вкладке сон, где мишка в кровати лежит, сделать
-/// анимацию дыхания и моргания глаз, будто он хочет спать». 22.09, после
-/// первой версии: «у него должно быть открыто, и он должен моргать. Это
-/// эффект, когда человек как будто бы засыпает». И после второй: «дыхание
-/// очень сильное, как будто подпрыгивает его тело» — то есть дышать должно
-/// одеяло и плечи, а не голова.
+/// анимацию дыхания и моргания глаз, будто он хочет спать». Дальше по
+/// версиям 22.09: глаза открыты, а прикрытые — эпизоды; дышать должно
+/// одеяло, а не голова; одеяло — «только в районе мишки… как будто укрылся
+/// человек, и вот тут он дышит»; и засыпать быстро — «2–3 раза, чтобы он
+/// моргнул медленно, и как бы засыпал».
 ///
 /// По ТЗ аниматора это `act_sleep`: «укладывается, засыпает, сопит» — риг в
 /// Rive. Позы «лёжа» в риге нет, и заказчик прислал спальню картинкой вместо
@@ -23,7 +25,7 @@ import 'package:flutter/material.dart';
 /// Слои снизу вверх: комната без мишки (фон комнаты, рисуется не здесь) →
 /// голова с лицом → лапы → передний край одеяла → свет ночника. Лапы отдельно,
 /// чтобы лежать на месте, пока голова клюёт носом. Одеяло поверх, чтобы низ
-/// фигуры уходил под него.
+/// фигуры уходил под него — и чтобы дышать могло оно, а не мишка.
 class BedroomScene extends StatefulWidget {
   const BedroomScene({super.key});
 
@@ -39,12 +41,18 @@ class BedroomScene extends StatefulWidget {
   /// ребёнка; на взрослых трёх секундах мишка выглядит встревоженным.
   static const Duration breath = Duration(milliseconds: 4400);
 
-  /// Дыхание — это одеяло и плечи, не голова. Одеяло приподнимается от
-  /// нижнего края, плечи чуть расширяются, макушка ходит на волосок.
-  /// Заказчик 22.09: при подъёме всей фигуры «как будто подпрыгивает».
-  static const double blanketRise = 0.010;
-  static const double shoulderSwell = 0.014;
-  static const double shoulderSpread = 0.006;
+  /// Где под одеялом грудь — в долях слоя одеяла — и насколько широко
+  /// расходится вздох. Дышит только это место: остальное одеяло лежит.
+  static const Offset chest = Offset(0.50, 0.10);
+  static const Size chestSpread = Size(0.17, 0.24);
+
+  /// На сколько поднимается одеяло над грудью — в долях высоты слоя.
+  /// Заказчик: «прям немного это должно быть заметно».
+  static const double chestRise = 0.013;
+
+  /// Плечи под капюшоном чуть расширяются, макушка ходит на волосок.
+  static const double shoulderSwell = 0.010;
+  static const double shoulderSpread = 0.005;
 
   /// Засыпая, голова наклоняется и опускается. Радианы и доля высоты.
   static const double nodTilt = -0.026;
@@ -59,11 +67,14 @@ class BedroomScene extends StatefulWidget {
 }
 
 /// Какой вариант лица показан.
+///
+/// Зевок в файлах есть, но в сценарии его нет: без движения головы
+/// открытый рот не читается как зевок — заказчик 22.09: «непонятно, что
+/// там происходит».
 enum _Face {
   open('assets/rooms/bedroom/bear_open.png'),
   half('assets/rooms/bedroom/bear_half.png'),
-  closed('assets/rooms/bedroom/bear_closed.png'),
-  yawn('assets/rooms/bedroom/bear_yawn.png');
+  closed('assets/rooms/bedroom/bear_closed.png');
 
   const _Face(this.asset);
 
@@ -96,7 +107,7 @@ class _BedroomSceneState extends State<BedroomScene>
   /// вздрагивает: спохватился.
   late final AnimationController _nodDrive = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3600),
+    duration: const Duration(milliseconds: 4200),
     reverseDuration: const Duration(milliseconds: 420),
   );
 
@@ -127,9 +138,11 @@ class _BedroomSceneState extends State<BedroomScene>
   final Queue<_Step> _plan = Queue();
   Timer? _next;
 
-  /// Сколько морганий прошло с последнего засыпания: задремать он должен
-  /// после нескольких, а не с первого.
-  int _blinks = 0;
+  /// Картинка одеяла — нужна как `ui.Image`, потому что одеяло рисуется
+  /// сеткой, а не целиком: дышит только его кусок над грудью.
+  ui.Image? _blanket;
+  ImageStream? _blanketStream;
+  ImageStreamListener? _blanketListener;
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
   /// со значением по умолчанию и анимации не запустились бы вовсе.
@@ -140,6 +153,8 @@ class _BedroomSceneState extends State<BedroomScene>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _loadBlanket();
+
     // Системная настройка «убрать анимацию» — для тех, кому от движения
     // на экране плохо. Тогда мишка просто лежит с открытыми глазами.
     final still = MediaQuery.disableAnimationsOf(context);
@@ -162,9 +177,31 @@ class _BedroomSceneState extends State<BedroomScene>
     }
   }
 
+  void _loadBlanket() {
+    final stream = const AssetImage('assets/rooms/bedroom/blanket_front.png')
+        .resolve(createLocalImageConfiguration(context));
+    if (stream.key == _blanketStream?.key) return;
+    _dropBlanket();
+    _blanketStream = stream;
+    _blanketListener = ImageStreamListener((info, _) {
+      if (!mounted) return;
+      setState(() => _blanket = info.image);
+    });
+    stream.addListener(_blanketListener!);
+  }
+
+  void _dropBlanket() {
+    if (_blanketListener != null) {
+      _blanketStream?.removeListener(_blanketListener!);
+    }
+    _blanketStream = null;
+    _blanketListener = null;
+  }
+
   @override
   void dispose() {
     _next?.cancel();
+    _dropBlanket();
     _breath.dispose();
     _lamp.dispose();
     _fade.dispose();
@@ -181,38 +218,55 @@ class _BedroomSceneState extends State<BedroomScene>
   /// мигающую лампочку, а не как живое существо.
   void _rest() {
     _next?.cancel();
-    _next = Timer(_ms(2000, 2600), _act);
+    _next = Timer(_ms(2200, 1800), _act);
   }
 
-  /// Моргнуть — или, если моргал уже достаточно, начать засыпать.
+  /// Один круг: обычное моргание, потом два-три медленных — и заснул.
+  ///
+  /// Заказчик 22.09: «нужно 2–3 раза, чтобы он моргнул медленно, и как бы
+  /// засыпал» — и чтобы ждать этого не приходилось. Круг целиком занимает
+  /// около двадцати секунд.
   void _act() {
     if (!mounted || _still) return;
 
-    final drowsy = _blinks >= 3 && _dice.nextInt(3) == 0;
-    if (!drowsy) {
-      _blinks++;
-      // Моргание в три фазы через полуприкрытые: щелчок «открыто-закрыто»
-      // без промежуточного кадра выглядит как сбой картинки.
+    // Обычное моргание в три фазы через полуприкрытые: щелчок без
+    // промежуточного кадра выглядит как сбой картинки.
+    _plan.addAll([
+      (face: _Face.half, fade: _ms(55), hold: Duration.zero, nod: null),
+      (face: _Face.closed, fade: _ms(55), hold: _ms(90, 60), nod: null),
+      (face: _Face.half, fade: _ms(70), hold: Duration.zero, nod: null),
+      (face: _Face.open, fade: _ms(110), hold: _ms(1600, 1400), nod: null),
+    ]);
+
+    // Первое медленное: веки тяжёлые, но ещё открывает до конца.
+    _plan.addAll([
+      (face: _Face.half, fade: _ms(420), hold: Duration.zero, nod: null),
+      (face: _Face.closed, fade: _ms(480), hold: _ms(320, 200), nod: null),
+      (face: _Face.half, fade: _ms(520), hold: Duration.zero, nod: null),
+      (face: _Face.open, fade: _ms(520), hold: _ms(1300, 900), nod: null),
+    ]);
+
+    // Второе: ещё медленнее, голова пошла вниз, глаза поднимаются только
+    // до полуприкрытых.
+    _plan.addAll([
+      (face: _Face.half, fade: _ms(560), hold: Duration.zero, nod: true),
+      (face: _Face.closed, fade: _ms(640), hold: _ms(520, 300), nod: null),
+      (face: _Face.half, fade: _ms(700), hold: _ms(900, 500), nod: null),
+    ]);
+
+    // Иногда третье — открыл до конца, будто борется со сном.
+    if (_dice.nextBool()) {
       _plan.addAll([
-        (face: _Face.half, fade: _ms(55), hold: Duration.zero, nod: null),
-        (face: _Face.closed, fade: _ms(55), hold: _ms(90, 60), nod: null),
-        (face: _Face.half, fade: _ms(70), hold: Duration.zero, nod: null),
-        (face: _Face.open, fade: _ms(110), hold: Duration.zero, nod: null),
-      ]);
-    } else {
-      _blinks = 0;
-      // Засыпание: веки тяжелеют, голова клюёт носом, глаза закрываются —
-      // и через несколько секунд он спохватывается. Перед этим иногда
-      // зевок.
-      if (_dice.nextBool()) {
-        _plan.add((face: _Face.yawn, fade: _ms(220), hold: _ms(1300, 300), nod: null));
-      }
-      _plan.addAll([
-        (face: _Face.half, fade: _ms(700), hold: _ms(1400, 1200), nod: true),
-        (face: _Face.closed, fade: _ms(900), hold: _ms(2600, 2400), nod: null),
-        (face: _Face.open, fade: _ms(260), hold: Duration.zero, nod: false),
+        (face: _Face.open, fade: _ms(600), hold: _ms(700, 500), nod: null),
+        (face: _Face.half, fade: _ms(700), hold: _ms(400, 300), nod: null),
       ]);
     }
+
+    // Заснул. Через несколько секунд спохватывается и открывает глаза.
+    _plan.addAll([
+      (face: _Face.closed, fade: _ms(900), hold: _ms(4500, 3000), nod: null),
+      (face: _Face.open, fade: _ms(260), hold: Duration.zero, nod: false),
+    ]);
     _step();
   }
 
@@ -320,17 +374,24 @@ class _BedroomSceneState extends State<BedroomScene>
     );
   }
 
-  /// Одеяло приподнимается на вдохе — это и есть то, что видно у спящего.
+  /// Одеяло: приподнимается на вдохе — но только над грудью.
+  ///
+  /// Пока картинка не загрузилась, лежит как есть: секунда без дыхания
+  /// незаметна, а пустое место на кровати — нет.
   Widget _blanketLayer() {
+    final image = _blanket;
+    if (image == null) {
+      return Image.asset('assets/rooms/bedroom/blanket_front.png',
+          fit: BoxFit.fill);
+    }
     return AnimatedBuilder(
       animation: _breath,
-      builder: (context, child) => Transform.scale(
-        scaleY: 1 + BedroomScene.blanketRise * _wave.value,
-        alignment: Alignment.bottomCenter,
-        child: child,
+      builder: (context, _) => CustomPaint(
+        painter: _BreathingBlanket(
+          image: image,
+          rise: BedroomScene.chestRise * _wave.value,
+        ),
       ),
-      child: Image.asset('assets/rooms/bedroom/blanket_front.png',
-          fit: BoxFit.fill),
     );
   }
 
@@ -356,4 +417,76 @@ class _BedroomSceneState extends State<BedroomScene>
       child: child,
     );
   }
+}
+
+/// Одеяло, натянутое на сетку: узлы над грудью приподняты, остальные лежат.
+///
+/// Вздох спящего под одеялом — это горб над грудью, который сходит на нет
+/// к краям. Двигать слой целиком нельзя: заказчик 22.09 — «одеяло начинает
+/// двигаться полностью всё, нужно только в районе мишки».
+class _BreathingBlanket extends CustomPainter {
+  const _BreathingBlanket({required this.image, required this.rise});
+
+  final ui.Image image;
+
+  /// На сколько сейчас поднята грудь — в долях высоты слоя.
+  final double rise;
+
+  /// Частота сетки. Горб плавный, и двадцати ячеек хватает, чтобы на нём
+  /// не было видно изломов.
+  static const int cols = 24;
+  static const int rows = 12;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final positions = <Offset>[];
+    final texture = <Offset>[];
+    final chest = BedroomScene.chest;
+    final spread = BedroomScene.chestSpread;
+
+    for (var r = 0; r <= rows; r++) {
+      final v = r / rows;
+      for (var c = 0; c <= cols; c++) {
+        final u = c / cols;
+        // Горб — гауссов колокол над грудью. У нижнего и боковых краёв
+        // он уже нулевой сам по себе, и слой сидит на фоне без шва.
+        final dx = (u - chest.dx) / spread.width;
+        final dy = (v - chest.dy) / spread.height;
+        final bump = math.exp(-(dx * dx + dy * dy));
+        positions.add(Offset(u * size.width, v * size.height - rise * bump * size.height));
+        texture.add(Offset(u * image.width, v * image.height));
+      }
+    }
+
+    final indices = <int>[];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final a = r * (cols + 1) + c;
+        final b = a + 1;
+        final d = a + cols + 1;
+        final e = d + 1;
+        indices.addAll([a, b, d, b, e, d]);
+      }
+    }
+
+    final vertices = ui.Vertices(
+      ui.VertexMode.triangles,
+      positions,
+      textureCoordinates: texture,
+      indices: Uint16List.fromList(indices),
+    );
+    final paint = Paint()
+      ..shader = ui.ImageShader(
+        image,
+        ui.TileMode.clamp,
+        ui.TileMode.clamp,
+        Matrix4.identity().storage,
+      )
+      ..filterQuality = FilterQuality.medium;
+    canvas.drawVertices(vertices, ui.BlendMode.srcOver, paint);
+  }
+
+  @override
+  bool shouldRepaint(_BreathingBlanket old) =>
+      old.rise != rise || old.image != image;
 }

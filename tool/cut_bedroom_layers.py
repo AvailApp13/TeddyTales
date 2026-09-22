@@ -48,7 +48,12 @@ MOUTH = (405, 1030, 560, 1180)
 # с остальными по контуру, и подменять его целиком нельзя. Зато сами глаза
 # у него на месте: пересаживаем только их в базовый файл, двумя пятнами
 # по векам. Координаты — в файле полуприкрытых (941 × 1672).
-EYES = ((348, 944, 440, 1020), (535, 905, 648, 1000))
+EYES = ((348, 944, 440, 1020), (535, 917, 648, 1012))
+
+# Правый открытый глаз у подрядчика нарисован выше и правее, чем веко у
+# полуприкрытых, и при моргании глаз «съезжал». Сдвигаем сам глаз к веку:
+# веко — то, что общее у трёх остальных лиц, ему и верить.
+EYE_R_SHIFT = (-5, 12)
 
 # Лапы — отдельный слой поверх головы: когда мишка, засыпая, клюёт носом,
 # голова двигается, а лапы лежат на одеяле, где лежали. Два пятна в файле
@@ -97,10 +102,16 @@ def open_face(folder):
     aligned = Image.new('RGBA', half.size, (0, 0, 0, 0))
     aligned.paste(figure.resize((box[2] - box[0], box[3] - box[1]), Image.LANCZOS),
                   (box[0], box[1]))
+    left, right = EYES
     mask = Image.new('L', half.size, 0)
-    for eye in EYES:
-        ImageDraw.Draw(mask).ellipse(list(eye), fill=255)
-    return Image.composite(aligned, half, mask.filter(ImageFilter.GaussianBlur(8)))
+    ImageDraw.Draw(mask).ellipse(list(left), fill=255)
+    result = Image.composite(aligned, half, mask.filter(ImageFilter.GaussianBlur(8)))
+
+    shifted = Image.new('RGBA', half.size, (0, 0, 0, 0))
+    shifted.paste(aligned, EYE_R_SHIFT)
+    mask = Image.new('L', half.size, 0)
+    ImageDraw.Draw(mask).ellipse(list(right), fill=255)
+    return Image.composite(shifted, result, mask.filter(ImageFilter.GaussianBlur(8)))
 
 
 def paws_only(folder):
