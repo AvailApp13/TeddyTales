@@ -14,6 +14,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_sheet.dart';
 import '../widgets/bedroom_scene.dart';
+import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/furnish_bar.dart';
@@ -611,6 +612,8 @@ class _RoomScene extends StatelessWidget {
         // и моргает, а передний край одеяла и свет ночника идут над ним.
         // Буквы z рисуются последними — они выше всего, в просвете стены.
         if (room == RoomKind.bedroom) ...[
+          // Окно живёт под мишкой: луна и звёзды мерцают, звёзды падают.
+          Positioned.fromRect(rect: frame.rect, child: const NightWindow()),
           Positioned.fromRect(
             rect: frame.rect,
             child: BedroomScene(asleep: asleep),
