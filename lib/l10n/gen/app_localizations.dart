@@ -148,6 +148,30 @@ abstract class AppLocalizations {
   /// **'Уложить спать'**
   String get bedroomActionSleep;
 
+  /// No description provided for @bedroomWakeTogether.
+  ///
+  /// In ru, this message translates to:
+  /// **'Давай проснёмся вместе'**
+  String get bedroomWakeTogether;
+
+  /// No description provided for @bedroomAlarmQuestion.
+  ///
+  /// In ru, this message translates to:
+  /// **'В какое время поставить будильник?'**
+  String get bedroomAlarmQuestion;
+
+  /// No description provided for @bedroomAlarmSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time}'**
+  String bedroomAlarmSet(String time);
+
+  /// No description provided for @bedroomAlarmHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда просыпаемся?'**
+  String get bedroomAlarmHelp;
+
   /// No description provided for @bathWashSoon.
   ///
   /// In ru, this message translates to:

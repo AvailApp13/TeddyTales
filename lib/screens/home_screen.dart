@@ -13,6 +13,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bedroom_scene.dart';
+import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
@@ -107,9 +108,26 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Кнопка «Уложить спать» на ковре: мишка закрывает глаза. Что дальше —
-  /// показатель, пробуждение, — заказчик решает следующим шагом (22.09).
+  /// Кнопка «Уложить спать» на ковре: мишка закрывает глаза. Показатель
+  /// сна и пробуждение — следующим шагом по решению заказчика (22.09).
   void _putToBed() => setState(() => _asleep = true);
+
+  /// На какое время поставлен будильник «проснёмся вместе».
+  ///
+  /// Пока живёт в памяти экрана. Заказчик 22.09: пуш-уведомление под него
+  /// появится, когда на Supabase у каждого пользователя будет свой ID.
+  TimeOfDay? _alarm;
+
+  Future<void> _pickAlarm() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _alarm ?? const TimeOfDay(hour: 7, minute: 30),
+      helpText: context.l10n.bedroomAlarmHelp,
+      initialEntryMode: TimePickerEntryMode.dialOnly,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _alarm = picked);
+  }
 
   @override
   void didChangeDependencies() {
@@ -373,6 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRoomChanged: _showRoom,
                   asleep: _asleep,
                   onPutToBed: _putToBed,
+                  alarm: _alarm,
+                  onPickAlarm: _pickAlarm,
                   onOpenFeed: _openFeed,
                   onWash: _wash,
                   onToilet: _toilet,
@@ -495,6 +515,8 @@ class _RoomScene extends StatelessWidget {
     required this.onRoomChanged,
     required this.asleep,
     required this.onPutToBed,
+    required this.alarm,
+    required this.onPickAlarm,
     required this.onOpenFeed,
     required this.onWash,
     required this.onToilet,
@@ -524,6 +546,10 @@ class _RoomScene extends StatelessWidget {
   /// Спит ли мишка и как его уложить: кнопка на ковре спальни.
   final bool asleep;
   final VoidCallback onPutToBed;
+
+  /// Будильник «проснёмся вместе»: на какое время стоит и как поменять.
+  final TimeOfDay? alarm;
+  final VoidCallback onPickAlarm;
 
   /// Открыть кормление с кухни на выбранной вкладке.
   final ValueChanged<FeedTab> onOpenFeed;
@@ -579,6 +605,10 @@ class _RoomScene extends StatelessWidget {
             child: BedroomScene(asleep: asleep),
           ),
           Positioned.fromRect(rect: frame.rect, child: const SleepZzz()),
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: SleepThought(shown: asleep),
+          ),
         ],
         // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
         // мишкой. Мишка лежит между двумя слоями мест, и будь тап на нём —
@@ -670,13 +700,16 @@ class _RoomScene extends StatelessWidget {
             child: _KitchenMenu(onOpenFeed: onOpenFeed),
           ),
         // В спальне — «Уложить спать» на ковре, там, где заказчик 22.09
-        // обвёл на скрине. Пока спит, кнопки нет: класть больше некого.
-        if (room == RoomKind.bedroom && !asleep)
+        // обвёл на скрине. Когда уснул, на её месте — «Давай проснёмся
+        // вместе»: на какое время поставить будильник.
+        if (room == RoomKind.bedroom)
           Positioned(
             left: 16,
             right: _pawSpace,
             bottom: 34,
-            child: _BedroomMenu(onPutToBed: onPutToBed),
+            child: asleep
+                ? _WakeMenu(alarm: alarm, onPickAlarm: onPickAlarm)
+                : _BedroomMenu(onPutToBed: onPutToBed),
           ),
         if (room == RoomKind.bath)
           Positioned(
@@ -760,6 +793,90 @@ class _BathMenu extends StatelessWidget {
           label: l10n.bathActionToilet,
           icon: Icons.wc_outlined,
           onTap: onToilet,
+        ),
+      ],
+    );
+  }
+}
+
+/// Кнопка уснувшей спальни: «Давай проснёмся вместе» — на какое время
+/// поставить будильник. Две строки: приглашение и вопрос; когда время
+/// выбрано, вместо вопроса — оно само, а тап меняет его.
+class _WakeMenu extends StatelessWidget {
+  const _WakeMenu({required this.alarm, required this.onPickAlarm});
+
+  final TimeOfDay? alarm;
+  final VoidCallback onPickAlarm;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final alarm = this.alarm;
+    final second = alarm == null
+        ? l10n.bedroomAlarmQuestion
+        : l10n.bedroomAlarmSet(
+            MaterialLocalizations.of(context).formatTimeOfDay(alarm),
+          );
+
+    return _ActionRow(
+      children: [
+        Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+          elevation: 3,
+          shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
+          child: InkWell(
+            onTap: onPickAlarm,
+            borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
+                      color: AppColors.statSleep,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      alarm == null
+                          ? Icons.alarm_add_outlined
+                          : Icons.alarm_on_outlined,
+                      size: 19,
+                      color: AppColors.surface,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.bedroomWakeTogether,
+                        style: text.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        second,
+                        style: text.labelMedium?.copyWith(
+                          color: alarm == null
+                              ? AppColors.textSecondary
+                              : AppColors.sageDark,
+                          fontWeight:
+                              alarm == null ? FontWeight.w500 : FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );

@@ -39,6 +39,17 @@
   "bathActionToilet": "В туалет",
   "bathActionWash": "Искупаться",
   "bedroomActionSleep": "Уложить спать",
+  "bedroomWakeTogether": "Давай проснёмся вместе",
+  "bedroomAlarmQuestion": "В какое время поставить будильник?",
+  "@bedroomAlarmSet": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "bedroomAlarmSet": "Будильник на {time}",
+  "bedroomAlarmHelp": "Когда просыпаемся?",
   "bathWashSoon": "Чиним душ — скоро сможем купать малыша",
   "bathToiletSoon": "Горшок ещё в работе — скоро научим",
   "@bearRigMissingHint": {

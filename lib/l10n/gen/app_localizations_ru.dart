@@ -76,6 +76,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bedroomActionSleep => 'Уложить спать';
 
   @override
+  String get bedroomWakeTogether => 'Давай проснёмся вместе';
+
+  @override
+  String get bedroomAlarmQuestion => 'В какое время поставить будильник?';
+
+  @override
+  String bedroomAlarmSet(String time) {
+    return 'Будильник на $time';
+  }
+
+  @override
+  String get bedroomAlarmHelp => 'Когда просыпаемся?';
+
+  @override
   String get bathWashSoon => 'Чиним душ — скоро сможем купать малыша';
 
   @override

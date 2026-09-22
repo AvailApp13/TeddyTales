@@ -71,6 +71,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bedroomActionSleep => 'Put to bed';
 
   @override
+  String get bedroomWakeTogether => 'Let\'s wake up together';
+
+  @override
+  String get bedroomAlarmQuestion => 'What time should the alarm ring?';
+
+  @override
+  String bedroomAlarmSet(String time) {
+    return 'Alarm at $time';
+  }
+
+  @override
+  String get bedroomAlarmHelp => 'When do we wake up?';
+
+  @override
   String get bathWashSoon => 'Fixing the shower — bath time is coming soon';
 
   @override
