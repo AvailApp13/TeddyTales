@@ -1,0 +1,2 @@
+Список слоёв, присланных художником, по одному в строке.
+Сгенерировать эталон: node tools/bin/teddy.mjs layers > handoff/expected_layers.txt

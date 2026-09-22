@@ -1,0 +1,32 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
+
+# Платформенные папки создаются локально через `flutter create .`
+app/android/
+app/ios/
+app/linux/
+app/macos/
+app/windows/
+app/web/
+
+# Нативные библиотеки rive_native скачиваются при сборке
+**/rive_native/
+
+# Локальное
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Промежуточные выгрузки от художника кладём сюда, в репозиторий не тянем
+handoff/incoming/*
+!handoff/incoming/.gitkeep

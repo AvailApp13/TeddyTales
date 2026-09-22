@@ -1,0 +1,19 @@
+{
+  "name": "@teddytales/rig-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Workbench tooling for the TeddyTales bear rig: spec validation, artist-layer checking, Dart codegen and the local Rive lab.",
+  "bin": { "teddy": "./bin/teddy.mjs" },
+  "scripts": {
+    "lab": "node bin/teddy.mjs lab",
+    "tree": "node bin/teddy.mjs tree",
+    "doctor": "node bin/teddy.mjs doctor",
+    "gen:dart": "node bin/teddy.mjs gen:dart",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@rive-app/webgl2": "2.42.2"
+  },
+  "engines": { "node": ">=20" }
+}

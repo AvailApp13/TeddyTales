@@ -1,0 +1,964 @@
+{
+  "$schema": "./bear_rig.schema.json",
+  "specVersion": 1,
+  "character": "bear",
+  "namingConvention": "snake_case",
+  "_readme": [
+    "SINGLE SOURCE OF TRUTH for every name that must match across four places:",
+    "  1. the artist's layer names in the delivered source file,",
+    "  2. the bones / nodes built by hand in the Rive Editor,",
+    "  3. the View Model + State Machine authored via Rive MCP,",
+    "  4. the Dart contract consumed by the Flutter app.",
+    "",
+    "Do NOT hand-edit app/lib/src/bear_rig_contract.dart - it is generated from",
+    "this file by `npm run gen:dart` in tools/.",
+    "",
+    "status values:",
+    "  spec    - written verbatim in the TZ, safe to build against",
+    "  derived - expanded or inferred by us from the TZ, sane but confirm with Ruslan",
+    "  draft   - placeholder blocked on an open question (docs/open-questions.md)"
+  ],
+  "source": {
+    "commercialProposal": "TeddyTales_KP_22000.docx (v1.0) - ведущий документ",
+    "riggingSpec": "TeddyTales Rive Animation TZ.pdf - черновик по ригу",
+    "markdown": "docs/TZ-rive-animation.md",
+    "namingReference": "https://github.com/2d-inc/Flare-Flutter/tree/master/example/teddy",
+    "note": "Скелет ниже взят из PDF (раздел 3). Показатели, стадии, характеры и каталог клипов - из КП (разделы 3-7). Там где документы расходятся, КП главнее: PDF сам помечал свой набор характеристик как неподтверждённый шаблон."
+  },
+  "decisions": [
+    {
+      "id": "D1",
+      "topic": "arm chain side suffix",
+      "text": "TZ 3.1 writes the arm chain generically (forearm -> forearm_light -> hand -> hand_light -> finger_N_nail). Because both arms exist, every link is expanded with a _left / _right suffix so names stay unique inside one artboard.",
+      "status": "derived"
+    },
+    {
+      "id": "D2",
+      "topic": "arm parenting",
+      "text": "TZ 3.1 lists root_arm_left / root_arm_right at the same level as root_body, so they are parented to root, not to body. Consequence: arms do NOT inherit body motion. If squash-and-stretch on the body should carry the arms, re-parent root_arm_* under body in the editor and update this file.",
+      "status": "derived"
+    },
+    {
+      "id": "D3",
+      "topic": "View Model property casing",
+      "text": "TZ 3 mandates snake_case for the rig, but TZ 5 writes the View Model property as growthStage. View Model properties are kept exactly as the TZ spells them so the Rive Editor and the Dart contract cannot drift. See open question Q6.",
+      "status": "spec"
+    },
+    {
+      "id": "D4",
+      "topic": "state machine name",
+      "text": "TZ 6.2 uses 'State Machine 1', which is also the Rive Editor default. Kept as-is to avoid a rename step.",
+      "status": "spec"
+    },
+    {
+      "id": "D5",
+      "topic": "набор показателей",
+      "text": "PDF (раздел 5) предлагал hunger/mood как шаблон и в разделе 8.1 помечал набор характеристик как открытый вопрос. КП 6.1 фиксирует ровно пять показателей: еда, гигиена, сон, игра, любовь. Берём КП.",
+      "status": "spec"
+    },
+    {
+      "id": "D6",
+      "topic": "стадия роста как enum",
+      "text": "PDF допускал number или enum. КП 5.1-5.5 задаёт пять именованных стадий, поэтому enum: имя стадии читается в редакторе и в логах, а переход между стадиями всё равно событийный (КП 5.6), а не плавный блендинг.",
+      "status": "spec"
+    },
+    {
+      "id": "D7",
+      "topic": "безопасный предел показателей",
+      "text": "КП 6.3: при долгом отсутствии показатели не падают ниже заданного уровня. Предел вынесен в safeFloor и применяется в клампе, а не в UI - иначе при офлайне (КП 1.1) можно получить нулевые показатели до синхронизации.",
+      "status": "spec"
+    },
+    {
+      "id": "D8",
+      "topic": "пол героя",
+      "text": "КП обещает 2 героев (мальчик/девочка). Заведён отдельный артборд на героя, а не enum внутри одного: наборы слоёв различаются, и один артборд с двумя телами утяжелил бы .riv на каждом кадре.",
+      "status": "derived"
+    }
+  ],
+  "artboard": {
+    "names": {
+      "boy": "Bear_Boy",
+      "girl": "Bear_Girl"
+    },
+    "primary": "Bear_Boy",
+    "status": "derived",
+    "width": 1024,
+    "height": 1024,
+    "note": "КП 2.4 - пол определяет сервер. См. решение D8. Оба артборда обязаны иметь одинаковые имена View Model и State Machine."
+  },
+  "nodes": [
+    {
+      "name": "root",
+      "kind": "bone",
+      "parent": null,
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": false
+    },
+    {
+      "name": "root_body",
+      "kind": "bone",
+      "parent": "root",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": false
+    },
+    {
+      "name": "body",
+      "kind": "art",
+      "parent": "root_body",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": true
+    },
+    {
+      "name": "body_base",
+      "kind": "art",
+      "parent": "root_body",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": true
+    },
+    {
+      "name": "head",
+      "kind": "art",
+      "parent": "root_body",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": true
+    },
+    {
+      "name": "head_shadow",
+      "kind": "art",
+      "parent": "root_body",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": true
+    },
+    {
+      "name": "root_arm_left",
+      "kind": "bone",
+      "parent": "root",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": false
+    },
+    {
+      "name": "forearm_left",
+      "kind": "art",
+      "parent": "root_arm_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "forearm_light_left",
+      "kind": "art",
+      "parent": "forearm_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "hand_left",
+      "kind": "art",
+      "parent": "forearm_light_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "hand_light_left",
+      "kind": "art",
+      "parent": "hand_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_1_nail_left",
+      "kind": "art",
+      "parent": "hand_light_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_2_nail_left",
+      "kind": "art",
+      "parent": "hand_light_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_3_nail_left",
+      "kind": "art",
+      "parent": "hand_light_left",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "root_arm_right",
+      "kind": "bone",
+      "parent": "root",
+      "status": "spec",
+      "origin": "tz:3.1",
+      "artistLayer": false
+    },
+    {
+      "name": "forearm_right",
+      "kind": "art",
+      "parent": "root_arm_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "forearm_light_right",
+      "kind": "art",
+      "parent": "forearm_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "hand_right",
+      "kind": "art",
+      "parent": "forearm_light_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "hand_light_right",
+      "kind": "art",
+      "parent": "hand_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_1_nail_right",
+      "kind": "art",
+      "parent": "hand_light_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_2_nail_right",
+      "kind": "art",
+      "parent": "hand_light_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "finger_3_nail_right",
+      "kind": "art",
+      "parent": "hand_light_right",
+      "status": "derived",
+      "origin": "tz:3.1+D1",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_left",
+      "kind": "art",
+      "parent": "head",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_in_left",
+      "kind": "art",
+      "parent": "ear_left",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_light_left",
+      "kind": "art",
+      "parent": "ear_left",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_right",
+      "kind": "art",
+      "parent": "head",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_in_right",
+      "kind": "art",
+      "parent": "ear_right",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ear_light_right",
+      "kind": "art",
+      "parent": "ear_right",
+      "status": "spec",
+      "origin": "tz:3.2",
+      "artistLayer": true
+    },
+    {
+      "name": "ctrl_face",
+      "kind": "control",
+      "parent": "head",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "whole face group"
+    },
+    {
+      "name": "ctrl_eyes",
+      "kind": "control",
+      "parent": "ctrl_face",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "gaze direction, moves both eyes at once"
+    },
+    {
+      "name": "ctrl_pupils",
+      "kind": "control",
+      "parent": "ctrl_eyes",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "pupils"
+    },
+    {
+      "name": "ctrl_mouth",
+      "kind": "control",
+      "parent": "ctrl_face",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "mouth"
+    },
+    {
+      "name": "ctrl_nose",
+      "kind": "control",
+      "parent": "ctrl_face",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "nose"
+    },
+    {
+      "name": "ctrl_eyebrow_left",
+      "kind": "control",
+      "parent": "ctrl_face",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "left eyebrow"
+    },
+    {
+      "name": "ctrl_eyebrow_right",
+      "kind": "control",
+      "parent": "ctrl_face",
+      "status": "spec",
+      "origin": "tz:3.4",
+      "artistLayer": false,
+      "drives": "right eyebrow"
+    },
+    {
+      "name": "eye_left",
+      "kind": "art",
+      "parent": "ctrl_eyes",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "pupil_left",
+      "kind": "art",
+      "parent": "ctrl_pupils",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "pupil_light_left",
+      "kind": "art",
+      "parent": "pupil_left",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyelid_top_left",
+      "kind": "art",
+      "parent": "eye_left",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyelid_bottom_left",
+      "kind": "art",
+      "parent": "eye_left",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyebrow_left",
+      "kind": "art",
+      "parent": "ctrl_eyebrow_left",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eye_right",
+      "kind": "art",
+      "parent": "ctrl_eyes",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "pupil_right",
+      "kind": "art",
+      "parent": "ctrl_pupils",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "pupil_light_right",
+      "kind": "art",
+      "parent": "pupil_right",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyelid_top_right",
+      "kind": "art",
+      "parent": "eye_right",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyelid_bottom_right",
+      "kind": "art",
+      "parent": "eye_right",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "eyebrow_right",
+      "kind": "art",
+      "parent": "ctrl_eyebrow_right",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "nose",
+      "kind": "art",
+      "parent": "ctrl_nose",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "mouth",
+      "kind": "art",
+      "parent": "ctrl_mouth",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "teeth",
+      "kind": "art",
+      "parent": "mouth",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "tongue",
+      "kind": "art",
+      "parent": "mouth",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "lips",
+      "kind": "art",
+      "parent": "mouth",
+      "status": "spec",
+      "origin": "tz:3.3",
+      "artistLayer": true
+    },
+    {
+      "name": "scarf_1",
+      "kind": "art",
+      "parent": "root_body",
+      "status": "spec",
+      "origin": "tz:3.5",
+      "artistLayer": true,
+      "optional": true,
+      "note": "segmented for sway physics - post-MVP, see Q5"
+    },
+    {
+      "name": "scarf_2",
+      "kind": "art",
+      "parent": "scarf_1",
+      "status": "spec",
+      "origin": "tz:3.5",
+      "artistLayer": true,
+      "optional": true
+    },
+    {
+      "name": "scarf_3",
+      "kind": "art",
+      "parent": "scarf_2",
+      "status": "spec",
+      "origin": "tz:3.5",
+      "artistLayer": true,
+      "optional": true
+    }
+  ],
+  "viewModel": {
+    "name": "BearVM",
+    "status": "spec",
+    "note": "Пять показателей ухода из КП 6.1 плюс стадия, характер и слоты одежды. Имена свойств - snake_case, как и весь риг (PDF раздел 3).",
+    "properties": [
+      {
+        "name": "food",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "safeFloor": 20,
+        "status": "spec",
+        "origin": "kp:6.1",
+        "doc": "Еда. 0 - голоден, 100 - сыт."
+      },
+      {
+        "name": "hygiene",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "safeFloor": 20,
+        "status": "spec",
+        "origin": "kp:6.1",
+        "doc": "Гигиена. 0 - неухожен, 100 - чистый."
+      },
+      {
+        "name": "sleep",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "safeFloor": 20,
+        "status": "spec",
+        "origin": "kp:6.1",
+        "doc": "Сон. 0 - истощён, 100 - выспался."
+      },
+      {
+        "name": "play",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "safeFloor": 20,
+        "status": "spec",
+        "origin": "kp:6.1",
+        "doc": "Игра. 0 - скучает, 100 - наигрался."
+      },
+      {
+        "name": "love",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "safeFloor": 20,
+        "status": "spec",
+        "origin": "kp:6.1",
+        "doc": "Любовь. 0 - обделён вниманием, 100 - обласкан."
+      },
+      {
+        "name": "care_index",
+        "type": "number",
+        "min": 0,
+        "max": 100,
+        "default": 80,
+        "status": "derived",
+        "origin": "kp:5.7",
+        "doc": "Среднее пяти показателей. Считает приложение, риг только потребляет - чтобы формула менялась с сервера (КП 15.4), а не в .riv."
+      },
+      {
+        "name": "stage",
+        "type": "enum",
+        "enumName": "stage",
+        "default": "newborn",
+        "status": "spec",
+        "origin": "kp:5.1-5.5",
+        "doc": "Текущая стадия роста. Длительности настраиваются с сервера (КП 5.6)."
+      },
+      {
+        "name": "trait",
+        "type": "enum",
+        "enumName": "trait",
+        "default": "calm",
+        "status": "spec",
+        "origin": "kp:7.1",
+        "doc": "Тип характера. Влияет на покой, реакции и инициативы (КП 7.4)."
+      },
+      {
+        "name": "mood",
+        "type": "enum",
+        "enumName": "mood",
+        "default": "calm",
+        "status": "derived",
+        "origin": "kp:4.2",
+        "doc": "Итоговое настроение покоя. Вычисляется приложением из пяти показателей, а не хранится на сервере."
+      },
+      {
+        "name": "outfit_body",
+        "type": "number",
+        "min": 0,
+        "max": 8,
+        "default": 0,
+        "status": "derived",
+        "origin": "kp:4.9+10.5",
+        "doc": "Слот «комплект». 0 - пусто, 1..8 - комплекты (КП 10.5)."
+      },
+      {
+        "name": "outfit_head",
+        "type": "number",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "status": "derived",
+        "origin": "kp:4.9+10.5",
+        "doc": "Слот «головной убор». 0 - пусто, 1..3."
+      },
+      {
+        "name": "outfit_feet",
+        "type": "number",
+        "min": 0,
+        "max": 2,
+        "default": 0,
+        "status": "derived",
+        "origin": "kp:4.9+10.5",
+        "doc": "Слот «обувь». 0 - пусто, 1..2."
+      },
+      {
+        "name": "outfit_accessory",
+        "type": "number",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "status": "derived",
+        "origin": "kp:4.9+10.5",
+        "doc": "Слот «аксессуар». 0 - пусто, 1..3."
+      },
+      {
+        "name": "feed",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Кормление. feedBear()"
+      },
+      {
+        "name": "wash",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Умывание. washBear()"
+      },
+      {
+        "name": "sleep_action",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Укладывание спать. Имя с суффиксом, чтобы не конфликтовать с показателем sleep."
+      },
+      {
+        "name": "wake",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Пробуждение."
+      },
+      {
+        "name": "play_action",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Игра. Суффикс по той же причине, что и у sleep_action."
+      },
+      {
+        "name": "pet",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Поглаживание. petBear()"
+      },
+      {
+        "name": "tap",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:3.1",
+        "doc": "Касание питомца на главном экране."
+      },
+      {
+        "name": "grow",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.5",
+        "doc": "Переход на следующую стадию: 2-3 секунды со свечением."
+      },
+      {
+        "name": "initiative",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:3.4",
+        "doc": "Пузырь инициативы - питомец сам предлагает активность."
+      },
+      {
+        "name": "emote_joy",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.8",
+        "doc": "Радость."
+      },
+      {
+        "name": "emote_upset",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.8",
+        "doc": "Огорчение."
+      },
+      {
+        "name": "emote_surprise",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.8",
+        "doc": "Удивление."
+      },
+      {
+        "name": "emote_love",
+        "type": "trigger",
+        "status": "spec",
+        "origin": "kp:4.8",
+        "doc": "Проявление любви."
+      }
+    ]
+  },
+  "stateMachine": {
+    "name": "State Machine 1",
+    "status": "spec",
+    "origin": "tz:6.2",
+    "layers": [
+      {
+        "name": "base",
+        "status": "derived",
+        "doc": "Покой и перемещение. Ветвится по stage, внутри - по mood (КП 4.2, 4.4)."
+      },
+      {
+        "name": "action",
+        "status": "derived",
+        "doc": "Разовые действия ухода поверх покоя (КП 4.3)."
+      },
+      {
+        "name": "emotion",
+        "status": "derived",
+        "doc": "Эмоциональные акценты, не прерывающие покой (КП 4.8)."
+      },
+      {
+        "name": "growth",
+        "status": "derived",
+        "doc": "Переходы между стадиями, перекрывают всё (КП 4.5)."
+      }
+    ],
+    "states": [
+      {
+        "name": "idle",
+        "status": "spec",
+        "origin": "kp:4.2",
+        "doc": "Покой: дыхание, моргание, микродвижения ушей и головы."
+      },
+      {
+        "name": "move",
+        "status": "spec",
+        "origin": "kp:4.4",
+        "doc": "Перемещение: ползание, первые шаги, ходьба, развороты."
+      },
+      {
+        "name": "care_action",
+        "status": "spec",
+        "origin": "kp:4.3",
+        "doc": "Действие ухода."
+      },
+      {
+        "name": "emotion_accent",
+        "status": "spec",
+        "origin": "kp:4.8",
+        "doc": "Эмоциональный акцент."
+      },
+      {
+        "name": "trait_behaviour",
+        "status": "spec",
+        "origin": "kp:4.6",
+        "doc": "Поведение, характерное для типа характера."
+      },
+      {
+        "name": "growth_transition",
+        "status": "spec",
+        "origin": "kp:4.5",
+        "doc": "Взросление со свечением, 2-3 секунды."
+      }
+    ],
+    "blendStates": [
+      {
+        "name": "care_level",
+        "status": "derived",
+        "origin": "kp:5.7+6.2",
+        "inputs": [
+          "neglected_pose",
+          "cared_pose"
+        ],
+        "weightProperty": "care_index",
+        "doc": "Общая ухоженность - среднее пяти показателей. КП 5.7: скорость роста зависит от общего ухода, а не от одного показателя; КП 6.2: при плохом уходе питомец грустит."
+      }
+    ]
+  },
+  "simulation": {
+    "status": "draft",
+    "note": "Скорости затухания настраиваются из панели управления (КП 15.4) и здесь не зафиксированы. Значения ниже - заглушки для лаборатории и стенда, в продакшен не идут. Безопасный предел (КП 6.3) берётся из safeFloor каждого показателя.",
+    "decayPerSecond": {
+      "food": 0.6,
+      "hygiene": 0.35,
+      "sleep": 0.45,
+      "play": 0.5,
+      "love": 0.4
+    },
+    "actionBoost": {
+      "feed": {
+        "food": 30,
+        "love": 3
+      },
+      "wash": {
+        "hygiene": 35
+      },
+      "sleep_action": {
+        "sleep": 40
+      },
+      "wake": {
+        "sleep": 5,
+        "play": 5
+      },
+      "play_action": {
+        "play": 30,
+        "love": 5
+      },
+      "pet": {
+        "love": 25
+      },
+      "tap": {
+        "love": 2
+      },
+      "emote_love": {
+        "love": 5
+      }
+    }
+  },
+  "runtime": {
+    "riveAssetPath": "app/assets/rive/bear.riv",
+    "flutterAssetKey": "assets/rive/bear.riv",
+    "flutterPackage": {
+      "name": "rive",
+      "version": "^0.14.11",
+      "note": "NOT rive-flutter-legacy - see TZ 6.1"
+    },
+    "webPackage": {
+      "name": "@rive-app/webgl2",
+      "version": "2.42.2"
+    },
+    "animationCatalog": "rig/animation_catalog.json"
+  },
+  "enums": {
+    "stage": {
+      "values": [
+        "newborn",
+        "crawler",
+        "first_steps",
+        "growing",
+        "adult"
+      ],
+      "status": "spec",
+      "origin": "kp:5.1-5.5",
+      "labels": {
+        "newborn": "Новорождённый (1 день)",
+        "crawler": "Ползающий малыш (~2 дня)",
+        "first_steps": "Первые шаги (1-2 дня)",
+        "growing": "Подрастающий (до ~14 дня)",
+        "adult": "Взрослый (постоянно)"
+      }
+    },
+    "trait": {
+      "values": [
+        "active",
+        "curious",
+        "affectionate",
+        "calm",
+        "independent",
+        "reserved"
+      ],
+      "status": "spec",
+      "origin": "kp:7.1",
+      "labels": {
+        "active": "активный",
+        "curious": "любознательный",
+        "affectionate": "ласковый",
+        "calm": "спокойный",
+        "independent": "самостоятельный",
+        "reserved": "замкнутый"
+      }
+    },
+    "mood": {
+      "values": [
+        "calm",
+        "happy",
+        "sad",
+        "hungry",
+        "sleepy",
+        "messy"
+      ],
+      "status": "spec",
+      "origin": "kp:4.2",
+      "labels": {
+        "calm": "спокойное",
+        "happy": "радостное",
+        "sad": "грустное",
+        "hungry": "голодное",
+        "sleepy": "сонное",
+        "messy": "неухоженное"
+      }
+    }
+  }
+}

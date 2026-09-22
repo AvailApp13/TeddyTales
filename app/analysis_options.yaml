@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # The rig contract is generated; a stale copy is a build error, not a hint.
+    todo: ignore
+  exclude:
+    - "**/*.g.dart"
+    - build/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - prefer_final_locals
+    - unawaited_futures

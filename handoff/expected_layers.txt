@@ -1,0 +1,44 @@
+body
+body_base
+head
+head_shadow
+forearm_left
+forearm_light_left
+hand_left
+hand_light_left
+finger_1_nail_left
+finger_2_nail_left
+finger_3_nail_left
+forearm_right
+forearm_light_right
+hand_right
+hand_light_right
+finger_1_nail_right
+finger_2_nail_right
+finger_3_nail_right
+ear_left
+ear_in_left
+ear_light_left
+ear_right
+ear_in_right
+ear_light_right
+eye_left
+pupil_left
+pupil_light_left
+eyelid_top_left
+eyelid_bottom_left
+eyebrow_left
+eye_right
+pupil_right
+pupil_light_right
+eyelid_top_right
+eyelid_bottom_right
+eyebrow_right
+nose
+mouth
+teeth
+tongue
+lips
+scarf_1  # optional
+scarf_2  # optional
+scarf_3  # optional

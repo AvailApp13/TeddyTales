@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bear Rig Lab</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%90%BB%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/lab/lab.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1>Bear Rig Lab</h1>
+      <span class="sub" id="specVersion"></span>
+      <div class="spacer"></div>
+      <label class="btn" for="filePicker">Open .riv</label>
+      <input id="filePicker" type="file" accept=".riv" hidden />
+      <button class="btn" id="loadRepo" title="Load the .riv committed in this repo">Load from repo</button>
+      <button class="btn" id="reload" disabled>Reload</button>
+    </header>
+
+    <main>
+      <section class="pane" id="leftPane">
+        <h2>Contract</h2>
+        <p class="hint">
+          Checks the loaded file against <code>rig/bear_rig.json</code>. Anything red here will
+          break the Flutter app, so fix it in the Rive Editor before exporting again.
+        </p>
+        <div id="contract" class="contract"><p class="empty">No file loaded.</p></div>
+
+        <h2>File contents</h2>
+        <div id="contents" class="contents"><p class="empty">No file loaded.</p></div>
+      </section>
+
+      <section class="pane stage">
+        <div class="stageTools">
+          <label>Fit
+            <select id="fit">
+              <option value="contain" selected>contain</option>
+              <option value="cover">cover</option>
+              <option value="fill">fill</option>
+              <option value="fitWidth">fitWidth</option>
+              <option value="fitHeight">fitHeight</option>
+              <option value="none">none</option>
+              <option value="scaleDown">scaleDown</option>
+              <option value="layout">layout</option>
+            </select>
+          </label>
+          <label>Artboard <select id="artboard" disabled></select></label>
+          <label>State machine <select id="stateMachine" disabled></select></label>
+          <label class="check"><input type="checkbox" id="showGrid" /> grid</label>
+        </div>
+        <div class="canvasWrap" id="canvasWrap">
+          <canvas id="stage"></canvas>
+          <p class="dropHint" id="dropHint">Drop a <code>.riv</code> here</p>
+        </div>
+        <div class="stageStatus">
+          <span id="fps">-- fps</span>
+          <span id="statusMsg">Waiting for a file.</span>
+        </div>
+      </section>
+
+      <section class="pane" id="rightPane">
+        <h2>Vitals</h2>
+        <div class="simBar">
+          <button class="btn primary" id="simToggle" disabled>Start decay</button>
+          <button class="btn" id="simReset" disabled>Reset</button>
+          <label class="check" title="Multiplies the decay rate so a slow timer is testable in seconds">
+            speed <input type="range" id="simSpeed" min="1" max="60" step="1" value="10" />
+            <output id="simSpeedOut">10x</output>
+          </label>
+        </div>
+        <p class="hint warn" id="simNote"></p>
+
+        <h2>Data binding</h2>
+        <p class="hint">
+          Live view model properties. This is the path the app uses
+          (<code>ViewModelInstance</code>), so whatever works here works in Flutter.
+        </p>
+        <div id="bindings"><p class="empty">No file loaded.</p></div>
+
+        <h2>State machine inputs <span class="tag">legacy</span></h2>
+        <p class="hint">
+          Deprecated in both runtimes. Shown only to inspect a rig that still uses them.
+        </p>
+        <div id="inputs"><p class="empty">No file loaded.</p></div>
+
+        <h2>Log</h2>
+        <div id="log" class="log"></div>
+      </section>
+    </main>
+
+    <script src="/vendor/rive.js"></script>
+    <script type="module" src="/lab/lab.js"></script>
+  </body>
+</html>

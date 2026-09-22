@@ -1,0 +1,25 @@
+name: teddy_bear
+description: >-
+  The animated bear character for TeddyTales: a Rive-backed widget plus the
+  controller that drives it from the app's game logic.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.28.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The current runtime. NOT rive-flutter-legacy - see TZ 6.1.
+  rive: ^0.14.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  assets:
+    - assets/rive/

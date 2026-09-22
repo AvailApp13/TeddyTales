@@ -1,0 +1,819 @@
+{
+  "specVersion": 1,
+  "_readme": [
+    "Каталог анимационных клипов из раздела 4 коммерческого предложения.",
+    "КП 4.11 фиксирует ровно 108 клипов + отдельную сцену рождения (4.10).",
+    "",
+    "declaredInProposal - число, обещанное в КП.",
+    "clips              - конкретные имена, которые нужно создать в Rive.",
+    "Если len(clips) != declaredInProposal, расхождение намеренно и описано в note:",
+    "это вопрос к Заказчику, а не ошибка. `teddy clips` показывает все расхождения.",
+    "",
+    "status: spec - прямо из КП; derived - разложено нами; draft - ждёт согласования."
+  ],
+  "totals": {
+    "declaredInProposal": 108,
+    "origin": "kp:4.11"
+  },
+  "groups": {
+    "idle": {
+      "section": "4.2",
+      "declaredInProposal": 28,
+      "clips": [
+        {
+          "name": "idle_calm_newborn",
+          "mood": "calm",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_happy_newborn",
+          "mood": "happy",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sad_newborn",
+          "mood": "sad",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_hungry_newborn",
+          "mood": "hungry",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sleepy_newborn",
+          "mood": "sleepy",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_messy_newborn",
+          "mood": "messy",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "idle_calm_crawler",
+          "mood": "calm",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_happy_crawler",
+          "mood": "happy",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sad_crawler",
+          "mood": "sad",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_hungry_crawler",
+          "mood": "hungry",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sleepy_crawler",
+          "mood": "sleepy",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_messy_crawler",
+          "mood": "messy",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "idle_calm_first_steps",
+          "mood": "calm",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_happy_first_steps",
+          "mood": "happy",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sad_first_steps",
+          "mood": "sad",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_hungry_first_steps",
+          "mood": "hungry",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sleepy_first_steps",
+          "mood": "sleepy",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_messy_first_steps",
+          "mood": "messy",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "idle_calm_growing",
+          "mood": "calm",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_happy_growing",
+          "mood": "happy",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sad_growing",
+          "mood": "sad",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_hungry_growing",
+          "mood": "hungry",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sleepy_growing",
+          "mood": "sleepy",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_messy_growing",
+          "mood": "messy",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "idle_calm_adult",
+          "mood": "calm",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "idle_happy_adult",
+          "mood": "happy",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sad_adult",
+          "mood": "sad",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "idle_hungry_adult",
+          "mood": "hungry",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "idle_sleepy_adult",
+          "mood": "sleepy",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "idle_messy_adult",
+          "mood": "messy",
+          "stage": "adult",
+          "status": "derived"
+        }
+      ],
+      "note": "Матрица 6 настроений x 5 стадий = 30 ячеек, КП обещает 28. Две ячейки лишние - какие именно, вопрос к Заказчику (Q1). Вероятнее всего у стадии newborn нет messy и play-производных."
+    },
+    "care": {
+      "section": "4.3",
+      "declaredInProposal": 28,
+      "clips": [
+        {
+          "name": "care_feed_newborn",
+          "action": "feed",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_wash_newborn",
+          "action": "wash",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_sleep_newborn",
+          "action": "sleep",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_wake_newborn",
+          "action": "wake",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_play_newborn",
+          "action": "play",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_pet_newborn",
+          "action": "pet",
+          "stage": "newborn",
+          "status": "derived"
+        },
+        {
+          "name": "care_feed_crawler",
+          "action": "feed",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_wash_crawler",
+          "action": "wash",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_sleep_crawler",
+          "action": "sleep",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_wake_crawler",
+          "action": "wake",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_play_crawler",
+          "action": "play",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_pet_crawler",
+          "action": "pet",
+          "stage": "crawler",
+          "status": "derived"
+        },
+        {
+          "name": "care_feed_first_steps",
+          "action": "feed",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_wash_first_steps",
+          "action": "wash",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_sleep_first_steps",
+          "action": "sleep",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_wake_first_steps",
+          "action": "wake",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_play_first_steps",
+          "action": "play",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_pet_first_steps",
+          "action": "pet",
+          "stage": "first_steps",
+          "status": "derived"
+        },
+        {
+          "name": "care_feed_growing",
+          "action": "feed",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_wash_growing",
+          "action": "wash",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_sleep_growing",
+          "action": "sleep",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_wake_growing",
+          "action": "wake",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_play_growing",
+          "action": "play",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_pet_growing",
+          "action": "pet",
+          "stage": "growing",
+          "status": "derived"
+        },
+        {
+          "name": "care_feed_adult",
+          "action": "feed",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "care_wash_adult",
+          "action": "wash",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "care_sleep_adult",
+          "action": "sleep",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "care_wake_adult",
+          "action": "wake",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "care_play_adult",
+          "action": "play",
+          "stage": "adult",
+          "status": "derived"
+        },
+        {
+          "name": "care_pet_adult",
+          "action": "pet",
+          "stage": "adult",
+          "status": "derived"
+        }
+      ],
+      "note": "Та же арифметика: 6 действий x 5 стадий = 30 при обещанных 28 (Q1)."
+    },
+    "move": {
+      "section": "4.4",
+      "declaredInProposal": 6,
+      "clips": [
+        {
+          "name": "move_crawl",
+          "stage": "crawler",
+          "status": "spec",
+          "doc": "ползание"
+        },
+        {
+          "name": "move_crawl_turn",
+          "stage": "crawler",
+          "status": "derived",
+          "doc": "разворот в ползании"
+        },
+        {
+          "name": "move_first_steps",
+          "stage": "first_steps",
+          "status": "spec",
+          "doc": "первые неуверенные шаги"
+        },
+        {
+          "name": "move_walk",
+          "stage": "growing",
+          "status": "spec",
+          "doc": "уверенная ходьба"
+        },
+        {
+          "name": "move_turn_left",
+          "stage": "growing",
+          "status": "derived",
+          "doc": "разворот влево"
+        },
+        {
+          "name": "move_turn_right",
+          "stage": "growing",
+          "status": "derived",
+          "doc": "разворот вправо"
+        }
+      ],
+      "note": "КП перечисляет «ползание, первые неуверенные шаги, уверенная ходьба, развороты» и число 6. Развороты разложены на три клипа, чтобы сумма сошлась."
+    },
+    "growth": {
+      "section": "4.5",
+      "declaredInProposal": 4,
+      "clips": [
+        {
+          "name": "growth_newborn_to_crawler",
+          "from": "newborn",
+          "to": "crawler",
+          "status": "spec",
+          "durationSeconds": [
+            2,
+            3
+          ],
+          "doc": "выразительный момент взросления со свечением"
+        },
+        {
+          "name": "growth_crawler_to_first_steps",
+          "from": "crawler",
+          "to": "first_steps",
+          "status": "spec",
+          "durationSeconds": [
+            2,
+            3
+          ],
+          "doc": "выразительный момент взросления со свечением"
+        },
+        {
+          "name": "growth_first_steps_to_growing",
+          "from": "first_steps",
+          "to": "growing",
+          "status": "spec",
+          "durationSeconds": [
+            2,
+            3
+          ],
+          "doc": "выразительный момент взросления со свечением"
+        },
+        {
+          "name": "growth_growing_to_adult",
+          "from": "growing",
+          "to": "adult",
+          "status": "spec",
+          "durationSeconds": [
+            2,
+            3
+          ],
+          "doc": "выразительный момент взросления со свечением"
+        }
+      ]
+    },
+    "trait": {
+      "section": "4.6",
+      "declaredInProposal": 18,
+      "clips": [
+        {
+          "name": "trait_active_idle",
+          "trait": "active",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_active_reaction",
+          "trait": "active",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_active_initiative",
+          "trait": "active",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        },
+        {
+          "name": "trait_curious_idle",
+          "trait": "curious",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_curious_reaction",
+          "trait": "curious",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_curious_initiative",
+          "trait": "curious",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        },
+        {
+          "name": "trait_affectionate_idle",
+          "trait": "affectionate",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_affectionate_reaction",
+          "trait": "affectionate",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_affectionate_initiative",
+          "trait": "affectionate",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        },
+        {
+          "name": "trait_calm_idle",
+          "trait": "calm",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_calm_reaction",
+          "trait": "calm",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_calm_initiative",
+          "trait": "calm",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        },
+        {
+          "name": "trait_independent_idle",
+          "trait": "independent",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_independent_reaction",
+          "trait": "independent",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_independent_initiative",
+          "trait": "independent",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        },
+        {
+          "name": "trait_reserved_idle",
+          "trait": "reserved",
+          "status": "spec",
+          "doc": "свои движения в покое"
+        },
+        {
+          "name": "trait_reserved_reaction",
+          "trait": "reserved",
+          "status": "spec",
+          "doc": "своя реакция на взаимодействие"
+        },
+        {
+          "name": "trait_reserved_initiative",
+          "trait": "reserved",
+          "status": "derived",
+          "doc": "инициатива - питомец предлагает активность (КП 3.4)"
+        }
+      ],
+      "note": "6 типов x 3 клипа. Третий клип отнесён к пузырю инициативы из КП 3.4."
+    },
+    "variants": {
+      "section": "4.7",
+      "declaredInProposal": 16,
+      "clips": [
+        {
+          "name": "var_feed_alt",
+          "of": "care_feed",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_wash_alt",
+          "of": "care_wash",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_sleep_alt",
+          "of": "care_sleep",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_wake_alt",
+          "of": "care_wake",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_play_alt",
+          "of": "care_play",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_pet_alt",
+          "of": "care_pet",
+          "status": "derived",
+          "doc": "второй вариант частого действия"
+        },
+        {
+          "name": "var_idle_calm_alt",
+          "of": "idle_calm",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "var_idle_happy_alt",
+          "of": "idle_happy",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "var_idle_sad_alt",
+          "of": "idle_sad",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "var_idle_hungry_alt",
+          "of": "idle_hungry",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "var_idle_sleepy_alt",
+          "of": "idle_sleepy",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "var_idle_messy_alt",
+          "of": "idle_messy",
+          "status": "derived",
+          "doc": "второй вариант покоя"
+        },
+        {
+          "name": "easter_egg_1",
+          "status": "draft",
+          "doc": "редкая пасхалка - сюжет согласуется с Заказчиком"
+        },
+        {
+          "name": "easter_egg_2",
+          "status": "draft",
+          "doc": "редкая пасхалка - сюжет согласуется с Заказчиком"
+        },
+        {
+          "name": "easter_egg_3",
+          "status": "draft",
+          "doc": "редкая пасхалка - сюжет согласуется с Заказчиком"
+        },
+        {
+          "name": "easter_egg_4",
+          "status": "draft",
+          "doc": "редкая пасхалка - сюжет согласуется с Заказчиком"
+        }
+      ],
+      "note": "6 альтернатив действиям + 6 альтернатив покою + 4 пасхалки = 16."
+    },
+    "emotions": {
+      "section": "4.8",
+      "declaredInProposal": 8,
+      "clips": [
+        {
+          "name": "emote_joy_a",
+          "emotion": "joy",
+          "status": "spec",
+          "doc": "радость"
+        },
+        {
+          "name": "emote_joy_b",
+          "emotion": "joy",
+          "status": "derived",
+          "doc": "радость - второй вариант"
+        },
+        {
+          "name": "emote_upset_a",
+          "emotion": "upset",
+          "status": "spec",
+          "doc": "огорчение"
+        },
+        {
+          "name": "emote_upset_b",
+          "emotion": "upset",
+          "status": "derived",
+          "doc": "огорчение - второй вариант"
+        },
+        {
+          "name": "emote_surprise_a",
+          "emotion": "surprise",
+          "status": "spec",
+          "doc": "удивление"
+        },
+        {
+          "name": "emote_surprise_b",
+          "emotion": "surprise",
+          "status": "derived",
+          "doc": "удивление - второй вариант"
+        },
+        {
+          "name": "emote_love_a",
+          "emotion": "love",
+          "status": "spec",
+          "doc": "проявление любви"
+        },
+        {
+          "name": "emote_love_b",
+          "emotion": "love",
+          "status": "derived",
+          "doc": "проявление любви - второй вариант"
+        }
+      ],
+      "note": "4 эмоции x 2 варианта = 8."
+    }
+  },
+  "birthScene": {
+    "section": "4.10",
+    "status": "spec",
+    "countedInTotal": false,
+    "doc": "Расширенная сцена рождения: кроватка, световые эффекты, звёздочки, первый вдох, пробуждение, первый плач. Ролик 20-30 секунд (КП 2.1), субтитры, «Пропустить» после 5 секунд.",
+    "clips": [
+      {
+        "name": "birth_crib",
+        "status": "derived"
+      },
+      {
+        "name": "birth_light",
+        "status": "derived"
+      },
+      {
+        "name": "birth_stars",
+        "status": "derived"
+      },
+      {
+        "name": "birth_first_breath",
+        "status": "spec"
+      },
+      {
+        "name": "birth_awakening",
+        "status": "spec"
+      },
+      {
+        "name": "birth_first_cry",
+        "status": "spec"
+      }
+    ]
+  },
+  "outfitSlots": {
+    "section": "4.9",
+    "status": "spec",
+    "doc": "Одежда двигается вместе с телом и не съезжает - каждый слот привязывается к костям, а не к артборду.",
+    "slots": [
+      {
+        "name": "outfit_body",
+        "label": "комплект",
+        "count": 8,
+        "boundTo": "root_body"
+      },
+      {
+        "name": "outfit_head",
+        "label": "головной убор",
+        "count": 3,
+        "boundTo": "head"
+      },
+      {
+        "name": "outfit_feet",
+        "label": "обувь",
+        "count": 2,
+        "boundTo": "root_body"
+      },
+      {
+        "name": "outfit_accessory",
+        "label": "аксессуар",
+        "count": 3,
+        "boundTo": "root_body"
+      }
+    ]
+  }
+}

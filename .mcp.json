@@ -1,0 +1,13 @@
+{
+  "_comment": [
+    "Rive MCP поднимается только когда на этой же машине открыт Rive Editor",
+    "(Early Access, не Production). См. docs/rive-mcp-setup.md.",
+    "Если редактор закрыт, сервер просто недоступен - это не ошибка конфигурации."
+  ],
+  "mcpServers": {
+    "rive": {
+      "type": "http",
+      "url": "http://127.0.0.1:9791/mcp"
+    }
+  }
+}
