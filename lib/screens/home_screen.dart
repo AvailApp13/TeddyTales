@@ -618,7 +618,12 @@ class _RoomScene extends StatelessWidget {
             rect: frame.rect,
             child: BedroomScene(asleep: asleep),
           ),
-          Positioned.fromRect(rect: frame.rect, child: const SleepZzz()),
+          // Буквы z и облако мыслей ждут одного момента: мишку уложили и
+          // он закрыл глаза.
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: SleepZzz(shown: asleep),
+          ),
           Positioned.fromRect(
             rect: frame.rect,
             child: SleepThought(shown: asleep),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../game/room_kind.dart';
 import '../theme/app_colors.dart';
 import 'bedroom_scene.dart';
 
@@ -163,7 +164,7 @@ class _SleepThoughtState extends State<SleepThought>
                     ),
                   ),
                   if (_dreamReady && steps[2] > 0)
-                    _dreamLayer(cloud, steps[2]),
+                    _dreamLayer(Size(w, h), cloud, steps[2]),
                   if (steps[2] > 0)
                     CustomPaint(
                       size: Size(w, h),
@@ -178,51 +179,113 @@ class _SleepThoughtState extends State<SleepThought>
     );
   }
 
-  /// Ролик в окне внутри облака. Растёт и проступает вместе с ним из
-  /// того же угла, что и само облако.
+  /// Ролик заливает облако целиком, до самого контура. Растёт и проступает
+  /// вместе с ним из того же угла, что и само облако.
   ///
-  /// Окно — скруглённый прямоугольник, вписанный в контур: горбы облака
-  /// остаются вокруг, как рамка. Обрезать ролик по самому контуру нельзя:
-  /// на вебе видео — отдельный слой браузера, и произвольный контур к нему
-  /// не применяется, только прямоугольник со скруглением.
-  Widget _dreamLayer(Rect cloud, double grown) {
+  /// Заказчик 22.09: «чтобы не было вот этого квадрата в облаке… чтобы он
+  /// полностью облако закрывал и не было ни одного белого пробела».
+  ///
+  /// Обрезать ролик по контуру напрямую нельзя: на вебе видео — отдельный
+  /// слой браузера, и произвольный контур к нему не применяется. Поэтому
+  /// окно ролика — прямоугольник по границам контура, а углы, торчащие за
+  /// горбы, закрыты сверху куском стены комнаты, вырезанным по обратной
+  /// маске. Стена та же картинка, что и фон, в тех же координатах, — шва
+  /// не видно. Под облаком только стена: окно левее, мишка ниже.
+  Widget _dreamLayer(Size frame, Rect cloud, double grown) {
     final size = _dream.value.size;
-    final window = Rect.fromLTWH(
-      cloud.left + cloud.width * 0.10,
-      cloud.top + cloud.height * 0.12,
-      cloud.width * 0.80,
-      cloud.height * 0.66,
-    );
-    return Positioned.fromRect(
-      rect: cloud,
-      child: Transform.scale(
-        scale: 0.6 + 0.4 * grown,
-        alignment: Alignment.bottomRight,
-        child: Opacity(
-          opacity: grown.clamp(0.0, 1.0),
-          child: Stack(
-            children: [
-              Positioned.fromRect(
-                rect: window.shift(-cloud.topLeft),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(cloud.height * 0.10),
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    clipBehavior: Clip.hardEdge,
-                    child: SizedBox(
-                      width: size.width,
-                      height: size.height,
-                      child: VideoPlayer(_dream),
-                    ),
+    final window = cloudPath(cloud).getBounds();
+    final scale = 0.6 + 0.4 * grown;
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          Positioned.fromRect(
+            rect: window,
+            child: Transform.scale(
+              scale: scale,
+              // Облако растёт из своего нижнего правого угла; окно шире
+              // рамки облака, поэтому якорь — в тех же координатах, но
+              // относительно окна.
+              alignment: Alignment(
+                _anchor(cloud.right, window.left, window.width),
+                _anchor(cloud.bottom, window.top, window.height),
+              ),
+              child: Opacity(
+                opacity: grown.clamp(0.0, 1.0),
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: size.width,
+                    height: size.height,
+                    child: VideoPlayer(_dream),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          ClipPath(
+            clipper: _OutsideCloud(cloud: cloud, window: window, scale: scale),
+            child: Image.asset(
+              RoomKind.bedroom.asset,
+              width: frame.width,
+              height: frame.height,
+              fit: BoxFit.fill,
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  /// Точка [at] в координатах кадра — как выравнивание внутри отрезка
+  /// от [start] длиной [length]: −1 в начале, +1 в конце.
+  static double _anchor(double at, double start, double length) =>
+      (at - start) / length * 2 - 1;
+}
+
+/// Матрица роста облака: масштаб [scale] вокруг его нижнего правого угла.
+Matrix4 cloudGrowth(Rect cloud, double scale) => Matrix4.identity()
+  ..translateByDouble(cloud.right, cloud.bottom, 0, 1)
+  ..scaleByDouble(scale, scale, 1, 1)
+  ..translateByDouble(-cloud.right, -cloud.bottom, 0, 1);
+
+/// Всё, что внутри окна ролика, но снаружи контура облака: этим куском
+/// стены накрываются углы прямоугольного видео.
+class _OutsideCloud extends CustomClipper<Path> {
+  const _OutsideCloud({
+    required this.cloud,
+    required this.window,
+    required this.scale,
+  });
+
+  final Rect cloud;
+  final Rect window;
+  final double scale;
+
+  @override
+  Path getClip(Size size) {
+    // Окно чуть шире контура: край видео с антиалиасингом не должен
+    // просвечивать тонкой линией вдоль горбов.
+    final growth = cloudGrowth(cloud, scale);
+    return ring(
+      MatrixUtils.transformRect(growth, window.inflate(2)),
+      MatrixUtils.transformRect(growth, cloud),
+    );
+  }
+
+  /// Кольцо: прямоугольник [outer] без облака в рамке [grown]. Через
+  /// заливку «чёт-нечет», а не `Path.combine(difference)`: на вебе разность
+  /// с трансформированным контуром давала пустой результат, и маска
+  /// накрывала ролик целиком. Контур в масштабе строится заново от
+  /// выросшей рамки — все его горбы заданы в её долях.
+  static Path ring(Rect outer, Rect grown) => Path()
+    ..fillType = PathFillType.evenOdd
+    ..addRect(outer)
+    ..addPath(cloudPath(grown), Offset.zero);
+
+  @override
+  bool shouldReclip(_OutsideCloud old) =>
+      old.cloud != cloud || old.window != window || old.scale != scale;
 }
 
 /// Контур облака — овал с горбами по верху и по низу. Горбы разного
@@ -318,12 +381,14 @@ class _ThoughtPainter extends CustomPainter {
     if (grown <= 0) return;
 
     // Облако растёт из своего нижнего правого угла — оттуда, где пузырьки.
-    final anchor = cloud.bottomRight;
+    // Только заливка: тень и кромку кладёт [_RimPainter] поверх ролика,
+    // иначе их накрыла бы маска стены вокруг видео.
     canvas.save();
-    canvas.translate(anchor.dx, anchor.dy);
-    canvas.scale(0.6 + 0.4 * grown);
-    canvas.translate(-anchor.dx, -anchor.dy);
-    draw(cloudPath(cloud), grown, 8);
+    canvas.transform(cloudGrowth(cloud, 0.6 + 0.4 * grown).storage);
+    canvas.drawPath(
+      cloudPath(cloud),
+      Paint()..color = AppColors.surface.withValues(alpha: grown.clamp(0, 1)),
+    );
     canvas.restore();
   }
 
@@ -335,8 +400,9 @@ class _ThoughtPainter extends CustomPainter {
       old.cloud != cloud;
 }
 
-/// Кромка облака поверх ролика: ролик обрезан по контуру, и без неё край
-/// выглядит резаным.
+/// Тень и кромка облака поверх ролика: ролик обрезан по контуру, и без
+/// кромки край выглядит резаным. Тень только снаружи контура: внутри —
+/// ролик, и темнить его нечем.
 class _RimPainter extends CustomPainter {
   const _RimPainter({required this.cloud, required this.grown});
 
@@ -345,19 +411,23 @@ class _RimPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final anchor = cloud.bottomRight;
+    final alpha = grown.clamp(0.0, 1.0);
+    // Контур в текущем масштабе строится от выросшей рамки, без
+    // трансформации пути: см. [_OutsideCloud.ring].
+    final grownCloud = MatrixUtils.transformRect(
+        cloudGrowth(cloud, 0.6 + 0.4 * grown), cloud);
+    final path = cloudPath(grownCloud);
     canvas.save();
-    canvas.translate(anchor.dx, anchor.dy);
-    canvas.scale(0.6 + 0.4 * grown);
-    canvas.translate(-anchor.dx, -anchor.dy);
+    canvas.clipPath(_OutsideCloud.ring(path.getBounds().inflate(40), grownCloud));
+    canvas.drawShadow(path, Color.fromRGBO(32, 48, 64, alpha), 8 * alpha, true);
+    canvas.restore();
     canvas.drawPath(
-      cloudPath(cloud),
+      path,
       Paint()
-        ..color = AppColors.outline.withValues(alpha: grown.clamp(0.0, 1.0))
+        ..color = AppColors.outline.withValues(alpha: alpha)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.6,
     );
-    canvas.restore();
   }
 
   @override
