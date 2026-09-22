@@ -35,8 +35,9 @@ class KitchenMeal {
 /// `tool/cut_kitchen_parts.py`, он же печатает доли кадра ниже.
 ///
 /// Слои снизу вверх: комната без мишки (фон, рисуется не здесь) → ножки
-/// под столом → край стола и скатерть (кусок фона поверх ножек) → уши →
-/// лапы → рукава → туловище → голова → глаза и рот спрайтами. Глаза и рот
+/// под столом → край стола и скатерть (кусок фона поверх ножек) →
+/// неподвижные копии ушей (доборы) → уши → лапы → рукава → туловище →
+/// голова → глаза и рот спрайтами. Глаза и рот
 /// не нарисованы на голове, а кладутся сверху: так любая пара глаз
 /// сочетается с любым ртом — ТЗ аниматора, раздел 5.9.
 class KitchenScene extends StatefulWidget {
@@ -538,6 +539,11 @@ class _KitchenSceneState extends State<KitchenScene>
                 _foot(w, h, KitchenScene.footLeft, 'foot_left', _footLeft, 1),
                 _foot(w, h, KitchenScene.footRight, 'foot_right', _footRight, -1),
                 _tableFront(w, h),
+                // Под каждым ухом — его же неподвижная копия: когда ухо
+                // гнётся, на его месте открывалась бы стена. Заказчик 22.09:
+                // «при движении ушей видны пробелы, нужно делать доборы».
+                _place(KitchenScene.earLeft, w, h, _image('ear_left')),
+                _place(KitchenScene.earRight, w, h, _image('ear_right')),
                 _ear(w, h, KitchenScene.earLeft, KitchenScene.assets[2],
                     KitchenScene.earLeftRoot, KitchenScene.earLeftTip, _earLeft, 1),
                 _ear(w, h, KitchenScene.earRight, KitchenScene.assets[3],
