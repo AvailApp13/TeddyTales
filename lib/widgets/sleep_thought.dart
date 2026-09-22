@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -42,12 +44,19 @@ class _SleepThoughtState extends State<SleepThought>
     if (widget.shown) _grow.value = 1;
   }
 
+  /// Облако ждёт, пока мишка уснёт: появиться раньше закрытых глаз —
+  /// значит показать сон бодрствующему.
+  Timer? _wait;
+
   @override
   void didUpdateWidget(SleepThought old) {
     super.didUpdateWidget(old);
     if (old.shown == widget.shown) return;
+    _wait?.cancel();
     if (widget.shown) {
-      _grow.forward();
+      _wait = Timer(BedroomScene.fallAsleep, () {
+        if (mounted && widget.shown) _grow.forward();
+      });
     } else {
       _grow.reverse();
     }
@@ -55,6 +64,7 @@ class _SleepThoughtState extends State<SleepThought>
 
   @override
   void dispose() {
+    _wait?.cancel();
     _grow.dispose();
     super.dispose();
   }

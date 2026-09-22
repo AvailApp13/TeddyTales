@@ -50,6 +50,8 @@
   },
   "bedroomAlarmSet": "Будильник на {time}",
   "bedroomAlarmHelp": "Когда просыпаемся?",
+  "bedroomActionWake": "Разбудить",
+  "bedroomAlarmDone": "Готово",
   "bathWashSoon": "Чиним душ — скоро сможем купать малыша",
   "bathToiletSoon": "Горшок ещё в работе — скоро научим",
   "@bearRigMissingHint": {

@@ -90,6 +90,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bedroomAlarmHelp => 'Когда просыпаемся?';
 
   @override
+  String get bedroomActionWake => 'Разбудить';
+
+  @override
+  String get bedroomAlarmDone => 'Готово';
+
+  @override
   String get bathWashSoon => 'Чиним душ — скоро сможем купать малыша';
 
   @override

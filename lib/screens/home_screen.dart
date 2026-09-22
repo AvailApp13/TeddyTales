@@ -12,6 +12,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/alarm_sheet.dart';
 import '../widgets/bedroom_scene.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
@@ -108,22 +109,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Кнопка «Уложить спать» на ковре: мишка закрывает глаза. Показатель
-  /// сна и пробуждение — следующим шагом по решению заказчика (22.09).
+  /// Кнопки на ковре: «Уложить спать» — мишка засыпает и закрывает глаза,
+  /// «Разбудить» — открывает и дальше просто моргает. Показатель сна
+  /// они не трогают: это решение заказчика следующим шагом (22.09).
   void _putToBed() => setState(() => _asleep = true);
+  void _wake() => setState(() => _asleep = false);
 
   /// На какое время поставлен будильник «проснёмся вместе».
   ///
-  /// Пока живёт в памяти экрана. Заказчик 22.09: пуш-уведомление под него
-  /// появится, когда на Supabase у каждого пользователя будет свой ID.
+  /// Пока живёт в памяти экрана — заглушка. Заказчик 22.09: привяжем к
+  /// региону при регистрации и к пуш-уведомлению каждого пользователя,
+  /// когда на Supabase у каждого будет свой ID.
   TimeOfDay? _alarm;
 
   Future<void> _pickAlarm() async {
-    final picked = await showTimePicker(
+    final picked = await showAlarmSheet(
       context: context,
-      initialTime: _alarm ?? const TimeOfDay(hour: 7, minute: 30),
-      helpText: context.l10n.bedroomAlarmHelp,
-      initialEntryMode: TimePickerEntryMode.dialOnly,
+      initial: _alarm ?? const TimeOfDay(hour: 7, minute: 30),
     );
     if (picked == null || !mounted) return;
     setState(() => _alarm = picked);
@@ -391,6 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRoomChanged: _showRoom,
                   asleep: _asleep,
                   onPutToBed: _putToBed,
+                  onWake: _wake,
                   alarm: _alarm,
                   onPickAlarm: _pickAlarm,
                   onOpenFeed: _openFeed,
@@ -515,6 +518,7 @@ class _RoomScene extends StatelessWidget {
     required this.onRoomChanged,
     required this.asleep,
     required this.onPutToBed,
+    required this.onWake,
     required this.alarm,
     required this.onPickAlarm,
     required this.onOpenFeed,
@@ -543,9 +547,10 @@ class _RoomScene extends StatelessWidget {
   final RoomKind room;
   final ValueChanged<RoomKind> onRoomChanged;
 
-  /// Спит ли мишка и как его уложить: кнопка на ковре спальни.
+  /// Спит ли мишка, как уложить и как разбудить: кнопки на ковре спальни.
   final bool asleep;
   final VoidCallback onPutToBed;
+  final VoidCallback onWake;
 
   /// Будильник «проснёмся вместе»: на какое время стоит и как поменять.
   final TimeOfDay? alarm;
@@ -700,16 +705,25 @@ class _RoomScene extends StatelessWidget {
             child: _KitchenMenu(onOpenFeed: onOpenFeed),
           ),
         // В спальне — «Уложить спать» на ковре, там, где заказчик 22.09
-        // обвёл на скрине. Когда уснул, на её месте — «Давай проснёмся
-        // вместе»: на какое время поставить будильник.
+        // обвёл на скрине. Когда уснул, на её месте — «Разбудить», а выше
+        // над ней «Давай проснёмся вместе»: на какое время будильник.
         if (room == RoomKind.bedroom)
           Positioned(
             left: 16,
             right: _pawSpace,
             bottom: 34,
-            child: asleep
-                ? _WakeMenu(alarm: alarm, onPickAlarm: onPickAlarm)
-                : _BedroomMenu(onPutToBed: onPutToBed),
+            child: _BedroomMenu(
+              asleep: asleep,
+              onPutToBed: onPutToBed,
+              onWake: onWake,
+            ),
+          ),
+        if (room == RoomKind.bedroom && asleep)
+          Positioned(
+            left: 16,
+            right: _pawSpace,
+            bottom: 34 + 44 + 12,
+            child: _WakeMenu(alarm: alarm, onPickAlarm: onPickAlarm),
           ),
         if (room == RoomKind.bath)
           Positioned(
@@ -750,21 +764,35 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-/// Одна кнопка спальни: уложить спать.
+/// Кнопка спальни: уложить спать — или, если уже спит, разбудить.
 class _BedroomMenu extends StatelessWidget {
-  const _BedroomMenu({required this.onPutToBed});
+  const _BedroomMenu({
+    required this.asleep,
+    required this.onPutToBed,
+    required this.onWake,
+  });
 
+  final bool asleep;
   final VoidCallback onPutToBed;
+  final VoidCallback onWake;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return _ActionRow(
       children: [
-        _Pill(
-          label: context.l10n.bedroomActionSleep,
-          icon: Icons.bedtime_outlined,
-          onTap: onPutToBed,
-        ),
+        if (asleep)
+          _Pill(
+            label: l10n.bedroomActionWake,
+            icon: Icons.wb_sunny_outlined,
+            onTap: onWake,
+          )
+        else
+          _Pill(
+            label: l10n.bedroomActionSleep,
+            icon: Icons.bedtime_outlined,
+            onTap: onPutToBed,
+          ),
       ],
     );
   }

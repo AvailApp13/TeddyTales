@@ -12,6 +12,8 @@
   "bedroomAlarmQuestion": "What time should the alarm ring?",
   "bedroomAlarmSet": "Alarm at {time}",
   "bedroomAlarmHelp": "When do we wake up?",
+  "bedroomActionWake": "Wake up",
+  "bedroomAlarmDone": "Done",
   "bathWashSoon": "Fixing the shower — bath time is coming soon",
   "bathToiletSoon": "The potty is still in the works",
   "bearRigMissingHint": "Add {path} to the app",

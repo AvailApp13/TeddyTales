@@ -55,6 +55,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bedroomAlarmHelp => '几点起床？';
 
   @override
+  String get bedroomActionWake => '叫醒';
+
+  @override
+  String get bedroomAlarmDone => '完成';
+
+  @override
   String get bathWashSoon => '正在修淋浴 — 很快就能洗澡啦';
 
   @override

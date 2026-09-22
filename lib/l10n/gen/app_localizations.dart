@@ -172,6 +172,18 @@ abstract class AppLocalizations {
   /// **'Когда просыпаемся?'**
   String get bedroomAlarmHelp;
 
+  /// No description provided for @bedroomActionWake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить'**
+  String get bedroomActionWake;
+
+  /// No description provided for @bedroomAlarmDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get bedroomAlarmDone;
+
   /// No description provided for @bathWashSoon.
   ///
   /// In ru, this message translates to:

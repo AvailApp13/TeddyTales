@@ -87,6 +87,10 @@ class BedroomScene extends StatefulWidget {
   /// пульсировать целиком.
   static const Duration lampBreath = Duration(milliseconds: 5500);
 
+  /// Сколько мишка засыпает после «Уложить спать»: сумма шагов `_doze`.
+  /// К этому моменту глаза закрыты — и можно показывать сон.
+  static const Duration fallAsleep = Duration(milliseconds: 7500);
+
   /// Все картинки сцены.
   static const List<String> assets = [
     'assets/rooms/bedroom/bear_open.png',
@@ -292,17 +296,32 @@ class _BedroomSceneState extends State<BedroomScene>
       return;
     }
     if (widget.asleep) {
-      // Веки опускаются, как при засыпании, и остаются закрытыми.
-      _look(_Gaze.open, const Duration(milliseconds: 300));
-      _lid.animateTo(1,
-          duration: const Duration(milliseconds: 1100),
-          curve: Curves.easeInOutSine);
-      _nodDrive.reverse();
+      _doze();
     } else {
+      // Проснулся: глаза открыл быстро, голову поднял, дальше — как днём.
       _lid.animateTo(0,
           duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+      _nodDrive.reverse();
+      _look(_Gaze.open, const Duration(milliseconds: 200));
       _rest();
     }
+  }
+
+  /// Уложили: засыпает по-настоящему — два медленных моргания, взгляд
+  /// вниз, голова клюёт носом, и глаза закрываются насовсем.
+  ///
+  /// Времена здесь без разброса: ровно через [BedroomScene.fallAsleep]
+  /// глаза закрыты, и облако мыслей над головой ждёт именно этого.
+  void _doze() {
+    _plan.addAll([
+      _go(lid: 1, move: _ms(600), hold: _ms(350)),
+      _go(lid: 0, move: _ms(640), hold: _ms(900)),
+      _go(gaze: _Gaze.down, lid: 0.15, move: _ms(380), hold: _ms(500)),
+      _go(lid: 1, move: _ms(900), hold: _ms(500), nod: true),
+      _go(lid: 0.55, move: _ms(900), hold: _ms(700)),
+      _go(lid: 1, move: _ms(1100)),
+    ]);
+    _step();
   }
 
   @override
@@ -371,67 +390,50 @@ class _BedroomSceneState extends State<BedroomScene>
   }) =>
       (gaze: gaze, lid: lid, curve: curve, move: move, hold: hold, nod: nod);
 
-  /// Один круг: моргнул, огляделся, два-три медленных — и заснул.
+  /// Один круг бодрствования: моргнул, иногда дважды, иногда огляделся.
   ///
-  /// Заказчик 22.09: «нужно 2–3 раза, чтобы он моргнул медленно, и как бы
-  /// засыпал» — и чтобы ждать этого не приходилось. Круг целиком занимает
-  /// около двадцати секунд.
+  /// Заказчик 22.09: пока не уложили, «просто открытые глаза, моргание,
+  /// ушки и дыхание». Засыпание — только по кнопке, см. [_doze].
   void _act() {
     if (!mounted || _still || widget.asleep) return;
 
     // Обычное моргание: веко падает быстро, поднимается чуть медленнее.
-    _plan.addAll([
-      _go(lid: 1, move: _ms(90), hold: _ms(50, 50), curve: Curves.easeIn),
-      _go(lid: 0, move: _ms(170), hold: _ms(1600, 1400), curve: Curves.easeOut),
-    ]);
-
-    // Посмотрел в сторону — что там? — и обратно. В какую, решает жребий:
-    // одна и та же сторона каждый круг выдаёт запись.
-    _plan.addAll([
-      _go(
-        gaze: _dice.nextBool() ? _Gaze.left : _Gaze.right,
-        move: _ms(170),
-        hold: _ms(900, 700),
-      ),
-      _go(gaze: _Gaze.open, move: _ms(200), hold: _ms(600, 500)),
-    ]);
-
-    // Первое медленное: веки тяжёлые, но ещё открывает до конца.
-    _plan.addAll([
-      _go(lid: 1, move: _ms(560, 200), hold: _ms(300, 200)),
-      _go(lid: 0, move: _ms(640), hold: _ms(1300, 900)),
-    ]);
-
-    // Глаза опустились — уже не смотрит, а дремлет. Отсюда второе
-    // медленное: ещё медленнее, голова пошла вниз, веки поднимаются только
-    // наполовину.
-    _plan.addAll([
-      _go(gaze: _Gaze.down, lid: 0.15, move: _ms(380), hold: _ms(600, 400)),
-      _go(lid: 1, move: _ms(820, 200), hold: _ms(500, 300), nod: true),
-      _go(lid: 0.55, move: _ms(900), hold: _ms(900, 500)),
-    ]);
-
-    // Иногда третье — открыл почти до конца, будто борется со сном.
-    if (_dice.nextBool()) {
+    // Иногда двойное — так моргают живые, а не заведённые.
+    final twice = _dice.nextInt(4) == 0;
+    for (var i = 0; i < (twice ? 2 : 1); i++) {
       _plan.addAll([
-        _go(lid: 0.1, move: _ms(700), hold: _ms(700, 500)),
-        _go(lid: 0.6, move: _ms(800), hold: _ms(400, 300)),
+        _go(lid: 1, move: _ms(90), hold: _ms(50, 50), curve: Curves.easeIn),
+        _go(
+          lid: 0,
+          move: _ms(170),
+          hold: i == 0 && twice ? _ms(120, 80) : _ms(1600, 1400),
+          curve: Curves.easeOut,
+        ),
       ]);
     }
 
-    // Заснул. Через несколько секунд спохватывается и открывает глаза.
-    _plan.addAll([
-      _go(lid: 1, move: _ms(1100), hold: _ms(4500, 3000)),
-      _go(gaze: _Gaze.open, lid: 0, move: _ms(280), curve: Curves.easeOut, nod: false),
-    ]);
+    // Посмотрел в сторону — что там? — и обратно. В какую, решает жребий:
+    // одна и та же сторона каждый круг выдаёт запись. Не каждый круг:
+    // постоянно бегающий взгляд читается как тревога.
+    if (_dice.nextBool()) {
+      _plan.addAll([
+        _go(
+          gaze: _dice.nextBool() ? _Gaze.left : _Gaze.right,
+          move: _ms(170),
+          hold: _ms(900, 700),
+        ),
+        _go(gaze: _Gaze.open, move: _ms(200), hold: _ms(600, 500)),
+      ]);
+    }
     _step();
   }
 
   /// Выполнить следующий шаг сценария; когда он кончился — отдыхать.
+  /// Уснувшему отдыхать нечего: последний шаг [_doze] закрыл глаза.
   void _step() {
-    if (!mounted || _still || widget.asleep) return;
+    if (!mounted || _still) return;
     if (_plan.isEmpty) {
-      _rest();
+      if (!widget.asleep) _rest();
       return;
     }
     final step = _plan.removeFirst();
