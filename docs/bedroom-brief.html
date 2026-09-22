@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — спальня по слоям: приёмка и переделка</title>
+<style>
+  /* Шрифт тот же, что в приложении. */
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+
+  :root {
+    --ink: #1A202E;
+    --ink-soft: #6C7789;
+    --line: #DCE2EB;
+    --paper: #F6F8FB;
+    --red: #C9432F;
+    --red-soft: #FBEDEA;
+    --green: #2E8A5E;
+    --green-soft: #EAF5EF;
+    --blue: #266ABD;
+    --amber: #A8741A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 1.5mm;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+  }
+
+  .lead { color: var(--ink-soft); font-size: 11pt; margin: 0 0 6mm; max-width: 150mm; }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 5mm 0 2.5mm;
+    padding-bottom: 1.2mm;
+    border-bottom: 1.5pt solid var(--ink);
+    break-after: avoid;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 800;
+    margin: 5mm 0 2mm;
+    break-after: avoid;
+  }
+
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1mm; }
+
+  .page-break { break-before: page; }
+
+  figure { margin: 0 0 4mm; break-inside: avoid; }
+
+  /* Высокие чертежи иначе не влезают в полосу и гонят пустую страницу. */
+  figure img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 225mm;
+    border: 0.75pt solid var(--line);
+  }
+  figcaption { font-size: 9pt; color: var(--ink-soft); margin-top: 1.5mm; }
+
+  figure.plain img { border: 0; }
+
+  /* Строки приёмки */
+
+  .verdict { display: flex; flex-direction: column; gap: 2mm; margin-bottom: 4mm; }
+
+  .row {
+    display: flex;
+    gap: 3mm;
+    padding: 2.5mm 3mm;
+    border-radius: 2mm;
+    break-inside: avoid;
+  }
+
+  .row.good { background: var(--green-soft); }
+  .row.bad  { background: var(--red-soft); }
+
+  .mark { font-weight: 800; font-size: 11pt; flex: none; width: 4mm; }
+  .row.good .mark { color: var(--green); }
+  .row.bad .mark { color: var(--red); }
+
+  .row b { display: block; font-size: 10.5pt; }
+  .row span { color: var(--ink-soft); }
+
+  /* Таблицы */
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4mm;
+    break-inside: avoid;
+  }
+
+  th, td { text-align: left; padding: 1.8mm 2.5mm; border-bottom: 0.6pt solid var(--line); }
+
+  th {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    border-bottom: 1pt solid var(--ink);
+  }
+
+  td.num { font-weight: 700; }
+  tr.want td { background: var(--green-soft); }
+  tr.want td.num { color: var(--green); }
+  td.wrong { color: var(--red); }
+
+  /* Задания */
+
+  .task {
+    border: 1.2pt solid var(--ink);
+    border-radius: 2.5mm;
+    padding: 4mm 4.5mm;
+    margin-bottom: 3mm;
+    break-inside: avoid;
+  }
+
+  .task > h3 { margin-top: 0; }
+
+  .task .num {
+    display: inline-block;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 800;
+    font-size: 9pt;
+    padding: 0.6mm 2.2mm;
+    border-radius: 1.2mm;
+    margin-right: 2mm;
+    vertical-align: 0.4mm;
+  }
+
+  .rule { margin: 3mm 0 0; }
+  .rule dt { font-weight: 800; margin-top: 2mm; }
+  .rule dd { margin: 0.6mm 0 0; }
+
+  .stop {
+    background: var(--red-soft);
+    border-left: 2pt solid var(--red);
+    padding: 2.5mm 3mm;
+    margin: 3mm 0 0;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .stop b { color: var(--red); }
+
+  .keep {
+    background: var(--green-soft);
+    border-left: 2pt solid var(--green);
+    padding: 2.5mm 3mm;
+    margin: 3mm 0 0;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .keep b { color: var(--green); }
+
+  code {
+    font-family: ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-size: 9.5pt;
+    background: var(--paper);
+    padding: 0.3mm 1mm;
+    border-radius: 1mm;
+  }
+
+  .files { font-size: 10pt; }
+  .files td:first-child { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; }
+
+  footer {
+    break-before: avoid;
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 0.6pt solid var(--line);
+    font-size: 9pt;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<h1>Спальня по слоям: приёмка и переделка</h1>
+<p class="lead">
+  Мишка в кровати должен дышать, моргать и зевать. Для этого плоская картинка
+  спальни разбирается на слои. Первая партия пришла — три слоя приняты,
+  четыре надо переделать. Ниже: что уже готово, что не так, все обмеры
+  и два задания.
+</p>
+
+<h2>Приёмка первой партии</h2>
+
+<div class="verdict">
+  <div class="row good">
+    <span class="mark">✓</span>
+    <span>
+      <b>Комната без мишки</b>
+      941 × 1672, мишка убран, подушки дорисованы чисто, остальная картинка
+      совпадает с исходником точка в точку. Принято, переделывать не надо.
+    </span>
+  </div>
+  <div class="row good">
+    <span class="mark">✓</span>
+    <span>
+      <b>Передний край одеяла</b>
+      941 × 1672, прозрачность настоящая, вырезано прямо из исходника,
+      верхняя кромка на y = 912, на всю ширину кровати. Принято.
+    </span>
+  </div>
+  <div class="row good">
+    <span class="mark">✓</span>
+    <span>
+      <b>Свет ночника</b>
+      941 × 1672, фон прозрачный, ядро свечения 785–880 по ширине и
+      740–942 по высоте — ровно на лампе. Принято.
+    </span>
+  </div>
+  <div class="row bad">
+    <span class="mark">✕</span>
+    <span>
+      <b>Четыре варианта мишки</b>
+      Нарисованы верно, но фигура в 2,4 раза крупнее нужной, и между собой
+      у них два разных масштаба. И главное — это четыре отдельных рисунка,
+      а не один мишка с перерисованным лицом. Переделать.
+    </span>
+  </div>
+</div>
+
+<h2>Как слои складываются</h2>
+
+<figure class="plain">
+  <img src="bedroom-brief/order.jpg" alt="Порядок слоёв">
+  <figcaption>
+    Слои кладутся друг на друга снизу вверх. Комната, край одеяла и свет
+    ночника уже готовы — в переделку идёт только второй слой, мишка.
+  </figcaption>
+</figure>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Что не так с мишкой</h2>
+
+<h3>1. Размер и место</h3>
+
+<figure>
+  <img src="bedroom-brief/stack.jpg" alt="Исходник и стопка присланных слоёв">
+  <figcaption>
+    Слева — как должно быть. Справа — что получается, если сложить
+    присланные слои как есть: мишка занимает полкровати.
+  </figcaption>
+</figure>
+
+<figure class="plain">
+  <img src="bedroom-brief/scale.jpg" alt="Размеры присланных файлов">
+  <figcaption>
+    Каждый белый прямоугольник — холст 941 × 1672. Красная рамка — где на нём
+    оказалась фигура. Справа зелёным — где она должна быть.
+  </figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Размер фигуры</th><th>Левый верхний угол</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>глаза открыты</td><td class="num wrong">860 × 946</td><td class="num wrong">65, 400</td></tr>
+    <tr><td>глаза полуприкрыты</td><td class="num wrong">862 × 958</td><td class="num wrong">60, 374</td></tr>
+    <tr><td>глаза закрыты</td><td class="num wrong">594 × 650</td><td class="num wrong">203, 508</td></tr>
+    <tr><td>зевок</td><td class="num wrong">590 × 644</td><td class="num wrong">194, 508</td></tr>
+    <tr class="want"><td><b>как надо</b></td><td class="num">236 × 260</td><td class="num">355, 690</td></tr>
+  </tbody>
+</table>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>2. Варианты нарисованы заново, а не отредактированы</h2>
+
+<figure class="plain">
+  <img src="bedroom-brief/jitter.jpg" alt="Контуры двух вариантов наложены друг на друга">
+  <figcaption>
+    Два варианта подогнаны под один размер, и их контуры наложены друг на
+    друга. Красная и синяя линии должны были слиться в одну, а они расходятся:
+    край капюшона, уши и лапы стоят по-разному. При переключении между
+    вариантами мишка будет дёргаться всей фигурой, а не просто моргать.
+  </figcaption>
+</figure>
+
+<h2>Все обмеры разом</h2>
+
+<table>
+  <thead><tr><th>Что</th><th>Где</th></tr></thead>
+  <tbody>
+    <tr><td>Холст каждого слоя</td><td class="num">941 × 1672</td></tr>
+    <tr><td>Прямоугольник фигуры мишки</td><td class="num">355, 690 — 591, 950 &nbsp;(236 × 260)</td></tr>
+    <tr><td>Кончик колпака</td><td class="num">463, 690</td></tr>
+    <tr><td>Левый глаз, центр</td><td class="num">444, 857 &nbsp;· размер 15 × 13</td></tr>
+    <tr><td>Правый глаз, центр</td><td class="num">502, 849 &nbsp;· размер 14 × 13</td></tr>
+    <tr><td>Нос</td><td class="num">464–491 по ширине, 864–885 по высоте</td></tr>
+    <tr><td>Рот</td><td class="num">460–514 по ширине, 878–901 по высоте</td></tr>
+    <tr class="want"><td><b>Зона лица — только её можно менять</b></td><td class="num">420, 830 — 530, 915</td></tr>
+    <tr><td>Одеяло перекрывает мишку от</td><td class="num">y = 912</td></tr>
+    <tr><td>Ядро света ночника</td><td class="num">785–880 по ширине, 740–942 по высоте</td></tr>
+  </tbody>
+</table>
+
+<p style="color:var(--ink-soft)">
+  Все числа — точки на исходном изображении 941 × 1672, отсчёт от левого
+  верхнего угла. На следующих двух страницах то же самое нарисовано.
+</p>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Обмеры: где стоит мишка</h2>
+
+<figure class="plain">
+  <img src="bedroom-brief/canvas.jpg" alt="Чертёж холста с разметкой">
+  <figcaption>
+    Все числа — точки на холсте 941 × 1672, отсчёт от левого верхнего угла.
+  </figcaption>
+</figure>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Обмеры: мордочка</h2>
+
+<figure class="plain">
+  <img src="bedroom-brief/face.jpg" alt="Чертёж мордочки с разметкой">
+  <figcaption>
+    Красный пунктир — единственное место, где вариантам разрешено отличаться
+    друг от друга.
+  </figcaption>
+</figure>
+
+<p style="color:var(--ink-soft)">
+  Голова у мишки слегка наклонена, поэтому правый глаз выше левого на восемь
+  точек. Этот наклон нужно сохранить: если поставить глаза на одну высоту,
+  морда «выпрямится» и станет чужой.
+</p>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Задание</h2>
+
+<p>
+  Два шага, строго по очереди. Второй делается по файлу из первого — иначе
+  снова получатся четыре разных мишки.
+</p>
+
+<div class="task">
+  <h3><span class="num">Шаг 1</span> Мишка на своём месте &nbsp;<code>bear.png</code></h3>
+
+  <p>
+    Из исходной картинки спальни (941 × 1672) вырезать плюшевого мишку и
+    положить на полностью прозрачный фон. В фигуру входит колпак с капюшоном,
+    голова, оба уха и обе лапы, лежащие на одеяле. Глаза открытые, как на
+    исходнике.
+  </p>
+
+  <dl class="rule">
+    <dt>Размер и место</dt>
+    <dd>
+      Холст файла ровно 941 × 1672 точки. Фигура занимает прямоугольник
+      от точки 355, 690 до точки 591, 950 — 236 точек в ширину и 260 в высоту.
+      Кончик колпака приходится на точку 463, 690. Всё поле вне фигуры
+      полностью прозрачное.
+    </dd>
+
+    <dt>Край шерсти</dt>
+    <dd>
+      Вырезать мягко, по волоску, с полупрозрачными кончиками ворса. Никакой
+      белой или серой каймы по контуру.
+    </dd>
+
+    <dt>Тень</dt>
+    <dd>
+      Тень, которую мишка отбрасывает на подушку, в слой не включать — она
+      остаётся на фоне.
+    </dd>
+
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом, без сжатия с потерями. Имя файла <code>bear.png</code>.</dd>
+  </dl>
+
+  <div class="stop">
+    <b>Нельзя рисовать мишку заново.</b> Это должен быть тот же самый мишка
+    с исходной картинки: та же форма капюшона, те же места ушей и лап,
+    тот же свет и те же тени на шерсти. Новая генерация не подойдёт — она
+    не сядет на подушку, с которой её убрали.
+  </div>
+
+  <div class="keep">
+    <b>Если инструмент не умеет ставить фигуру в заданный прямоугольник</b> —
+    отдавайте мишку на прозрачном фоне как есть, размер и место подгонятся
+    на нашей стороне. Но этот файл обязательно сохранить: все три файла
+    шага 2 делаются из него.
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<div class="task">
+  <h3><span class="num">Шаг 2</span> Три варианта лица</h3>
+
+  <p>Три копии файла <code>bear.png</code>, в которых меняется только мордочка:</p>
+
+  <table class="files">
+    <tbody>
+      <tr><td>bear_eyes_half.png</td><td>глаза полуприкрыты, сонный взгляд, рот закрыт</td></tr>
+      <tr><td>bear_eyes_closed.png</td><td>глаза закрыты дугами, рот закрыт, спокойная мордочка</td></tr>
+      <tr><td>bear_yawn.png</td><td>глаза закрыты, рот открыт в зевке</td></tr>
+    </tbody>
+  </table>
+
+  <dl class="rule">
+    <dt>Как именно это делается</dt>
+    <dd>
+      Открыть <code>bear.png</code> и перерисовать пиксели только внутри
+      прямоугольника от точки 420, 830 до точки 530, 915. Это зона глаз,
+      носа и рта.
+    </dd>
+
+    <dt>Что должно остаться нетронутым</dt>
+    <dd>
+      Всё, что за пределами этого прямоугольника, — точка в точку как в
+      <code>bear.png</code>: колпак, капюшон, уши, лапы, складки ткани, цвет
+      шерсти, свет, тени, край ворса и альфа-канал. Размер холста, положение
+      фигуры, её масштаб и поворот не меняются.
+    </dd>
+
+    <dt>Нос не трогать</dt>
+    <dd>Он остаётся на месте: 464–491 по ширине, 864–885 по высоте.</dd>
+
+    <dt>Ориентиры по глазам и рту</dt>
+    <dd>
+      Левый глаз — центр 444, 857, размер около 15 × 13. Правый глаз — центр
+      502, 849, размер около 14 × 13. Рот — 460–514 по ширине, 878–901 по
+      высоте. Правый глаз выше левого на восемь точек, этот наклон сохранить.
+    </dd>
+
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом, размер холста как у <code>bear.png</code>.</dd>
+  </dl>
+
+  <div class="stop">
+    <b>Нельзя генерировать мишку заново для каждого варианта.</b> Если
+    фигура рисуется с нуля, у неё сдвигаются капюшон, уши и лапы — и при
+    переключении мишка дёргается целиком вместо того, чтобы моргнуть.
+    В первой партии получилось именно так: см. страницу с наложенными
+    контурами.
+  </div>
+</div>
+
+<h2>Проверка перед отправкой</h2>
+
+<ul>
+  <li>Файлов четыре: <code>bear.png</code>, <code>bear_eyes_half.png</code>,
+      <code>bear_eyes_closed.png</code>, <code>bear_yawn.png</code>.</li>
+  <li>У всех четырёх одинаковый размер холста, и фигура стоит на одном
+      и том же месте.</li>
+  <li>Если наложить любые два файла друг на друга — отличаются только глаза
+      и рот. Капюшон, уши и лапы совпадают.</li>
+  <li>Фон прозрачный, белой или серой каймы по краю нет.</li>
+  <li>Комнату, край одеяла и свет ночника переделывать не надо и присылать
+      заново не надо — они приняты.</li>
+  <li>Отдать файлами, а не картинками в переписке: в переписке они приходят
+      сжатыми и без прозрачности, проверить их невозможно.</li>
+</ul>
+
+<footer>
+  TeddyTales · спальня по слоям, вторая редакция. Обмеры сняты с
+  <code>assets/rooms/bedroom.jpg</code>, 941 × 1672. Все координаты — точки
+  этого изображения, отсчёт от левого верхнего угла.
+</footer>
+
+</body>
+</html>
