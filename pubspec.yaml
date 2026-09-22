@@ -28,6 +28,7 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_local_notifications: ^22.3.1
   timezone: ^0.11.1
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_test:
@@ -47,6 +48,7 @@ flutter:
     # Спальня разобрана на слои, чтобы мишка в кровати дышал и моргал:
     # мишка, передний край одеяла и свет ночника лежат отдельно от фона.
     - assets/rooms/bedroom/
+    - assets/rooms/bedroom/dreams/
     - assets/ui/
     # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.

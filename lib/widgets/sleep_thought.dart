@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../theme/app_colors.dart';
 import 'bedroom_scene.dart';
@@ -8,18 +9,26 @@ import 'bedroom_scene.dart';
 /// Облако мыслей над головой уснувшего мишки: слева над капюшоном.
 ///
 /// Заказчик 22.09: «над головой слева должно открываться облачко…
-/// поэтапно: раз, два — маленькое, и большое уже три». Что будет внутри
-/// большого — отдельное решение заказчика; пока облако пустое.
+/// поэтапно: раз, два — маленькое, и большое уже три». В большом — сон:
+/// короткий видеоряд по кругу, «типа его снов».
 ///
 /// Вырастает в три шага, как в комиксах: пузырёк у головы, пузырёк
-/// побольше, потом само облако. Каждый шаг чуть перелетает размер и
-/// садится назад — так оно «всплывает», а не включается.
+/// побольше, потом само облако. Медленно и без пружины — это уже сон.
+/// Внутри облака, обрезанный его контуром, крутится ролик; он появляется
+/// вместе с облаком и растёт с ним.
 class SleepThought extends StatefulWidget {
-  const SleepThought({super.key, required this.shown});
+  const SleepThought({
+    super.key,
+    required this.shown,
+    this.dream = 'assets/rooms/bedroom/dreams/dream1.mp4',
+  });
 
   /// Показывать ли: облако появляется, когда мишку уложили, и уходит,
   /// когда он проснулся.
   final bool shown;
+
+  /// Ролик сна. Требования к нему — `docs/living-scene.md`, раздел 6.
+  final String dream;
 
   /// Сколько длится появление целиком, и когда стартует каждый шаг —
   /// в долях этого времени. Медленно: это уже сон, и заказчик 22.09
@@ -39,15 +48,41 @@ class _SleepThoughtState extends State<SleepThought>
     reverseDuration: const Duration(milliseconds: 450),
   );
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.shown) _grow.value = 1;
-  }
+  /// Ролик готовится заранее: к моменту, когда облако выросло, он должен
+  /// уже идти, а не догружаться в пустом облаке.
+  late final VideoPlayerController _dream =
+      VideoPlayerController.asset(widget.dream);
+  bool _dreamReady = false;
 
   /// Облако ждёт, пока мишка уснёт: появиться раньше закрытых глаз —
   /// значит показать сон бодрствующему.
   Timer? _wait;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.shown) _grow.value = 1;
+    _grow.addStatusListener(_onGrow);
+    _dream.setLooping(true);
+    _dream.setVolume(0);
+    _dream.initialize().then((_) {
+      if (!mounted) return;
+      setState(() => _dreamReady = true);
+      if (_grow.value > 0) _dream.play();
+    }).catchError((Object _) {
+      // Без ролика облако остаётся пустым — как было до него.
+    });
+  }
+
+  /// Ролик идёт, пока облако видно, и стоит, пока его нет.
+  void _onGrow(AnimationStatus status) {
+    if (!_dreamReady) return;
+    if (status == AnimationStatus.dismissed) {
+      _dream.pause();
+    } else if (!_dream.value.isPlaying) {
+      _dream.play();
+    }
+  }
 
   @override
   void didUpdateWidget(SleepThought old) {
@@ -56,7 +91,9 @@ class _SleepThoughtState extends State<SleepThought>
     _wait?.cancel();
     if (widget.shown) {
       _wait = Timer(BedroomScene.fallAsleep, () {
-        if (mounted && widget.shown) _grow.forward();
+        if (!mounted || !widget.shown) return;
+        if (_dreamReady) _dream.play();
+        _grow.forward();
       });
     } else {
       _grow.reverse();
@@ -66,7 +103,9 @@ class _SleepThoughtState extends State<SleepThought>
   @override
   void dispose() {
     _wait?.cancel();
+    _grow.removeStatusListener(_onGrow);
     _grow.dispose();
+    _dream.dispose();
     super.dispose();
   }
 
@@ -109,16 +148,28 @@ class _SleepThoughtState extends State<SleepThought>
             animation: _grow,
             builder: (context, _) {
               if (_grow.value == 0) return const SizedBox.shrink();
-              return CustomPaint(
-                size: Size(w, h),
-                painter: _ThoughtPainter(
-                  one: one,
-                  oneRadius: 0.045 * bear.width * w,
-                  two: two,
-                  twoRadius: 0.075 * bear.width * w,
-                  cloud: cloud,
-                  steps: [_step(0), _step(1), _step(2)],
-                ),
+              final steps = [_step(0), _step(1), _step(2)];
+              return Stack(
+                children: [
+                  CustomPaint(
+                    size: Size(w, h),
+                    painter: _ThoughtPainter(
+                      one: one,
+                      oneRadius: 0.045 * bear.width * w,
+                      two: two,
+                      twoRadius: 0.075 * bear.width * w,
+                      cloud: cloud,
+                      steps: steps,
+                    ),
+                  ),
+                  if (_dreamReady && steps[2] > 0)
+                    _dreamLayer(cloud, steps[2]),
+                  if (steps[2] > 0)
+                    CustomPaint(
+                      size: Size(w, h),
+                      painter: _RimPainter(cloud: cloud, grown: steps[2]),
+                    ),
+                ],
               );
             },
           );
@@ -126,6 +177,83 @@ class _SleepThoughtState extends State<SleepThought>
       ),
     );
   }
+
+  /// Ролик в окне внутри облака. Растёт и проступает вместе с ним из
+  /// того же угла, что и само облако.
+  ///
+  /// Окно — скруглённый прямоугольник, вписанный в контур: горбы облака
+  /// остаются вокруг, как рамка. Обрезать ролик по самому контуру нельзя:
+  /// на вебе видео — отдельный слой браузера, и произвольный контур к нему
+  /// не применяется, только прямоугольник со скруглением.
+  Widget _dreamLayer(Rect cloud, double grown) {
+    final size = _dream.value.size;
+    final window = Rect.fromLTWH(
+      cloud.left + cloud.width * 0.10,
+      cloud.top + cloud.height * 0.12,
+      cloud.width * 0.80,
+      cloud.height * 0.66,
+    );
+    return Positioned.fromRect(
+      rect: cloud,
+      child: Transform.scale(
+        scale: 0.6 + 0.4 * grown,
+        alignment: Alignment.bottomRight,
+        child: Opacity(
+          opacity: grown.clamp(0.0, 1.0),
+          child: Stack(
+            children: [
+              Positioned.fromRect(
+                rect: window.shift(-cloud.topLeft),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(cloud.height * 0.10),
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    clipBehavior: Clip.hardEdge,
+                    child: SizedBox(
+                      width: size.width,
+                      height: size.height,
+                      child: VideoPlayer(_dream),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Контур облака — овал с горбами по верху и по низу. Горбы разного
+/// размера: одинаковые читаются как шестерёнка.
+Path cloudPath(Rect r) {
+  var path = Path()
+    ..addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(r.left + r.width * 0.06, r.top + r.height * 0.28,
+          r.width * 0.88, r.height * 0.52),
+      Radius.circular(r.height * 0.26),
+    ));
+  const bumps = [
+    // Центр (в долях облака) и радиус (в долях высоты).
+    (0.22, 0.30, 0.30),
+    (0.45, 0.20, 0.36),
+    (0.70, 0.27, 0.32),
+    (0.88, 0.45, 0.24),
+    (0.12, 0.55, 0.26),
+    (0.30, 0.76, 0.24),
+    (0.58, 0.80, 0.26),
+    (0.82, 0.72, 0.22),
+  ];
+  for (final (cx, cy, radius) in bumps) {
+    final bump = Path()
+      ..addOval(Rect.fromCircle(
+        center: Offset(r.left + r.width * cx, r.top + r.height * cy),
+        radius: r.height * radius,
+      ));
+    path = Path.combine(PathOperation.union, path, bump);
+  }
+  return path;
 }
 
 /// Два пузырька и облако — одним цветом с капсулами приложения, с тенью
@@ -195,39 +323,8 @@ class _ThoughtPainter extends CustomPainter {
     canvas.translate(anchor.dx, anchor.dy);
     canvas.scale(0.6 + 0.4 * grown);
     canvas.translate(-anchor.dx, -anchor.dy);
-    draw(_cloudPath(cloud), grown, 8);
+    draw(cloudPath(cloud), grown, 8);
     canvas.restore();
-  }
-
-  /// Облако — овал с горбами по верху и по низу. Горбы разного размера:
-  /// одинаковые читаются как шестерёнка.
-  static Path _cloudPath(Rect r) {
-    var path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(r.left + r.width * 0.06, r.top + r.height * 0.28,
-            r.width * 0.88, r.height * 0.52),
-        Radius.circular(r.height * 0.26),
-      ));
-    const bumps = [
-      // Центр (в долях облака) и радиус (в долях высоты).
-      (0.22, 0.30, 0.30),
-      (0.45, 0.20, 0.36),
-      (0.70, 0.27, 0.32),
-      (0.88, 0.45, 0.24),
-      (0.12, 0.55, 0.26),
-      (0.30, 0.76, 0.24),
-      (0.58, 0.80, 0.26),
-      (0.82, 0.72, 0.22),
-    ];
-    for (final (cx, cy, radius) in bumps) {
-      final bump = Path()
-        ..addOval(Rect.fromCircle(
-          center: Offset(r.left + r.width * cx, r.top + r.height * cy),
-          radius: r.height * radius,
-        ));
-      path = Path.combine(PathOperation.union, path, bump);
-    }
-    return path;
   }
 
   @override
@@ -236,4 +333,34 @@ class _ThoughtPainter extends CustomPainter {
       old.steps[1] != steps[1] ||
       old.steps[2] != steps[2] ||
       old.cloud != cloud;
+}
+
+/// Кромка облака поверх ролика: ролик обрезан по контуру, и без неё край
+/// выглядит резаным.
+class _RimPainter extends CustomPainter {
+  const _RimPainter({required this.cloud, required this.grown});
+
+  final Rect cloud;
+  final double grown;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final anchor = cloud.bottomRight;
+    canvas.save();
+    canvas.translate(anchor.dx, anchor.dy);
+    canvas.scale(0.6 + 0.4 * grown);
+    canvas.translate(-anchor.dx, -anchor.dy);
+    canvas.drawPath(
+      cloudPath(cloud),
+      Paint()
+        ..color = AppColors.outline.withValues(alpha: grown.clamp(0.0, 1.0))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_RimPainter old) =>
+      old.grown != grown || old.cloud != cloud;
 }
