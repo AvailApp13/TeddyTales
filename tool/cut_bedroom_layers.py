@@ -8,6 +8,7 @@
 
 На выходе:
     assets/rooms/bedroom.jpg              комната без мишки
+    assets/rooms/bedroom/bear_open.png    глаза открыты (глаза пересажены)
     assets/rooms/bedroom/bear_half.png    полуприкрытые глаза
     assets/rooms/bedroom/bear_closed.png  глаза закрыты
     assets/rooms/bedroom/bear_yawn.png    зевок
@@ -42,6 +43,12 @@ BEAR_SCALE = 2
 # Работает потому, что эти два файла сделаны из одного.
 MOUTH = (405, 1030, 560, 1180)
 
+# «Глаза открыты» подрядчик нарисовал отдельным рисунком — он не совпадает
+# с остальными по контуру, и подменять его целиком нельзя. Зато сами глаза
+# у него на месте: пересаживаем только их в базовый файл, двумя пятнами
+# по векам. Координаты — в файле полуприкрытых (941 × 1672).
+EYES = ((348, 944, 440, 1020), (538, 912, 632, 996))
+
 
 def cut(image, floor=8):
     """Обрезать до содержимого и вернуть вместе с местом.
@@ -70,6 +77,26 @@ def closed_face(folder):
     return Image.composite(half, yawn, mask.filter(ImageFilter.GaussianBlur(9)))
 
 
+def open_face(folder):
+    """Собрать «глаза открыты»: глаза из чужого рисунка на нашей морде.
+
+    Чужой рисунок сначала подгоняется под фигуру базового файла по
+    габаритам — они расходятся на десяток точек, — и только потом из него
+    вырезаются два пятна с глазами.
+    """
+    half = Image.open(folder / '02-half.png').convert('RGBA')
+    other = Image.open(folder / '03-open.png').convert('RGBA')
+    _, box = cut(half, floor=64)
+    figure, _ = cut(other, floor=64)
+    aligned = Image.new('RGBA', half.size, (0, 0, 0, 0))
+    aligned.paste(figure.resize((box[2] - box[0], box[3] - box[1]), Image.LANCZOS),
+                  (box[0], box[1]))
+    mask = Image.new('L', half.size, 0)
+    for eye in EYES:
+        ImageDraw.Draw(mask).ellipse(list(eye), fill=255)
+    return Image.composite(aligned, half, mask.filter(ImageFilter.GaussianBlur(8)))
+
+
 def put_bear(image, name):
     """Привести фигуру к её месту на фоне и сохранить."""
     figure, _ = cut(image)
@@ -95,6 +122,7 @@ def main() -> int:
     print(f'{room_path.name:22} {room.size[0]} × {room.size[1]}, '
           f'{room_path.stat().st_size / 1024:.0f} КБ')
 
+    put_bear(open_face(args.second), 'bear_open.png')
     put_bear(Image.open(args.second / '02-half.png').convert('RGBA'), 'bear_half.png')
     put_bear(Image.open(args.second / '01-yawn.png').convert('RGBA'), 'bear_yawn.png')
     put_bear(closed_face(args.second), 'bear_closed.png')

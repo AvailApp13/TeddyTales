@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Живые слои спальни: мишка дышит, моргает и зевает под одеялом.
+/// Живые слои спальни: мишка дышит, моргает и засыпает под одеялом.
 ///
-/// Заказчик 21.09: «можем ли мы во вкладке сон, где мишка в кровати лежит,
-/// сделать анимацию дыхания и моргания глаз, будто он хочет спать».
+/// Заказчик 21.09: «во вкладке сон, где мишка в кровати лежит, сделать
+/// анимацию дыхания и моргания глаз, будто он хочет спать». И 22.09, после
+/// первой версии: «у него должно быть открыто, и он должен моргать. Это
+/// эффект, когда человек как будто бы засыпает» — то есть основное
+/// состояние с открытыми глазами, а прикрытые и закрытые — эпизоды.
 ///
 /// Раньше это было нечем сделать: спальню прислали одной плоской картинкой,
 /// мишка был впечатан в фон вместе с подушками. Теперь картинка разобрана на
@@ -31,28 +35,28 @@ class BedroomScene extends StatefulWidget {
   static const Rect blanket = Rect.fromLTWH(0, 0.544258, 1, 0.310407);
   static const Rect glow = Rect.fromLTWH(0.420829, 0.199761, 0.579171, 0.459928);
 
-  /// Вдох-выдох. Четыре секунды на полный цикл — темп спящего ребёнка;
-  /// на взрослых трёх секундах мишка выглядит встревоженным.
-  static const Duration breath = Duration(milliseconds: 4200);
+  /// Вдох-выдох. Четыре с небольшим секунды на цикл — темп спящего
+  /// ребёнка; на взрослых трёх секундах мишка выглядит встревоженным.
+  static const Duration breath = Duration(milliseconds: 4400);
 
-  /// Насколько мишка ходит вверх-вниз — в долях собственной высоты.
-  /// Больше двух процентов уже читается как подпрыгивание.
-  static const double breathLift = 0.022;
+  /// Насколько мишка ходит вверх-вниз — в долях собственной высоты, и
+  /// насколько раздувается грудью. Заказчик 22.09 попросил заметнее: «чтобы
+  /// видно было, что он дышит грудью». Больше этого уже читается как
+  /// подпрыгивание.
+  static const double breathLift = 0.032;
+  static const double breathSwell = 0.022;
 
   /// Ночник дышит своим темпом: совпади он с мишкой, комната начала бы
   /// пульсировать целиком.
   static const Duration lampBreath = Duration(milliseconds: 5500);
 
-  /// Переход между вариантами лица. Меньше ста миллисекунд — щелчок,
-  /// больше двухсот — мишка «жмурится» вместо того, чтобы моргнуть.
-  static const Duration faceFade = Duration(milliseconds: 140);
-
   @override
   State<BedroomScene> createState() => _BedroomSceneState();
 }
 
-/// Какой вариант лица показан сейчас.
+/// Какой вариант лица показан.
 enum _Face {
+  open('assets/rooms/bedroom/bear_open.png'),
   half('assets/rooms/bedroom/bear_half.png'),
   closed('assets/rooms/bedroom/bear_closed.png'),
   yawn('assets/rooms/bedroom/bear_yawn.png');
@@ -61,6 +65,10 @@ enum _Face {
 
   final String asset;
 }
+
+/// Один шаг сценария: показать лицо, перетекая к нему за [fade], и держать
+/// его [hold], прежде чем идти дальше.
+typedef _Step = ({_Face face, Duration fade, Duration hold});
 
 class _BedroomSceneState extends State<BedroomScene>
     with TickerProviderStateMixin {
@@ -76,20 +84,33 @@ class _BedroomSceneState extends State<BedroomScene>
 
   late final AnimationController _fade = AnimationController(
     vsync: this,
-    duration: BedroomScene.faceFade,
+    duration: const Duration(milliseconds: 140),
     value: 1,
   );
 
-  /// Спящий мишка большую часть времени с полуприкрытыми глазами: это и
-  /// есть «хочет спать». Закрытые и зевок — короткие гости.
-  _Face _face = _Face.half;
-  _Face _under = _Face.half;
+  /// Вдох короче выдоха: так дышат во сне. Ровная синусоида читается как
+  /// качание, а не как дыхание.
+  late final Animation<double> _wave = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      weight: 42,
+    ),
+    TweenSequenceItem(
+      tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      weight: 58,
+    ),
+  ]).animate(_breath);
+
+  /// Что показано сейчас и из чего перетекаем.
+  _Face _face = _Face.open;
+  _Face _under = _Face.open;
 
   final math.Random _dice = math.Random();
+  final Queue<_Step> _plan = Queue();
   Timer? _next;
 
-  /// Сколько морганий прошло с прошлого зевка. Зевать каждые пять секунд
-  /// мишка не должен — это читается как тик.
+  /// Сколько морганий прошло с последнего засыпания: задремать он должен
+  /// после нескольких, а не с первого.
   int _blinks = 0;
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
@@ -102,21 +123,22 @@ class _BedroomSceneState extends State<BedroomScene>
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Системная настройка «убрать анимацию» — для тех, кому от движения
-    // на экране плохо. Тогда мишка просто лежит с полуприкрытыми глазами.
+    // на экране плохо. Тогда мишка просто лежит с открытыми глазами.
     final still = MediaQuery.disableAnimationsOf(context);
     if (still == _stillSetting) return;
     _stillSetting = still;
     if (still) {
       _next?.cancel();
+      _plan.clear();
       _breath.stop();
       _lamp.stop();
       _breath.value = 0;
       _lamp.value = 0;
-      _show(_Face.half);
+      _show(_Face.open, Duration.zero);
     } else {
-      _breath.repeat(reverse: true);
+      _breath.repeat();
       _lamp.repeat(reverse: true);
-      _schedule();
+      _rest();
     }
   }
 
@@ -129,42 +151,71 @@ class _BedroomSceneState extends State<BedroomScene>
     super.dispose();
   }
 
-  /// Назначить следующее событие лица.
+  Duration _ms(int base, [int spread = 0]) =>
+      Duration(milliseconds: base + (spread == 0 ? 0 : _dice.nextInt(spread)));
+
+  /// Полежать с открытыми глазами, потом — что-нибудь сделать.
   ///
   /// Паузы нарочно неровные: ровный интервал глаз ловит сразу и читает как
   /// мигающую лампочку, а не как живое существо.
-  void _schedule() {
+  void _rest() {
     _next?.cancel();
-    final pause = 2400 + _dice.nextInt(3000);
-    _next = Timer(Duration(milliseconds: pause), _blinkOrYawn);
+    _next = Timer(_ms(2000, 2600), _act);
   }
 
-  void _blinkOrYawn() {
+  /// Моргнуть — или, если моргал уже достаточно, начать засыпать.
+  void _act() {
     if (!mounted || _still) return;
 
-    // Зевок — раз в пять-восемь морганий, то есть примерно раз в полминуты.
-    final yawning = _blinks >= 5 && _dice.nextInt(3) == 0;
-    _blinks = yawning ? 0 : _blinks + 1;
-
-    _show(yawning ? _Face.yawn : _Face.closed);
-    final hold = yawning ? 1400 : 260 + _dice.nextInt(200);
-    _next = Timer(Duration(milliseconds: hold), () {
-      if (!mounted || _still) return;
-      _show(_Face.half);
-      _schedule();
-    });
+    final drowsy = _blinks >= 3 && _dice.nextInt(3) == 0;
+    if (!drowsy) {
+      _blinks++;
+      // Моргание: быстро закрыть, чуть медленнее открыть.
+      _plan.addAll([
+        (face: _Face.closed, fade: _ms(80), hold: _ms(110, 60)),
+        (face: _Face.open, fade: _ms(120), hold: Duration.zero),
+      ]);
+    } else {
+      _blinks = 0;
+      // Засыпание: веки тяжелеют, глаза закрываются, и через несколько
+      // секунд он спохватывается и открывает их снова. Перед этим —
+      // иногда зевок.
+      if (_dice.nextBool()) {
+        _plan.add((face: _Face.yawn, fade: _ms(220), hold: _ms(1300, 300)));
+      }
+      _plan.addAll([
+        (face: _Face.half, fade: _ms(700), hold: _ms(1400, 1200)),
+        (face: _Face.closed, fade: _ms(900), hold: _ms(2600, 2400)),
+        (face: _Face.open, fade: _ms(260), hold: Duration.zero),
+      ]);
+    }
+    _step();
   }
 
-  /// Показать вариант лица, мягко перетекая из текущего.
-  void _show(_Face face) {
+  /// Выполнить следующий шаг сценария; когда он кончился — отдыхать.
+  void _step() {
+    if (!mounted || _still) return;
+    if (_plan.isEmpty) {
+      _rest();
+      return;
+    }
+    final step = _plan.removeFirst();
+    _show(step.face, step.fade);
+    _next?.cancel();
+    _next = Timer(step.fade + step.hold, _step);
+  }
+
+  /// Показать вариант лица, перетекая из текущего за [fade].
+  void _show(_Face face, Duration fade) {
     if (face == _face) return;
     setState(() {
       _under = _face;
       _face = face;
     });
-    if (_still) {
+    if (fade == Duration.zero) {
       _fade.value = 1;
     } else {
+      _fade.duration = fade;
       _fade.forward(from: 0);
     }
   }
@@ -201,10 +252,11 @@ class _BedroomSceneState extends State<BedroomScene>
     return AnimatedBuilder(
       animation: Listenable.merge([_breath, _fade]),
       builder: (context, _) {
-        // Вдох — плавный подъём и еле заметное «раздувание» вверх от
-        // одеяла. Низ остаётся на месте: он и так спрятан под одеялом.
-        final wave = Curves.easeInOutSine.transform(_breath.value);
+        // Вдох — подъём и раздувание груди вверх и в стороны от одеяла.
+        // Низ остаётся на месте: он и так спрятан под одеялом.
+        final wave = _wave.value;
         final lift = -height * BedroomScene.breathLift * wave;
+        final swell = BedroomScene.breathSwell * wave;
 
         return Positioned(
           left: box.left * w,
@@ -212,7 +264,8 @@ class _BedroomSceneState extends State<BedroomScene>
           width: box.width * w,
           height: height,
           child: Transform.scale(
-            scaleY: 1 + 0.006 * wave,
+            scaleX: 1 + swell * 0.45,
+            scaleY: 1 + swell,
             alignment: Alignment.bottomCenter,
             child: Stack(
               fit: StackFit.expand,
