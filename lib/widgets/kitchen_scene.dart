@@ -233,10 +233,10 @@ class _KitchenSceneState extends State<KitchenScene>
   _Eyes _eyes = _Eyes.open;
   _Mouth _mouth = _Mouth.neutral;
 
-  /// Картинки ушей и закрытых глаз как `ui.Image`: уши рисуются сеткой,
-  /// веко — шторкой.
+  /// Картинки ушей и глаз как `ui.Image`: уши рисуются сеткой, глаза —
+  /// со шторкой века.
   late final _Pictures _pictures = _Pictures(
-    [KitchenScene.assets[2], KitchenScene.assets[3], _Eyes.closed.asset],
+    [KitchenScene.assets[2], KitchenScene.assets[3], for (final e in _Eyes.values) e.asset],
     onChange: () {
       if (mounted) setState(() {});
     },
@@ -327,7 +327,8 @@ class _KitchenSceneState extends State<KitchenScene>
     for (final d in [_side, _earLeft, _earRight, _footLeft, _footRight, _lookX, _lookY]) {
       _to(d, 0.5, ms);
     }
-    _face(eyes: _Eyes.open, mouth: _Mouth.neutral);
+    _face(mouth: _Mouth.neutral);
+    if (_eyes != _Eyes.open) _eyesTo(_run, _Eyes.open).catchError((Object _) {});
   }
 
   // --- Мелочи сценариев ---------------------------------------------------
@@ -354,6 +355,21 @@ class _KitchenSceneState extends State<KitchenScene>
       if (eyes != null) _eyes = eyes;
       if (mouth != null) _mouth = mouth;
     });
+  }
+
+  /// Сменить выражение глаз под веком: закрыл, поменял, открыл. Живые так
+  /// и делают — новый взгляд появляется из-под века, а не проступает
+  /// сквозь старый. [mouth] меняется в тот же момент, пока глаза закрыты.
+  Future<void> _eyesTo(int run, _Eyes eyes, {_Mouth? mouth}) async {
+    if (eyes == _eyes) {
+      _face(mouth: mouth);
+      return;
+    }
+    _to(_lid, 1, 90, Curves.easeIn);
+    await _wait(run, 110);
+    _face(eyes: eyes, mouth: mouth);
+    _to(_lid, 0, 170, Curves.easeOut);
+    await _wait(run, 170);
   }
 
   /// Моргание: веко падает быстро, поднимается чуть медленнее — те же
@@ -401,11 +417,11 @@ class _KitchenSceneState extends State<KitchenScene>
           _to(_lookY, 1, 250);
           _to(_bow, 0.5, 700);
           await _wait(run, 400);
-          _face(eyes: _Eyes.sad, mouth: _Mouth.sad);
+          await _eyesTo(run, _Eyes.sad, mouth: _Mouth.sad);
           _to(_earLeft, 0.15, 500);
           _to(_earRight, 0.15, 500);
           await _wait(run, 1600, 600);
-          _face(eyes: _Eyes.open, mouth: _Mouth.neutral);
+          await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
           _to(_lookY, 0.5, 250);
           _to(_bow, 0, 600);
           _to(_earLeft, 0.5, 400);
@@ -453,7 +469,7 @@ class _KitchenSceneState extends State<KitchenScene>
   /// покой.
   Future<void> _eat(int run, KitchenMood mood) async {
     try {
-      _face(eyes: _Eyes.open, mouth: _Mouth.neutral);
+      await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
       _to(_side, 0.5, 300);
       _to(_earLeft, 0.5, 300);
       _to(_earRight, 0.5, 300);
@@ -518,7 +534,7 @@ class _KitchenSceneState extends State<KitchenScene>
   /// лапы на столе похлопывают попеременно, ножки болтаются под столом.
   /// Руки остаются на столе — заказчик 22.09.
   Future<void> _happy(int run) async {
-    _face(eyes: _Eyes.happy, mouth: _Mouth.smile);
+    await _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile);
     _to(_earLeft, 1, 260, Curves.easeOutCubic);
     _to(_earRight, 1, 260, Curves.easeOutCubic);
     for (var i = 0; i < 3; i++) {
@@ -542,13 +558,13 @@ class _KitchenSceneState extends State<KitchenScene>
     _to(_earLeft, 0.5, 500);
     _to(_earRight, 0.5, 500);
     await _wait(run, 1100);
-    _face(eyes: _Eyes.open, mouth: _Mouth.neutral);
+    await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
   }
 
   /// `emo_love`: прикрыл глаза, тихо улыбнулся, склонил голову набок,
   /// над головой сердечки.
   Future<void> _love(int run) async {
-    _face(eyes: _Eyes.happy, mouth: _Mouth.neutral);
+    await _eyesTo(run, _Eyes.happy, mouth: _Mouth.neutral);
     _to(_side, 1, 900);
     _to(_earLeft, 0.25, 700);
     _to(_earRight, 0.25, 700);
@@ -558,12 +574,13 @@ class _KitchenSceneState extends State<KitchenScene>
     _to(_earLeft, 0.5, 500);
     _to(_earRight, 0.5, 500);
     await _wait(run, 700);
-    _face(eyes: _Eyes.open, mouth: _Mouth.neutral);
+    await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
   }
 
   /// `emo_surprise`: глаза во всю бусину, рот кружком, голова назад, уши
   /// торчком.
   Future<void> _surprise(int run) async {
+    // Удивление — единственное, что бьёт без моргания: глаза распахиваются.
     _face(eyes: _Eyes.wide, mouth: _Mouth.o);
     _to(_bow, -0.5, 220, Curves.easeOutCubic);
     _to(_earLeft, 1, 160, Curves.easeOutCubic);
@@ -757,13 +774,7 @@ class _KitchenSceneState extends State<KitchenScene>
                   _ear(KitchenScene.earRight, KitchenScene.assets[3],
                       KitchenScene.earRightRoot, KitchenScene.earRightTip, _earRight, -1)),
               _image('head'),
-              _sprite(width, height, KitchenScene.eyes, _eyes.asset,
-                  shift: Offset(
-                    (_lookX.value - 0.5) * 0.06,
-                    (_lookY.value - 0.5) * 0.08,
-                  ),
-                  lid: _lid.value,
-                  switchMs: 220),
+              _eyesLayer(width, height),
               _sprite(width, height, KitchenScene.mouth, _mouth.asset,
                   switchMs: 140),
             ],
@@ -773,33 +784,43 @@ class _KitchenSceneState extends State<KitchenScene>
     );
   }
 
-  /// Спрайт на своём месте внутри головы; подменяется с перетеканием за
-  /// [switchMs], чтобы смена выражения не щёлкала. [shift] — в долях
-  /// рамки спрайта: взгляд в сторону. [lid] — веко-шторка поверх: картинка
-  /// закрытых глаз, открытая сверху вниз с мягким краем.
-  Widget _sprite(double w, double h, Rect place, String asset,
-      {Offset shift = Offset.zero, double lid = 0, required int switchMs}) {
+  /// Глаза: текущее выражение под веком-шторкой, сдвинутые по взгляду.
+  /// Пока картинки не раскодированы — просто спрайт, без века.
+  Widget _eyesLayer(double w, double h) {
     final head = KitchenScene.head;
+    final place = KitchenScene.eyes;
     final width = place.width / head.width * w;
     final height = place.height / head.height * h;
+    final base = _pictures[_eyes.asset];
     final closed = _pictures[_Eyes.closed.asset];
     return Positioned(
-      left: (place.left - head.left) / head.width * w + shift.dx * width,
-      top: (place.top - head.top) / head.height * h + shift.dy * height,
+      left: (place.left - head.left) / head.width * w + (_lookX.value - 0.5) * 0.06 * width,
+      top: (place.top - head.top) / head.height * h + (_lookY.value - 0.5) * 0.08 * height,
       width: width,
       height: height,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          AnimatedSwitcher(
-            duration: Duration(milliseconds: switchMs),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: Image.asset(asset, key: ValueKey(asset), fit: BoxFit.fill),
-          ),
-          if (lid > 0 && closed != null)
-            CustomPaint(painter: _LidPainter(closed: closed, lid: lid)),
-        ],
+      child: base == null || closed == null
+          ? Image.asset(_eyes.asset, fit: BoxFit.fill)
+          : CustomPaint(
+              painter: _LidPainter(base: base, closed: closed, lid: _lid.value),
+            ),
+    );
+  }
+
+  /// Спрайт рта на своём месте внутри головы; подменяется с перетеканием
+  /// за [switchMs], чтобы смена не щёлкала.
+  Widget _sprite(double w, double h, Rect place, String asset,
+      {required int switchMs}) {
+    final head = KitchenScene.head;
+    return Positioned(
+      left: (place.left - head.left) / head.width * w,
+      top: (place.top - head.top) / head.height * h,
+      width: place.width / head.width * w,
+      height: place.height / head.height * h,
+      child: AnimatedSwitcher(
+        duration: Duration(milliseconds: switchMs),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: Image.asset(asset, key: ValueKey(asset), fit: BoxFit.fill),
       ),
     );
   }
@@ -888,47 +909,68 @@ class _Stopped implements Exception {
   const _Stopped();
 }
 
-/// Веко-шторка: картинка закрытых глаз, открытая сверху вниз на [lid] с
-/// мягким краем. Тот же приём, что в спальне: заказчик 22.09 — «не
+/// Веко-шторка. Голова под глазами — сплошной ворс, а спрайты глаз — одни
+/// бусины и дуги. Поэтому веко не «накрывает» глаза, а стирает открытые
+/// сверху вниз до ворса и в стёртой части рисует дуги закрытых. Край
+/// мягкий, положение непрерывное — как в спальне: заказчик 22.09 — «не
 /// плавно они закрываются… как будто покадрово».
 class _LidPainter extends CustomPainter {
-  const _LidPainter({required this.closed, required this.lid});
+  const _LidPainter({required this.base, required this.closed, required this.lid});
 
+  /// Текущее выражение и закрытые глаза.
+  final ui.Image base;
   final ui.Image closed;
+
+  /// 0 — открыто, 1 — закрыто.
   final double lid;
 
   /// Путь века в долях высоты спрайта и ширина мягкого края.
-  static const double lidFrom = 0.10;
-  static const double lidTo = 0.95;
-  static const double feather = 0.16;
+  static const double lidFrom = 0.05;
+  static const double lidTo = 1.0;
+  static const double feather = 0.18;
 
   @override
   void paint(Canvas canvas, Size size) {
     final zone = Offset.zero & size;
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+    if (lid <= 0) {
+      canvas.drawImageRect(base, _whole(base), zone, paint);
+      return;
+    }
     final edge = size.height * (lidFrom + (lidTo - lidFrom) * lid);
     final soft = size.height * feather;
+    // Открытые глаза — только ниже края века.
     canvas.saveLayer(zone, Paint());
-    canvas.drawImageRect(
-      closed,
-      Rect.fromLTWH(0, 0, closed.width.toDouble(), closed.height.toDouble()),
-      zone,
-      Paint()..filterQuality = FilterQuality.medium,
-    );
-    canvas.drawRect(
-      zone,
-      Paint()
-        ..blendMode = BlendMode.dstIn
-        ..shader = ui.Gradient.linear(
-          Offset(0, edge - soft),
-          Offset(0, edge + soft),
-          const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
-        ),
-    );
+    canvas.drawImageRect(base, _whole(base), zone, paint);
+    canvas.drawRect(zone, _mask(edge, soft, below: true));
     canvas.restore();
+    // Закрытые — только выше края, и лишь когда веко почти дошло: дуги
+    // закрытых глаз лежат там, где бусины, и появляются под конец.
+    if (lid > 0.55) {
+      canvas.saveLayer(zone, Paint());
+      canvas.drawImageRect(closed, _whole(closed), zone,
+          paint..color = Color.fromRGBO(0, 0, 0, ((lid - 0.55) / 0.45).clamp(0, 1)));
+      canvas.drawRect(zone, _mask(edge, soft, below: false));
+      canvas.restore();
+    }
   }
 
+  Paint _mask(double edge, double soft, {required bool below}) => Paint()
+    ..blendMode = BlendMode.dstIn
+    ..shader = ui.Gradient.linear(
+      Offset(0, edge - soft),
+      Offset(0, edge + soft),
+      below
+          ? const [Color(0x00FFFFFF), Color(0xFFFFFFFF)]
+          : const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+    );
+
+  Rect _whole(ui.Image image) =>
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+
   @override
-  bool shouldRepaint(_LidPainter old) => old.lid != lid || old.closed != closed;
+  bool shouldRepaint(_LidPainter old) =>
+      old.lid != lid || old.base != base || old.closed != closed;
 }
 
 /// Оставляет [fraction] ширины с правого или левого края.
