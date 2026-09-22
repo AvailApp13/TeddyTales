@@ -138,7 +138,20 @@ class _CareStatsPanelState extends State<CareStatsPanel>
   /// крестик.
   void _pick(BearAction action) => widget.onAction?.call(action);
 
+  /// Порядок колец: игра, еда, гигиена, сон. Пятой справа стоит кнопка,
+  /// которая ряд прячет.
+  ///
+  /// Заказчик 21.09: «игра — это основная, после еда, гигиена и в конце сон».
+  /// До этого первой шла еда. Порядок здесь — решение заказчика, а не
+  /// следствие чего-то в коде, поэтому менять его на свой вкус нельзя.
   List<CareStat> _tiles(AppLocalizations l10n) => [
+    CareStat(
+      label: l10n.statsPlay,
+      icon: Icons.sports_baseball_outlined,
+      value: widget.stats.play,
+      color: AppColors.statPlay,
+      action: BearAction.play,
+    ),
     CareStat(
       label: l10n.statsFood,
       icon: Icons.restaurant,
@@ -159,13 +172,6 @@ class _CareStatsPanelState extends State<CareStatsPanel>
       value: widget.stats.sleep,
       color: AppColors.statSleep,
       action: BearAction.sleep,
-    ),
-    CareStat(
-      label: l10n.statsPlay,
-      icon: Icons.sports_baseball_outlined,
-      value: widget.stats.play,
-      color: AppColors.statPlay,
-      action: BearAction.play,
     ),
   ];
 
