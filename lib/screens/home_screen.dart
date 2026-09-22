@@ -451,18 +451,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       // у нас идут наложения, это никак не катит».
                       //
                       // Справа оставлено место под кнопку профиля и лапу.
-                      Padding(
-                        padding: const EdgeInsets.only(right: 64),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: PetSpeechBubble(
-                            mood: state.mood,
-                            initiative: widget.controller.initiative,
-                            language: widget.language,
-                            onTap: _runAction,
+                      //
+                      // В спальне реплики нет вовсе: заказчик 22.09 — «во
+                      // время сна они не должны присутствовать, убрать с
+                      // комнаты сон». Нужна ли она там потом и в каком
+                      // виде — решение отдельное.
+                      if (_room != RoomKind.bedroom)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 64),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: PetSpeechBubble(
+                              mood: state.mood,
+                              initiative: widget.controller.initiative,
+                              language: widget.language,
+                              onTap: _runAction,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
