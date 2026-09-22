@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — кухня по слоям: задание</title>
+<style>
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+  :root {
+    --ink: #1A202E; --ink-soft: #6C7789; --line: #DCE2EB; --paper: #F6F8FB;
+    --red: #C9432F; --red-soft: #FBEDEA; --green: #2E8A5E; --green-soft: #EAF5EF;
+    --blue: #266ABD; --amber: #A8741A;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Nunito', sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); }
+  h1 { font-size: 22pt; font-weight: 800; margin: 0 0 1.5mm; line-height: 1.12; letter-spacing: -0.01em; }
+  .lead { color: var(--ink-soft); font-size: 11pt; margin: 0 0 6mm; max-width: 150mm; }
+  h2 { font-size: 13pt; font-weight: 800; margin: 5mm 0 2.5mm; padding-bottom: 1.2mm; border-bottom: 1.5pt solid var(--ink); break-after: avoid; }
+  h3 { font-size: 11.5pt; font-weight: 800; margin: 5mm 0 2mm; break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1mm; }
+  .page-break { break-before: page; }
+  figure { margin: 0 0 4mm; break-inside: avoid; }
+  figure img { display: block; margin: 0 auto; max-width: 100%; max-height: 225mm; border: 0.75pt solid var(--line); }
+  figcaption { font-size: 9pt; color: var(--ink-soft); margin-top: 1.5mm; }
+  .verdict { display: flex; flex-direction: column; gap: 2mm; margin-bottom: 4mm; }
+  .row { display: flex; gap: 3mm; padding: 2.5mm 3mm; border-radius: 2mm; break-inside: avoid; }
+  .row.good { background: var(--green-soft); }
+  .mark { font-weight: 800; font-size: 11pt; flex: none; width: 4mm; }
+  .row.good .mark { color: var(--green); }
+  .row b { display: block; font-size: 10.5pt; }
+  .row span { color: var(--ink-soft); }
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; font-variant-numeric: tabular-nums; margin-bottom: 4mm; break-inside: avoid; }
+  th, td { text-align: left; padding: 1.8mm 2.5mm; border-bottom: 0.6pt solid var(--line); vertical-align: top; }
+  th { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); border-bottom: 1pt solid var(--ink); }
+  td.num { font-weight: 700; }
+  .task { border: 1.2pt solid var(--ink); border-radius: 2.5mm; padding: 4mm 4.5mm; margin-bottom: 3mm; break-inside: avoid; }
+  .task > h3 { margin-top: 0; }
+  .task .num { display: inline-block; background: var(--ink); color: #fff; font-weight: 800; font-size: 9pt; padding: 0.6mm 2.2mm; border-radius: 1.2mm; margin-right: 2mm; vertical-align: 0.4mm; }
+  .rule { margin: 3mm 0 0; }
+  .rule dt { font-weight: 800; margin-top: 2mm; }
+  .rule dd { margin: 0.6mm 0 0; }
+  .stop { background: var(--red-soft); border-left: 2pt solid var(--red); padding: 2.5mm 3mm; margin: 3mm 0 0; border-radius: 0 2mm 2mm 0; }
+  .stop b { color: var(--red); }
+  .keep { background: var(--green-soft); border-left: 2pt solid var(--green); padding: 2.5mm 3mm; margin: 3mm 0 0; border-radius: 0 2mm 2mm 0; }
+  .keep b { color: var(--green); }
+  code { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; font-size: 9.5pt; background: var(--paper); padding: 0.3mm 1mm; border-radius: 1mm; }
+  .files td:first-child { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; white-space: nowrap; }
+  footer { break-before: avoid; margin-top: 4mm; padding-top: 3mm; border-top: 0.6pt solid var(--line); font-size: 9pt; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<h1>Кухня по слоям: задание</h1>
+<p class="lead">Мишка за столом должен дышать, моргать, водить глазами, есть и
+реагировать на еду. Для этого плоская картинка кухни разбирается на слои,
+как уже сделано со спальней. Комната без мишки получена и принята. Ниже все
+обмеры и три шага задания: сам мишка, уши и варианты лица.</p>
+
+<h2>Что уже принято</h2>
+<div class="verdict">
+  <div class="row good"><div class="mark">✓</div><div>
+    <b>Комната без мишки</b>
+    <span>941 × 1672, стол, стул и скатерть на месте, мишка убран. Принято,
+    переделывать не надо. Картинка перерисована заново и с исходником не
+    совпадает точка в точку, поэтому все обмеры ниже сняты с исходной
+    картинки, где мишка есть, и мишку вырезать нужно из неё.</span>
+  </div></div>
+</div>
+
+<h2>Как слои складываются</h2>
+<p>Снизу вверх. Каждый слой — отдельный файл PNG на холсте 941 × 1672,
+с настоящей прозрачностью, фигура стоит ровно на своём месте.</p>
+<ol>
+  <li>комната без мишки — принята;</li>
+  <li>лапы под столом — <code>kitchen_feet.png</code>;</li>
+  <li>левое и правое ухо целиком — <code>kitchen_ear_left.png</code>,
+      <code>kitchen_ear_right.png</code>;</li>
+  <li>мишка без ушей: капюшон, голова, туловище, лапы на столе —
+      <code>kitchen_bear_noears.png</code>;</li>
+  <li>варианты лица — десять копий мишки, отличаются только зоной глаз и рта.</li>
+</ol>
+<p>Лапы на столе лежат поверх скатерти, поэтому отдельный слой стола не
+нужен: стол остаётся на фоне, мишка режется по его кромке.</p>
+
+<h2>Все обмеры разом</h2>
+<table>
+  <tr><th>Что</th><th>Где</th></tr>
+  <tr><td>Холст каждого слоя</td><td class="num">941 × 1672</td></tr>
+  <tr><td>Прямоугольник фигуры мишки</td><td class="num">318, 640 — 631, 1034 &nbsp;(314 × 395)</td></tr>
+  <tr><td>Кончик капюшона</td><td class="num">471, 640</td></tr>
+  <tr><td>Левое ухо</td><td class="num">330, 746 — 389, 835</td></tr>
+  <tr><td>Правое ухо</td><td class="num">540, 747 — 606, 833</td></tr>
+  <tr><td>Линия сгиба уха (середина)</td><td class="num">y ≈ 790</td></tr>
+  <tr><td>Корень уха под капюшоном, дорисовать до</td><td class="num">y ≈ 850</td></tr>
+  <tr><td>Левый глаз, центр</td><td class="num">431, 872 &nbsp;· размер 19 × 19</td></tr>
+  <tr><td>Правый глаз, центр</td><td class="num">500, 872 &nbsp;· размер 18 × 19</td></tr>
+  <tr><td>Нос</td><td class="num">451–477 по ширине, 888–905 по высоте</td></tr>
+  <tr><td>Рот</td><td class="num">445–483 по ширине, 907–922 по высоте</td></tr>
+  <tr><td>Зона лица — только её можно менять</td><td class="num">400, 845 — 530, 935</td></tr>
+  <tr><td>Левая лапа на столе</td><td class="num">318, 978 — 380, 1029</td></tr>
+  <tr><td>Правая лапа на столе</td><td class="num">542, 979 — 623, 1028</td></tr>
+  <tr><td>Стол закрывает мишку от</td><td class="num">y = 1014</td></tr>
+  <tr><td>Лапы под столом</td><td class="num">340, 1270 — 582, 1343</td></tr>
+</table>
+<p>Все числа — точки исходной картинки 941 × 1672, отсчёт от левого
+верхнего угла. На следующих страницах то же самое нарисовано.</p>
+
+<figure class="page-break">
+  <img src="kitchen-brief/canvas.jpg" alt="Обмеры на всём холсте">
+  <figcaption>Обмеры: где стоит мишка. Зелёное — фигура, синее — уши,
+  жёлтое — лапы на столе, фиолетовое — лапы под столом, красный пунктир —
+  зона лица, красная линия — кромка стола.</figcaption>
+</figure>
+
+<figure class="page-break">
+  <img src="kitchen-brief/face.jpg" alt="Обмеры мордочки">
+  <figcaption>Обмеры: мордочка. Красный пунктир — единственное место, где
+  вариантам разрешено отличаться друг от друга. Глаза стоят на одной
+  высоте, голова не наклонена.</figcaption>
+</figure>
+
+<figure>
+  <img src="kitchen-brief/ear.jpg" alt="Обмеры уха" style="max-height: 120mm">
+  <figcaption>Ухо. В приложении ухо не поворачивается целиком, а сгибается
+  посередине: верхняя половина клонится, нижняя стоит. Поэтому ухо нужно
+  целиком, вместе с корнем, который на исходнике спрятан под капюшоном.</figcaption>
+</figure>
+
+<h2 class="page-break">Задание</h2>
+<p>Три шага, строго по очереди. Второй и третий делаются по файлу из
+первого, иначе получатся разные мишки, и при переключении он будет
+дёргаться всей фигурой.</p>
+
+<div class="task">
+  <h3><span class="num">Шаг 1</span>Мишка на своём месте &nbsp; <code>kitchen_bear.png</code> и <code>kitchen_feet.png</code></h3>
+  <p>Из исходной картинки кухни (941 × 1672, с мишкой) вырезать плюшевого
+  мишку и положить на полностью прозрачный фон. В фигуру входит капюшон,
+  голова, оба уха, туловище и обе лапы, лежащие на столе. Ниже кромки стола
+  (y = 1014) остаются только лапы: то, что закрыто столом, не рисовать.
+  Глаза открытые, рот закрыт, как на исходнике.</p>
+  <dl class="rule">
+    <dt>Размер и место</dt>
+    <dd>Холст ровно 941 × 1672. Фигура занимает прямоугольник от точки
+    318, 640 до точки 631, 1034 — 314 в ширину и 395 в высоту. Кончик
+    капюшона приходится на точку 471, 640. Всё поле вне фигуры полностью
+    прозрачное.</dd>
+    <dt>Лапы под столом</dt>
+    <dd>Отдельным файлом <code>kitchen_feet.png</code> на таком же холсте:
+    две лапы, свисающие со стула под столом, прямоугольник 340, 1270 —
+    582, 1343. Ножки стула и стола в слой не включать.</dd>
+    <dt>Край шерсти</dt>
+    <dd>Вырезать мягко, по волоску, с полупрозрачными кончиками ворса.
+    Никакой белой, серой или зелёной каймы по контуру. Ни одного кусочка
+    стула, скатерти или стены в слое.</dd>
+    <dt>Тень</dt>
+    <dd>Тень мишки на скатерти и на спинке стула в слой не включать —
+    она остаётся на фоне.</dd>
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом, без сжатия с потерями.</dd>
+  </dl>
+  <div class="stop"><b>Нельзя рисовать мишку заново.</b> Это должен быть тот
+  же самый мишка с исходной картинки: та же форма капюшона, те же места ушей
+  и лап, тот же свет. Новая генерация не сядет на стул, с которого его
+  убрали.</div>
+  <div class="keep"><b>Если инструмент не умеет ставить фигуру в заданный
+  прямоугольник</b> — отдавайте мишку на прозрачном фоне как есть, размер и
+  место подгонятся на нашей стороне. Но этот файл обязательно сохранить:
+  все файлы шагов 2 и 3 делаются из него.</div>
+</div>
+
+<div class="task">
+  <h3><span class="num">Шаг 2</span>Уши отдельно &nbsp; <code>kitchen_bear_noears.png</code>, <code>kitchen_ear_left.png</code>, <code>kitchen_ear_right.png</code></h3>
+  <p>Три файла из <code>kitchen_bear.png</code>, холст и место фигуры те же.</p>
+  <dl class="rule">
+    <dt>kitchen_bear_noears.png</dt>
+    <dd>Тот же мишка, но без ушей. Там, где были уши, контур капюшона
+    продолжается плавно, видна только ткань капюшона; всё, что было за
+    ушами снаружи капюшона, — прозрачное. Больше ничего не менять.</dd>
+    <dt>kitchen_ear_left.png, kitchen_ear_right.png</dt>
+    <dd>В каждом файле одно ухо, целиком, на своём месте: левое в
+    прямоугольнике 330, 746 — 389, 835, правое в 540, 747 — 606, 833.
+    Дорисовать ту часть уха, которая на исходнике спрятана под капюшоном,
+    до корня, примерно до y = 850: ухо будет сгибаться посередине, и корень
+    должен существовать. Тот же ворс, тот же свет, слегка более светлая
+    внутренняя сторона. Всё остальное в файле прозрачное.</dd>
+  </dl>
+</div>
+
+<div class="task">
+  <h3><span class="num">Шаг 3</span>Десять вариантов лица</h3>
+  <p>Десять копий файла <code>kitchen_bear.png</code>, в которых
+  перерисованы пиксели только внутри прямоугольника от точки 400, 845 до
+  точки 530, 935. Это зона глаз, носа и рта. Нос не трогать: он остаётся на
+  месте, 451–477 по ширине, 888–905 по высоте.</p>
+  <table class="files">
+    <tr><th>Файл</th><th>Что на мордочке</th></tr>
+    <tr><td>kitchen_eyes_closed.png</td><td>глаза закрыты спокойными дугами, рот как на исходнике</td></tr>
+    <tr><td>kitchen_eyes_left.png</td><td>глаза открыты, зрачки смотрят влево (в сторону окна), рот как на исходнике</td></tr>
+    <tr><td>kitchen_eyes_right.png</td><td>глаза открыты, зрачки смотрят вправо (в сторону плиты), рот как на исходнике</td></tr>
+    <tr><td>kitchen_eyes_down.png</td><td>глаза открыты, зрачки опущены вниз, на стол, рот как на исходнике</td></tr>
+    <tr><td>kitchen_mouth_open.png</td><td>глаза как на исходнике, рот открыт — ждёт ложку, виден кончик языка</td></tr>
+    <tr><td>kitchen_mouth_chew.png</td><td>глаза как на исходнике, рот закрыт плотнее, жуёт: губы чуть сжаты, щёчки чуть полнее в пределах зоны</td></tr>
+    <tr><td>kitchen_emo_happy.png</td><td>радость: глаза зажмурены счастливыми дугами, рот широко улыбается, виден язычок</td></tr>
+    <tr><td>kitchen_emo_sad.png</td><td>грусть: глаза полуприкрыты и смотрят вниз, уголки рта опущены</td></tr>
+    <tr><td>kitchen_emo_surprise.png</td><td>удивление: глаза широко раскрыты, крупнее обычного, с яркими бликами, рот маленьким кружком «о»</td></tr>
+    <tr><td>kitchen_emo_love.png</td><td>нежность: глаза закрыты счастливыми дугами, маленькая довольная улыбка, щёчки чуть розовее (сердечки рисовать не надо, их добавит приложение)</td></tr>
+  </table>
+  <dl class="rule">
+    <dt>Что должно остаться нетронутым</dt>
+    <dd>Всё, что за пределами прямоугольника 400, 845 — 530, 935, — точка в
+    точку как в <code>kitchen_bear.png</code>: капюшон, уши, лапы, складки
+    ткани, цвет шерсти, свет, тени, край ворса и альфа-канал. Размер холста,
+    положение фигуры, её масштаб и поворот не меняются.</dd>
+    <dt>Ориентиры</dt>
+    <dd>Левый глаз — центр 431, 872, размер 19 × 19. Правый глаз — центр
+    500, 872, размер 18 × 19. Глаза на одной высоте. Рот — 445–483 по
+    ширине, 907–922 по высоте. Это пришитые глаза-бусины и вышитый рот
+    плюшевой игрушки: закрытые глаза — дуги той же тёмной нитью, а не
+    нарисованные веки.</dd>
+    <dt>Формат</dt>
+    <dd>PNG-24 с альфа-каналом, холст как у <code>kitchen_bear.png</code>.</dd>
+  </dl>
+  <div class="stop"><b>Нельзя генерировать мишку заново для каждого
+  варианта.</b> Если фигура рисуется с нуля, у неё сдвигаются капюшон, уши и
+  лапы — и вместо того, чтобы моргнуть, мишка дёргается целиком. В спальне
+  первая партия пришла именно такой, и её пришлось переделывать.</div>
+</div>
+
+<h2>Проверка перед отправкой</h2>
+<ul>
+  <li>Файлов пятнадцать: <code>kitchen_bear.png</code>,
+  <code>kitchen_feet.png</code>, <code>kitchen_bear_noears.png</code>,
+  <code>kitchen_ear_left.png</code>, <code>kitchen_ear_right.png</code> и
+  десять вариантов лица.</li>
+  <li>У всех одинаковый холст 941 × 1672, и фигура стоит на одном и том же месте.</li>
+  <li>Если наложить любые два варианта лица друг на друга — отличаются
+  только глаза и рот. Капюшон, уши и лапы совпадают.</li>
+  <li>Если наложить мишку без ушей и два уха — получается ровно
+  <code>kitchen_bear.png</code>, плюс корни ушей под капюшоном.</li>
+  <li>Фон прозрачный, каймы по краю нет, кусочков стула и скатерти нет.</li>
+  <li>Комнату без мишки переделывать и присылать заново не надо — она принята.</li>
+  <li>Отдать файлами, а не картинками в переписке: в переписке они приходят
+  сжатыми и без прозрачности, проверить их невозможно.</li>
+</ul>
+
+<footer>TeddyTales · кухня по слоям, первая редакция, 22.09.2026. Обмеры
+сняты с <code>assets/rooms/kitchen.jpg</code>, 941 × 1672. Все координаты —
+точки этого изображения, отсчёт от левого верхнего угла.</footer>
+
+</body>
+</html>
