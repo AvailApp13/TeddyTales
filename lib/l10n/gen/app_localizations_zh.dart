@@ -38,6 +38,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bathActionWash => '洗澡';
 
   @override
+  String get bedroomActionSleep => '哄睡';
+
+  @override
   String get bathWashSoon => '正在修淋浴 — 很快就能洗澡啦';
 
   @override

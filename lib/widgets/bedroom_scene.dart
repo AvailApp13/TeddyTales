@@ -28,7 +28,13 @@ import 'package:flutter/material.dart';
 /// лежать на месте, пока голова клюёт носом. Одеяло поверх, чтобы низ
 /// фигуры уходил под него — и чтобы дышать могло оно, а не мишка.
 class BedroomScene extends StatefulWidget {
-  const BedroomScene({super.key});
+  const BedroomScene({super.key, this.asleep = false});
+
+  /// Уложили спать: глаза закрыты и не открываются, круг засыпания не
+  /// идёт. Дыхание и уши живут — спящий тоже дышит и прядёт ушами.
+  /// Заказчик 22.09: «при нажатии её наш мишка должен закрыть глаза
+  /// полностью».
+  final bool asleep;
 
   /// Где лежит каждый слой — в долях кадра комнаты (941 × 1672).
   ///
@@ -260,12 +266,42 @@ class _BedroomSceneState extends State<BedroomScene>
         drive.stop();
         drive.value = 0;
       }
+      _lid.value = widget.asleep ? 1 : 0;
       _look(_Gaze.open, Duration.zero);
     } else {
       _breath.repeat();
       _lamp.repeat(reverse: true);
-      _rest();
+      if (widget.asleep) {
+        _lid.value = 1;
+      } else {
+        _rest();
+      }
       _earRest();
+    }
+  }
+
+  @override
+  void didUpdateWidget(BedroomScene old) {
+    super.didUpdateWidget(old);
+    if (old.asleep == widget.asleep) return;
+    _next?.cancel();
+    _plan.clear();
+    if (_still) {
+      _lid.value = widget.asleep ? 1 : 0;
+      _look(_Gaze.open, Duration.zero);
+      return;
+    }
+    if (widget.asleep) {
+      // Веки опускаются, как при засыпании, и остаются закрытыми.
+      _look(_Gaze.open, const Duration(milliseconds: 300));
+      _lid.animateTo(1,
+          duration: const Duration(milliseconds: 1100),
+          curve: Curves.easeInOutSine);
+      _nodDrive.reverse();
+    } else {
+      _lid.animateTo(0,
+          duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+      _rest();
     }
   }
 
@@ -341,7 +377,7 @@ class _BedroomSceneState extends State<BedroomScene>
   /// засыпал» — и чтобы ждать этого не приходилось. Круг целиком занимает
   /// около двадцати секунд.
   void _act() {
-    if (!mounted || _still) return;
+    if (!mounted || _still || widget.asleep) return;
 
     // Обычное моргание: веко падает быстро, поднимается чуть медленнее.
     _plan.addAll([
@@ -393,7 +429,7 @@ class _BedroomSceneState extends State<BedroomScene>
 
   /// Выполнить следующий шаг сценария; когда он кончился — отдыхать.
   void _step() {
-    if (!mounted || _still) return;
+    if (!mounted || _still || widget.asleep) return;
     if (_plan.isEmpty) {
       _rest();
       return;

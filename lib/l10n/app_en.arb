@@ -7,6 +7,7 @@
   "appTitle": "TeddyTales",
   "bathActionToilet": "Potty",
   "bathActionWash": "Take a bath",
+  "bedroomActionSleep": "Put to bed",
   "bathWashSoon": "Fixing the shower — bath time is coming soon",
   "bathToiletSoon": "The potty is still in the works",
   "bearRigMissingHint": "Add {path} to the app",

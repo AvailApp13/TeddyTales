@@ -92,8 +92,24 @@ class _HomeScreenState extends State<HomeScreen> {
   /// куда человек сейчас смотрит. Уходить на сервер здесь нечему.
   RoomKind _room = RoomKind.nursery;
 
+  /// Мишку уложили спать: глаза закрыты, кнопка на ковре убрана.
+  /// Сбрасывается, когда уходим из спальни.
+  bool _asleep = false;
+
   /// Картинки спальни раскодированы заранее — один раз на экран.
   bool _bedroomWarm = false;
+
+  void _showRoom(RoomKind room) {
+    if (room == _room) return;
+    setState(() {
+      _room = room;
+      _asleep = false;
+    });
+  }
+
+  /// Кнопка «Уложить спать» на ковре: мишка закрывает глаза. Что дальше —
+  /// показатель, пробуждение, — заказчик решает следующим шагом (22.09).
+  void _putToBed() => setState(() => _asleep = true);
 
   @override
   void didChangeDependencies() {
@@ -110,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Комната — следствие действия (`roomForAction`), а не отдельный выбор.
     final room = roomForAction(action);
-    if (room != null && room != _room) setState(() => _room = room);
+    if (room != null) _showRoom(room);
 
     switch (action) {
       // Кормление само по себе ничего не открывает: по решению заказчика
@@ -122,8 +138,11 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case BearAction.wash:
         controller.washBear();
+      // Сон так же: кольцо только приводит в спальню, показатель не
+      // пополняет — заказчик 22.09: «при нажатии кнопки на сон оно не
+      // должно пополняться до 100%». Уложить — кнопкой на ковре.
       case BearAction.sleep:
-        controller.putToSleep();
+        break;
       case BearAction.play:
         controller.playWithBear();
       case BearAction.pet:
@@ -351,7 +370,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   furnishing: _furnishing,
                   picked: _picked,
                   room: _room,
-                  onRoomChanged: (kind) => setState(() => _room = kind),
+                  onRoomChanged: _showRoom,
+                  asleep: _asleep,
+                  onPutToBed: _putToBed,
                   onOpenFeed: _openFeed,
                   onWash: _wash,
                   onToilet: _toilet,
@@ -472,6 +493,8 @@ class _RoomScene extends StatelessWidget {
     required this.picked,
     required this.room,
     required this.onRoomChanged,
+    required this.asleep,
+    required this.onPutToBed,
     required this.onOpenFeed,
     required this.onWash,
     required this.onToilet,
@@ -497,6 +520,10 @@ class _RoomScene extends StatelessWidget {
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
   final ValueChanged<RoomKind> onRoomChanged;
+
+  /// Спит ли мишка и как его уложить: кнопка на ковре спальни.
+  final bool asleep;
+  final VoidCallback onPutToBed;
 
   /// Открыть кормление с кухни на выбранной вкладке.
   final ValueChanged<FeedTab> onOpenFeed;
@@ -547,7 +574,10 @@ class _RoomScene extends StatelessWidget {
         // и моргает, а передний край одеяла и свет ночника идут над ним.
         // Буквы z рисуются последними — они выше всего, в просвете стены.
         if (room == RoomKind.bedroom) ...[
-          Positioned.fromRect(rect: frame.rect, child: const BedroomScene()),
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: BedroomScene(asleep: asleep),
+          ),
           Positioned.fromRect(rect: frame.rect, child: const SleepZzz()),
         ],
         // Погладить (КП 7.6) ловится самым нижним слоем, а не самим
@@ -639,6 +669,15 @@ class _RoomScene extends StatelessWidget {
             bottom: 34,
             child: _KitchenMenu(onOpenFeed: onOpenFeed),
           ),
+        // В спальне — «Уложить спать» на ковре, там, где заказчик 22.09
+        // обвёл на скрине. Пока спит, кнопки нет: класть больше некого.
+        if (room == RoomKind.bedroom && !asleep)
+          Positioned(
+            left: 16,
+            right: _pawSpace,
+            bottom: 34,
+            child: _BedroomMenu(onPutToBed: onPutToBed),
+          ),
         if (room == RoomKind.bath)
           Positioned(
             left: 16,
@@ -674,6 +713,26 @@ class _ActionRow extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Row(mainAxisSize: MainAxisSize.min, children: children),
       ),
+    );
+  }
+}
+
+/// Одна кнопка спальни: уложить спать.
+class _BedroomMenu extends StatelessWidget {
+  const _BedroomMenu({required this.onPutToBed});
+
+  final VoidCallback onPutToBed;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ActionRow(
+      children: [
+        _Pill(
+          label: context.l10n.bedroomActionSleep,
+          icon: Icons.bedtime_outlined,
+          onTap: onPutToBed,
+        ),
+      ],
     );
   }
 }
