@@ -129,3 +129,27 @@ test('безопасный предел лежит внутри диапазон
     assert.ok(prop.safeFloor >= prop.min && prop.safeFloor <= prop.max, prop.name);
   }
 });
+
+test('каждая группа клипов привязана к известному экрану', () => {
+  const catalog = JSON.parse(readFileSync(resolve(repoRoot, 'rig/animation_catalog.json'), 'utf8'));
+  const surfaces = new Set(Object.keys(catalog.surfaces));
+  for (const [key, group] of Object.entries(catalog.groups)) {
+    assert.ok(group.surface, `у группы ${key} нет surface`);
+    assert.ok(surfaces.has(group.surface), `неизвестный экран ${group.surface}`);
+  }
+  assert.ok(surfaces.has(catalog.birthScene.surface));
+});
+
+test('комната «Игра» набирает ровно 108 клипов по цифрам КП', () => {
+  const catalog = JSON.parse(readFileSync(resolve(repoRoot, 'rig/animation_catalog.json'), 'utf8'));
+  const room = Object.values(catalog.groups).filter((g) => catalog.surfaces[g.surface].inScope);
+  const declared = room.reduce((n, g) => n + g.declaredInProposal, 0);
+  assert.equal(declared, catalog.totals.declaredInProposal);
+  assert.equal(declared, 108);
+});
+
+test('сцена рождения размечена как вне границ ветки', () => {
+  const catalog = JSON.parse(readFileSync(resolve(repoRoot, 'rig/animation_catalog.json'), 'utf8'));
+  assert.equal(catalog.surfaces[catalog.birthScene.surface].inScope, false);
+  assert.equal(catalog.birthScene.countedInTotal, false);
+});

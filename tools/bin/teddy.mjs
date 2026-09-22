@@ -73,33 +73,53 @@ function cmdLayers() {
 
 function cmdClips() {
   const catalog = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'animation_catalog.json'), 'utf8'));
+  const inScope = Object.entries(catalog.surfaces).filter(([, s]) => s.inScope).map(([key]) => key);
+
   const lines = [];
   let planned = 0;
   let declared = 0;
   let mismatched = 0;
 
   for (const [key, group] of Object.entries(catalog.groups)) {
+    if (!inScope.includes(group.surface)) continue;
     const count = group.clips.length;
     planned += count;
     declared += group.declaredInProposal;
     const ok = count === group.declaredInProposal;
     if (!ok) mismatched += 1;
-    lines.push(`  ${ok ? ' ' : '!'} ${group.section.padEnd(5)} ${key.padEnd(10)} ${String(count).padStart(3)} / ${group.declaredInProposal}`);
+    lines.push(
+      `  ${ok ? ' ' : '!'} ${group.section.padEnd(5)} ${key.padEnd(10)} ${String(count).padStart(3)} / ${group.declaredInProposal}`,
+    );
     if (!ok && group.note) lines.push(`      ${group.note.replace(/\s+/g, ' ')}`);
   }
 
-  process.stdout.write('Animation clips (KP section 4)\n');
+  for (const surface of inScope) {
+    process.stdout.write(`${catalog.surfaces[surface].label}\n`);
+  }
   process.stdout.write(lines.join('\n') + '\n');
-  process.stdout.write(`\n  total        ${planned} planned / ${declared} promised in the proposal\n`);
-  process.stdout.write(`  birth scene  ${catalog.birthScene.clips.length} clips (KP ${catalog.birthScene.section}, counted separately)\n`);
-  process.stdout.write(`  outfit slots ${catalog.outfitSlots.slots.length} (KP ${catalog.outfitSlots.section})\n`);
+  process.stdout.write(`\n  ИТОГО        ${planned} расписано / ${declared} обещано в КП\n`);
 
   if (mismatched) {
     process.stdout.write(
-      `\n${mismatched} group(s) do not match the proposal's count. That gap is a question for the client,\n` +
-        'not a bug - see the note on each group above.\n',
+      `\n  ${mismatched} группы не сходятся с цифрой КП. Это вопрос к Заказчику, а не ошибка счёта -\n` +
+        '  см. примечание у каждой группы выше и docs/open-questions.md, Q1.\n',
     );
   }
+
+  // Что размечено, но в этой ветке не делается.
+  const outOfScope = Object.values(catalog.surfaces).filter((s) => !s.inScope);
+  if (outOfScope.length) {
+    process.stdout.write('\nВне границ этой ветки\n');
+    for (const [key, surface] of Object.entries(catalog.surfaces)) {
+      if (surface.inScope) continue;
+      const groups = Object.values(catalog.groups).filter((g) => g.surface === key);
+      const extra = catalog.birthScene.surface === key ? catalog.birthScene.clips.length : 0;
+      const count = groups.reduce((n, g) => n + g.clips.length, 0) + extra;
+      process.stdout.write(`  - ${surface.label}: ${count} клипов (КП ${surface.kpSections.join(', ')})\n`);
+    }
+  }
+
+  process.stdout.write(`\nСлоты одежды: ${catalog.outfitSlots.slots.length} (КП ${catalog.outfitSlots.section}) - привязаны к костям, работают во всех клипах комнаты.\n`);
   return 0;
 }
 
@@ -155,7 +175,13 @@ function cmdDoctor() {
   lines.push(`  lab/rig_spec.generated.js            ${existsSync(LAB_SPEC_OUT) ? 'generated' : 'MISSING - run teddy gen:dart'}`);
   const catalog = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'animation_catalog.json'), 'utf8'));
   const planned = Object.values(catalog.groups).reduce((n, g) => n + g.clips.length, 0);
-  lines.push(`\nAnimation clips     ${planned} planned / ${catalog.totals.declaredInProposal} promised (teddy clips)`);
+  const roomPlanned = Object.values(catalog.groups)
+    .filter((g) => catalog.surfaces[g.surface]?.inScope)
+    .reduce((n, g) => n + g.clips.length, 0);
+  const roomDeclared = Object.values(catalog.groups)
+    .filter((g) => catalog.surfaces[g.surface]?.inScope)
+    .reduce((n, g) => n + g.declaredInProposal, 0);
+  lines.push(`\nRoom "Игра" clips   ${roomPlanned} planned / ${roomDeclared} promised (teddy clips)`);
   lines.push('\nOpen questions are tracked in docs/open-questions.md');
 
   process.stdout.write(lines.join('\n') + '\n');
