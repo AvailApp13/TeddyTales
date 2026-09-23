@@ -973,7 +973,7 @@ class _KitchenSceneState extends State<KitchenScene>
 
   /// Спокойный: один глубокий медленный кивок, уши чуть опускаются.
   static _Motion _treatCalm(double t) => _Motion(
-    bow: 0.24 * (_ramp(t, 0.2, 1.4) - _ramp(t, 1.8, 3.2)),
+    bow: 0.45 * (_ramp(t, 0.2, 1.4) - _ramp(t, 1.8, 3.2)),
     ears: -0.3 * (_ramp(t, 0.3, 1.4) - _ramp(t, 2.0, 3.3)),
   );
 
@@ -992,7 +992,8 @@ class _KitchenSceneState extends State<KitchenScene>
     return _Motion(
       lookY: 0.6 * away,
       lookX: -0.8 * away,
-      side: -0.5 * away,
+      side: -0.9 * away,
+      bow: 0.14 * away,
       ears: -0.3 * away,
     );
   }
