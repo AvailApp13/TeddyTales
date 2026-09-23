@@ -6,6 +6,7 @@ import { extractLayerNames, checkLayers, formatReport } from '../lib/check_layer
 import { generateDartContract, generateLabSpec } from '../lib/gen_dart.mjs';
 import { generateRiveProject, loadCatalog } from '../lib/gen_rml.mjs';
 import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
+import { buildInEditor, bonePlan } from '../lib/mcp_build.mjs';
 import { mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { serveLab } from '../lib/serve.mjs';
@@ -30,6 +31,9 @@ const USAGE = `teddy - TeddyTales bear rig workbench
   teddy mcp:ping [--url U]       connect to the Rive Editor MCP server and print server info
   teddy mcp:tools [--url U]      list the editor's tools
   teddy mcp:call <tool> [json]   call one tool, e.g. teddy mcp:call get_hierarchy '{}'
+  teddy mcp:schema <tool>        print a tool's full description and input schema
+  teddy mcp:build                build the rig scaffold inside the open Rive file (everything but bones)
+  teddy mcp:bones                print bone coordinates for placing them by hand in the editor
                                  URL defaults to $RIVE_MCP_URL or http://127.0.0.1:9791/mcp
 `;
 
@@ -66,6 +70,12 @@ function main() {
       return cmdMcp('tools');
     case 'mcp:call':
       return cmdMcp('call');
+    case 'mcp:schema':
+      return cmdMcp('schema');
+    case 'mcp:build':
+      return cmdMcpBuild();
+    case 'mcp:bones':
+      return cmdMcpBones();
     case undefined:
     case '-h':
     case '--help':
@@ -273,6 +283,26 @@ function cmdDoctor() {
   return 0;
 }
 
+async function cmdMcpBuild() {
+  try {
+    const result = await buildInEditor({ log: (m) => process.stdout.write(m + '\n'), artboardName: flag('artboard', undefined) });
+    process.stdout.write(`Done: ${Object.keys(result.ids).length} groups on ${result.board.name}\n`);
+    return 0;
+  } catch (error) {
+    process.stderr.write(`${error.message}\n`);
+    return 1;
+  }
+}
+
+function cmdMcpBones() {
+  process.stdout.write('Bones to place by hand (artboard coordinates, y down):\n\n');
+  for (const b of bonePlan()) {
+    process.stdout.write(`  ${b.name.padEnd(16)} from (${b.from.x}, ${b.from.y})  to (${b.to.x}, ${b.to.y})   length ${b.length}  angle ${b.angleDeg}\u00b0\n`);
+  }
+  process.stdout.write('\nroot -> root_body is a chain (root_body starts at the tip of root). Arms and legs are root bones of their own.\n');
+  return 0;
+}
+
 async function cmdMcp(action) {
   const client = new RiveMcpClient({ url: flag('url', undefined) });
   try {
@@ -292,8 +322,17 @@ async function cmdMcp(action) {
     }
     const name = args[1];
     if (!name) {
-      process.stderr.write('teddy mcp:call <tool> [json-arguments]\n');
+      process.stderr.write(`teddy mcp:${action} <tool> [json-arguments]\n`);
       return 1;
+    }
+    if (action === 'schema') {
+      const tool = (await client.listTools()).find((t) => t.name === name);
+      if (!tool) {
+        process.stderr.write(`no tool named ${name}\n`);
+        return 1;
+      }
+      process.stdout.write(`${tool.name}\n\n${tool.description ?? ''}\n\n${JSON.stringify(tool.inputSchema, null, 2)}\n`);
+      return 0;
     }
     const toolArgs = args[2] && !args[2].startsWith('--') ? JSON.parse(args[2]) : {};
     const result = await client.callTool(name, toolArgs);

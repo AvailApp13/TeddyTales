@@ -1,0 +1,134 @@
+{
+  "2604780": {
+    "fileName": "Untitled",
+    "artboards": {
+      "Bear_Boy": {
+        "id": "0-2",
+        "ids": {
+          "rig": "0-116",
+          "body": "0-117",
+          "body_base": "0-122",
+          "head": "0-127",
+          "ear_left": "0-132",
+          "ear_in_left": "0-137",
+          "ear_light_left": "0-142",
+          "ear_right": "0-147",
+          "ear_in_right": "0-152",
+          "ear_light_right": "0-157",
+          "ctrl_face": "0-162",
+          "ctrl_eyes": "0-163",
+          "ctrl_pupils": "0-164",
+          "pupil_left": "0-165",
+          "pupil_light_left": "0-170",
+          "pupil_right": "0-175",
+          "pupil_light_right": "0-180",
+          "eye_left": "0-185",
+          "eyelid_top_left": "0-190",
+          "eyelid_bottom_left": "0-195",
+          "eye_right": "0-200",
+          "eyelid_top_right": "0-205",
+          "eyelid_bottom_right": "0-210",
+          "ctrl_mouth": "0-215",
+          "mouth": "0-216",
+          "teeth": "0-221",
+          "tongue": "0-226",
+          "lips": "0-231",
+          "ctrl_nose": "0-236",
+          "nose": "0-237",
+          "ctrl_eyebrow_left": "0-242",
+          "eyebrow_left": "0-243",
+          "ctrl_eyebrow_right": "0-248",
+          "eyebrow_right": "0-249",
+          "head_shadow": "0-255",
+          "scarf_1": "0-260",
+          "scarf_2": "0-265",
+          "scarf_3": "0-270",
+          "forearm_left": "0-278",
+          "forearm_light_left": "0-283",
+          "hand_left": "0-288",
+          "hand_light_left": "0-293",
+          "finger_1_nail_left": "0-298",
+          "finger_2_nail_left": "0-303",
+          "finger_3_nail_left": "0-308",
+          "forearm_right": "0-313",
+          "forearm_light_right": "0-318",
+          "hand_right": "0-323",
+          "hand_light_right": "0-328",
+          "finger_1_nail_right": "0-333",
+          "finger_2_nail_right": "0-338",
+          "finger_3_nail_right": "0-343",
+          "leg_left": "0-348",
+          "foot_left": "0-353",
+          "leg_right": "0-358",
+          "foot_right": "0-363"
+        }
+      }
+    },
+    "viewModel": {
+      "id": "0-34",
+      "properties": {
+        "food": "0-36",
+        "hygiene": "0-38",
+        "sleep": "0-40",
+        "play": "0-42",
+        "love": "0-44",
+        "care_index": "0-46",
+        "stage": "0-48",
+        "trait": "0-50",
+        "mood": "0-52",
+        "outfit_body": "0-54",
+        "outfit_head": "0-56",
+        "outfit_feet": "0-58",
+        "outfit_accessory": "0-60",
+        "feed": "0-62",
+        "wash": "0-64",
+        "sleep_action": "0-66",
+        "wake": "0-68",
+        "play_action": "0-70",
+        "pet": "0-72",
+        "tap": "0-74",
+        "grow": "0-76",
+        "initiative": "0-78",
+        "emote_joy": "0-80",
+        "emote_upset": "0-82",
+        "emote_surprise": "0-84",
+        "emote_love": "0-86"
+      }
+    },
+    "enums": {
+      "stage": {
+        "id": "0-14",
+        "values": {
+          "newborn": "0-15",
+          "crawler": "0-16",
+          "first_steps": "0-17",
+          "growing": "0-18",
+          "adult": "0-19"
+        }
+      },
+      "trait": {
+        "id": "0-20",
+        "values": {
+          "active": "0-21",
+          "curious": "0-22",
+          "affectionate": "0-23",
+          "calm": "0-24",
+          "independent": "0-25",
+          "reserved": "0-26"
+        }
+      },
+      "mood": {
+        "id": "0-27",
+        "values": {
+          "calm": "0-28",
+          "happy": "0-29",
+          "sad": "0-30",
+          "hungry": "0-31",
+          "sleepy": "0-32",
+          "messy": "0-33"
+        }
+      }
+    },
+    "defaultsWritten": true
+  }
+}

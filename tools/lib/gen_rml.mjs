@@ -26,7 +26,7 @@ import { repoRoot, childrenOf } from './rig.mjs';
 
 const PROPORTIONS = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions.json'), 'utf8'));
 
-const AB = { w: 1024, h: 1024, figureHeight: 880, groundY: 980 };
+export const AB = { w: 1024, h: 1024, figureHeight: 880, groundY: 980 };
 const SCALE = AB.figureHeight; // 1.0 роста без капюшона = 880 px артборда
 
 /** Часть сетки -> мировые координаты артборда. */
@@ -49,7 +49,7 @@ const off = (base, dx, dy, w, h) => base && { x: base.x + dx, y: base.y + dy, w,
  * Узлы, которых нет на фото напрямую (ctrl_*, зрачки, веки, блики),
  * выводятся из соседей по простым правилам, записанным тут же.
  */
-function worldLayout() {
+export function worldLayout() {
   const eyeR = G.eye_left.w / 2;
   const L = {
     body: G.body, body_base: G.body_base, head: G.head,
@@ -117,7 +117,7 @@ function mid(a, b, w, h) {
  * Кости: точка начала, направление и длина — из суставов сетки.
  * Угол — мировой (радианы, от оси +x экрана, по часовой), как рисует Rive.
  */
-function boneLayout() {
+export function boneLayout() {
   const hips = { x: (G.hip_left.x + G.hip_right.x) / 2, y: (G.hip_left.y + G.hip_right.y) / 2 };
   const chest = { x: G.body.x, y: G.body.y - G.body.h * 0.2 };
   const headC = { x: G.head.x, y: G.head.y };
@@ -132,7 +132,7 @@ function boneLayout() {
   };
 }
 
-const PLACEHOLDER_COLOR = {
+export const PLACEHOLDER_COLOR = {
   body: 'FFC9A57C', body_base: 'FFB8946C', head: 'FFC9A57C', head_shadow: 'FF000000',
   ear: 'FFC9A57C', ear_in: 'FFE8B7A3', ear_light: 'FFFFFFFF',
   eye: 'FFEDE3D3', pupil: 'FF1A1411', pupil_light: 'FFFFFFFF', eyelid_top: 'FFC9A57C', eyelid_bottom: 'FFC9A57C', eyebrow: 'FF8A6A48',
@@ -141,7 +141,7 @@ const PLACEHOLDER_COLOR = {
   forearm: 'FFC9A57C', forearm_light: 'FFFFFFFF', hand: 'FFB8946C', hand_light: 'FFFFFFFF', finger_nail: 'FF8A6A48',
   leg: 'FFC9A57C', foot: 'FFB8946C',
 };
-const PLACEHOLDER_OPACITY = { head_shadow: 0.15, ear_light: 0.5, forearm_light: 0.35, hand_light: 0.35 };
+export const PLACEHOLDER_OPACITY = { head_shadow: 0.15, ear_light: 0.5, forearm_light: 0.35, hand_light: 0.35 };
 
 /** Отличия героев. Пока только цвет акцентов, чтобы артборды было видно порознь. */
 const HERO_TINT = {
