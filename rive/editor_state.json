@@ -498,6 +498,93 @@
         "wash": "0-64"
       }
     },
-    "defaultsWritten": true
+    "defaultsWritten": true,
+    "parts": {
+      "arm_left": {
+        "asset": "0-344",
+        "instance": "0-345",
+        "parent": "0-250",
+        "sizePx": [
+          1333,
+          2000
+        ],
+        "scalePercent": 16.3,
+        "scaleY": 16.3,
+        "world": {
+          "x": 296,
+          "y": 633
+        },
+        "hidden": true,
+        "role": "запас под скрытые зоны"
+      },
+      "arm_right": {
+        "asset": "0-346",
+        "instance": "0-347",
+        "parent": "0-285",
+        "sizePx": [
+          1333,
+          2000
+        ],
+        "scalePercent": 14.37,
+        "scaleY": 14.37,
+        "world": {
+          "x": 734,
+          "y": 634
+        },
+        "hidden": true,
+        "role": "запас под скрытые зоны"
+      },
+      "body": {
+        "asset": "0-348",
+        "instance": "0-349",
+        "parent": "0-89",
+        "sizePx": [
+          1333,
+          2000
+        ],
+        "scalePercent": 31.93,
+        "scaleY": 31.93,
+        "world": {
+          "x": 517.6,
+          "y": 644.8
+        },
+        "hidden": true,
+        "role": "запас под скрытые зоны"
+      },
+      "ears": {
+        "asset": "0-350",
+        "instance": "0-351",
+        "parent": "0-99",
+        "sizePx": [
+          1333,
+          2000
+        ],
+        "scalePercent": 48.07,
+        "scaleY": 39.17,
+        "world": {
+          "x": 514.3,
+          "y": 357.9
+        },
+        "hidden": true,
+        "role": "запас под скрытые зоны"
+      },
+      "face_features": {
+        "asset": "0-352",
+        "instance": "0-353",
+        "parent": "0-134",
+        "sizePx": [
+          1333,
+          2000
+        ],
+        "scalePercent": 37.71,
+        "scaleY": 37.71,
+        "world": {
+          "x": 509.5,
+          "y": 435.6
+        },
+        "hidden": true,
+        "role": "запас под скрытые зоны"
+      }
+    }
   }
 }
