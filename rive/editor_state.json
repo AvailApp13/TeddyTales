@@ -139,12 +139,14 @@
           2336,
           3504
         ],
-        "scalePercent": 22.91,
+        "scalePercent": 24.61,
         "world": {
-          "x": 513.4,
-          "y": 282
+          "x": 507.6,
+          "y": 300.9
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 23.4,
+        "hidden": true
       },
       "outfit_feet": {
         "asset": "0-391",
@@ -154,12 +156,14 @@
           2336,
           3504
         ],
-        "scalePercent": 22.5,
+        "scalePercent": 25.3,
         "world": {
-          "x": 518.3,
-          "y": 638.7
+          "x": 526.4,
+          "y": 740.2
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 14.33,
+        "hidden": true
       },
       "outfit_body": {
         "asset": "0-389",
@@ -169,12 +173,14 @@
           2336,
           3504
         ],
-        "scalePercent": 26.8,
+        "scalePercent": 28.08,
         "world": {
-          "x": 521.2,
-          "y": 551.6
+          "x": 514.3,
+          "y": 593
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 20.55,
+        "hidden": true
       },
       "leg_right": {
         "asset": "0-388",
@@ -184,12 +190,14 @@
           2336,
           3504
         ],
-        "scalePercent": 9.93,
+        "scalePercent": 12.61,
         "world": {
-          "x": 630.6,
-          "y": 850.5
+          "x": 657.3,
+          "y": 812.1
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 12.61,
+        "hidden": true
       },
       "leg_left": {
         "asset": "0-386",
@@ -199,12 +207,14 @@
           2336,
           3504
         ],
-        "scalePercent": 11.63,
+        "scalePercent": 14.77,
         "world": {
-          "x": 390.7,
-          "y": 833.6
+          "x": 371.1,
+          "y": 785.7
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 14.77,
+        "hidden": true
       },
       "head": {
         "asset": "0-385",
@@ -214,12 +224,14 @@
           2336,
           3504
         ],
-        "scalePercent": 21.67,
+        "scalePercent": 23.03,
         "world": {
-          "x": 510.4,
-          "y": 354.4
+          "x": 510.8,
+          "y": 371.3
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 23.03,
+        "hidden": true
       },
       "face_features": {
         "asset": "0-384",
@@ -245,12 +257,14 @@
           2336,
           3504
         ],
-        "scalePercent": 28.22,
+        "scalePercent": 27.43,
         "world": {
-          "x": 511.8,
-          "y": 366.4
+          "x": 514.3,
+          "y": 357.9
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 22.35,
+        "hidden": true
       },
       "body": {
         "asset": "0-381",
@@ -275,12 +289,14 @@
           2336,
           3504
         ],
-        "scalePercent": 8.18,
+        "scalePercent": 11.86,
         "world": {
-          "x": 727.3,
-          "y": 618.8
+          "x": 735,
+          "y": 644.5
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 11.86,
+        "hidden": true
       },
       "arm_left": {
         "asset": "0-379",
@@ -290,12 +306,14 @@
           2336,
           3504
         ],
-        "scalePercent": 9.33,
+        "scalePercent": 13.53,
         "world": {
-          "x": 306.1,
-          "y": 620.2
+          "x": 282.3,
+          "y": 636.3
         },
-        "fitted": true
+        "fitted": true,
+        "scaleY": 13.53,
+        "hidden": true
       }
     },
     "referenceImageRemoved": {
@@ -312,6 +330,98 @@
       "scalePercent": 93.25,
       "drawOrder": "sendToBack",
       "note": "Рост без капюшона 815 px в вырезе -> 760 px артборда (AB.figureHeight); стопы на groundY 985, остриё капюшона на y≈6. Позиции узлов пересчитаны под 760."
+    },
+    "photoLayers": {
+      "p_hood": {
+        "asset": "0-407",
+        "instance": "0-423",
+        "parent": "0-254",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_face": {
+        "asset": "0-409",
+        "instance": "0-410",
+        "parent": "0-127",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_ears": {
+        "asset": "0-411",
+        "instance": "0-412",
+        "parent": "0-127",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_shirt": {
+        "asset": "0-427",
+        "instance": "0-428",
+        "parent": "0-275",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_paw_left": {
+        "asset": "0-429",
+        "instance": "0-430",
+        "parent": "0-278",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_paw_right": {
+        "asset": "0-431",
+        "instance": "0-432",
+        "parent": "0-313",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_foot_left": {
+        "asset": "0-419",
+        "instance": "0-420",
+        "parent": "0-348",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_foot_right": {
+        "asset": "0-421",
+        "instance": "0-422",
+        "parent": "0-358",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      },
+      "p_shorts": {
+        "asset": "0-435",
+        "instance": "0-436",
+        "parent": "0-276",
+        "world": {
+          "x": 518,
+          "y": 494
+        },
+        "scalePercent": 93.25
+      }
     }
   }
 }
