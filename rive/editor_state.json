@@ -146,7 +146,7 @@
         },
         "fitted": true,
         "scaleY": 23.4,
-        "hidden": true
+        "hidden": false
       },
       "outfit_feet": {
         "asset": "0-391",
@@ -163,7 +163,7 @@
         },
         "fitted": true,
         "scaleY": 14.33,
-        "hidden": true
+        "hidden": false
       },
       "outfit_body": {
         "asset": "0-389",
@@ -180,7 +180,7 @@
         },
         "fitted": true,
         "scaleY": 20.55,
-        "hidden": true
+        "hidden": false
       },
       "leg_right": {
         "asset": "0-388",
@@ -197,7 +197,7 @@
         },
         "fitted": true,
         "scaleY": 12.61,
-        "hidden": true
+        "hidden": false
       },
       "leg_left": {
         "asset": "0-386",
@@ -214,7 +214,7 @@
         },
         "fitted": true,
         "scaleY": 14.77,
-        "hidden": true
+        "hidden": false
       },
       "head": {
         "asset": "0-385",
@@ -231,7 +231,7 @@
         },
         "fitted": true,
         "scaleY": 23.03,
-        "hidden": true
+        "hidden": false
       },
       "face_features": {
         "asset": "0-384",
@@ -264,7 +264,7 @@
         },
         "fitted": true,
         "scaleY": 22.35,
-        "hidden": true
+        "hidden": false
       },
       "body": {
         "asset": "0-381",
@@ -279,7 +279,8 @@
           "x": 517.6,
           "y": 644.8
         },
-        "fitted": true
+        "fitted": true,
+        "hidden": false
       },
       "arm_right": {
         "asset": "0-380",
@@ -296,7 +297,7 @@
         },
         "fitted": true,
         "scaleY": 11.86,
-        "hidden": true
+        "hidden": false
       },
       "arm_left": {
         "asset": "0-379",
@@ -313,7 +314,7 @@
         },
         "fitted": true,
         "scaleY": 13.53,
-        "hidden": true
+        "hidden": false
       }
     },
     "referenceImageRemoved": {
@@ -331,7 +332,7 @@
       "drawOrder": "sendToBack",
       "note": "Рост без капюшона 815 px в вырезе -> 760 px артборда (AB.figureHeight); стопы на groundY 985, остриё капюшона на y≈6. Позиции узлов пересчитаны под 760."
     },
-    "photoLayers": {
+    "photoLayersRemoved": {
       "p_hood": {
         "asset": "0-407",
         "instance": "0-423",
@@ -423,5 +424,80 @@
         "scalePercent": 93.25
       }
     }
+  },
+  "2604781": {
+    "fileName": "Untitled",
+    "artboards": {
+      "Bear_Boy": {
+        "id": "0-2",
+        "ids": {}
+      }
+    },
+    "enums": {
+      "stage": {
+        "id": "0-14",
+        "values": {
+          "newborn": "0-15",
+          "crawler": "0-16",
+          "first_steps": "0-17",
+          "growing": "0-18",
+          "adult": "0-19"
+        }
+      },
+      "trait": {
+        "id": "0-20",
+        "values": {
+          "active": "0-21",
+          "curious": "0-22",
+          "affectionate": "0-23",
+          "calm": "0-24",
+          "independent": "0-25",
+          "reserved": "0-26"
+        }
+      },
+      "mood": {
+        "id": "0-27",
+        "values": {
+          "calm": "0-28",
+          "happy": "0-29",
+          "sad": "0-30",
+          "hungry": "0-31",
+          "sleepy": "0-32",
+          "messy": "0-33"
+        }
+      }
+    },
+    "viewModel": {
+      "id": "0-34",
+      "properties": {
+        "care_index": "0-46",
+        "emote_joy": "0-80",
+        "emote_love": "0-86",
+        "emote_surprise": "0-84",
+        "emote_upset": "0-82",
+        "feed": "0-62",
+        "food": "0-36",
+        "grow": "0-76",
+        "hygiene": "0-38",
+        "initiative": "0-78",
+        "love": "0-44",
+        "mood": "0-52",
+        "outfit_accessory": "0-60",
+        "outfit_body": "0-54",
+        "outfit_feet": "0-58",
+        "outfit_head": "0-56",
+        "pet": "0-72",
+        "play": "0-42",
+        "play_action": "0-70",
+        "sleep": "0-40",
+        "sleep_action": "0-66",
+        "stage": "0-48",
+        "tap": "0-74",
+        "trait": "0-50",
+        "wake": "0-68",
+        "wash": "0-64"
+      }
+    },
+    "defaultsWritten": true
   }
 }
