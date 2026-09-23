@@ -351,6 +351,7 @@ class _KitchenSceneState extends State<KitchenScene>
     [
       KitchenScene.assets[2],
       KitchenScene.assets[3],
+      '${KitchenScene._dir}/head.png',
       for (final e in _Eyes.values) e.asset,
       for (final m in _Mouth.values) m.asset,
     ],
@@ -682,7 +683,8 @@ class _KitchenSceneState extends State<KitchenScene>
   /// жевание с улыбкой глаз». Глаза-улыбка включаются в [_eat] под веком.
   /// Руки на столе (заказчик 22.09).
   static _Motion _eatMotion(double t) {
-    var jaw = 0.0, chew = 0.0, munch = 0.0, bow = 0.0, side = 0.0, lookY = 0.0;
+    var jaw = 0.0, chew = 0.0, munch = 0.0, grind = 0.0;
+    var bow = 0.0, side = 0.0, lookY = 0.0;
     // Увидел: взгляд вниз; в конце обратно.
     lookY += _ramp(t, 0, 0.5);
     // Лапы лежат на столе всю еду (заказчик 22.09: «не обязательно руки
@@ -703,9 +705,12 @@ class _KitchenSceneState extends State<KitchenScene>
         final env = _ramp(u, 0, 0.3) * (1 - _ramp(u, c1 - c0 - 0.4, c1 - c0));
         final phase = 2 * math.pi * 1.8 * u;
         chew += env;
+        // Челюсть ходит по кругу: вниз (munch) и в сторону (grind), как
+        // настоящее перетирание. Голова чуть кивает и водит в такт.
         munch += (0.5 - 0.5 * math.cos(phase)) * env;
-        bow += 0.06 * math.sin(phase) * env;
-        side += 0.22 * math.sin(phase / 2 + math.pi / 2) * env;
+        grind += math.sin(phase) * env;
+        bow += 0.04 * math.sin(phase) * env;
+        side += 0.12 * math.sin(phase / 2 + math.pi / 2) * env;
       }
       // Перед вторым кусочком снова посмотрел на еду.
       if (s < 1) lookY += 0.7 * _ramp(t, 3.15, 3.5);
@@ -715,6 +720,7 @@ class _KitchenSceneState extends State<KitchenScene>
       jaw: jaw.clamp(0.0, 1.0),
       chew: chew.clamp(0.0, 1.0),
       munch: munch.clamp(0.0, 1.0),
+      grind: grind.clamp(-1.0, 1.0),
       bow: bow,
       side: side,
       lookY: lookY.clamp(0.0, 1.0),
@@ -1099,6 +1105,7 @@ class _KitchenSceneState extends State<KitchenScene>
                 ),
               ),
               _image('head'),
+              _muzzleLayer(width, height),
               _eyesLayer(width, height, bow),
               _mouthLayer(width, height, bow),
             ],
@@ -1148,17 +1155,48 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Рот: базовое выражение (меняется под веком вместе с глазами) плюс
   /// челюсть — открытый рот раскрывается от верхней губы на [_Motion.jaw],
   /// и жевание — сжатые губы на [_Motion.chew].
+  /// Челюсть сейчас: на сколько нижняя часть мордочки опущена и сдвинута
+  /// в сторону, в долях головы; надуты ли щёки. Из этого рисуется и
+  /// мордочка ([_MuzzlePainter]), и сдвиг губ.
+  _Jaw get _jaw => _Jaw(
+    drop:
+        _Jaw.biteDrop * Curves.easeInOutSine.transform(_m.jaw) +
+        _Jaw.chewDrop * _m.munch * _m.chew,
+    shift: _Jaw.chewShift * _m.grind * _m.chew,
+    cheeks: _m.munch * _m.chew,
+  );
+
+  /// Мордочка: нижняя часть морды на сетке, ходит как челюсть — вниз при
+  /// укусе и по кругу при жевании, щёки надуваются. Нос стоит. Заказчик
+  /// 23.09: «жевательный визуал не очень… может, щёки задействовать,
+  /// чтобы смотрелось живым».
+  Widget _muzzleLayer(double w, double h) {
+    final image = _pictures['${KitchenScene._dir}/head.png'];
+    final jaw = _jaw;
+    if (image == null || jaw.isRest) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: CustomPaint(
+        painter: _MuzzlePainter(image: image, jaw: jaw),
+      ),
+    );
+  }
+
   Widget _mouthLayer(double w, double h, double bow) {
     final head = KitchenScene.head;
     final place = KitchenScene.mouth;
     final base = _pictures[_mouth.asset];
     final open = _pictures[_Mouth.open.asset];
     final chew = _pictures[_Mouth.chew.asset];
+    // Губы едут вместе с челюстью: сдвиг мордочки в середине зоны рта.
+    final jaw = _jaw;
+    final mouthY = (place.top + place.height / 2 - head.top) / head.height;
+    final ride = jaw.at(mouthY, 0.5);
     return Positioned(
-      left: (place.left - head.left) / head.width * w,
+      left: (place.left - head.left) / head.width * w + ride.dx * w,
       top:
           (place.top - head.top) / head.height * h +
-          KitchenScene.bowFace * bow * h,
+          KitchenScene.bowFace * bow * h +
+          ride.dy * h,
       width: place.width / head.width * w,
       height: place.height / head.height * h,
       child: base == null || open == null || chew == null
@@ -1301,10 +1339,14 @@ class _Motion {
     this.ears = 0,
     this.feet = 0,
     this.munch = 0,
+    this.grind = 0,
   });
 
   /// Жевательный такт 0…1 внутри [chew]: губы сжаты и челюсть внизу на 1.
   final double munch;
+
+  /// Челюсть в сторону −1…1 при жевании (перетирание).
+  final double grind;
 
   bool get isRest =>
       bow == 0 &&
@@ -1316,7 +1358,8 @@ class _Motion {
       side == 0 &&
       ears == 0 &&
       feet == 0 &&
-      munch == 0;
+      munch == 0 &&
+      grind == 0;
 
   static _Motion lerp(_Motion a, _Motion b, double k) => _Motion(
     bow: a.bow + (b.bow - a.bow) * k,
@@ -1329,6 +1372,7 @@ class _Motion {
     ears: a.ears + (b.ears - a.ears) * k,
     feet: a.feet + (b.feet - a.feet) * k,
     munch: a.munch + (b.munch - a.munch) * k,
+    grind: a.grind + (b.grind - a.grind) * k,
   );
 
   /// Наклон головы к столу: 0 прямо, 1 у стола, минус — назад.
@@ -1376,9 +1420,7 @@ class _MouthPainter extends CustomPainter {
     // Жуёт: губы чуть ходят вниз-вверх вместе с челюстью. Нос в базовом
     // спрайте стоит на месте.
     final still = Offset.zero & size;
-    final zone = still.shift(
-      Offset(0, size.height * 0.10 * chewing.clamp(0.0, 1.0) * munch),
-    );
+    final zone = still;
     final openness = Curves.easeInOutSine.transform(jaw.clamp(0.0, 1.0));
     final pressed =
         chewing.clamp(0.0, 1.0) *
@@ -1558,6 +1600,161 @@ class _LidPainter extends CustomPainter {
       old.base != base ||
       old.closed != closed ||
       old.look != look;
+}
+
+/// Положение челюсти в долях головы.
+class _Jaw {
+  const _Jaw({required this.drop, required this.shift, required this.cheeks});
+
+  /// Опускание при укусе и при жевании, сдвиг вбок при жевании, надув
+  /// щёк — в долях высоты/ширины головы.
+  static const double biteDrop = 0.035;
+  static const double chewDrop = 0.022;
+  static const double chewShift = 0.012;
+  static const double cheekBulge = 0.02;
+
+  /// Где челюсть начинает двигаться и где движется целиком — доли высоты
+  /// головы: нос (0.79–0.85) стоит, ниже него мордочка ходит.
+  static const double hinge = 0.85;
+  static const double chin = 0.96;
+
+  final double drop;
+  final double shift;
+  final double cheeks;
+
+  bool get isRest => drop == 0 && shift == 0 && cheeks == 0;
+
+  /// Вес челюсти в точке: 0 у носа и выше, 1 у подбородка.
+  static double weight(double y) => Curves.easeInOutSine.transform(
+    ((y - hinge) / (chin - hinge)).clamp(0.0, 1.0),
+  );
+
+  /// Сдвиг точки мордочки ([x], [y] — доли головы) в долях головы.
+  Offset at(double y, double x) {
+    final wy = weight(y);
+    return Offset(shift * wy, drop * wy);
+  }
+}
+
+/// Нижняя часть мордочки на сетке поверх головы: узлы ниже носа
+/// опускаются и сдвигаются по [_Jaw], щёки надуваются в стороны. Край
+/// заплатки мягкий сверху и с боков, где она совпадает с головой; снизу —
+/// подбородок, он и должен опускаться.
+class _MuzzlePainter extends CustomPainter {
+  const _MuzzlePainter({required this.image, required this.jaw});
+
+  final ui.Image image;
+  final _Jaw jaw;
+
+  /// Заплатка — доли головы.
+  static const Rect patch = Rect.fromLTRB(0.10, 0.68, 0.90, 1.0);
+  static const int cols = 16;
+  static const int rows = 12;
+
+  /// Щёки: центры и разброс (доли головы).
+  static const double cheekY = 0.84;
+  static const double cheekX = 0.24;
+  static const double cheekSpread = 0.09;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final positions = <Offset>[];
+    final texture = <Offset>[];
+    for (var row = 0; row <= rows; row++) {
+      final y = patch.top + patch.height * row / rows;
+      for (var col = 0; col <= cols; col++) {
+        final x = patch.left + patch.width * col / cols;
+        final d = jaw.at(y, x);
+        // Щёки: выпуклость наружу колоколом вокруг центра щеки; та, куда
+        // ушла челюсть, надута сильнее.
+        final side = x < 0.5 ? -1.0 : 1.0;
+        final cx = x < 0.5 ? cheekX : 1 - cheekX;
+        final bell = math.exp(
+          -(((x - cx) * (x - cx)) + ((y - cheekY) * (y - cheekY))) /
+              (2 * cheekSpread * cheekSpread),
+        );
+        final favour = (jaw.shift * side > 0 ? 1.0 : 0.5);
+        final bulge = _Jaw.cheekBulge * jaw.cheeks * favour * bell;
+        positions.add(
+          Offset(
+            (x + d.dx + side * bulge) * size.width,
+            (y + d.dy) * size.height,
+          ),
+        );
+        texture.add(Offset(x * image.width, y * image.height));
+      }
+    }
+    final indices = <int>[];
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        final a = row * (cols + 1) + col;
+        final b = a + 1;
+        final c = a + cols + 1;
+        final d = c + 1;
+        indices.addAll([a, b, c, b, d, c]);
+      }
+    }
+    final vertices = ui.Vertices(
+      ui.VertexMode.triangles,
+      positions,
+      textureCoordinates: texture,
+      indices: Uint16List.fromList(indices),
+    );
+    final zone = Rect.fromLTRB(
+      patch.left * size.width,
+      patch.top * size.height,
+      patch.right * size.width,
+      (patch.bottom + 0.06) * size.height,
+    );
+    canvas.saveLayer(zone, Paint());
+    canvas.drawVertices(
+      vertices,
+      ui.BlendMode.srcOver,
+      Paint()
+        ..shader = ui.ImageShader(
+          image,
+          ui.TileMode.clamp,
+          ui.TileMode.clamp,
+          Matrix4.identity().storage,
+        )
+        ..filterQuality = FilterQuality.medium,
+    );
+    // Мягкий край: сверху и с боков заплатка растворяется в голове.
+    canvas.drawRect(
+      zone,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          Offset(0, zone.top),
+          Offset(0, zone.top + 0.12 * size.height),
+          const [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
+        ),
+    );
+    canvas.drawRect(
+      zone,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          Offset(zone.left, 0),
+          Offset(zone.right, 0),
+          const [
+            Color(0x00FFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0x00FFFFFF),
+          ],
+          const [0.0, 0.12, 0.88, 1.0],
+        ),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_MuzzlePainter old) =>
+      old.image != image ||
+      old.jaw.drop != jaw.drop ||
+      old.jaw.shift != jaw.shift ||
+      old.jaw.cheeks != jaw.cheeks;
 }
 
 /// Оставляет [fraction] высоты сверху.
