@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 
 import '../game/room_kind.dart';
 import '../theme/app_colors.dart';
@@ -51,18 +52,78 @@ class KitchenScene extends StatefulWidget {
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
-  static const Rect footLeft = Rect.fromLTWH(0.361111, 0.751953, 0.115741, 0.050781);
-  static const Rect footRight = Rect.fromLTWH(0.503472, 0.751953, 0.116898, 0.052083);
-  static const Rect earLeft = Rect.fromLTWH(0.348380, 0.444010, 0.079861, 0.065104);
-  static const Rect earRight = Rect.fromLTWH(0.567130, 0.445312, 0.079861, 0.063802);
-  static const Rect pawLeft = Rect.fromLTWH(0.335648, 0.579427, 0.092593, 0.037760);
-  static const Rect pawRight = Rect.fromLTWH(0.562500, 0.579427, 0.086806, 0.037760);
-  static const Rect sleeveLeft = Rect.fromLTWH(0.340278, 0.554688, 0.096065, 0.052734);
-  static const Rect sleeveRight = Rect.fromLTWH(0.554398, 0.554688, 0.091435, 0.050130);
-  static const Rect torso = Rect.fromLTWH(0.406250, 0.541016, 0.178241, 0.067057);
-  static const Rect head = Rect.fromLTWH(0.357639, 0.382161, 0.275463, 0.185547);
-  static const Rect eyes = Rect.fromLTWH(0.430556, 0.505208, 0.129630, 0.033854);
-  static const Rect mouth = Rect.fromLTWH(0.458333, 0.536458, 0.071759, 0.023438);
+  static const Rect footLeft = Rect.fromLTWH(
+    0.361111,
+    0.751953,
+    0.115741,
+    0.050781,
+  );
+  static const Rect footRight = Rect.fromLTWH(
+    0.503472,
+    0.751953,
+    0.116898,
+    0.052083,
+  );
+  static const Rect earLeft = Rect.fromLTWH(
+    0.348380,
+    0.444010,
+    0.079861,
+    0.065104,
+  );
+  static const Rect earRight = Rect.fromLTWH(
+    0.567130,
+    0.445312,
+    0.079861,
+    0.063802,
+  );
+  static const Rect pawLeft = Rect.fromLTWH(
+    0.335648,
+    0.579427,
+    0.092593,
+    0.037760,
+  );
+  static const Rect pawRight = Rect.fromLTWH(
+    0.562500,
+    0.579427,
+    0.086806,
+    0.037760,
+  );
+  static const Rect sleeveLeft = Rect.fromLTWH(
+    0.340278,
+    0.554688,
+    0.096065,
+    0.052734,
+  );
+  static const Rect sleeveRight = Rect.fromLTWH(
+    0.554398,
+    0.554688,
+    0.091435,
+    0.050130,
+  );
+  static const Rect torso = Rect.fromLTWH(
+    0.406250,
+    0.541016,
+    0.178241,
+    0.067057,
+  );
+  static const Rect head = Rect.fromLTWH(
+    0.357639,
+    0.382161,
+    0.275463,
+    0.185547,
+  );
+  static const Rect eyes = Rect.fromLTWH(
+    0.430556,
+    0.505208,
+    0.129630,
+    0.033854,
+  );
+  static const Rect mouth = Rect.fromLTWH(
+    0.458333,
+    0.536458,
+    0.071759,
+    0.023438,
+  );
 
   /// Край стола со скатертью: кусок фона, положенный поверх ножек, чтобы
   /// их припуск уходил под стол. От кромки стола до низа скатерти.
@@ -87,7 +148,7 @@ class KitchenScene extends StatefulWidget {
   static const Offset earRightTip = Offset(0.58342, 0.44737);
 
   /// На сколько ухо гнётся при вздрагивании — радианы у вершины.
-  static const double earTwitch = 0.28;
+  static const double earTwitch = 0.22;
 
   /// Дыхание — тот же темп, что в спальне: заказчик просил один ритм.
   static const Duration breath = Duration(milliseconds: 4400);
@@ -144,8 +205,8 @@ class KitchenScene extends StatefulWidget {
   /// Заранее раскодировать картинки — ещё до того, как открыли кухню:
   /// иначе мишка появляется по частям.
   static Future<void> warmUp(BuildContext context) => Future.wait([
-        for (final asset in assets) precacheImage(AssetImage(asset), context),
-      ]);
+    for (final asset in assets) precacheImage(AssetImage(asset), context),
+  ]);
 
   @override
   State<KitchenScene> createState() => _KitchenSceneState();
@@ -188,11 +249,17 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Вдох короче выдоха — как в спальне.
   late final Animation<double> _wave = TweenSequence<double>([
     TweenSequenceItem(
-      tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      tween: Tween(
+        begin: 0.0,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeInOutSine)),
       weight: 42,
     ),
     TweenSequenceItem(
-      tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      tween: Tween(
+        begin: 1.0,
+        end: 0.0,
+      ).chain(CurveTween(curve: Curves.easeInOutSine)),
       weight: 58,
     ),
   ]).animate(_breath);
@@ -345,9 +412,19 @@ class _KitchenSceneState extends State<KitchenScene>
   }
 
   List<AnimationController> get _drives => [
-        _bow, _side, _armLeft, _armRight, _pawLeft, _pawRight,
-        _earLeft, _earRight, _footLeft, _footRight, _lookX, _lookY,
-      ];
+    _bow,
+    _side,
+    _armLeft,
+    _armRight,
+    _pawLeft,
+    _pawRight,
+    _earLeft,
+    _earRight,
+    _footLeft,
+    _footRight,
+    _lookX,
+    _lookY,
+  ];
 
   /// Всё в исходную позу разом: сидит прямо, смотрит перед собой. Только
   /// для режима без анимации — живому мишке нужен [_settle].
@@ -355,7 +432,15 @@ class _KitchenSceneState extends State<KitchenScene>
     for (final d in [_bow, _armLeft, _armRight, _pawLeft, _pawRight]) {
       d.value = 0;
     }
-    for (final d in [_side, _earLeft, _earRight, _footLeft, _footRight, _lookX, _lookY]) {
+    for (final d in [
+      _side,
+      _earLeft,
+      _earRight,
+      _footLeft,
+      _footRight,
+      _lookX,
+      _lookY,
+    ]) {
       d.value = 0.5;
     }
     _hearts.value = 0;
@@ -371,28 +456,51 @@ class _KitchenSceneState extends State<KitchenScene>
     for (final d in [_bow, _armLeft, _armRight, _pawLeft, _pawRight]) {
       _to(d, 0, ms);
     }
-    for (final d in [_side, _earLeft, _earRight, _footLeft, _footRight, _lookX, _lookY]) {
+    for (final d in [
+      _side,
+      _earLeft,
+      _earRight,
+      _footLeft,
+      _footRight,
+      _lookX,
+      _lookY,
+    ]) {
       _to(d, 0.5, ms);
     }
     _face(mouth: _Mouth.neutral);
-    if (_eyes != _Eyes.open) _eyesTo(_run, _Eyes.open).catchError((Object _) {});
+    if (_eyes != _Eyes.open) {
+      _eyesTo(_run, _Eyes.open).catchError((Object _) {});
+    }
   }
 
   // --- Мелочи сценариев ---------------------------------------------------
 
   bool _alive(int run) => mounted && !_still && run == _run;
 
+  /// Пауза сценария. Уважает [timeDilation]: при замедленной съёмке
+  /// паузы растягиваются вместе с анимациями, иначе сценарий убегал бы
+  /// вперёд движений.
   Future<void> _wait(int run, int ms, [int spread = 0]) async {
-    await Future<void>.delayed(
-        Duration(milliseconds: ms + (spread == 0 ? 0 : _dice.nextInt(spread))));
+    await _delay(ms + (spread == 0 ? 0 : _dice.nextInt(spread)));
     if (!_alive(run)) throw _Stopped();
   }
 
+  static Future<void> _delay(int ms) =>
+      Future<void>.delayed(Duration(milliseconds: (ms * timeDilation).round()));
+
   /// Перевести [drive] в [to] за [ms]. Не ждёт конца: параллельные
   /// движения складываются из нескольких таких вызовов.
-  void _to(AnimationController drive, double to, int ms,
-      [Curve curve = Curves.easeInOutSine]) {
-    drive.animateTo(to, duration: Duration(milliseconds: ms), curve: curve);
+  void _to(
+    AnimationController drive,
+    double to,
+    int ms, [
+    Curve curve = Curves.easeInOutSine,
+  ]) {
+    drive.animateTo(
+      to,
+      duration: Duration(milliseconds: ms),
+      curve: curve,
+    );
   }
 
   void _face({_Eyes? eyes, _Mouth? mouth}) {
@@ -443,10 +551,12 @@ class _KitchenSceneState extends State<KitchenScene>
         await _blink(run, twice: _dice.nextInt(4) == 0);
 
         if (_dice.nextBool()) {
+          // Взгляд в сторону: 220 мс туда, 260 обратно, синус — без
+          // старта рывком. Заказчик 23.09: «более плавные взгляды».
           final x = _dice.nextBool() ? 0.0 : 1.0;
-          _to(_lookX, x, 170);
+          _to(_lookX, x, 220);
           await _wait(run, 900, 700);
-          _to(_lookX, 0.5, 200);
+          _to(_lookX, 0.5, 260);
           await _wait(run, 600, 500);
         }
 
@@ -476,7 +586,11 @@ class _KitchenSceneState extends State<KitchenScene>
   void _earRest() {
     _earNext?.cancel();
     _earNext = Timer(
-        Duration(milliseconds: 3500 + _dice.nextInt(6000)), _earTwitch);
+      Duration(
+        milliseconds: ((3500 + _dice.nextInt(6000)) * timeDilation).round(),
+      ),
+      _earTwitch,
+    );
   }
 
   Future<void> _earTwitch() async {
@@ -485,15 +599,17 @@ class _KitchenSceneState extends State<KitchenScene>
     final both = _dice.nextInt(5) == 0;
     final twice = _dice.nextBool();
     for (var i = 0; i < (twice ? 2 : 1); i++) {
+      // Вверх 130 мс, вниз 320: заказчик 23.09 — «более плавные движения
+      // ушами». Кривая вверх — синус, а не кубик: без щелчка на старте.
       for (final e in [ear, if (both) ear == _earLeft ? _earRight : _earLeft]) {
-        _to(e, 1, 90, Curves.easeOutCubic);
+        _to(e, 1, 130, Curves.easeOutSine);
       }
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await _delay(140);
       if (!mounted || _still) return;
       for (final e in [ear, if (both) ear == _earLeft ? _earRight : _earLeft]) {
-        _to(e, 0.5, 260);
+        _to(e, 0.5, 320);
       }
-      await Future<void>.delayed(const Duration(milliseconds: 320));
+      await _delay(380);
       if (!mounted || _still) return;
     }
     _earRest();
@@ -502,8 +618,12 @@ class _KitchenSceneState extends State<KitchenScene>
   // --- Еда и эмоции: непрерывные кривые ------------------------------------
 
   /// Прогресс 0…1 между моментами [a] и [b] секунд по кривой [curve].
-  static double _ramp(double t, double a, double b,
-      [Curve curve = Curves.easeInOutSine]) {
+  static double _ramp(
+    double t,
+    double a,
+    double b, [
+    Curve curve = Curves.easeInOutSine,
+  ]) {
     if (t <= a) return 0;
     if (t >= b) return 1;
     return curve.transform((t - a) / (b - a));
@@ -511,7 +631,11 @@ class _KitchenSceneState extends State<KitchenScene>
 
   /// Проиграть кривую [motion] длиной [seconds]. Функция должна
   /// возвращать покой в начале и в конце, тогда стыков нет.
-  Future<void> _play(int run, double seconds, _Motion Function(double) motion) async {
+  Future<void> _play(
+    int run,
+    double seconds,
+    _Motion Function(double) motion,
+  ) async {
     final was = _m;
     setState(() {
       _blendFrom = was.isRest ? null : was;
@@ -548,9 +672,12 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Руки на столе (заказчик 22.09).
   static _Motion _eatMotion(double t) {
     var jaw = 0.0, chew = 0.0, munch = 0.0, bow = 0.0, side = 0.0, lookY = 0.0;
-    // Увидел: взгляд вниз, лапы подобрал; в конце всё обратно.
+    // Увидел: взгляд вниз; в конце обратно.
     lookY += _ramp(t, 0, 0.5);
-    final paws = _ramp(t, 0, 0.6) - _ramp(t, 6.0, 6.7);
+    // Лапы лежат на столе всю еду (заказчик 22.09: «не обязательно руки
+    // подносить ко рту, могут оставаться на столе»; 23.09: «лапки
+    // закрывают скатерть»).
+    const paws = 0.0;
     for (final s in [0.6, 3.5]) {
       // Откусил: рот раскрывается и закрывается по синусу — без резкого
       // старта и стопа, иначе «рот как у робота».
@@ -588,7 +715,8 @@ class _KitchenSceneState extends State<KitchenScene>
   /// похлопывают по столу, ножки болтаются, уши вверх.
   static _Motion _happyMotion(double t) {
     // Разгон: лапы и ножки не дёргаются с первого кадра, а раскачиваются.
-    final env = math.exp(-0.75 * t) * (1 - _ramp(t, 2.3, 2.9)) * _ramp(t, 0, 0.3);
+    final env =
+        math.exp(-0.75 * t) * (1 - _ramp(t, 2.3, 2.9)) * _ramp(t, 0, 0.3);
     final w = 2 * math.pi * 1.6 * t;
     final hop = math.sin(w / 2);
     return _Motion(
@@ -602,22 +730,22 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Голодный покой: посмотрел вниз, на пустой стол, ссутулился, уши
   /// повисли — и отпустило. Одной кривой, глаза меняются под веком.
   static _Motion _hungryMotion(double t) => _Motion(
-        bow: 0.4 * (_ramp(t, 0, 0.9) - _ramp(t, 2.5, 3.4)),
-        lookY: _ramp(t, 0, 0.5) - _ramp(t, 2.5, 3.1),
-        ears: -0.7 * (_ramp(t, 0.3, 1.0) - _ramp(t, 2.5, 3.3)),
-      );
+    bow: 0.4 * (_ramp(t, 0, 0.9) - _ramp(t, 2.5, 3.4)),
+    lookY: _ramp(t, 0, 0.5) - _ramp(t, 2.5, 3.1),
+    ears: -0.7 * (_ramp(t, 0.3, 1.0) - _ramp(t, 2.5, 3.3)),
+  );
 
   /// `emo_love`: голова медленно клонится набок, уши мягко опускаются.
   static _Motion _loveMotion(double t) => _Motion(
-        side: _ramp(t, 0, 1.3) - _ramp(t, 2.7, 3.7),
-        ears: -0.6 * (_ramp(t, 0.1, 1.2) - _ramp(t, 2.7, 3.6)),
-      );
+    side: _ramp(t, 0, 1.3) - _ramp(t, 2.7, 3.7),
+    ears: -0.6 * (_ramp(t, 0.1, 1.2) - _ramp(t, 2.7, 3.6)),
+  );
 
   /// `emo_surprise`: голова отшатнулась, уши торчком, потом отпустило.
   static _Motion _surpriseMotion(double t) => _Motion(
-        bow: -0.5 * (_ramp(t, 0, 0.28, Curves.easeOutBack) - _ramp(t, 1.05, 1.6)),
-        ears: _ramp(t, 0, 0.2, Curves.easeOutCubic) - _ramp(t, 1.1, 1.6),
-      );
+    bow: -0.5 * (_ramp(t, 0, 0.28, Curves.easeOutBack) - _ramp(t, 1.05, 1.6)),
+    ears: _ramp(t, 0, 0.2, Curves.easeOutCubic) - _ramp(t, 1.1, 1.6),
+  );
 
   Future<void> _eat(int run, KitchenMood mood) async {
     try {
@@ -678,11 +806,24 @@ class _KitchenSceneState extends State<KitchenScene>
           final w = constraints.maxWidth;
           final h = constraints.maxHeight;
           return AnimatedBuilder(
-            animation: Listenable.merge([_breath, ..._drives, _lid, _act, _hearts]),
+            animation: Listenable.merge([
+              _breath,
+              ..._drives,
+              _lid,
+              _act,
+              _hearts,
+            ]),
             builder: (context, _) => Stack(
               children: [
                 _foot(w, h, KitchenScene.footLeft, 'foot_left', _footLeft, 1),
-                _foot(w, h, KitchenScene.footRight, 'foot_right', _footRight, -1),
+                _foot(
+                  w,
+                  h,
+                  KitchenScene.footRight,
+                  'foot_right',
+                  _footRight,
+                  -1,
+                ),
                 _tableFront(w, h),
                 // Плечевые доборы: внутренняя половина рукава, неподвижная,
                 // под туловищем. Когда рука взмахивает, у плеча иначе
@@ -697,24 +838,73 @@ class _KitchenSceneState extends State<KitchenScene>
                   h,
                   Stack(
                     children: [
-                      _shoulder(w, h, KitchenScene.sleeveLeft, 'sleeve_left', keepRight: true),
-                      _shoulder(w, h, KitchenScene.sleeveRight, 'sleeve_right', keepRight: false),
+                      _shoulder(
+                        w,
+                        h,
+                        KitchenScene.sleeveLeft,
+                        'sleeve_left',
+                        keepRight: true,
+                      ),
+                      _shoulder(
+                        w,
+                        h,
+                        KitchenScene.sleeveRight,
+                        'sleeve_right',
+                        keepRight: false,
+                      ),
                       // Рука висит от сустава у туловища вниз и наружу:
                       // левая крутится по часовой, правая против.
-                      _arm(w, h, KitchenScene.pawLeft, 'paw_left',
-                          KitchenScene.shoulderLeft, _armLeft, KitchenScene.wristLeft, _pawLeft, 1),
-                      _arm(w, h, KitchenScene.pawRight, 'paw_right',
-                          KitchenScene.shoulderRight, _armRight, KitchenScene.wristRight, _pawRight, -1),
-                      _arm(w, h, KitchenScene.sleeveLeft, 'sleeve_left',
-                          KitchenScene.shoulderLeft, _armLeft, null, null, 1),
-                      _arm(w, h, KitchenScene.sleeveRight, 'sleeve_right',
-                          KitchenScene.shoulderRight, _armRight, null, null, -1),
+                      _arm(
+                        w,
+                        h,
+                        KitchenScene.pawLeft,
+                        'paw_left',
+                        KitchenScene.shoulderLeft,
+                        _armLeft,
+                        KitchenScene.wristLeft,
+                        _pawLeft,
+                        1,
+                      ),
+                      _arm(
+                        w,
+                        h,
+                        KitchenScene.pawRight,
+                        'paw_right',
+                        KitchenScene.shoulderRight,
+                        _armRight,
+                        KitchenScene.wristRight,
+                        _pawRight,
+                        -1,
+                      ),
+                      _arm(
+                        w,
+                        h,
+                        KitchenScene.sleeveLeft,
+                        'sleeve_left',
+                        KitchenScene.shoulderLeft,
+                        _armLeft,
+                        null,
+                        null,
+                        1,
+                      ),
+                      _arm(
+                        w,
+                        h,
+                        KitchenScene.sleeveRight,
+                        'sleeve_right',
+                        KitchenScene.shoulderRight,
+                        _armRight,
+                        null,
+                        null,
+                        -1,
+                      ),
                       _torso(w, h),
                     ],
                   ),
                 ),
                 _head(w, h),
-                if (_hearts.isAnimating || _hearts.value > 0) _heartsLayer(w, h),
+                if (_hearts.isAnimating || _hearts.value > 0)
+                  _heartsLayer(w, h),
               ],
             ),
           );
@@ -729,28 +919,34 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Точка кадра как выравнивание внутри рамки [box]: −1 у левого/верхнего
   /// края, +1 у правого/нижнего. Может выходить за рамку — это нормально.
   Alignment _pivot(Offset point, Rect box) => Alignment(
-        (point.dx - box.left) / box.width * 2 - 1,
-        (point.dy - box.top) / box.height * 2 - 1,
-      );
+    (point.dx - box.left) / box.width * 2 - 1,
+    (point.dy - box.top) / box.height * 2 - 1,
+  );
 
-  Positioned _place(Rect box, double w, double h, Widget child) =>
-      Positioned(
-        left: box.left * w,
-        top: box.top * h,
-        width: box.width * w,
-        height: box.height * h,
-        child: child,
-      );
+  Positioned _place(Rect box, double w, double h, Widget child) => Positioned(
+    left: box.left * w,
+    top: box.top * h,
+    width: box.width * w,
+    height: box.height * h,
+    child: child,
+  );
 
   /// Ножка: качается от колена под кромкой стола.
-  Widget _foot(double w, double h, Rect box, String name,
-      AnimationController swing, double sign) {
+  Widget _foot(
+    double w,
+    double h,
+    Rect box,
+    String name,
+    AnimationController swing,
+    double sign,
+  ) {
     return _place(
       box,
       w,
       h,
       Transform.rotate(
-        angle: sign * KitchenScene.footSwing * ((swing.value - 0.5) * 2 + _m.feet),
+        angle:
+            sign * KitchenScene.footSwing * ((swing.value - 0.5) * 2 + _m.feet),
         alignment: Alignment.topCenter,
         child: _image(name),
       ),
@@ -773,8 +969,12 @@ class _KitchenSceneState extends State<KitchenScene>
           maxHeight: h,
           child: Transform.translate(
             offset: Offset(0, -box.top * h),
-            child: Image.asset(RoomKind.kitchen.asset,
-                width: w, height: h, fit: BoxFit.fill),
+            child: Image.asset(
+              RoomKind.kitchen.asset,
+              width: w,
+              height: h,
+              fit: BoxFit.fill,
+            ),
           ),
         ),
       ),
@@ -823,13 +1023,15 @@ class _KitchenSceneState extends State<KitchenScene>
 
     return Positioned(
       left: box.left * w,
-      top: box.top * h -
+      top:
+          box.top * h -
           KitchenScene.chestSwell * 0.5 * wave * height +
           KitchenScene.bowDrop * bow * height,
       width: width,
       height: height,
       child: Transform.rotate(
-        angle: KitchenScene.bowTilt * bow * 0.3 +
+        angle:
+            KitchenScene.bowTilt * bow * 0.3 +
             KitchenScene.sideTilt * side +
             KitchenScene.breathSway * (wave - 0.5) * 2,
         alignment: neck,
@@ -840,17 +1042,36 @@ class _KitchenSceneState extends State<KitchenScene>
             fit: StackFit.expand,
             children: [
               // Уши внутри головы: наклонилась голова — уехали и уши.
-              // Под каждым — неподвижная копия (добор): когда ухо гнётся,
-              // на его месте открывалась бы стена. Заказчик 22.09: «при
-              // движении ушей видны пробелы, нужно делать доборы».
-              _inHead(width, height, KitchenScene.earLeft, _image('ear_left')),
-              _inHead(width, height, KitchenScene.earRight, _image('ear_right')),
-              _inHead(width, height, KitchenScene.earLeft,
-                  _ear(KitchenScene.earLeft, KitchenScene.assets[2],
-                      KitchenScene.earLeftRoot, KitchenScene.earLeftTip, _earLeft, 1)),
-              _inHead(width, height, KitchenScene.earRight,
-                  _ear(KitchenScene.earRight, KitchenScene.assets[3],
-                      KitchenScene.earRightRoot, KitchenScene.earRightTip, _earRight, -1)),
+              // Лежат под капюшоном: корень спрятан, а голова под ними
+              // целая, за ними — стена комнаты без мишки. Поэтому добор
+              // не нужен; неподвижная копия уха под ухом читалась как
+              // второе ухо (заказчик 23.09: «просто тупо подкладка»).
+              _inHead(
+                width,
+                height,
+                KitchenScene.earLeft,
+                _ear(
+                  KitchenScene.earLeft,
+                  KitchenScene.assets[2],
+                  KitchenScene.earLeftRoot,
+                  KitchenScene.earLeftTip,
+                  _earLeft,
+                  1,
+                ),
+              ),
+              _inHead(
+                width,
+                height,
+                KitchenScene.earRight,
+                _ear(
+                  KitchenScene.earRight,
+                  KitchenScene.assets[3],
+                  KitchenScene.earRightRoot,
+                  KitchenScene.earRightTip,
+                  _earRight,
+                  -1,
+                ),
+              ),
               _image('head'),
               _eyesLayer(width, height, bow),
               _mouthLayer(width, height, bow),
@@ -871,8 +1092,11 @@ class _KitchenSceneState extends State<KitchenScene>
     final base = _pictures[_eyes.asset];
     final closed = _pictures[_Eyes.closed.asset];
     return Positioned(
-      left: (place.left - head.left) / head.width * w + (_lookX.value - 0.5) * 0.06 * width,
-      top: (place.top - head.top) / head.height * h +
+      left:
+          (place.left - head.left) / head.width * w +
+          (_lookX.value - 0.5) * 0.06 * width,
+      top:
+          (place.top - head.top) / head.height * h +
           ((_lookY.value - 0.5) + 0.5 * _m.lookY) * 0.08 * height +
           KitchenScene.bowFace * bow * h,
       width: width,
@@ -896,27 +1120,38 @@ class _KitchenSceneState extends State<KitchenScene>
     final chew = _pictures[_Mouth.chew.asset];
     return Positioned(
       left: (place.left - head.left) / head.width * w,
-      top: (place.top - head.top) / head.height * h + KitchenScene.bowFace * bow * h,
+      top:
+          (place.top - head.top) / head.height * h +
+          KitchenScene.bowFace * bow * h,
       width: place.width / head.width * w,
       height: place.height / head.height * h,
       child: base == null || open == null || chew == null
           ? Image.asset(_mouth.asset, fit: BoxFit.fill)
           : CustomPaint(
               painter: _MouthPainter(
-                  base: base,
-                  open: open,
-                  chew: chew,
-                  jaw: _m.jaw,
-                  chewing: _m.chew,
-                  munch: _m.munch),
+                base: base,
+                open: open,
+                chew: chew,
+                jaw: _m.jaw,
+                chewing: _m.chew,
+                munch: _m.munch,
+              ),
             ),
     );
   }
 
   /// Рукав или лапа: крутится в плече на [lift]; лапа ещё и в запястье.
-  Widget _arm(double w, double h, Rect box, String name, Offset shoulder,
-      AnimationController lift, Offset? wrist, AnimationController? bend,
-      double sign) {
+  Widget _arm(
+    double w,
+    double h,
+    Rect box,
+    String name,
+    Offset shoulder,
+    AnimationController lift,
+    Offset? wrist,
+    AnimationController? bend,
+    double sign,
+  ) {
     // Похлопывание: плюс — левая лапа, минус — правая.
     final pat = (sign > 0 ? _m.pat : -_m.pat).clamp(0.0, 1.0);
     Widget child = _image(name);
@@ -941,16 +1176,29 @@ class _KitchenSceneState extends State<KitchenScene>
 
   /// Ухо: гнётся вдоль своей оси сеткой, как стебель. Ставится в рамку
   /// [box] снаружи — см. [_inHead].
-  Widget _ear(Rect box, String asset, Offset root, Offset tip,
-      AnimationController bend, double sign) {
+  Widget _ear(
+    Rect box,
+    String asset,
+    Offset root,
+    Offset tip,
+    AnimationController bend,
+    double sign,
+  ) {
     final image = _pictures[asset];
     if (image == null) return Image.asset(asset, fit: BoxFit.fill);
     return CustomPaint(
       painter: _EarBend(
         image: image,
-        root: Offset((root.dx - box.left) / box.width, (root.dy - box.top) / box.height),
-        tip: Offset((tip.dx - box.left) / box.width, (tip.dy - box.top) / box.height),
-        angle: sign * KitchenScene.earTwitch * ((bend.value - 0.5) * 2 + _m.ears),
+        root: Offset(
+          (root.dx - box.left) / box.width,
+          (root.dy - box.top) / box.height,
+        ),
+        tip: Offset(
+          (tip.dx - box.left) / box.width,
+          (tip.dy - box.top) / box.height,
+        ),
+        angle:
+            sign * KitchenScene.earTwitch * ((bend.value - 0.5) * 2 + _m.ears),
       ),
     );
   }
@@ -968,8 +1216,13 @@ class _KitchenSceneState extends State<KitchenScene>
   }
 
   /// Плечевой добор: половина рукава со стороны туловища, неподвижная.
-  Widget _shoulder(double w, double h, Rect box, String name,
-      {required bool keepRight}) {
+  Widget _shoulder(
+    double w,
+    double h,
+    Rect box,
+    String name, {
+    required bool keepRight,
+  }) {
     return _place(
       box,
       w,
@@ -1018,21 +1271,29 @@ class _Motion {
   final double munch;
 
   bool get isRest =>
-      bow == 0 && jaw == 0 && chew == 0 && lookY == 0 && paws == 0 &&
-      pat == 0 && side == 0 && ears == 0 && feet == 0 && munch == 0;
+      bow == 0 &&
+      jaw == 0 &&
+      chew == 0 &&
+      lookY == 0 &&
+      paws == 0 &&
+      pat == 0 &&
+      side == 0 &&
+      ears == 0 &&
+      feet == 0 &&
+      munch == 0;
 
   static _Motion lerp(_Motion a, _Motion b, double k) => _Motion(
-        bow: a.bow + (b.bow - a.bow) * k,
-        jaw: a.jaw + (b.jaw - a.jaw) * k,
-        chew: a.chew + (b.chew - a.chew) * k,
-        lookY: a.lookY + (b.lookY - a.lookY) * k,
-        paws: a.paws + (b.paws - a.paws) * k,
-        pat: a.pat + (b.pat - a.pat) * k,
-        side: a.side + (b.side - a.side) * k,
-        ears: a.ears + (b.ears - a.ears) * k,
-        feet: a.feet + (b.feet - a.feet) * k,
-        munch: a.munch + (b.munch - a.munch) * k,
-      );
+    bow: a.bow + (b.bow - a.bow) * k,
+    jaw: a.jaw + (b.jaw - a.jaw) * k,
+    chew: a.chew + (b.chew - a.chew) * k,
+    lookY: a.lookY + (b.lookY - a.lookY) * k,
+    paws: a.paws + (b.paws - a.paws) * k,
+    pat: a.pat + (b.pat - a.pat) * k,
+    side: a.side + (b.side - a.side) * k,
+    ears: a.ears + (b.ears - a.ears) * k,
+    feet: a.feet + (b.feet - a.feet) * k,
+    munch: a.munch + (b.munch - a.munch) * k,
+  );
 
   /// Наклон головы к столу: 0 прямо, 1 у стола, минус — назад.
   final double bow;
@@ -1080,26 +1341,46 @@ class _MouthPainter extends CustomPainter {
     // спрайте стоит на месте.
     final still = Offset.zero & size;
     final zone = still.shift(
-        Offset(0, size.height * 0.10 * chewing.clamp(0.0, 1.0) * munch));
+      Offset(0, size.height * 0.10 * chewing.clamp(0.0, 1.0) * munch),
+    );
     final openness = Curves.easeInOutSine.transform(jaw.clamp(0.0, 1.0));
     final pressed =
-        chewing.clamp(0.0, 1.0) * (0.35 + 0.65 * munch.clamp(0.0, 1.0)) * (1 - openness);
+        chewing.clamp(0.0, 1.0) *
+        (0.35 + 0.65 * munch.clamp(0.0, 1.0)) *
+        (1 - openness);
     final paint = Paint()..filterQuality = FilterQuality.medium;
 
     // Базовая вышивка тает, когда рот открывается или губы сжимаются.
-    canvas.drawImageRect(base, _whole(base), still,
-        paint..color = Color.fromRGBO(0, 0, 0, (1 - math.max<double>(openness, pressed)).clamp(0.0, 1.0)));
+    canvas.drawImageRect(
+      base,
+      _whole(base),
+      still,
+      paint
+        ..color = Color.fromRGBO(
+          0,
+          0,
+          0,
+          (1 - math.max<double>(openness, pressed)).clamp(0.0, 1.0),
+        ),
+    );
     if (pressed > 0) {
-      canvas.drawImageRect(chew, _whole(chew), zone,
-          paint..color = Color.fromRGBO(0, 0, 0, pressed));
+      canvas.drawImageRect(
+        chew,
+        _whole(chew),
+        zone,
+        paint..color = Color.fromRGBO(0, 0, 0, pressed),
+      );
     }
     if (openness > 0) {
       // Верхняя губа на месте, нижняя опускается: масштаб по высоте от верха.
       final height = size.height * (0.3 + 0.7 * openness);
       final top = zone.top + size.height * 0.12;
-      canvas.drawImageRect(open, _whole(open),
-          Rect.fromLTWH(0, top, size.width, height),
-          paint..color = Color.fromRGBO(0, 0, 0, openness));
+      canvas.drawImageRect(
+        open,
+        _whole(open),
+        Rect.fromLTWH(0, top, size.width, height),
+        paint..color = Color.fromRGBO(0, 0, 0, openness),
+      );
     }
   }
 
@@ -1108,7 +1389,10 @@ class _MouthPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MouthPainter old) =>
-      old.jaw != jaw || old.chewing != chewing || old.munch != munch || old.base != base;
+      old.jaw != jaw ||
+      old.chewing != chewing ||
+      old.munch != munch ||
+      old.base != base;
 }
 
 /// Веко-шторка. Голова под глазами — сплошной ворс, а спрайты глаз — одни
@@ -1117,7 +1401,11 @@ class _MouthPainter extends CustomPainter {
 /// мягкий, положение непрерывное — как в спальне: заказчик 22.09 — «не
 /// плавно они закрываются… как будто покадрово».
 class _LidPainter extends CustomPainter {
-  const _LidPainter({required this.base, required this.closed, required this.lid});
+  const _LidPainter({
+    required this.base,
+    required this.closed,
+    required this.lid,
+  });
 
   /// Текущее выражение и закрытые глаза.
   final ui.Image base;
@@ -1127,9 +1415,9 @@ class _LidPainter extends CustomPainter {
   final double lid;
 
   /// Путь века в долях высоты спрайта и ширина мягкого края.
-  static const double lidFrom = 0.05;
-  static const double lidTo = 1.0;
-  static const double feather = 0.18;
+  static const double lidFrom = 0.06;
+  static const double lidTo = 0.96;
+  static const double feather = 0.14;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1146,15 +1434,17 @@ class _LidPainter extends CustomPainter {
     canvas.drawImageRect(base, _whole(base), zone, paint);
     canvas.drawRect(zone, _mask(edge, soft, below: true));
     canvas.restore();
-    // Закрытые — только выше края, и лишь когда веко почти дошло: дуги
-    // закрытых глаз лежат там, где бусины, и появляются под конец.
-    if (lid > 0.55) {
-      canvas.saveLayer(zone, Paint());
-      canvas.drawImageRect(closed, _whole(closed), zone,
-          paint..color = Color.fromRGBO(0, 0, 0, ((lid - 0.55) / 0.45).clamp(0, 1)));
-      canvas.drawRect(zone, _mask(edge, soft, below: false));
-      canvas.restore();
-    }
+    // Закрытые — только выше края: дуга проступает, когда веко до неё
+    // доходит, ровно как в спальне (там та же шторка над зоной глаза).
+    canvas.saveLayer(zone, Paint());
+    canvas.drawImageRect(
+      closed,
+      _whole(closed),
+      zone,
+      paint..color = const Color(0xFF000000),
+    );
+    canvas.drawRect(zone, _mask(edge, soft, below: false));
+    canvas.restore();
   }
 
   Paint _mask(double edge, double soft, {required bool below}) => Paint()
@@ -1184,7 +1474,12 @@ class _HalfClipper extends CustomClipper<Rect> {
 
   @override
   Rect getClip(Size size) => keepRight
-      ? Rect.fromLTWH(size.width * (1 - fraction), 0, size.width * fraction, size.height)
+      ? Rect.fromLTWH(
+          size.width * (1 - fraction),
+          0,
+          size.width * fraction,
+          size.height,
+        )
       : Rect.fromLTWH(0, 0, size.width * fraction, size.height);
 
   @override
@@ -1237,10 +1532,12 @@ class _EarBend extends CustomPainter {
         final d = p - r;
         final cosA = math.cos(a);
         final sinA = math.sin(a);
-        positions.add(Offset(
-          r.dx + d.dx * cosA - d.dy * sinA,
-          r.dy + d.dx * sinA + d.dy * cosA,
-        ));
+        positions.add(
+          Offset(
+            r.dx + d.dx * cosA - d.dy * sinA,
+            r.dy + d.dx * sinA + d.dy * cosA,
+          ),
+        );
         texture.add(Offset(u * image.width, v * image.height));
       }
     }
@@ -1272,8 +1569,7 @@ class _EarBend extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_EarBend old) =>
-      old.angle != angle || old.image != image;
+  bool shouldRepaint(_EarBend old) => old.angle != angle || old.image != image;
 }
 
 /// Три сердечка разного размера всплывают над головой и тают.
@@ -1304,8 +1600,22 @@ class _HeartsPainter extends CustomPainter {
 
   Path _heart(Offset c, double s) {
     final p = Path()..moveTo(c.dx, c.dy + s * 0.45);
-    p.cubicTo(c.dx - s * 0.9, c.dy - s * 0.2, c.dx - s * 0.45, c.dy - s * 0.75, c.dx, c.dy - s * 0.3);
-    p.cubicTo(c.dx + s * 0.45, c.dy - s * 0.75, c.dx + s * 0.9, c.dy - s * 0.2, c.dx, c.dy + s * 0.45);
+    p.cubicTo(
+      c.dx - s * 0.9,
+      c.dy - s * 0.2,
+      c.dx - s * 0.45,
+      c.dy - s * 0.75,
+      c.dx,
+      c.dy - s * 0.3,
+    );
+    p.cubicTo(
+      c.dx + s * 0.45,
+      c.dy - s * 0.75,
+      c.dx + s * 0.9,
+      c.dy - s * 0.2,
+      c.dx,
+      c.dy + s * 0.45,
+    );
     return p..close();
   }
 

@@ -35,3 +35,8 @@ const double? kTestFood = 87;
 /// открывается мишка». Экран цел: выход из аккаунта по-прежнему ведёт
 /// на него. Перед публикацией — `true`.
 const bool kShowSignIn = false;
+
+/// Множитель замедления всех анимаций для покадровой проверки. Задаётся
+/// при сборке: `--dart-define=SLOW_MOTION=8`. В обычной сборке 1.
+const double kSlowMotion =
+    int.fromEnvironment('SLOW_MOTION', defaultValue: 1) * 1.0;

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:rive/rive.dart' show RiveNative;
 
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -44,6 +45,10 @@ Future<void> main() async {
   // Напоминания не обязательны для игры: не поднялись — она работает молча.
   final notifications = await NotificationService.create();
 
+  // Замедленная съёмка для проверки плавности по кадрам: сборка с
+  // --dart-define=SLOW_MOTION=8 идёт в восемь раз медленнее, и моргание в
+  // 90 мс раскладывается на кадры. В обычной сборке множитель 1.
+  timeDilation = kSlowMotion;
   runApp(TeddyTalesApp(boot: boot, notifications: notifications));
 }
 
