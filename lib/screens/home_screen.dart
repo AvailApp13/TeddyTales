@@ -5,6 +5,7 @@ import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
 import '../game/pet_name.dart';
+import '../game/test_stubs.dart';
 import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
@@ -336,16 +337,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(text),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
       );
   }
 
   /// Последнее кормление: по нему мишка на кухне ест и радуется.
   KitchenMeal? _meal;
   int _meals = 0;
+
+  /// Поглаживания (КП 7.6): показатель любви растёт, а мишка на кухне
+  /// отзывается на руку. Счётчик — чтобы сцена увидела каждое касание.
+  int _pets = 0;
+
+  void _petBear() {
+    widget.controller.petBear();
+    setState(() => _pets++);
+  }
 
   /// Открыть кормление с кухни, на нужной вкладке (КП 8.1). Лист
   /// возвращает настроение после еды — и сцена кухни играет её.
@@ -405,6 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRoomChanged: _showRoom,
                   asleep: _asleep,
                   meal: _meal,
+                  pets: _pets,
+                  onPet: _petBear,
                   onPutToBed: _putToBed,
                   onWake: _wake,
                   alarm: _alarm,
@@ -432,60 +441,60 @@ class _HomeScreenState extends State<HomeScreen> {
               // В режиме обустройства его не видно: комната должна быть
               // видна целиком, иначе не разглядеть, что получается.
               if (!_furnishing)
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimens.pagePadding,
-                    8,
-                    AppDimens.pagePadding,
-                    0,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      PetHeader(
-                        profile: profile,
-                        age: age,
-                        onOpenProfile: () => _open(_profileScreen()),
-                      ),
-                      const SizedBox(height: 14),
-                      CareStatsPanel(
-                        stats: state.stats,
-                        stage: state.stage,
-                        onAction: _runAction,
-                      ),
-                      const SizedBox(height: 10),
-                      // Реплика идёт следом за кольцами в одной колонке, а
-                      // не висит на своей высоте поверх них. Раньше высота
-                      // была числом (178), а подписи колец занимают разное
-                      // место: на телефоне с высоким вырезом пузырь ложился
-                      // прямо на «Еда» и «Гигиена» — заказчик 20.09: «здесь
-                      // у нас идут наложения, это никак не катит».
-                      //
-                      // Справа оставлено место под кнопку профиля и лапу.
-                      //
-                      // В спальне реплики нет вовсе: заказчик 22.09 — «во
-                      // время сна они не должны присутствовать, убрать с
-                      // комнаты сон». Нужна ли она там потом и в каком
-                      // виде — решение отдельное.
-                      if (_room != RoomKind.bedroom)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 64),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: PetSpeechBubble(
-                              mood: state.mood,
-                              initiative: widget.controller.initiative,
-                              language: widget.language,
-                              onTap: _runAction,
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimens.pagePadding,
+                      8,
+                      AppDimens.pagePadding,
+                      0,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PetHeader(
+                          profile: profile,
+                          age: age,
+                          onOpenProfile: () => _open(_profileScreen()),
+                        ),
+                        const SizedBox(height: 14),
+                        CareStatsPanel(
+                          stats: state.stats,
+                          stage: state.stage,
+                          onAction: _runAction,
+                        ),
+                        const SizedBox(height: 10),
+                        // Реплика идёт следом за кольцами в одной колонке, а
+                        // не висит на своей высоте поверх них. Раньше высота
+                        // была числом (178), а подписи колец занимают разное
+                        // место: на телефоне с высоким вырезом пузырь ложился
+                        // прямо на «Еда» и «Гигиена» — заказчик 20.09: «здесь
+                        // у нас идут наложения, это никак не катит».
+                        //
+                        // Справа оставлено место под кнопку профиля и лапу.
+                        //
+                        // В спальне реплики нет вовсе: заказчик 22.09 — «во
+                        // время сна они не должны присутствовать, убрать с
+                        // комнаты сон». Нужна ли она там потом и в каком
+                        // виде — решение отдельное.
+                        if (_room != RoomKind.bedroom)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 64),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: PetSpeechBubble(
+                                mood: state.mood,
+                                initiative: widget.controller.initiative,
+                                language: widget.language,
+                                onTap: _runAction,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               // Разделы. Лежат выше всего: разлетевшиеся кружки должны
               // перекрывать и комнату, и кольца показателей.
               if (!_furnishing)
@@ -523,6 +532,19 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 /// Сцена комнаты: питомец и пузырь с репликой.
+/// Покой кухни из настроения мишки. Заглушка `kTestKitchenIdle` на время
+/// испытаний позволяет снять любое настроение без изменения показателей.
+KitchenIdle _kitchenIdle(BearMood mood) {
+  final forced = KitchenIdle.values.where((i) => i.name == kTestKitchenIdle);
+  if (forced.isNotEmpty) return forced.first;
+  return switch (mood) {
+    BearMood.happy => KitchenIdle.happy,
+    BearMood.sad => KitchenIdle.sad,
+    BearMood.hungry => KitchenIdle.hungry,
+    _ => KitchenIdle.normal,
+  };
+}
+
 class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.controller,
@@ -537,6 +559,8 @@ class _RoomScene extends StatelessWidget {
     required this.onRoomChanged,
     required this.asleep,
     required this.meal,
+    required this.pets,
+    required this.onPet,
     required this.onPutToBed,
     required this.onWake,
     required this.alarm,
@@ -573,6 +597,11 @@ class _RoomScene extends StatelessWidget {
 
   /// Последнее кормление — мишка на кухне ест и показывает эмоцию.
   final KitchenMeal? meal;
+
+  /// Сколько раз погладили и что делать при поглаживании: на кухне мишка
+  /// отзывается на руку (`act_pet`).
+  final int pets;
+  final VoidCallback onPet;
   final VoidCallback onWake;
 
   /// Будильник «проснёмся вместе»: на какое время стоит и как поменять.
@@ -635,7 +664,8 @@ class _RoomScene extends StatelessWidget {
             rect: frame.rect,
             child: KitchenScene(
               meal: meal,
-              hungry: controller.state.stats.food < 30,
+              idle: _kitchenIdle(controller.state.mood),
+              pet: pets,
             ),
           ),
         if (room == RoomKind.bedroom) ...[
@@ -664,7 +694,7 @@ class _RoomScene extends StatelessWidget {
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: controller.petBear,
+            onTap: onPet,
           ),
         ),
         // Дальние места — под мишкой: он стоит на трети глубины комнаты,
@@ -936,8 +966,9 @@ class _WakeMenu extends StatelessWidget {
                           color: alarm == null
                               ? AppColors.textSecondary
                               : AppColors.sageDark,
-                          fontWeight:
-                              alarm == null ? FontWeight.w500 : FontWeight.w700,
+                          fontWeight: alarm == null
+                              ? FontWeight.w500
+                              : FontWeight.w700,
                         ),
                       ),
                     ],
@@ -1018,4 +1049,3 @@ class _Pill extends StatelessWidget {
     );
   }
 }
-

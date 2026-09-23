@@ -40,3 +40,7 @@ const bool kShowSignIn = false;
 /// при сборке: `--dart-define=SLOW_MOTION=8`. В обычной сборке 1.
 const double kSlowMotion =
     int.fromEnvironment('SLOW_MOTION', defaultValue: 1) * 1.0;
+
+/// Принудительный покой кухни для съёмки: `--dart-define=KITCHEN_IDLE=sad`
+/// (normal / happy / sad / hungry). Пусто — настроение из показателей.
+const String kTestKitchenIdle = String.fromEnvironment('KITCHEN_IDLE');

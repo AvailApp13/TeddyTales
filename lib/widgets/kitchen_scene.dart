@@ -26,8 +26,14 @@ class KitchenMeal {
   final KitchenMood mood;
 }
 
+/// Покой кухни по показателям: ТЗ аниматора 5.1 — `idle_normal`,
+/// `idle_happy` (уши приподняты, движения живее), `idle_sad` (голова и уши
+/// опущены, вяло), `idle_hungry` (смотрит на пустой стол, грустит).
+enum KitchenIdle { normal, happy, sad, hungry }
+
 /// Живая кухня: мишка за столом дышит, моргает, оглядывается, прядёт
-/// ушами, а когда его покормили — ест и радуется.
+/// ушами, а когда его покормили — ест и радуется. Погладили — жмурится и
+/// тянется к руке (`act_pet`).
 ///
 /// Собрана по памятке спальни (`docs/living-scene.md`), но не из целой
 /// картинки, а из частей: заказчик 22.09 — «разбил по частям, чтобы
@@ -42,13 +48,21 @@ class KitchenMeal {
 /// не нарисованы на голове, а кладутся сверху: так любая пара глаз
 /// сочетается с любым ртом — ТЗ аниматора, раздел 5.9.
 class KitchenScene extends StatefulWidget {
-  const KitchenScene({super.key, this.meal, this.hungry = false});
+  const KitchenScene({
+    super.key,
+    this.meal,
+    this.idle = KitchenIdle.normal,
+    this.pet = 0,
+  });
 
   /// Последнее кормление. Новое — мишка ест и показывает эмоцию.
   final KitchenMeal? meal;
 
-  /// Показатель «Еда» низкий: покой `idle_hungry` — иногда грустит.
-  final bool hungry;
+  /// Покой по показателям: осанка, уши, лицо и темп меняются плавно.
+  final KitchenIdle idle;
+
+  /// Счётчик поглаживаний: вырос — мишка отзывается на руку.
+  final int pet;
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
@@ -284,6 +298,12 @@ class _KitchenSceneState extends State<KitchenScene>
   late final AnimationController _earLeft = _drive(value: 0.5);
   late final AnimationController _earRight = _drive(value: 0.5);
 
+  /// Базовая поза настроения: уши −1…1 через 0.5 и наклон головы.
+  /// Переезжают за 1.2 с при смене показателей — действия и покой
+  /// складываются поверх, поэтому смена настроения не рвёт движение.
+  late final AnimationController _moodEars = _drive(value: 0.5);
+  late final AnimationController _moodBow = _drive(lowerBound: -1);
+
   /// Ножки: качание −1…1 через 0.5.
   late final AnimationController _footLeft = _drive(value: 0.5);
   late final AnimationController _footRight = _drive(value: 0.5);
@@ -400,7 +420,37 @@ class _KitchenSceneState extends State<KitchenScene>
     final meal = widget.meal;
     if (meal != null && meal.id != old.meal?.id && !_still) {
       _eat(++_run, meal.mood);
+      return;
     }
+    if (widget.pet != old.pet && !_still && !_eating) {
+      _petted(++_run);
+      return;
+    }
+    if (widget.idle != old.idle && !_still) _applyIdle();
+  }
+
+  /// Идёт еда: поглаживание в это время не перебивает её.
+  bool _eating = false;
+
+  /// Базовая поза и лицо настроения. Лицо меняется под веком и только в
+  /// покое: во время действия его сменит `_settle` по окончании.
+  void _applyIdle() {
+    final pose = _IdlePose.of(widget.idle);
+    _to(_moodEars, 0.5 + pose.ears / 2, 1200);
+    _to(_moodBow, pose.bow, 1200);
+    if (!_eating) {
+      _eyesTo(_run, pose.eyes, mouth: pose.mouth).catchError((Object _) {});
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final pose = _IdlePose.of(widget.idle);
+    _moodEars.value = 0.5 + pose.ears / 2;
+    _moodBow.value = pose.bow;
+    _eyes = pose.eyes;
+    _mouth = pose.mouth;
   }
 
   @override
@@ -421,6 +471,8 @@ class _KitchenSceneState extends State<KitchenScene>
   List<AnimationController> get _drives => [
     _bow,
     _side,
+    _moodEars,
+    _moodBow,
     _armLeft,
     _armRight,
     _pawLeft,
@@ -451,9 +503,12 @@ class _KitchenSceneState extends State<KitchenScene>
       d.value = 0.5;
     }
     _hearts.value = 0;
+    final pose = _IdlePose.of(widget.idle);
+    _moodEars.value = 0.5 + pose.ears / 2;
+    _moodBow.value = pose.bow;
     setState(() {
-      _eyes = _Eyes.open;
-      _mouth = _Mouth.neutral;
+      _eyes = pose.eyes;
+      _mouth = pose.mouth;
     });
   }
 
@@ -474,10 +529,8 @@ class _KitchenSceneState extends State<KitchenScene>
     ]) {
       _to(d, 0.5, ms);
     }
-    _face(mouth: _Mouth.neutral);
-    if (_eyes != _Eyes.open) {
-      _eyesTo(_run, _Eyes.open).catchError((Object _) {});
-    }
+    final pose = _IdlePose.of(widget.idle);
+    _eyesTo(_run, pose.eyes, mouth: pose.mouth).catchError((Object _) {});
   }
 
   // --- Мелочи сценариев ---------------------------------------------------
@@ -554,10 +607,24 @@ class _KitchenSceneState extends State<KitchenScene>
   Future<void> _idle(int run) async {
     try {
       while (_alive(run)) {
-        await _wait(run, 2200, 1800);
-        await _blink(run, twice: _dice.nextInt(4) == 0);
+        final idle = widget.idle;
+        final lively = idle == KitchenIdle.happy;
+        final dull = idle == KitchenIdle.sad || idle == KitchenIdle.hungry;
+        // Радостный оглядывается чаще, грустный — реже и вяло.
+        await _wait(
+          run,
+          lively ? 1800 : (dull ? 2800 : 2200),
+          lively ? 1400 : 1800,
+        );
+        await _blink(run, twice: !dull && _dice.nextInt(4) == 0);
 
-        if (_dice.nextBool()) {
+        if (dull && _dice.nextInt(3) == 0) {
+          // Грустный: взгляд опускается на стол и медленно возвращается.
+          _to(_lookY, 0.85, 400);
+          await _wait(run, 1400, 900);
+          _to(_lookY, 0.5, 500);
+          await _wait(run, 700, 400);
+        } else if (_dice.nextBool()) {
           // Взгляд в сторону: 220 мс туда, 260 обратно, синус — без
           // старта рывком. Заказчик 23.09: «более плавные взгляды».
           // В сторону, а в трети случаев — вверх искоса (23.09: «или
@@ -572,7 +639,7 @@ class _KitchenSceneState extends State<KitchenScene>
           await _wait(run, 600, 500);
         }
 
-        if (_dice.nextInt(3) == 0) {
+        if (!dull && _dice.nextInt(lively ? 2 : 3) == 0) {
           // Наклонил голову набок — прислушался — и обратно. Медленно:
           // быстрый наклон читается как вздрагивание.
           _to(_side, _dice.nextBool() ? 0.1 : 0.9, 1100);
@@ -581,10 +648,13 @@ class _KitchenSceneState extends State<KitchenScene>
           await _wait(run, 900);
         }
 
-        if (widget.hungry && _dice.nextInt(3) == 0) {
+        if (idle == KitchenIdle.hungry && _dice.nextInt(3) == 0) {
           // Голоден: посмотрел вниз, на пустой стол, и погрустнел.
           _at(run, 450, () => _eyesTo(run, _Eyes.sad, mouth: _Mouth.sad));
-          _at(run, 2350, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+          _at(run, 2350, () {
+            final pose = _IdlePose.of(widget.idle);
+            return _eyesTo(run, pose.eyes, mouth: pose.mouth);
+          });
           await _play(run, 3.4, _hungryMotion);
           await _wait(run, 600);
         }
@@ -597,9 +667,15 @@ class _KitchenSceneState extends State<KitchenScene>
   /// Уши живут своим расписанием, не в ногу с глазами.
   void _earRest() {
     _earNext?.cancel();
+    // Радостный прядёт ушами чаще, грустный — реже.
+    final base = switch (widget.idle) {
+      KitchenIdle.happy => 2500,
+      KitchenIdle.sad || KitchenIdle.hungry => 6000,
+      KitchenIdle.normal => 3500,
+    };
     _earNext = Timer(
       Duration(
-        milliseconds: ((3500 + _dice.nextInt(6000)) * timeDilation).round(),
+        milliseconds: ((base + _dice.nextInt(6000)) * timeDilation).round(),
       ),
       _earTwitch,
     );
@@ -767,6 +843,7 @@ class _KitchenSceneState extends State<KitchenScene>
   );
 
   Future<void> _eat(int run, KitchenMood mood) async {
+    _eating = true;
     try {
       // Покой мог быть прерван на полпути: взгляд в сторону, наклон
       // набок, уши — всё мягко возвращается, пока он замечает еду.
@@ -788,12 +865,45 @@ class _KitchenSceneState extends State<KitchenScene>
           await _surprise(run);
           await _happy(run);
       }
+      _eating = false;
       _settle();
       await _wait(run, 500);
       await _idle(run);
     } on _Stopped {
       // Сценарий сменили.
+    } finally {
+      _eating = false;
     }
+  }
+
+  /// `act_pet`: погладили — уши вверх, голова тянется к руке и клонится
+  /// набок, жмурится от удовольствия; потом отпускает и снова покой.
+  /// Одной кривой, лицо под веком.
+  Future<void> _petted(int run) async {
+    try {
+      _to(_lookX, 0.5, 300);
+      _to(_lookY, 0.5, 300);
+      _at(run, 250, () => _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile));
+      _at(run, 1900, () {
+        final pose = _IdlePose.of(widget.idle);
+        return _eyesTo(run, pose.eyes, mouth: pose.mouth);
+      });
+      await _play(run, 2.6, _petMotion);
+      _settle();
+      await _wait(run, 400);
+      await _idle(run);
+    } on _Stopped {
+      // Сценарий сменили.
+    }
+  }
+
+  static _Motion _petMotion(double t) {
+    final hold = _ramp(t, 0.05, 0.7) - _ramp(t, 1.8, 2.5);
+    return _Motion(
+      ears: _ramp(t, 0, 0.35) - _ramp(t, 1.9, 2.5),
+      side: 0.9 * hold,
+      bow: -0.28 * hold,
+    );
   }
 
   Future<void> _happy(int run) async {
@@ -1029,7 +1139,7 @@ class _KitchenSceneState extends State<KitchenScene>
 
   /// Туловище: наклоняясь к столу, чуть подаётся вперёд вместе с головой.
   Widget _torso(double w, double h) {
-    final bow = _bow.value + _m.bow;
+    final bow = _bow.value + _m.bow + _moodBow.value;
     return _place(
       KitchenScene.torso,
       w,
@@ -1047,7 +1157,7 @@ class _KitchenSceneState extends State<KitchenScene>
   Widget _head(double w, double h) {
     final box = KitchenScene.head;
     final wave = _wave.value;
-    final bow = _bow.value + _m.bow;
+    final bow = _bow.value + _m.bow + _moodBow.value;
     final side = (_side.value - 0.5) * 2 + _m.side;
     final width = box.width * w;
     final height = box.height * h;
@@ -1274,7 +1384,9 @@ class _KitchenSceneState extends State<KitchenScene>
           (tip.dy - box.top) / box.height,
         ),
         angle:
-            sign * KitchenScene.earTwitch * ((bend.value - 0.5) * 2 + _m.ears),
+            sign *
+            KitchenScene.earTwitch *
+            ((bend.value - 0.5) * 2 + _m.ears + (_moodEars.value - 0.5) * 2),
       ),
     );
   }
@@ -1321,6 +1433,31 @@ class _KitchenSceneState extends State<KitchenScene>
       child: CustomPaint(painter: _HeartsPainter(progress: _hearts.value)),
     );
   }
+}
+
+/// Базовая поза покоя по настроению: уши −1…1, наклон головы, лицо.
+class _IdlePose {
+  const _IdlePose(this.ears, this.bow, this.eyes, this.mouth);
+
+  final double ears;
+  final double bow;
+  final _Eyes eyes;
+  final _Mouth mouth;
+
+  static _IdlePose of(KitchenIdle idle) => switch (idle) {
+    KitchenIdle.normal => const _IdlePose(0, 0, _Eyes.open, _Mouth.neutral),
+    // Уши приподняты, голова чуть выше, улыбка (ТЗ: `idle_happy`).
+    KitchenIdle.happy => const _IdlePose(0.35, -0.06, _Eyes.open, _Mouth.smile),
+    // Уши и голова опущены, грустное лицо (ТЗ: `idle_sad`).
+    KitchenIdle.sad => const _IdlePose(-0.6, 0.22, _Eyes.sad, _Mouth.sad),
+    // Голоден: уши чуть вниз, голова чуть ниже; грусть — приступами.
+    KitchenIdle.hungry => const _IdlePose(
+      -0.2,
+      0.08,
+      _Eyes.open,
+      _Mouth.neutral,
+    ),
+  };
 }
 
 /// Сценарий прерван: сцену повёл другой.
