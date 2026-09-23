@@ -148,7 +148,7 @@ class KitchenScene extends StatefulWidget {
   static const Offset earRightTip = Offset(0.58342, 0.44737);
 
   /// На сколько ухо гнётся при вздрагивании — радианы у вершины.
-  static const double earTwitch = 0.22;
+  static const double earTwitch = 0.18;
 
   /// Дыхание — тот же темп, что в спальне: заказчик просил один ритм.
   static const Duration breath = Duration(milliseconds: 4400);
@@ -553,10 +553,15 @@ class _KitchenSceneState extends State<KitchenScene>
         if (_dice.nextBool()) {
           // Взгляд в сторону: 220 мс туда, 260 обратно, синус — без
           // старта рывком. Заказчик 23.09: «более плавные взгляды».
+          // В сторону, а в трети случаев — вверх искоса (23.09: «или
+          // чуть-чуть вверх искоса»).
           final x = _dice.nextBool() ? 0.0 : 1.0;
+          final up = _dice.nextInt(3) == 0;
           _to(_lookX, x, 220);
+          if (up) _to(_lookY, 0.2, 220);
           await _wait(run, 900, 700);
           _to(_lookX, 0.5, 260);
+          if (up) _to(_lookY, 0.5, 260);
           await _wait(run, 600, 500);
         }
 
@@ -599,17 +604,17 @@ class _KitchenSceneState extends State<KitchenScene>
     final both = _dice.nextInt(5) == 0;
     final twice = _dice.nextBool();
     for (var i = 0; i < (twice ? 2 : 1); i++) {
-      // Вверх 130 мс, вниз 320: заказчик 23.09 — «более плавные движения
+      // Вверх 180 мс, вниз 420: заказчик 23.09 — «более плавные движения
       // ушами». Кривая вверх — синус, а не кубик: без щелчка на старте.
       for (final e in [ear, if (both) ear == _earLeft ? _earRight : _earLeft]) {
-        _to(e, 1, 130, Curves.easeOutSine);
+        _to(e, 1, 180, Curves.easeOutSine);
       }
-      await _delay(140);
+      await _delay(190);
       if (!mounted || _still) return;
       for (final e in [ear, if (both) ear == _earLeft ? _earRight : _earLeft]) {
-        _to(e, 0.5, 320);
+        _to(e, 0.5, 420);
       }
-      await _delay(380);
+      await _delay(470);
       if (!mounted || _still) return;
     }
     _earRest();
@@ -1042,10 +1047,29 @@ class _KitchenSceneState extends State<KitchenScene>
             fit: StackFit.expand,
             children: [
               // Уши внутри головы: наклонилась голова — уехали и уши.
-              // Лежат под капюшоном: корень спрятан, а голова под ними
-              // целая, за ними — стена комнаты без мишки. Поэтому добор
-              // не нужен; неподвижная копия уха под ухом читалась как
-              // второе ухо (заказчик 23.09: «просто тупо подкладка»).
+              // Лежат под капюшоном, голова под ними целая, сзади —
+              // стена. Добор — только половина уха со стороны капюшона,
+              // неподвижная: когда ухо гнётся, оно не отходит от
+              // капюшона (23.09: «отходят от капюшона»), а целая копия
+              // читалась вторым ухом со стороны стены.
+              _inHead(
+                width,
+                height,
+                KitchenScene.earLeft,
+                ClipRect(
+                  clipper: const _HalfClipper(keepRight: true, fraction: 0.55),
+                  child: _image('ear_left'),
+                ),
+              ),
+              _inHead(
+                width,
+                height,
+                KitchenScene.earRight,
+                ClipRect(
+                  clipper: const _HalfClipper(keepRight: false, fraction: 0.55),
+                  child: _image('ear_right'),
+                ),
+              ),
               _inHead(
                 width,
                 height,
@@ -1091,20 +1115,30 @@ class _KitchenSceneState extends State<KitchenScene>
     final height = place.height / head.height * h;
     final base = _pictures[_eyes.asset];
     final closed = _pictures[_Eyes.closed.asset];
+    // Бусины стоят на месте, взгляд показывает блик: он уезжает по
+    // бусине в сторону взгляда, а нарисованный на спрайте гаснет.
+    // Заказчик 23.09: «бусинки уходят влево-вправо, а нужно, чтобы стояли
+    // на месте, но появлялся блик».
+    final look = Offset(
+      (_lookX.value - 0.5) * 2,
+      ((_lookY.value - 0.5) * 2 + _m.lookY).clamp(-1.0, 1.0),
+    );
     return Positioned(
-      left:
-          (place.left - head.left) / head.width * w +
-          (_lookX.value - 0.5) * 0.06 * width,
+      left: (place.left - head.left) / head.width * w,
       top:
           (place.top - head.top) / head.height * h +
-          ((_lookY.value - 0.5) + 0.5 * _m.lookY) * 0.08 * height +
           KitchenScene.bowFace * bow * h,
       width: width,
       height: height,
       child: base == null || closed == null
           ? Image.asset(_eyes.asset, fit: BoxFit.fill)
           : CustomPaint(
-              painter: _LidPainter(base: base, closed: closed, lid: _lid.value),
+              painter: _LidPainter(
+                base: base,
+                closed: closed,
+                lid: _lid.value,
+                look: _eyes == _Eyes.open ? look : Offset.zero,
+              ),
             ),
     );
   }
@@ -1405,6 +1439,7 @@ class _LidPainter extends CustomPainter {
     required this.base,
     required this.closed,
     required this.lid,
+    this.look = Offset.zero,
   });
 
   /// Текущее выражение и закрытые глаза.
@@ -1413,6 +1448,18 @@ class _LidPainter extends CustomPainter {
 
   /// 0 — открыто, 1 — закрыто.
   final double lid;
+
+  /// Взгляд −1…1 по осям: блик на бусине уезжает в эту сторону.
+  final Offset look;
+
+  /// Бусины и блик в пикселях спрайта 112 × 52 (обмер `eyes_open.png`):
+  /// центры бусин, где сидит нарисованный блик и его слабый сосед
+  /// справа, на сколько блик может уехать.
+  static const List<Offset> beads = [Offset(23.8, 25.1), Offset(88.1, 25.3)];
+  static const Offset glintAt = Offset(-3.4, -2.7);
+  static const Offset glintTwin = Offset(2.6, -2.6);
+  static const Offset glintTravel = Offset(3.2, 2.2);
+  static const Size sprite = Size(112, 52);
 
   /// Путь века в долях высоты спрайта и ширина мягкого края.
   static const double lidFrom = 0.06;
@@ -1425,6 +1472,7 @@ class _LidPainter extends CustomPainter {
     final paint = Paint()..filterQuality = FilterQuality.medium;
     if (lid <= 0) {
       canvas.drawImageRect(base, _whole(base), zone, paint);
+      _glint(canvas, size);
       return;
     }
     final edge = size.height * (lidFrom + (lidTo - lidFrom) * lid);
@@ -1432,6 +1480,7 @@ class _LidPainter extends CustomPainter {
     // Открытые глаза — только ниже края века.
     canvas.saveLayer(zone, Paint());
     canvas.drawImageRect(base, _whole(base), zone, paint);
+    _glint(canvas, size);
     canvas.drawRect(zone, _mask(edge, soft, below: true));
     canvas.restore();
     // Закрытые — только выше края: дуга проступает, когда веко до неё
@@ -1445,6 +1494,40 @@ class _LidPainter extends CustomPainter {
     );
     canvas.drawRect(zone, _mask(edge, soft, below: false));
     canvas.restore();
+  }
+
+  /// Блик взгляда: нарисованный блик гаснет под тёмным пятном цвета
+  /// бусины, а такой же блик рисуется сдвинутым в сторону взгляда. Сила
+  /// — по длине взгляда, так что в покое не рисуется ничего.
+  void _glint(Canvas canvas, Size size) {
+    final k = Curves.easeInOutSine.transform(look.distance.clamp(0.0, 1.0));
+    if (k <= 0) return;
+    final sx = size.width / sprite.width;
+    final sy = size.height / sprite.height;
+    Offset at(Offset bead, Offset d) =>
+        Offset((bead.dx + d.dx) * sx, (bead.dy + d.dy) * sy);
+    final shift = Offset(look.dx * glintTravel.dx, look.dy * glintTravel.dy);
+    final cover = Paint()
+      ..color = Color.fromRGBO(22, 16, 14, k)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.6 * sx);
+    final bright = Paint()
+      ..color = Color.fromRGBO(255, 252, 248, 0.95 * k)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.35 * sx);
+    final faint = Paint()
+      ..color = Color.fromRGBO(255, 252, 248, 0.55 * k)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.35 * sx);
+    for (final bead in beads) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: at(bead, const Offset(-0.4, -2.6)),
+          width: 11 * sx,
+          height: 6 * sy,
+        ),
+        cover,
+      );
+      canvas.drawCircle(at(bead, glintAt + shift), 1.5 * sx, bright);
+      canvas.drawCircle(at(bead, glintTwin + shift), 1.1 * sx, faint);
+    }
   }
 
   Paint _mask(double edge, double soft, {required bool below}) => Paint()
@@ -1462,7 +1545,10 @@ class _LidPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LidPainter old) =>
-      old.lid != lid || old.base != base || old.closed != closed;
+      old.lid != lid ||
+      old.base != base ||
+      old.closed != closed ||
+      old.look != look;
 }
 
 /// Оставляет [fraction] ширины с правого или левого края.
