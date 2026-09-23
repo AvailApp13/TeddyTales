@@ -26,8 +26,10 @@ import { repoRoot, childrenOf } from './rig.mjs';
 
 const PROPORTIONS = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions.json'), 'utf8'));
 
-export const AB = { w: 1024, h: 1024, figureHeight: 880, groundY: 980 };
-const SCALE = AB.figureHeight; // 1.0 роста без капюшона = 880 px артборда
+// figureHeight: рост без капюшона; с капюшоном фигура на 21% выше и должна
+// влезать в 1024 — 800 px оставляют макушке запас в 13 px.
+export const AB = { w: 1024, h: 1024, figureHeight: 800, groundY: 985 };
+const SCALE = AB.figureHeight; // 1.0 роста без капюшона = 800 px артборда
 
 /** Часть сетки -> мировые координаты артборда. */
 function gridWorld(name) {
