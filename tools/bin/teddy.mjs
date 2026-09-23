@@ -5,6 +5,7 @@ import { loadRig, renderTree, artistLayers, repoRoot, rigPath } from '../lib/rig
 import { extractLayerNames, checkLayers, formatReport } from '../lib/check_layers.mjs';
 import { generateDartContract, generateLabSpec } from '../lib/gen_dart.mjs';
 import { generateRiveProject, loadCatalog } from '../lib/gen_rml.mjs';
+import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
 import { mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { serveLab } from '../lib/serve.mjs';
@@ -25,6 +26,11 @@ const USAGE = `teddy - TeddyTales bear rig workbench
   teddy build:riv                gen:rml -> rive --verify -> rive inspect -> rive --once -> app/assets/rive/bear.riv
   teddy doctor                   validate the spec and report what is still blocked
   teddy lab [--port 4321]        serve the local Rive lab
+
+  teddy mcp:ping [--url U]       connect to the Rive Editor MCP server and print server info
+  teddy mcp:tools [--url U]      list the editor's tools
+  teddy mcp:call <tool> [json]   call one tool, e.g. teddy mcp:call get_hierarchy '{}'
+                                 URL defaults to $RIVE_MCP_URL or http://127.0.0.1:9791/mcp
 `;
 
 const args = process.argv.slice(2);
@@ -54,6 +60,12 @@ function main() {
       return cmdDoctor();
     case 'lab':
       return cmdLab();
+    case 'mcp:ping':
+      return cmdMcp('ping');
+    case 'mcp:tools':
+      return cmdMcp('tools');
+    case 'mcp:call':
+      return cmdMcp('call');
     case undefined:
     case '-h':
     case '--help':
@@ -259,6 +271,38 @@ function cmdDoctor() {
 
   process.stdout.write(lines.join('\n') + '\n');
   return 0;
+}
+
+async function cmdMcp(action) {
+  const client = new RiveMcpClient({ url: flag('url', undefined) });
+  try {
+    const info = await client.initialize();
+    if (action === 'ping') {
+      process.stdout.write(`Connected: ${client.url}\n`);
+      process.stdout.write(JSON.stringify(info, null, 2) + '\n');
+      return 0;
+    }
+    if (action === 'tools') {
+      const tools = await client.listTools();
+      for (const tool of tools) {
+        process.stdout.write(`${tool.name}\n    ${(tool.description ?? '').split('\n')[0]}\n`);
+      }
+      process.stderr.write(`\n${tools.length} tools\n`);
+      return 0;
+    }
+    const name = args[1];
+    if (!name) {
+      process.stderr.write('teddy mcp:call <tool> [json-arguments]\n');
+      return 1;
+    }
+    const toolArgs = args[2] && !args[2].startsWith('--') ? JSON.parse(args[2]) : {};
+    const result = await client.callTool(name, toolArgs);
+    process.stdout.write(toolText(result) + '\n');
+    return 0;
+  } catch (error) {
+    process.stderr.write(`${error.message}\n`);
+    return 1;
+  }
 }
 
 async function cmdLab() {
