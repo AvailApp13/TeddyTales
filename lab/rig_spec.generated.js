@@ -687,6 +687,48 @@ export const rigSpec = {
       "parent": "scarf_2",
       "artistLayer": true,
       "optional": true
+    },
+    {
+      "name": "root_leg_left",
+      "kind": "bone",
+      "parent": "root",
+      "artistLayer": false,
+      "optional": false
+    },
+    {
+      "name": "leg_left",
+      "kind": "art",
+      "parent": "root_leg_left",
+      "artistLayer": true,
+      "optional": false
+    },
+    {
+      "name": "foot_left",
+      "kind": "art",
+      "parent": "leg_left",
+      "artistLayer": true,
+      "optional": false
+    },
+    {
+      "name": "root_leg_right",
+      "kind": "bone",
+      "parent": "root",
+      "artistLayer": false,
+      "optional": false
+    },
+    {
+      "name": "leg_right",
+      "kind": "art",
+      "parent": "root_leg_right",
+      "artistLayer": true,
+      "optional": false
+    },
+    {
+      "name": "foot_right",
+      "kind": "art",
+      "parent": "leg_right",
+      "artistLayer": true,
+      "optional": false
     }
   ],
   "simulation": {

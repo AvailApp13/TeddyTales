@@ -73,6 +73,24 @@
       "topic": "пол героя",
       "text": "КП обещает 2 героев (мальчик/девочка). Заведён отдельный артборд на героя, а не enum внутри одного: наборы слоёв различаются, и один артборд с двумя телами утяжелил бы .riv на каждом кадре.",
       "status": "derived"
+    },
+    {
+      "id": "D9",
+      "topic": "ноги",
+      "text": "В PDF-скелете (Flare teddy) ног не было — тот персонаж стоял по пояс. Наш референс стоит на ногах, и КП 4.4 обещает ползание и ходьбу. Добавлены root_leg_left/right (кости под root) с leg_* и foot_*.",
+      "status": "derived"
+    },
+    {
+      "id": "D10",
+      "topic": "глаза плюшевого мишки",
+      "text": "У референса глаза — чёрные бусины без белка. В риге eye_* остаётся группой (место под белок, если художник решит рисовать мультяшно), pupil_* — сама бусина, pupil_light_* — блик на ней. Размеры в rig/bear_proportions.json.",
+      "status": "derived"
+    },
+    {
+      "id": "D11",
+      "topic": "источник пропорций",
+      "text": "Раскладка плейсхолдеров и длины костей берутся из rig/bear_proportions.json — размерной сетки, снятой с фото handoff/reference/bear_boy_front.jpg. Части под одеждой помечены как оценка и уточняются по фото без одежды.",
+      "status": "derived"
     }
   ],
   "artboard": {
@@ -537,6 +555,54 @@
       "origin": "tz:3.5",
       "artistLayer": true,
       "optional": true
+    },
+    {
+      "name": "root_leg_left",
+      "kind": "bone",
+      "parent": "root",
+      "status": "derived",
+      "origin": "reference+kp:4.4",
+      "artistLayer": false
+    },
+    {
+      "name": "leg_left",
+      "kind": "art",
+      "parent": "root_leg_left",
+      "status": "derived",
+      "origin": "reference",
+      "artistLayer": true
+    },
+    {
+      "name": "foot_left",
+      "kind": "art",
+      "parent": "leg_left",
+      "status": "derived",
+      "origin": "reference",
+      "artistLayer": true
+    },
+    {
+      "name": "root_leg_right",
+      "kind": "bone",
+      "parent": "root",
+      "status": "derived",
+      "origin": "reference+kp:4.4",
+      "artistLayer": false
+    },
+    {
+      "name": "leg_right",
+      "kind": "art",
+      "parent": "root_leg_right",
+      "status": "derived",
+      "origin": "reference",
+      "artistLayer": true
+    },
+    {
+      "name": "foot_right",
+      "kind": "art",
+      "parent": "leg_right",
+      "status": "derived",
+      "origin": "reference",
+      "artistLayer": true
     }
   ],
   "viewModel": {
@@ -899,7 +965,8 @@
       "name": "@rive-app/webgl2",
       "version": "2.42.2"
     },
-    "animationCatalog": "rig/animation_catalog.json"
+    "animationCatalog": "rig/animation_catalog.json",
+    "proportions": "rig/bear_proportions.json"
   },
   "enums": {
     "stage": {

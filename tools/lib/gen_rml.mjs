@@ -17,78 +17,131 @@ import { repoRoot, childrenOf } from './rig.mjs';
 
 // ------------------------------------------------------------ раскладка манекена
 //
-// Экран 1024x1024, мишка анфас, нейтральная поза (как в брифе художнику).
-// Для потомков кости координаты ЛОКАЛЬНЫЕ: x — вдоль кости, y — вправо от неё.
-// Для root и root_body (направлены вверх) local = (parentTipY - screenY, screenX - parentTipX).
+// Мировые координаты (артборд 1024x1024) считаются из rig/bear_proportions.json —
+// размерной сетки, снятой с фото мишки. Локальные координаты для RML выводятся
+// из мировых с учётом поворота родительской кости, поэтому здесь нет ни одного
+// «подобранного» числа.
 
-const ART = {
-  // name: { local: [x, y], size: [w, h], color, opacity }
-  body:        { local: [-280, 0],  size: [300, 340], color: 'FFC9A57C' },
-  body_base:   { local: [-420, 0],  size: [260, 120], color: 'FFB8946C' },
-  head:        { local: [-20, 0],   size: [280, 260], color: 'FFC9A57C' },
-  head_shadow: { local: [-140, 0],  size: [240, 60],  color: 'FF000000', opacity: 0.15 },
 
-  ear_left:        { local: [120, -112], size: [90, 90], color: 'FFC9A57C' },
-  ear_right:       { local: [120, 112],  size: [90, 90], color: 'FFC9A57C' },
-  ear_in_left:     { local: [0, 0],      size: [50, 50], color: 'FFE8B7A3' },
-  ear_in_right:    { local: [0, 0],      size: [50, 50], color: 'FFE8B7A3' },
-  ear_light_left:  { local: [12, -10],   size: [20, 14], color: 'FFFFFFFF', opacity: 0.5 },
-  ear_light_right: { local: [12, 10],    size: [20, 14], color: 'FFFFFFFF', opacity: 0.5 },
 
-  ctrl_face:          { local: [-20, 0] },
-  ctrl_eyes:          { local: [20, 0] },
-  ctrl_pupils:        { local: [0, 0] },
-  ctrl_mouth:         { local: [-55, 0] },
-  ctrl_nose:          { local: [-25, 0] },
-  ctrl_eyebrow_left:  { local: [50, -42] },
-  ctrl_eyebrow_right: { local: [50, 42] },
+const PROPORTIONS = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions.json'), 'utf8'));
 
-  eye_left:            { local: [0, -42],  size: [44, 44], color: 'FFFFFFFF' },
-  eye_right:           { local: [0, 42],   size: [44, 44], color: 'FFFFFFFF' },
-  pupil_left:          { local: [0, -42],  size: [22, 22], color: 'FF2B1E16' },
-  pupil_right:         { local: [0, 42],   size: [22, 22], color: 'FF2B1E16' },
-  pupil_light_left:    { local: [4, -4],   size: [8, 8],   color: 'FFFFFFFF' },
-  pupil_light_right:   { local: [4, -4],   size: [8, 8],   color: 'FFFFFFFF' },
-  eyelid_top_left:     { local: [22, 0],   size: [48, 14], color: 'FFC9A57C' },
-  eyelid_top_right:    { local: [22, 0],   size: [48, 14], color: 'FFC9A57C' },
-  eyelid_bottom_left:  { local: [-22, 0],  size: [48, 10], color: 'FFC9A57C' },
-  eyelid_bottom_right: { local: [-22, 0],  size: [48, 10], color: 'FFC9A57C' },
-  eyebrow_left:        { local: [0, 0],    size: [50, 12], color: 'FF8A6A48' },
-  eyebrow_right:       { local: [0, 0],    size: [50, 12], color: 'FF8A6A48' },
+const AB = { w: 1024, h: 1024, figureHeight: 880, groundY: 980 };
+const SCALE = AB.figureHeight; // 1.0 роста без капюшона = 880 px артборда
 
-  nose:   { local: [0, 0],  size: [46, 32], color: 'FF3B2A22' },
-  mouth:  { local: [0, 0],  size: [70, 30], color: 'FF5A2E2E' },
-  teeth:  { local: [6, 0],  size: [40, 10], color: 'FFFFFFFF' },
-  tongue: { local: [-6, 0], size: [30, 14], color: 'FFE07A8A' },
-  lips:   { local: [0, 0],  size: [70, 8],  color: 'FF3B2A22' },
+/** Часть сетки -> мировые координаты артборда. */
+function gridWorld(name) {
+  const part = PROPORTIONS.parts[name];
+  if (!part) return null;
+  return {
+    x: AB.w / 2 + part.x * SCALE,
+    y: AB.groundY - part.y * SCALE,
+    w: part.w * SCALE,
+    h: part.h * SCALE,
+  };
+}
 
-  scarf_1: { local: [-150, 0], size: [200, 40], color: 'FFD9534F' },
-  scarf_2: { local: [-18, 0],  size: [180, 36], color: 'FFC9443F' },
-  scarf_3: { local: [-18, 0],  size: [160, 32], color: 'FFB9342F' },
+const G = new Proxy({}, { get: (_, name) => gridWorld(name) });
+const off = (base, dx, dy, w, h) => base && { x: base.x + dx, y: base.y + dy, w, h };
 
-  forearm_left:        { local: [0, 0],    size: [70, 110], color: 'FFC9A57C' },
-  forearm_light_left:  { local: [-10, -12], size: [30, 60], color: 'FFFFFFFF', opacity: 0.35 },
-  hand_left:           { local: [80, 0],   size: [70, 70],  color: 'FFB8946C' },
-  hand_light_left:     { local: [-8, -8],  size: [30, 30],  color: 'FFFFFFFF', opacity: 0.35 },
-  finger_1_nail_left:  { local: [30, -18], size: [14, 14],  color: 'FF8A6A48' },
-  finger_2_nail_left:  { local: [34, 0],   size: [14, 14],  color: 'FF8A6A48' },
-  finger_3_nail_left:  { local: [30, 18],  size: [14, 14],  color: 'FF8A6A48' },
-  forearm_right:       { local: [0, 0],    size: [70, 110], color: 'FFC9A57C' },
-  forearm_light_right: { local: [-10, 12], size: [30, 60],  color: 'FFFFFFFF', opacity: 0.35 },
-  hand_right:          { local: [80, 0],   size: [70, 70],  color: 'FFB8946C' },
-  hand_light_right:    { local: [-8, 8],   size: [30, 30],  color: 'FFFFFFFF', opacity: 0.35 },
-  finger_1_nail_right: { local: [30, 18],  size: [14, 14],  color: 'FF8A6A48' },
-  finger_2_nail_right: { local: [34, 0],   size: [14, 14],  color: 'FF8A6A48' },
-  finger_3_nail_right: { local: [30, -18], size: [14, 14],  color: 'FF8A6A48' },
+/**
+ * Мировая раскладка каждого узла спеки: центр и размер плейсхолдера.
+ * Узлы, которых нет на фото напрямую (ctrl_*, зрачки, веки, блики),
+ * выводятся из соседей по простым правилам, записанным тут же.
+ */
+function worldLayout() {
+  const eyeR = G.eye_left.w / 2;
+  const L = {
+    body: G.body, body_base: G.body_base, head: G.head,
+    head_shadow: off(G.head, 0, G.head.h * 0.42, G.head.w * 0.8, G.head.h * 0.18),
+
+    ear_left: G.ear_left, ear_right: G.ear_right,
+    ear_in_left: off(G.ear_left, 0, 2, G.ear_left.w * 0.55, G.ear_left.h * 0.55),
+    ear_in_right: off(G.ear_right, 0, 2, G.ear_right.w * 0.55, G.ear_right.h * 0.55),
+    ear_light_left: off(G.ear_left, -6, -8, 12, 8),
+    ear_light_right: off(G.ear_right, 6, -8, 12, 8),
+
+    ctrl_face: off(G.head, 0, G.head.h * 0.08, 0, 0),
+    ctrl_eyes: { x: (G.eye_left.x + G.eye_right.x) / 2, y: G.eye_left.y, w: 0, h: 0 },
+    ctrl_pupils: { x: (G.eye_left.x + G.eye_right.x) / 2, y: G.eye_left.y, w: 0, h: 0 },
+    ctrl_mouth: off(G.mouth, 0, 0, 0, 0),
+    ctrl_nose: off(G.nose, 0, 0, 0, 0),
+    ctrl_eyebrow_left: off(G.eyebrow_left, 0, 0, 0, 0),
+    ctrl_eyebrow_right: off(G.eyebrow_right, 0, 0, 0, 0),
+
+    // Глаза плюшевого мишки — бусины: eye — место под белок (у плюша его нет),
+    // pupil — сама бусина, pupil_light — блик.
+    eye_left: off(G.eye_left, 0, 0, eyeR * 2.6, eyeR * 2.6),
+    eye_right: off(G.eye_right, 0, 0, eyeR * 2.6, eyeR * 2.6),
+    pupil_left: G.eye_left, pupil_right: G.eye_right,
+    pupil_light_left: off(G.eye_left, -eyeR * 0.35, -eyeR * 0.35, eyeR * 0.7, eyeR * 0.7),
+    pupil_light_right: off(G.eye_right, -eyeR * 0.35, -eyeR * 0.35, eyeR * 0.7, eyeR * 0.7),
+    eyelid_top_left: off(G.eye_left, 0, -eyeR * 1.1, eyeR * 2.8, eyeR * 0.9),
+    eyelid_top_right: off(G.eye_right, 0, -eyeR * 1.1, eyeR * 2.8, eyeR * 0.9),
+    eyelid_bottom_left: off(G.eye_left, 0, eyeR * 1.1, eyeR * 2.8, eyeR * 0.7),
+    eyelid_bottom_right: off(G.eye_right, 0, eyeR * 1.1, eyeR * 2.8, eyeR * 0.7),
+    eyebrow_left: G.eyebrow_left, eyebrow_right: G.eyebrow_right,
+
+    nose: G.nose, mouth: G.mouth,
+    teeth: off(G.mouth, 0, -G.mouth.h * 0.2, G.mouth.w * 0.7, G.mouth.h * 0.3),
+    tongue: off(G.mouth, 0, G.mouth.h * 0.2, G.mouth.w * 0.5, G.mouth.h * 0.4),
+    lips: off(G.mouth, 0, 0, G.mouth.w, G.mouth.h * 0.25),
+
+    scarf_1: off(G.body, 0, -G.body.h * 0.42, G.body.w * 0.75, 34),
+    scarf_2: off(G.body, 0, -G.body.h * 0.42 + 16, G.body.w * 0.68, 30),
+    scarf_3: off(G.body, 0, -G.body.h * 0.42 + 30, G.body.w * 0.6, 26),
+
+    forearm_left: mid(G.shoulder_left, G.hand_left, 60, 100),
+    forearm_light_left: mid(G.shoulder_left, G.hand_left, 24, 50),
+    hand_left: G.hand_left, hand_light_left: off(G.hand_left, -6, -6, G.hand_left.w * 0.4, G.hand_left.h * 0.4),
+    finger_1_nail_left: off(G.hand_left, -G.hand_left.w * 0.3, -G.hand_left.h * 0.35, 12, 12),
+    finger_2_nail_left: off(G.hand_left, -G.hand_left.w * 0.42, 0, 12, 12),
+    finger_3_nail_left: off(G.hand_left, -G.hand_left.w * 0.3, G.hand_left.h * 0.35, 12, 12),
+    forearm_right: mid(G.shoulder_right, G.hand_right, 60, 100),
+    forearm_light_right: mid(G.shoulder_right, G.hand_right, 24, 50),
+    hand_right: G.hand_right, hand_light_right: off(G.hand_right, 6, -6, G.hand_right.w * 0.4, G.hand_right.h * 0.4),
+    finger_1_nail_right: off(G.hand_right, G.hand_right.w * 0.3, -G.hand_right.h * 0.35, 12, 12),
+    finger_2_nail_right: off(G.hand_right, G.hand_right.w * 0.42, 0, 12, 12),
+    finger_3_nail_right: off(G.hand_right, G.hand_right.w * 0.3, G.hand_right.h * 0.35, 12, 12),
+
+    leg_left: G.leg_left, leg_right: G.leg_right, foot_left: G.foot_left, foot_right: G.foot_right,
+  };
+  return L;
+}
+
+function mid(a, b, w, h) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, w, h };
+}
+
+/**
+ * Кости: точка начала, направление и длина — из суставов сетки.
+ * Угол — мировой (радианы, от оси +x экрана, по часовой), как рисует Rive.
+ */
+function boneLayout() {
+  const hips = { x: (G.hip_left.x + G.hip_right.x) / 2, y: (G.hip_left.y + G.hip_right.y) / 2 };
+  const chest = { x: G.body.x, y: G.body.y - G.body.h * 0.2 };
+  const headC = { x: G.head.x, y: G.head.y };
+  const seg = (from, to) => ({ x: from.x, y: from.y, length: Math.hypot(to.x - from.x, to.y - from.y), angle: Math.atan2(to.y - from.y, to.x - from.x) });
+  return {
+    root: seg(hips, chest),                         // таз -> грудь, вверх
+    root_body: seg(chest, headC),                   // грудь -> центр головы
+    root_arm_left: seg(G.shoulder_left, G.hand_left),
+    root_arm_right: seg(G.shoulder_right, G.hand_right),
+    root_leg_left: seg(G.hip_left, G.foot_left),
+    root_leg_right: seg(G.hip_right, G.foot_right),
+  };
+}
+
+const PLACEHOLDER_COLOR = {
+  body: 'FFC9A57C', body_base: 'FFB8946C', head: 'FFC9A57C', head_shadow: 'FF000000',
+  ear: 'FFC9A57C', ear_in: 'FFE8B7A3', ear_light: 'FFFFFFFF',
+  eye: 'FFEDE3D3', pupil: 'FF1A1411', pupil_light: 'FFFFFFFF', eyelid_top: 'FFC9A57C', eyelid_bottom: 'FFC9A57C', eyebrow: 'FF8A6A48',
+  nose: 'FF3B2A22', mouth: 'FF5A2E2E', teeth: 'FFFFFFFF', tongue: 'FFE07A8A', lips: 'FF3B2A22',
+  scarf_1: 'FFD9534F', scarf_2: 'FFC9443F', scarf_3: 'FFB9342F',
+  forearm: 'FFC9A57C', forearm_light: 'FFFFFFFF', hand: 'FFB8946C', hand_light: 'FFFFFFFF', finger_nail: 'FF8A6A48',
+  leg: 'FFC9A57C', foot: 'FFB8946C',
 };
-
-const BONES = {
-  // rotation — радианы относительно родительской кости; root — от оси +x экрана.
-  root:           { x: 512, y: 780, length: 240, rotation: -Math.PI / 2 },
-  root_body:      { length: 260, rotation: 0 },
-  root_arm_left:  { length: 130, rotation: -2.3 },
-  root_arm_right: { length: 130, rotation: 2.3 },
-};
+const PLACEHOLDER_OPACITY = { head_shadow: 0.15, ear_light: 0.5, forearm_light: 0.35, hand_light: 0.35 };
 
 /** Отличия героев. Пока только цвет акцентов, чтобы артборды было видно порознь. */
 const HERO_TINT = {
@@ -212,8 +265,8 @@ function buildArtboard({ rig, catalog, hero, name, ids, enums, vm, path, index }
   const animIds = {}; // clip name -> LinearAnimation id
   const nameOf = (n) => n;
 
-  const W = rig.artboard.width;
-  const H = rig.artboard.height;
+  const W = AB.w;
+  const H = AB.h;
   const stageX = index * (W + 200);
 
   emit(1, `<!-- ============ ${name} (${hero}) ============ -->`);
@@ -228,70 +281,104 @@ function buildArtboard({ rig, catalog, hero, name, ids, enums, vm, path, index }
   emit(2, `</Shape>`);
 
   // ---- скелет --------------------------------------------------------------
+  //
+  // Каждый узел знает свою мировую позицию и мировой угол. Кость наследует
+  // угол от геометрии (плечо -> лапа), Node — от родителя. Локальные x/y для
+  // RML — это мировое смещение, повёрнутое на минус угол родителя. Art- и
+  // control-узлы получают rotation = -угол родителя, так что внутри них всё
+  // остаётся в экранной ориентации, а анимации крутят их относительно этой
+  // базы (см. baseRotation).
+  const layout = worldLayout();
+  const bones = boneLayout();
+  const baseRotation = {};
+  const rot = (p, a) => ({ x: p.x * Math.cos(a) - p.y * Math.sin(a), y: p.x * Math.sin(a) + p.y * Math.cos(a) });
+  const toLocal = (world, origin, originAngle) => rot({ x: world.x - origin.x, y: world.y - origin.y }, -originAngle);
+
   const root = rig.nodes.find((n) => n.parent === null);
-  const walk = (node, depth) => {
+  // frame: { origin, angle } — система координат, в которой живут дети узла
+  // Первый брат рисуется сверху. Руки — поверх торса, торс — поверх ног:
+  // так у плюшевого мишки и выглядит, а спека порядок не задаёт.
+  const DRAW_PRIORITY = { root_arm_left: 0, root_arm_right: 0, root_body: 1, root_leg_left: 2, root_leg_right: 2 };
+  const ordered = (list) => [...list].sort((a, b) => (DRAW_PRIORITY[a.name] ?? 1) - (DRAW_PRIORITY[b.name] ?? 1));
+
+  const walk = (node, depth, frame) => {
     const id = ids.take();
     nodeIds[node.name] = id;
-    const kids = childrenOf(rig, node.name);
-    const art = ART[node.name] ?? { local: [0, 0] };
-    const [lx, ly] = art.local;
+    const kids = ordered(childrenOf(rig, node.name));
+    const slots = catalog.outfitSlots.slots.filter((s) => s.boundTo === node.name);
 
     if (node.kind === 'bone') {
-      const b = BONES[node.name] ?? { length: 40, rotation: 0 };
+      const b = bones[node.name];
+      if (!b) throw new Error(`gen:rml: нет геометрии кости ${node.name} в boneLayout()`);
+      const tip = { x: b.x + Math.cos(b.angle) * b.length, y: b.y + Math.sin(b.angle) * b.length };
+      // Проверено экспериментом (docs/rive-cli-workflow.md, «Система координат
+      // кости»): Node внутри кости считается от её НАЧАЛА, дочерняя Bone
+      // стартует в КОНЧИКЕ родителя.
+      const nodeFrame = { origin: { x: b.x, y: b.y }, angle: b.angle };
+      const boneFrame = { origin: tip, angle: b.angle };
+      let rotation;
       if (node.parent === null) {
-        emit(depth, `<RootBone x="${b.x}" y="${b.y}" length="${b.length}" rotation="${num(b.rotation)}" name="${nameOf(node.name)}" id="${id}">`);
+        rotation = b.angle;
+        emit(depth, `<RootBone x="${num(b.x)}" y="${num(b.y)}" length="${num(b.length)}" rotation="${num(b.angle)}" name="${node.name}" id="${id}">`);
       } else {
-        emit(depth, `<Bone length="${b.length}" rotation="${num(b.rotation)}" name="${nameOf(node.name)}" id="${id}">`);
+        const local = toLocal({ x: b.x, y: b.y }, frame.boneOrigin, frame.angle);
+        const startsAtParentTip = Math.hypot(local.x, local.y) < 1;
+        rotation = b.angle - frame.angle;
+        if (startsAtParentTip) {
+          emit(depth, `<Bone length="${num(b.length)}" rotation="${num(rotation)}" name="${node.name}" id="${id}">`);
+        } else {
+          // Сустав не в кончике родителя (плечо, бедро): RootBone внутри Bone.
+          // Его x/y считаются от НАЧАЛА родительской кости — как у Node, а не
+          // как у дочерней Bone. Проверено измерением: при отсчёте от кончика
+          // руки и ноги уходили вниз ровно на длину root.
+          const fromBase = toLocal({ x: b.x, y: b.y }, frame.baseOrigin, frame.angle);
+          emit(depth, `<RootBone x="${num(fromBase.x)}" y="${num(fromBase.y)}" length="${num(b.length)}" rotation="${num(rotation)}" name="${node.name}" id="${id}">`);
+          node.__rootBone = true;
+        }
       }
-      for (const kid of kids) walk(kid, depth + 1);
-      // Слоты одежды висят на костях, к которым их привязывает каталог (КП 4.9).
-      for (const slot of catalog.outfitSlots.slots.filter((s) => s.boundTo === node.name)) {
+      baseRotation[node.name] = rotation;
+      const base = { x: b.x, y: b.y };
+      for (const kid of kids) walk(kid, depth + 1, kid.kind === 'bone' ? { ...boneFrame, boneOrigin: tip, baseOrigin: base } : { ...nodeFrame, boneOrigin: tip, baseOrigin: base });
+      for (const slot of slots) {
         const sid = ids.take();
         nodeIds[slot.name] = sid;
-        emit(depth + 1, `<Node name="${slot.name}" id="${sid}"/>`);
+        emit(depth + 1, `<Node rotation="${num(-b.angle)}" name="${slot.name}" id="${sid}"/>`);
       }
-      emit(depth, node.parent === null ? '</RootBone>' : '</Bone>');
+      emit(depth, node.parent === null || node.__rootBone ? '</RootBone>' : '</Bone>');
+      delete node.__rootBone;
       return;
     }
 
-    if (node.kind === 'control') {
-      emit(depth, `<Node x="${num(lx)}" y="${num(ly)}" name="${nameOf(node.name)}" id="${id}">`);
-      for (const kid of kids) walk(kid, depth + 1);
-      emit(depth, '</Node>');
-      return;
-    }
-
-    // art: группа с именем спеки; внутри — дети (сверху) и плейсхолдер (снизу).
-    // Художник заменяет плейсхолдер своим слоем, имя группы не трогает.
-    emit(depth, `<Node x="${num(lx)}" y="${num(ly)}" name="${nameOf(node.name)}" id="${id}">`);
-    for (const kid of kids) walk(kid, depth + 1);
-    for (const slot of catalog.outfitSlots.slots.filter((s) => s.boundTo === node.name)) {
+    const world = layout[node.name] ?? { x: frame.origin.x, y: frame.origin.y, w: 0, h: 0 };
+    const local = toLocal(world, frame.origin, frame.angle);
+    const rotation = -frame.angle; // выравниваем в экран
+    baseRotation[node.name] = rotation;
+    const rotAttr = Math.abs(rotation) > 1e-6 ? ` rotation="${num(rotation)}"` : '';
+    emit(depth, `<Node x="${num(local.x)}" y="${num(local.y)}"${rotAttr} name="${node.name}" id="${id}">`);
+    const childFrame = { origin: world, boneOrigin: world, baseOrigin: world, angle: 0 };
+    for (const kid of kids) walk(kid, depth + 1, childFrame);
+    for (const slot of slots) {
       const sid = ids.take();
       nodeIds[slot.name] = sid;
       emit(depth + 1, `<Node name="${slot.name}" id="${sid}"/>`);
     }
-    if (art.size) {
-      // Потомки root/root_body живут в системе кости, повёрнутой на -90°:
-      // ширина фигуры уходит по экранной вертикали. Размеры в ART заданы «как
-      // на экране», поэтому здесь они меняются местами. Руки повёрнуты иначе
-      // и остаются как есть.
-      const underArm = /(_left|_right)$/.test(node.name) && /^(forearm|hand|finger)/.test(node.name);
-      const [w, h] = underArm ? art.size : [art.size[1], art.size[0]];
-      let color = art.color;
+    if (node.kind === 'art' && world.w > 0) {
+      let color = PLACEHOLDER_COLOR[node.name.replace(/_(left|right)$/, '').replace(/^finger_\d_/, 'finger_')] ?? 'FFC9A57C';
       if (node.name.startsWith('scarf')) color = tint.scarf;
       if (node.name.startsWith('ear_in')) color = tint.ear_in;
-      const opacity = art.opacity !== undefined ? ` opacity="${num(art.opacity)}"` : '';
-      emit(depth + 1, `<Shape${opacity} name="${node.name}__placeholder">`);
-      emit(depth + 2, `<Ellipse width="${w}" height="${h}" name="P"/>`);
+      const opacity = PLACEHOLDER_OPACITY[node.name.replace(/_(left|right)$/, '')];
+      const opAttr = opacity !== undefined ? ` opacity="${num(opacity)}"` : '';
+      emit(depth + 1, `<Shape${opAttr} name="${node.name}__placeholder">`);
+      emit(depth + 2, `<Ellipse width="${num(world.w)}" height="${num(world.h)}" name="P"/>`);
       emit(depth + 2, `<Fill name="F"><SolidColor colorValue="${color}" name="C"/></Fill>`);
       emit(depth + 1, `</Shape>`);
     }
     emit(depth, '</Node>');
   };
-  walk(root, 2);
+  walk(root, 2, { origin: { x: 0, y: 0 }, boneOrigin: { x: 0, y: 0 }, baseOrigin: { x: 0, y: 0 }, angle: 0 });
 
   // ---- анимации ------------------------------------------------------------
-  const animations = buildAnimations({ catalog, rig, nodeIds, ids, animIds });
+  const animations = buildAnimations({ catalog, rig, nodeIds, ids, animIds, baseRotation });
   const noneId = ids.take();
   animIds.__none = noneId;
 
@@ -487,14 +574,21 @@ function finalizeArtboard(ctx) {
 // чтобы в лаборатории было видно, какое состояние сейчас играет. Тайминг и
 // характер движения — работа аниматора в редакторе; здесь только каркас.
 
-function buildAnimations({ catalog, rig, nodeIds, ids, animIds }) {
+function buildAnimations({ catalog, rig, nodeIds, ids, animIds, baseRotation }) {
   const list = [];
   const add = (name, { duration, loop, tracks }) => {
     const id = ids.take();
     animIds[name] = id;
     list.push({ id, name, duration, loop, tracks: tracks.filter((t) => t.objectId) });
   };
-  const T = (node, key, keys) => ({ objectId: nodeIds[node], key, keys });
+  // Поворот в дорожках задаётся ДЕЛЬТОЙ к базовому повороту узла: узлы под
+  // наклонными костями выровнены в экран через rotation, и абсолютный ключ
+  // сломал бы эту базу.
+  const T = (node, key, keys) => ({
+    objectId: nodeIds[node],
+    key,
+    keys: key === KEY.rotation ? keys.map(([f, v, i]) => [f, (baseRotation[node] ?? 0) + v, i]) : keys,
+  });
 
   const breath = (amp = 0.03, len = 120) => [
     T('body', KEY.scaleX, [[0, 1], [len / 2, 1 + amp], [len, 1]]),
@@ -536,9 +630,10 @@ function buildAnimations({ catalog, rig, nodeIds, ids, animIds }) {
   }
 
   // -- перемещение (не подключено к state machine — нет триггера в VM) ----
+  const rootX = AB.w / 2 + ((PROPORTIONS.parts.hip_left.x + PROPORTIONS.parts.hip_right.x) / 2) * SCALE;
   for (const clip of catalog.groups.move.clips) {
     const dir = clip.name.includes('left') ? -1 : 1;
-    add(clip.name, { duration: 60, loop: 'loop', tracks: [T('root', KEY.rootX, [[0, 512], [60, 512 + 40 * dir]]), ...bob('body', 6, 30)] });
+    add(clip.name, { duration: 60, loop: 'loop', tracks: [T('root', KEY.rootX, [[0, rootX], [60, rootX + 40 * dir]]), ...bob('body', 6, 30)] });
   }
 
   // -- взросление ------------------------------------------------------------
