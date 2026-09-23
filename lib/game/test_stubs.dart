@@ -44,3 +44,7 @@ const double kSlowMotion =
 /// Принудительный покой кухни для съёмки: `--dart-define=KITCHEN_IDLE=sad`
 /// (normal / happy / sad / hungry). Пусто — настроение из показателей.
 const String kTestKitchenIdle = String.fromEnvironment('KITCHEN_IDLE');
+
+/// Принудительный характер для съёмки реакций на угощение:
+/// `--dart-define=KITCHEN_TRAIT=curious`. Пусто — характер мишки.
+const String kTestKitchenTrait = String.fromEnvironment('KITCHEN_TRAIT');

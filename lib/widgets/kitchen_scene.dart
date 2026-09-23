@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 
+import '../bear/bear_rig_spec.dart' show BearTrait;
 import '../game/room_kind.dart';
 import '../theme/app_colors.dart';
 
@@ -53,6 +54,7 @@ class KitchenScene extends StatefulWidget {
     this.meal,
     this.idle = KitchenIdle.normal,
     this.pet = 0,
+    this.trait = BearTrait.calm,
   });
 
   /// Последнее кормление. Новое — мишка ест и показывает эмоцию.
@@ -63,6 +65,10 @@ class KitchenScene extends StatefulWidget {
 
   /// Счётчик поглаживаний: вырос — мишка отзывается на руку.
   final int pet;
+
+  /// Характер: реакция на угощение после еды у каждого своя
+  /// (ТЗ аниматора 5.5, `reaction_trait_*_treat`).
+  final BearTrait trait;
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
@@ -806,22 +812,6 @@ class _KitchenSceneState extends State<KitchenScene>
     );
   }
 
-  /// `emo_happy_burst`: три подскока головы с затуханием, лапы попеременно
-  /// похлопывают по столу, ножки болтаются, уши вверх.
-  static _Motion _happyMotion(double t) {
-    // Разгон: лапы и ножки не дёргаются с первого кадра, а раскачиваются.
-    final env =
-        math.exp(-0.75 * t) * (1 - _ramp(t, 2.3, 2.9)) * _ramp(t, 0, 0.3);
-    final w = 2 * math.pi * 1.6 * t;
-    final hop = math.sin(w / 2);
-    return _Motion(
-      bow: -0.32 * hop * hop * env,
-      pat: math.sin(w) * env,
-      feet: math.sin(w + math.pi / 2) * env,
-      ears: _ramp(t, 0, 0.35) - _ramp(t, 2.6, 3.3),
-    );
-  }
-
   /// Голодный покой: посмотрел вниз, на пустой стол, ссутулился, уши
   /// повисли — и отпустило. Одной кривой, глаза меняются под веком.
   static _Motion _hungryMotion(double t) => _Motion(
@@ -858,12 +848,12 @@ class _KitchenSceneState extends State<KitchenScene>
       await _play(run, 6.7, _eatMotion);
       switch (mood) {
         case KitchenMood.happy:
-          await _happy(run);
+          await _treat(run, widget.trait);
         case KitchenMood.love:
           await _love(run);
         case KitchenMood.surprise:
           await _surprise(run);
-          await _happy(run);
+          await _treat(run, widget.trait);
       }
       _eating = false;
       _settle();
@@ -906,10 +896,105 @@ class _KitchenSceneState extends State<KitchenScene>
     );
   }
 
-  Future<void> _happy(int run) async {
-    await _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile);
-    _at(run, 2500, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
-    await _play(run, 3.4, _happyMotion);
+  /// `reaction_trait_*_treat`: как характер отзывается на угощение. Одной
+  /// кривой каждая, от покоя до покоя; лицо под веком по расписанию.
+  Future<void> _treat(int run, BearTrait trait) async {
+    switch (trait) {
+      case BearTrait.active:
+        await _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile);
+        _at(run, 2400, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+        await _play(run, 3.0, _treatActive);
+      case BearTrait.curious:
+        await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
+        _at(run, 1400, () => _eyesTo(run, _Eyes.wide, mouth: _Mouth.o));
+        _at(run, 2300, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+        await _play(run, 3.4, _treatCurious);
+      case BearTrait.affectionate:
+        await _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile);
+        _at(run, 3000, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+        await _play(run, 3.6, _treatAffectionate);
+      case BearTrait.calm:
+        _at(run, 300, () => _eyesTo(run, _Eyes.happy, mouth: _Mouth.smile));
+        _at(run, 2900, () => _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral));
+        await _play(run, 3.6, _treatCalm);
+      case BearTrait.independent:
+        await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
+        await _play(run, 2.4, _treatIndependent);
+      case BearTrait.reserved:
+        await _eyesTo(run, _Eyes.open, mouth: _Mouth.neutral);
+        _at(run, 900, () async => _face(mouth: _Mouth.smile));
+        _at(run, 1700, () async => _face(mouth: _Mouth.neutral));
+        await _play(run, 3.2, _treatReserved);
+    }
+  }
+
+  /// Активный: три быстрых подскока с затуханием, лапы похлопывают,
+  /// ножки болтаются, уши вверх.
+  static _Motion _treatActive(double t) {
+    final env =
+        math.exp(-0.9 * t) * (1 - _ramp(t, 2.0, 2.6)) * _ramp(t, 0, 0.25);
+    final w = 2 * math.pi * 2.2 * t;
+    final hop = math.sin(w / 2);
+    return _Motion(
+      bow: -0.3 * hop * hop * env,
+      pat: math.sin(w) * env,
+      feet: math.sin(w + math.pi / 2) * env,
+      ears: _ramp(t, 0, 0.3) - _ramp(t, 2.3, 2.9),
+    );
+  }
+
+  /// Любопытный: заглянул на место еды с наклоном набок, уши торчком по
+  /// очереди, поднял взгляд на зрителя — и обратно.
+  static _Motion _treatCurious(double t) => _Motion(
+    lookY:
+        _ramp(t, 0, 0.5) -
+        _ramp(t, 1.2, 1.7) -
+        0.3 * (_ramp(t, 1.5, 1.9) - _ramp(t, 2.6, 3.1)),
+    side: 0.8 * (_ramp(t, 0.1, 0.9) - _ramp(t, 1.4, 2.0)),
+    bow:
+        0.18 * (_ramp(t, 0, 0.6) - _ramp(t, 1.2, 1.8)) -
+        0.1 * (_ramp(t, 1.5, 1.9) - _ramp(t, 2.6, 3.1)),
+    ears: 0.6 * (_ramp(t, 0.2, 0.6) - _ramp(t, 2.7, 3.3)),
+  );
+
+  /// Ласковый: голова медленно набок, уши мягко вниз, два благодарных
+  /// кивка к зрителю.
+  static _Motion _treatAffectionate(double t) {
+    var bow = 0.0;
+    for (final s in [0.9, 1.9]) {
+      bow += 0.16 * (_ramp(t, s, s + 0.35) - _ramp(t, s + 0.35, s + 0.8));
+    }
+    return _Motion(
+      side: 0.8 * (_ramp(t, 0, 1.1) - _ramp(t, 2.6, 3.5)),
+      ears: -0.5 * (_ramp(t, 0.1, 1.0) - _ramp(t, 2.6, 3.4)),
+      bow: bow,
+    );
+  }
+
+  /// Спокойный: один глубокий медленный кивок, уши чуть опускаются.
+  static _Motion _treatCalm(double t) => _Motion(
+    bow: 0.24 * (_ramp(t, 0.2, 1.4) - _ramp(t, 1.8, 3.2)),
+    ears: -0.3 * (_ramp(t, 0.3, 1.4) - _ramp(t, 2.0, 3.3)),
+  );
+
+  /// Самостоятельный: короткий деловой кивок, взгляд в сторону и обратно,
+  /// оба уха один раз дёрнулись. Без улыбки.
+  static _Motion _treatIndependent(double t) => _Motion(
+    bow: 0.14 * (_ramp(t, 0.1, 0.4) - _ramp(t, 0.4, 0.9)),
+    lookX: _ramp(t, 0.9, 1.15) - _ramp(t, 1.7, 2.0),
+    ears: 0.8 * (_ramp(t, 0.9, 1.05) - _ramp(t, 1.05, 1.4)),
+  );
+
+  /// Замкнутый: отвёл взгляд вниз и в сторону с лёгким поворотом головы,
+  /// уши слегка назад, короткая улыбка — и снова обычное лицо.
+  static _Motion _treatReserved(double t) {
+    final away = _ramp(t, 0.1, 0.8) - _ramp(t, 2.3, 3.0);
+    return _Motion(
+      lookY: 0.6 * away,
+      lookX: -0.8 * away,
+      side: -0.5 * away,
+      ears: -0.3 * away,
+    );
   }
 
   Future<void> _love(int run) async {
@@ -1241,7 +1326,7 @@ class _KitchenSceneState extends State<KitchenScene>
     // Заказчик 23.09: «бусинки уходят влево-вправо, а нужно, чтобы стояли
     // на месте, но появлялся блик».
     final look = Offset(
-      (_lookX.value - 0.5) * 2,
+      ((_lookX.value - 0.5) * 2 + _m.lookX).clamp(-1.0, 1.0),
       ((_lookY.value - 0.5) * 2 + _m.lookY).clamp(-1.0, 1.0),
     );
     return Positioned(
@@ -1479,6 +1564,7 @@ class _Motion {
     this.jaw = 0,
     this.chew = 0,
     this.lookY = 0,
+    this.lookX = 0,
     this.paws = 0,
     this.pat = 0,
     this.side = 0,
@@ -1499,6 +1585,7 @@ class _Motion {
       jaw == 0 &&
       chew == 0 &&
       lookY == 0 &&
+      lookX == 0 &&
       paws == 0 &&
       pat == 0 &&
       side == 0 &&
@@ -1512,6 +1599,7 @@ class _Motion {
     jaw: a.jaw + (b.jaw - a.jaw) * k,
     chew: a.chew + (b.chew - a.chew) * k,
     lookY: a.lookY + (b.lookY - a.lookY) * k,
+    lookX: a.lookX + (b.lookX - a.lookX) * k,
     paws: a.paws + (b.paws - a.paws) * k,
     pat: a.pat + (b.pat - a.pat) * k,
     side: a.side + (b.side - a.side) * k,
@@ -1528,8 +1616,10 @@ class _Motion {
   final double jaw;
   final double chew;
 
-  /// Взгляд вниз 0…1; лапы подобраны 0…1; похлопывание −1 (правая) … 1 (левая).
+  /// Взгляд вниз 0…1 и в сторону −1…1; лапы подобраны 0…1; похлопывание
+  /// −1 (правая) … 1 (левая).
   final double lookY;
+  final double lookX;
   final double paws;
   final double pat;
 

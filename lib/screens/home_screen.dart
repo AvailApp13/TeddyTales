@@ -545,6 +545,13 @@ KitchenIdle _kitchenIdle(BearMood mood) {
   };
 }
 
+/// Характер для кухни. Заглушка `kTestKitchenTrait` — снять любую
+/// реакцию на угощение без смены характера.
+BearTrait _kitchenTrait(BearTrait trait) {
+  final forced = BearTrait.values.where((t) => t.name == kTestKitchenTrait);
+  return forced.isNotEmpty ? forced.first : trait;
+}
+
 class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.controller,
@@ -666,6 +673,7 @@ class _RoomScene extends StatelessWidget {
               meal: meal,
               idle: _kitchenIdle(controller.state.mood),
               pet: pets,
+              trait: _kitchenTrait(controller.state.trait),
             ),
           ),
         if (room == RoomKind.bedroom) ...[
