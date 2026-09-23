@@ -10,7 +10,7 @@
 2. из тех же дуг, перевёрнутых, делает глаза-улыбку — `eyes_happy.png`;
 3. смягчает край спрайтов с мехом (`eyes_open.png`, `mouth_neutral.png`):
    жёсткий срез читался кольцом вокруг бусин и носа;
-4. убирает светлую кайму с ушей.
+4. (уши режет `tool/cut_kitchen_backings.py` из цельной картинки).
 
 Исходники GPT сохраняются один раз в `tool/kitchen_gpt_originals/` (не в
 ассеты — иначе попадут в сборку).
@@ -164,8 +164,6 @@ def main():
         'eyes_happy.png': happy,
         'eyes_open.png': feather(K / 'eyes_open.png', 7),
         'mouth_neutral.png': feather(K / 'mouth_neutral.png', 5),
-        'ear_left.png': defringe(K / 'ear_left.png'),
-        'ear_right.png': defringe(K / 'ear_right.png'),
     }
     if not preview:
         for name, im in outputs.items():

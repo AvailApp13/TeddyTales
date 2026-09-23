@@ -52,18 +52,19 @@ class KitchenScene extends StatefulWidget {
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
-  // Ножки подняты на 0.008 против нарезки: круглый верх в упор к низу
-  // скатерти (0.760), иначе висят, «как будто ни к чему не привязаны»
+  // Ножки подняты на 0.012 против нарезки: круглая подушка заходит под
+  // скатерть (низ скатерти 0.760) на 10 px кадра, иначе висят, «как
+  // будто ни к чему не привязаны», а при качании у скатерти проблески
   // (заказчик 23.09). Припуск сверху уходит под слой стола.
   static const Rect footLeft = Rect.fromLTWH(
     0.361111,
-    0.743953,
+    0.739953,
     0.115741,
     0.050781,
   );
   static const Rect footRight = Rect.fromLTWH(
     0.503472,
-    0.743953,
+    0.739953,
     0.116898,
     0.052083,
   );
@@ -197,8 +198,6 @@ class KitchenScene extends StatefulWidget {
     '$_dir/foot_right.png',
     '$_dir/ear_left.png',
     '$_dir/ear_right.png',
-    '$_dir/ear_left_back.png',
-    '$_dir/ear_right_back.png',
     '$_dir/paw_left.png',
     '$_dir/paw_right.png',
     '$_dir/sleeve_left.png',
@@ -1067,30 +1066,12 @@ class _KitchenSceneState extends State<KitchenScene>
             fit: StackFit.expand,
             children: [
               // Уши внутри головы: наклонилась голова — уехали и уши.
-              // Лежат под капюшоном, сзади — стена. Подложка — рамка уха
-              // из цельного мишки GPT (там ухо к капюшону вплотную, у
-              // вырезанных спрайтов по шву просвечивала стена), только
-              // половина со стороны капюшона: целая копия читалась вторым
-              // ухом со стороны стены. Заказчик 23.09: «сделать подложки,
-              // не цельное ухо». Режет tool/cut_kitchen_backings.py.
-              _inHead(
-                width,
-                height,
-                KitchenScene.earLeft,
-                ClipRect(
-                  clipper: const _HalfClipper(keepRight: true, fraction: 0.6),
-                  child: _image('ear_left_back'),
-                ),
-              ),
-              _inHead(
-                width,
-                height,
-                KitchenScene.earRight,
-                ClipRect(
-                  clipper: const _HalfClipper(keepRight: false, fraction: 0.6),
-                  child: _image('ear_right_back'),
-                ),
-              ),
+              // Лежат под головой, сзади — стена. Спрайт уха вырезан из
+              // цельного мишки GPT вместе с куском капюшона
+              // (tool/cut_kitchen_backings.py): капюшон в нём накрыт
+              // капюшоном головы, а шва между ухом и капюшоном нет, как
+              // в исходнике. Копии и подложки не нужны: с прямым срезом
+              // они выглядывали при сгибе (заказчик 23.09).
               _inHead(
                 width,
                 height,
