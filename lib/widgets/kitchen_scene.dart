@@ -1730,6 +1730,20 @@ class _MuzzlePainter extends CustomPainter {
           const [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
         ),
     );
+    // Снизу: нижние строки заплатки — воротник, он опустился вместе с
+    // подбородком и лёг на воротник туловища; без растворения его край
+    // читался полоской.
+    final bottom = (patch.bottom + jaw.drop) * size.height;
+    canvas.drawRect(
+      zone,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          Offset(0, bottom - 0.02 * size.height),
+          Offset(0, bottom),
+          const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+        ),
+    );
     canvas.drawRect(
       zone,
       Paint()
