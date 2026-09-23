@@ -1614,9 +1614,11 @@ class _Jaw {
   static const double cheekBulge = 0.045;
 
   /// Где челюсть начинает двигаться и где движется целиком — доли высоты
-  /// головы: нос (0.79–0.85) стоит, ниже него мордочка ходит.
-  static const double hinge = 0.85;
-  static const double chin = 0.96;
+  /// головы: у носа (0.79–0.85) почти стоит, к подбородку ходит целиком.
+  /// Начало выше носа: мех между носом и подбородком течёт вместе с
+  /// челюстью, а не рвётся по линии.
+  static const double hinge = 0.78;
+  static const double chin = 0.97;
 
   final double drop;
   final double shift;
@@ -1646,15 +1648,19 @@ class _MuzzlePainter extends CustomPainter {
   final ui.Image image;
   final _Jaw jaw;
 
-  /// Заплатка — доли головы.
-  static const Rect patch = Rect.fromLTRB(0.10, 0.68, 0.90, 1.0);
+  /// Заплатка — доли головы: от уровня глаз, чтобы вместе со щеками
+  /// мягко ходила вся нижняя половина мордочки (заказчик 23.09: «щёки
+  /// отдельно от лица… нужен плавный переход»).
+  static const Rect patch = Rect.fromLTRB(0.08, 0.55, 0.92, 1.0);
   static const int cols = 16;
-  static const int rows = 12;
+  static const int rows = 16;
 
-  /// Щёки: центры и разброс (доли головы).
+  /// Щёки: центры и разброс (доли головы). Разброс широкий — не пятно,
+  /// а вся щека; плюс общее расширение лица на уровне щёк.
   static const double cheekY = 0.84;
-  static const double cheekX = 0.24;
-  static const double cheekSpread = 0.11;
+  static const double cheekX = 0.26;
+  static const double cheekSpread = 0.15;
+  static const double faceSpread = 0.17;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1673,12 +1679,24 @@ class _MuzzlePainter extends CustomPainter {
           -(((x - cx) * (x - cx)) + ((y - cheekY) * (y - cheekY))) /
               (2 * cheekSpread * cheekSpread),
         );
-        final favour = (jaw.shift * side > 0 ? 1.0 : 0.5);
-        final bulge = _Jaw.cheekBulge * jaw.cheeks * favour * bell;
+        final favour = (jaw.shift * side > 0 ? 1.0 : 0.6);
+        // Всё лицо на уровне щёк чуть расширяется от середины к краям
+        // (полоса по высоте, линейно по ширине), щёки добавляют сверху.
+        // Капюшон по краям заплатки не двигается: расширение сходит на
+        // нет к его кромке (|x − 0.5| от 0.38 до 0.44).
+        final band = math.exp(
+          -((y - cheekY) * (y - cheekY)) / (2 * faceSpread * faceSpread),
+        );
+        final face = 1 - ((x - 0.5).abs() - 0.38).clamp(0.0, 0.06) / 0.06;
+        final widen =
+            0.5 * _Jaw.cheekBulge * jaw.cheeks * band * (x - 0.5) * 2 * face;
+        final bulge = 0.6 * _Jaw.cheekBulge * jaw.cheeks * favour * bell;
+        // Щека, надуваясь, чуть приподнимает мех над собой.
+        final lift = -0.25 * _Jaw.cheekBulge * jaw.cheeks * bell;
         positions.add(
           Offset(
-            (x + d.dx + side * bulge) * size.width,
-            (y + d.dy) * size.height,
+            (x + d.dx + widen + side * bulge) * size.width,
+            (y + d.dy + lift) * size.height,
           ),
         );
         texture.add(Offset(x * image.width, y * image.height));
@@ -1700,10 +1718,12 @@ class _MuzzlePainter extends CustomPainter {
       textureCoordinates: texture,
       indices: Uint16List.fromList(indices),
     );
+    // Слой шире заплатки на ход узлов: иначе сдвинутые к краю пиксели
+    // срезались бы его границей ровной вертикальной линией.
     final zone = Rect.fromLTRB(
-      patch.left * size.width,
+      (patch.left - 0.06) * size.width,
       patch.top * size.height,
-      patch.right * size.width,
+      (patch.right + 0.06) * size.width,
       (patch.bottom + 0.06) * size.height,
     );
     canvas.saveLayer(zone, Paint());
@@ -1726,7 +1746,7 @@ class _MuzzlePainter extends CustomPainter {
         ..blendMode = BlendMode.dstIn
         ..shader = ui.Gradient.linear(
           Offset(0, zone.top),
-          Offset(0, zone.top + 0.12 * size.height),
+          Offset(0, zone.top + 0.22 * size.height),
           const [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
         ),
     );
@@ -1749,15 +1769,15 @@ class _MuzzlePainter extends CustomPainter {
       Paint()
         ..blendMode = BlendMode.dstIn
         ..shader = ui.Gradient.linear(
-          Offset(zone.left, 0),
-          Offset(zone.right, 0),
+          Offset(patch.left * size.width, 0),
+          Offset(patch.right * size.width, 0),
           const [
             Color(0x00FFFFFF),
             Color(0xFFFFFFFF),
             Color(0xFFFFFFFF),
             Color(0x00FFFFFF),
           ],
-          const [0.0, 0.12, 0.88, 1.0],
+          const [0.0, 0.18, 0.82, 1.0],
         ),
     );
     canvas.restore();
