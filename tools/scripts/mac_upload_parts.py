@@ -7,11 +7,29 @@
 
     python3 mac_upload_parts.py ~/Desktop/bear_parts
 
+Если в папке нет PNG (или папки нет), скрипт сам скачивает слои из галереи
+Higgsfield (ссылки ниже, это результаты в аккаунте Руслана) и кладёт их
+туда с правильными именами. full_no_tag.png скачивается для сравнения, в
+редактор не грузится.
+
 Зависимостей нет: только стандартная библиотека Python 3 (есть в macOS).
 """
 import base64, json, os, sys, urllib.parse, urllib.request
 
 URL = 'http://127.0.0.1:9791/mcp'
+PARTS = {'head': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141738_d83b3c2b-33dd-40c1-872b-2c04b8990afc.png',
+ 'ears': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141748_27cf515b-41fb-4f2b-afba-a17cf9c161f2.png',
+ 'outfit_head': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141755_a72000b6-fac6-44fc-9fed-91de3010f6ba.png',
+ 'outfit_body': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_142303_ada9a416-6e6d-4048-a25c-275d4bcfebe4.png',
+ 'body': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141808_0393cfb4-3d55-4d34-b819-61fa1fe113b6.png',
+ 'arm_left': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141814_443fc8cc-fcb8-43ef-a55c-99f9a8102f44.png',
+ 'arm_right': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141823_6785090a-5ba8-4faf-a302-1789ee5ade44.png',
+ 'leg_left': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141832_c8b9dea6-a207-4a42-ba3e-68f2b196d638.png',
+ 'leg_right': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141837_468741a2-d7f7-419b-9f85-f58d48dca4a7.png',
+ 'outfit_feet': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141843_19aba9b4-4b7d-4668-861e-5b753829d0cc.png',
+ 'face_features': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141849_d062dc9b-3678-431d-a491-c3b7b60e54e8.png',
+ 'full_no_tag': 'https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/hf_20260923_141502_54f40bd0-45bc-43f4-8fe2-17fac08fae57.png'}
+SKIP_UPLOAD = {'full_no_tag'}
 HEADERS = {'content-type': 'application/json',
            'accept': 'application/json, text/event-stream',
            'mcp-protocol-version': '2025-06-18'}
@@ -46,7 +64,13 @@ def request(method, params):
     return msg['result']
 
 folder = os.path.expanduser(sys.argv[1] if len(sys.argv) > 1 else '~/Desktop/bear_parts')
-files = sorted(f for f in os.listdir(folder) if f.lower().endswith('.png'))
+os.makedirs(folder, exist_ok=True)
+for name, url in PARTS.items():
+    dst = os.path.join(folder, name + '.png')
+    if os.path.exists(dst) and os.path.getsize(dst) > 10000: continue
+    print(f'скачиваю {name}.png ...', file=sys.stderr)
+    urllib.request.urlretrieve(url, dst)
+files = sorted(f for f in os.listdir(folder) if f.lower().endswith('.png') and os.path.splitext(f)[0] not in SKIP_UPLOAD)
 if not files: raise SystemExit(f'в {folder} нет PNG')
 
 request('initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
