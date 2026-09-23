@@ -5,6 +5,10 @@
  * читает их сам, через контейнер байты не идут.
  *
  *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/place_parts.mjs /Users/a123/bear_parts [--replace]
+ *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/place_parts.mjs --assets assets.json [--replace]
+ *
+ * --assets: ассеты уже загружены с мака скриптом mac_upload_parts.py; файл —
+ * его вывод {имя: {asset, width, height}}, upload_asset здесь не вызывается.
  *
  * Имена файлов = ключи handoff/reference/higgsfield_jobs.json (head.png, ears.png,
  * outfit_head.png, outfit_body.png, body.png, arm_left.png, arm_right.png,
@@ -28,9 +32,12 @@ const PARENT = {
   full_no_tag: 'rig', cutout_ai: 'rig',
 };
 
-const [folder, ...flags] = process.argv.slice(2);
-if (!folder) { console.error('нужен путь к папке с PNG'); process.exit(1); }
-const replace = flags.includes('--replace');
+const argv = process.argv.slice(2);
+const replace = argv.includes('--replace');
+const assetsIdx = argv.indexOf('--assets');
+const assetsFile = assetsIdx >= 0 ? argv[assetsIdx + 1] : null;
+const folder = argv.find((a, i) => !a.startsWith('--') && i !== assetsIdx + 1) ?? null;
+if (!folder && !assetsFile) { console.error('нужен путь к папке с PNG или --assets <json>'); process.exit(1); }
 const statePath = resolve(repoRoot, 'rive', 'editor_state.json');
 const state = JSON.parse(readFileSync(statePath, 'utf8'));
 const file = Object.values(state)[0];
@@ -57,7 +64,8 @@ const keys = {}; for (const id of chain) keys[id] = [13, 14];
 const vals = (await call('query_property_values', { propertyKeys: keys })).values ?? {};
 const world = (id) => { let x = 0, y = 0, cur = id; while (cur && cur !== boardId) { x += vals[cur]?.['13'] ?? 0; y += vals[cur]?.['14'] ?? 0; cur = parentOf.get(cur); } return { x, y }; };
 
-const files = readdirSync(folder).filter((f) => /\.png$/i.test(f)).sort();
+const preloaded = assetsFile ? JSON.parse(readFileSync(assetsFile, 'utf8')) : null;
+const files = preloaded ? Object.keys(preloaded).map((n) => `${n}.png`) : readdirSync(folder).filter((f) => /\.png$/i.test(f)).sort();
 file.parts ??= {};
 for (const f of files) {
   const name = basename(f, '.png');
@@ -65,8 +73,9 @@ for (const f of files) {
   if (!parentName) { console.log(`пропуск ${f}: нет места в риге`); continue; }
   const parent = byName.get(parentName);
   if (!parent) { console.log(`пропуск ${f}: группа ${parentName} не найдена`); continue; }
-  const up = await call('upload_asset', { file: resolve(folder, f), name });
-  const a = up.asset;
+  const a = preloaded
+    ? { id: preloaded[name].asset, width: preloaded[name].width, height: preloaded[name].height }
+    : (await call('upload_asset', { file: resolve(folder, f), name })).asset;
   const k = a.width / PHOTO.w;                       // фото -> картинка
   const S = AB.figureHeight / (PHOTO.figureHeight * k); // картинка -> артборд
   const cx = AB.w / 2 - (PHOTO.axisX * k - a.width / 2) * S;
