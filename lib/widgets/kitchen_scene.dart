@@ -1609,9 +1609,9 @@ class _Jaw {
   /// Опускание при укусе и при жевании, сдвиг вбок при жевании, надув
   /// щёк — в долях высоты/ширины головы.
   static const double biteDrop = 0.035;
-  static const double chewDrop = 0.022;
-  static const double chewShift = 0.012;
-  static const double cheekBulge = 0.02;
+  static const double chewDrop = 0.03;
+  static const double chewShift = 0.005;
+  static const double cheekBulge = 0.03;
 
   /// Где челюсть начинает двигаться и где движется целиком — доли высоты
   /// головы: нос (0.79–0.85) стоит, ниже него мордочка ходит.
