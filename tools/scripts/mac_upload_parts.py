@@ -59,9 +59,18 @@ def request(method, params):
     seq[0] += 1
     msgs = post({'jsonrpc': '2.0', 'id': seq[0], 'method': method, 'params': params})
     msg = next((m for m in msgs if m.get('id') == seq[0]), msgs[0] if msgs else None)
-    if msg is None: raise SystemExit(f'пустой ответ на {method}')
-    if 'error' in msg: raise SystemExit(f"{method}: {msg['error']}")
+    if msg is None: raise RuntimeError(f'пустой ответ на {method}')
+    if 'error' in msg: raise RuntimeError(f"{method}: {msg['error']}")
     return msg['result']
+
+def call_tool(name, arguments):
+    res = request('tools/call', {'name': name, 'arguments': arguments})
+    text = ''.join(c.get('text', '') for c in res.get('content', []) if c.get('type') == 'text')
+    return json.loads(text) if text.strip().startswith('{') else {'raw': text}
+
+def existing_assets():
+    info = call_tool('assets_tool', {'command': 'listAssets'})
+    return {a['name']: a for a in info.get('assets', []) if a.get('type') == 'image'}
 
 folder = os.path.expanduser(sys.argv[1] if len(sys.argv) > 1 else '~/Desktop/bear_parts')
 os.makedirs(folder, exist_ok=True)
@@ -77,18 +86,32 @@ request('initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
                        'clientInfo': {'name': 'teddytales-mac-upload', 'version': '0.1.0'}})
 post({'jsonrpc': '2.0', 'method': 'notifications/initialized', 'params': {}}, expect=False)
 
+import time
 out = {}
+have = existing_assets()
 for f in files:
     name = os.path.splitext(f)[0]
+    if name in have:
+        a = have[name]; out[name] = {'asset': a['id'], 'width': a['width'], 'height': a['height']}
+        print(f"{name:16s} уже в файле -> {a['id']}", file=sys.stderr); continue
     with open(os.path.join(folder, f), 'rb') as fh:
         b64 = base64.b64encode(fh.read()).decode()
     uri = f'data:image/png;name={urllib.parse.quote(f)};base64,{b64}'
-    res = request('tools/call', {'name': 'upload_asset', 'arguments': {'file': uri, 'name': name}})
-    text = ''.join(c.get('text', '') for c in res.get('content', []) if c.get('type') == 'text')
-    try:
-        info = json.loads(text)
-        a = info['asset']; out[name] = {'asset': a['id'], 'width': a['width'], 'height': a['height']}
-        print(f"{name:16s} -> {a['id']}  {a['width']}x{a['height']}", file=sys.stderr)
-    except Exception:
-        print(f'{name}: {text[:300]}', file=sys.stderr)
+    a = None
+    for attempt in range(1, 4):
+        try:
+            info = call_tool('upload_asset', {'file': uri, 'name': name})
+            a = info.get('asset')
+            if a: break
+            print(f'{name}: {str(info)[:200]}', file=sys.stderr)
+        except Exception as e:
+            print(f'{name}: попытка {attempt}: {e}', file=sys.stderr)
+        time.sleep(5)
+        have = existing_assets()
+        if name in have: a = have[name]; break
+    if not a:
+        print(f'{name}: не загрузился', file=sys.stderr); continue
+    out[name] = {'asset': a['id'], 'width': a['width'], 'height': a['height']}
+    print(f"{name:16s} -> {a['id']}  {a['width']}x{a['height']}", file=sys.stderr)
+    time.sleep(2)
 print(json.dumps(out, indent=1))
