@@ -1460,7 +1460,7 @@ class _LidPainter extends CustomPainter {
   static const List<Offset> beads = [Offset(23.8, 25.1), Offset(88.1, 25.3)];
   static const Offset glintAt = Offset(-3.4, -2.7);
   static const Offset glintTwin = Offset(2.6, -2.6);
-  static const Offset glintTravel = Offset(3.2, 2.2);
+  static const Offset glintTravel = Offset(3.6, 2.4);
   static const Size sprite = Size(112, 52);
 
   /// Путь века в долях высоты спрайта и ширина мягкого края.
@@ -1512,12 +1512,14 @@ class _LidPainter extends CustomPainter {
     final cover = Paint()
       ..color = Color.fromRGBO(22, 16, 14, k)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.6 * sx);
+    // Размер и яркость — как у нарисованной пары: иначе читается не
+    // «блик уехал», а «блик уменьшился».
     final bright = Paint()
-      ..color = Color.fromRGBO(255, 252, 248, 0.95 * k)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.35 * sx);
+      ..color = Color.fromRGBO(255, 252, 248, k)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.45 * sx);
     final faint = Paint()
-      ..color = Color.fromRGBO(255, 252, 248, 0.55 * k)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.35 * sx);
+      ..color = Color.fromRGBO(255, 252, 248, 0.85 * k)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 0.45 * sx);
     for (final bead in beads) {
       canvas.drawOval(
         Rect.fromCenter(
@@ -1527,8 +1529,8 @@ class _LidPainter extends CustomPainter {
         ),
         cover,
       );
-      canvas.drawCircle(at(bead, glintAt + shift), 1.5 * sx, bright);
-      canvas.drawCircle(at(bead, glintTwin + shift), 1.1 * sx, faint);
+      canvas.drawCircle(at(bead, glintAt + shift), 2.1 * sx, bright);
+      canvas.drawCircle(at(bead, glintTwin + shift), 1.7 * sx, faint);
     }
   }
 
