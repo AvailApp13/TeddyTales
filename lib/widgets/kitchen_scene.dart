@@ -1464,9 +1464,14 @@ class _LidPainter extends CustomPainter {
   static const Size sprite = Size(112, 52);
 
   /// Путь века в долях высоты спрайта и ширина мягкого края.
+  /// Мягкий край уже, чем в спальне (там 0.14 зоны глаза): здесь зона —
+  /// спрайт 112 × 52, и бусина радиусом 8 px целиком помещалась в край
+  /// шириной 7 px — на середине моргания читалась серой полупрозрачной
+  /// (проверка по кадрам 23.09). Край 3 px: веко режет бусину, как в
+  /// спальне, а не растворяет её.
   static const double lidFrom = 0.06;
   static const double lidTo = 0.96;
-  static const double feather = 0.14;
+  static const double feather = 0.06;
 
   @override
   void paint(Canvas canvas, Size size) {
