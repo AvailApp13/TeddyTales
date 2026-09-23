@@ -130,7 +130,175 @@
       }
     },
     "defaultsWritten": true,
-    "referenceImage": {
+    "parts": {
+      "outfit_head": {
+        "asset": "0-393",
+        "instance": "0-395",
+        "parent": "0-254",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 22.91,
+        "world": {
+          "x": 513.4,
+          "y": 282
+        },
+        "fitted": true
+      },
+      "outfit_feet": {
+        "asset": "0-391",
+        "instance": "0-396",
+        "parent": "0-276",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 22.5,
+        "world": {
+          "x": 518.3,
+          "y": 638.7
+        },
+        "fitted": true
+      },
+      "outfit_body": {
+        "asset": "0-389",
+        "instance": "0-397",
+        "parent": "0-275",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 26.8,
+        "world": {
+          "x": 521.2,
+          "y": 551.6
+        },
+        "fitted": true
+      },
+      "leg_right": {
+        "asset": "0-388",
+        "instance": "0-398",
+        "parent": "0-358",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 9.93,
+        "world": {
+          "x": 630.6,
+          "y": 850.5
+        },
+        "fitted": true
+      },
+      "leg_left": {
+        "asset": "0-386",
+        "instance": "0-399",
+        "parent": "0-348",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 11.63,
+        "world": {
+          "x": 390.7,
+          "y": 833.6
+        },
+        "fitted": true
+      },
+      "head": {
+        "asset": "0-385",
+        "instance": "0-400",
+        "parent": "0-127",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 21.67,
+        "world": {
+          "x": 510.4,
+          "y": 354.4
+        },
+        "fitted": true
+      },
+      "face_features": {
+        "asset": "0-384",
+        "instance": "0-401",
+        "parent": "0-162",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 21.52,
+        "world": {
+          "x": 509.5,
+          "y": 435.6
+        },
+        "fitted": true,
+        "hidden": true
+      },
+      "ears": {
+        "asset": "0-382",
+        "instance": "0-402",
+        "parent": "0-127",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 28.22,
+        "world": {
+          "x": 511.8,
+          "y": 366.4
+        },
+        "fitted": true
+      },
+      "body": {
+        "asset": "0-381",
+        "instance": "0-403",
+        "parent": "0-117",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 18.22,
+        "world": {
+          "x": 517.6,
+          "y": 644.8
+        },
+        "fitted": true
+      },
+      "arm_right": {
+        "asset": "0-380",
+        "instance": "0-404",
+        "parent": "0-313",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 8.18,
+        "world": {
+          "x": 727.3,
+          "y": 618.8
+        },
+        "fitted": true
+      },
+      "arm_left": {
+        "asset": "0-379",
+        "instance": "0-405",
+        "parent": "0-278",
+        "sizePx": [
+          2336,
+          3504
+        ],
+        "scalePercent": 9.33,
+        "world": {
+          "x": 306.1,
+          "y": 620.2
+        },
+        "fitted": true
+      }
+    },
+    "referenceImageRemoved": {
       "asset": "0-377",
       "instance": "0-378",
       "parent": "0-116",
