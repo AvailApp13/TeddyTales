@@ -88,6 +88,9 @@ _setUp({bool failing = false}) {
   final game = GameState(
     bear: bear,
     profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+    // Без добавки на испытания: здесь проверяется, что баланс приходит с
+    // сервера как есть.
+    walletFloor: 0,
   );
   final store = _FakeStore(failing: failing);
   final sync = ProgressSync(store: store, bear: bear, game: game);

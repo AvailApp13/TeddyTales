@@ -29,8 +29,9 @@ class BearController extends ChangeNotifier {
     BearTraitTracker? traitTracker,
     this.initiativePolicy = const BearInitiativePolicy(),
     this.autoTrait = true,
+    this.pinnedFood,
     Random? random,
-  }) : _state = initialState,
+  }) : _state = _pin(initialState, pinnedFood),
        _decay = decay,
        traitTracker = traitTracker ?? BearTraitTracker(),
        _random = random ?? Random();
@@ -262,7 +263,18 @@ class BearController extends ChangeNotifier {
     _rig?.fireTrigger(trigger, variant: varied ? _random.nextInt(2) : null);
   }
 
+  /// На чём закреплён показатель «Еда»; `null` — живой. Приложение
+  /// передаёт сюда [kTestFood] на время испытаний: тогда ни кормление, ни
+  /// время, ни сервер показатель не двигают.
+  final double? pinnedFood;
+
+  static BearState _pin(BearState state, double? food) {
+    if (food == null || state.stats.food == food) return state;
+    return state.copyWith(stats: state.stats.copyWith(food: food));
+  }
+
   void _update(BearState next) {
+    next = _pin(next, pinnedFood);
     if (next == _state) return;
     _state = next;
     _rig?.applyState(next);

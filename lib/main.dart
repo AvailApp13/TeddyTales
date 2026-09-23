@@ -13,6 +13,7 @@ import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
+import 'game/test_stubs.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
@@ -80,6 +81,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
               love: 100,
             ),
           ),
+    // Заглушка на испытания: еда закреплена, см. `lib/game/test_stubs.dart`.
+    pinnedFood: kTestFood,
   )..startDecay();
 
   late final GameState _game = GameState(

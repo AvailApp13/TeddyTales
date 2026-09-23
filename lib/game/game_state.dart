@@ -6,6 +6,9 @@ import '../bear/bear_state.dart';
 import 'food.dart';
 import 'pet_profile.dart';
 import 'shop_items.dart';
+import 'test_stubs.dart';
+
+export 'test_stubs.dart' show kTestWallet;
 
 /// Состояние игры вокруг персонажа: кошелёк, инвентарь, обстановка комнаты,
 /// прогресс обучения, настройки уведомлений.
@@ -17,18 +20,6 @@ import 'shop_items.dart';
 /// Хранится пока только в памяти. По КП 1.4 прогресс лежит на сервере и
 /// восстанавливается на новом устройстве; backend выбран (Supabase), но не
 /// подключён.
-/// Сколько монет насыпать на вход, пока идут испытания.
-///
-/// Просьба заказчика 20.09: «чтобы всегда на счету при заходе было по 5000
-/// монет, для того чтобы можно было тестировать покупку всего». Иначе
-/// проверить обстановку целиком нельзя: весь каталог стоит больше трёх
-/// тысяч, а зарабатывают монеты уходом, то есть временем.
-///
-/// **Это заглушка на время разработки.** Кошелёк по КП 11.1 живёт на
-/// сервере и пополняется за уход (КП 6.4); настоящие значения придут
-/// оттуда. Чтобы выключить добавку, достаточно поставить здесь ноль — ни
-/// одна другая строка про это не знает.
-const int kTestWallet = 5000;
 
 class GameState extends ChangeNotifier {
   GameState({
@@ -43,9 +34,8 @@ class GameState extends ChangeNotifier {
        // Порог берётся параметром, а не константой напрямую: тесты про
        // нехватку монет иначе проверяли бы не то — с полным кошельком не
        // бывает «денег не хватило».
-       _profile = profile.coins < walletFloor
-           ? profile.copyWith(coins: walletFloor)
-           : profile,
+       _walletFloor = walletFloor,
+       _profile = _floored(profile, walletFloor),
        // Наборы копируются, а не берутся как есть: снаружи легко прилетает
        // неизменяемый (`const {}` из теста, `Set.unmodifiable` из ответа
        // сервера), и первая же покупка падала бы на попытке в него
@@ -94,8 +84,12 @@ class GameState extends ChangeNotifier {
   /// Предмет поставлен в комнату или убран.
   void Function(String itemId, {required bool placed})? onPlace;
 
+  final int _walletFloor;
   PetProfile _profile;
   final Set<String> _owned;
+
+  static PetProfile _floored(PetProfile profile, int floor) =>
+      profile.coins < floor ? profile.copyWith(coins: floor) : profile;
   final Set<String> _placed;
 
   /// Что в каком месте стоит: ключ — id слота, значение — id вещи.
@@ -211,8 +205,10 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  /// Профиль с сервера. Порог кошелька держится и здесь: сервер про
+  /// добавку на испытания не знает и присылал ноль после первой покупки.
   void setProfile(PetProfile profile) {
-    _profile = profile;
+    _profile = _floored(profile, _walletFloor);
     notifyListeners();
   }
 

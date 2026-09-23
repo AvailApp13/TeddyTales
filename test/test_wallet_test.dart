@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear_controller.dart';
+import 'package:teddy_tales/game/food.dart';
 import 'package:teddy_tales/game/game_state.dart';
+import 'package:teddy_tales/game/test_stubs.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/bear/bear_rig_spec.dart';
 
@@ -30,6 +32,33 @@ void main() {
       // Поднимаем до порога, а не выдаём ровно столько: заработанное или
       // пришедшее с сервера трогать нельзя.
       expect(make(coins: kTestWallet + 700).coins, kTestWallet + 700);
+    });
+
+    test('снимок с сервера не опускает счёт ниже порога', () {
+      // Сервер про добавку не знает и после первого блюда присылал ноль:
+      // второе блюдо было не купить (заказчик 23.09: «почему я могу купить
+      // только одну еду»). Баланс общий: еда, магазин, что угодно.
+      final game = make(coins: 0);
+      expect(game.feedWithDish(FoodCatalog.dishes.first), isTrue);
+      game.setProfile(game.profile.copyWith(coins: 0));
+      expect(game.coins, kTestWallet);
+      expect(game.feedWithDish(FoodCatalog.dishes.last), isTrue);
+      expect(game.feedWithDish(FoodCatalog.dishes.last), isTrue);
+    });
+
+    test('показатель «Еда» закреплён на время испытаний', () {
+      // Заказчик 23.09: «зафиксируй, к примеру, на 87 %, но есть он может
+      // сколько угодно». Ни кормление, ни сервер его не двигают.
+      final bear = BearController(pinnedFood: kTestFood);
+      expect(bear.state.stats.food, kTestFood);
+      bear.feedBear(amount: 40);
+      expect(bear.state.stats.food, kTestFood);
+      bear.restoreState(
+        bear.state.copyWith(stats: bear.state.stats.copyWith(food: 0)),
+      );
+      expect(bear.state.stats.food, kTestFood);
+      // Без параметра контроллер живой — на нём держатся остальные тесты.
+      expect(BearController().state.stats.food, isNot(kTestFood));
     });
 
     test('порога хватает на всю обстановку комнаты', () {
