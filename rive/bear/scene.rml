@@ -16,37 +16,37 @@
       <Rectangle width="512" height="768" name="P"/>
       <Fill name="F"><SolidColor colorValue="00000000" name="C"/></Fill>
     </Shape>
-    <RootBone x="521.8" y="810.76" length="225.744" rotation="-1.5706" name="root" id="1:14">
-      <RootBone x="237.9678" y="-181.6022" length="135.3685" rotation="3.9272" name="root_arm_left" id="1:15">
-        <Node x="67.6843" y="0" rotation="-2.3566" name="forearm_left" id="1:16">
+    <RootBone x="521.31" y="819.472" length="214.4568" rotation="-1.5706" name="root" id="1:14">
+      <RootBone x="226.0694" y="-172.5221" length="128.6001" rotation="3.9272" name="root_arm_left" id="1:15">
+        <Node x="64.3001" y="-0" rotation="-2.3566" name="forearm_left" id="1:16">
           <Node x="0" y="0" name="forearm_light_left" id="1:17">
-            <Node x="-47.88" y="47.84" name="hand_left" id="1:18">
+            <Node x="-45.486" y="45.448" name="hand_left" id="1:18">
               <Node x="-6" y="-6" name="hand_light_left" id="1:19">
-                <Node x="-16.08" y="-19.76" name="finger_1_nail_left" id="1:20">
+                <Node x="-14.976" y="-18.472" name="finger_1_nail_left" id="1:20">
                   <Shape name="finger_1_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="-24.912" y="6" name="finger_2_nail_left" id="1:21">
+                <Node x="-23.3664" y="6" name="finger_2_nail_left" id="1:21">
                   <Shape name="finger_2_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="-16.08" y="31.76" name="finger_3_nail_left" id="1:22">
+                <Node x="-14.976" y="30.472" name="finger_3_nail_left" id="1:22">
                   <Shape name="finger_3_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape opacity="0.35" name="hand_light_left__placeholder">
-                  <Ellipse width="29.44" height="29.44" name="P"/>
+                  <Ellipse width="27.968" height="27.968" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                 </Shape>
               </Node>
               <Shape name="hand_left__placeholder">
-                <Ellipse width="73.6" height="73.6" name="P"/>
+                <Ellipse width="69.92" height="69.92" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
               </Shape>
             </Node>
@@ -61,36 +61,36 @@
           </Shape>
         </Node>
       </RootBone>
-      <RootBone x="242.9922" y="181.5969" length="128.4106" rotation="2.356" name="root_arm_right" id="1:23">
-        <Node x="64.2053" y="0" rotation="-0.7854" name="forearm_right" id="1:24">
+      <RootBone x="230.8426" y="172.5171" length="121.9901" rotation="2.356" name="root_arm_right" id="1:23">
+        <Node x="60.995" y="-0" rotation="-0.7854" name="forearm_right" id="1:24">
           <Node x="0" y="0" name="forearm_light_right" id="1:25">
-            <Node x="45.4" y="45.4" name="hand_right" id="1:26">
+            <Node x="43.13" y="43.13" name="hand_right" id="1:26">
               <Node x="6" y="-6" name="hand_light_right" id="1:27">
-                <Node x="17.568" y="-21.496" name="finger_1_nail_right" id="1:28">
+                <Node x="16.3896" y="-20.1212" name="finger_1_nail_right" id="1:28">
                   <Shape name="finger_1_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="26.9952" y="6" name="finger_2_nail_right" id="1:29">
+                <Node x="25.3454" y="6" name="finger_2_nail_right" id="1:29">
                   <Shape name="finger_2_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="17.568" y="33.496" name="finger_3_nail_right" id="1:30">
+                <Node x="16.3896" y="32.1212" name="finger_3_nail_right" id="1:30">
                   <Shape name="finger_3_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape opacity="0.35" name="hand_light_right__placeholder">
-                  <Ellipse width="31.424" height="31.424" name="P"/>
+                  <Ellipse width="29.8528" height="29.8528" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                 </Shape>
               </Node>
               <Shape name="hand_right__placeholder">
-                <Ellipse width="78.56" height="78.56" name="P"/>
+                <Ellipse width="74.632" height="74.632" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
               </Shape>
             </Node>
@@ -105,24 +105,24 @@
           </Shape>
         </Node>
       </RootBone>
-      <Bone length="240.6972" rotation="-0.0411" name="root_body" id="1:31">
-        <Node x="-61.2927" y="-2.5078" rotation="1.6117" name="body" id="1:32">
+      <Bone length="228.6624" rotation="-0.0411" name="root_body" id="1:31">
+        <Node x="-58.2281" y="-2.3824" rotation="1.6117" name="body" id="1:32">
           <Shape name="body__placeholder">
-            <Ellipse width="404.88" height="306.72" name="P"/>
+            <Ellipse width="384.636" height="291.384" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="-237.785" y="-9.7291" rotation="1.6117" name="body_base" id="1:33">
+        <Node x="-225.8958" y="-9.2426" rotation="1.6117" name="body_base" id="1:33">
           <Shape name="body_base__placeholder">
-            <Ellipse width="368.08" height="147.2" name="P"/>
+            <Ellipse width="349.676" height="139.84" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="240.6972" y="0" rotation="1.6117" name="head" id="1:34">
-          <Node x="-171.76" y="-144.8" name="ear_left" id="1:35">
+        <Node x="228.6624" y="0" rotation="1.6117" name="head" id="1:34">
+          <Node x="-163.172" y="-137.56" name="ear_left" id="1:35">
             <Node x="0" y="2" name="ear_in_left" id="1:36">
               <Shape name="ear_in_left__placeholder">
-                <Ellipse width="59.4" height="64.768" name="P"/>
+                <Ellipse width="56.43" height="61.5296" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFE8B7A3" name="C"/></Fill>
               </Shape>
             </Node>
@@ -133,14 +133,14 @@
               </Shape>
             </Node>
             <Shape name="ear_left__placeholder">
-              <Ellipse width="108" height="117.76" name="P"/>
+              <Ellipse width="102.6" height="111.872" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
             </Shape>
           </Node>
-          <Node x="171.76" y="-144.8" name="ear_right" id="1:38">
+          <Node x="163.172" y="-137.56" name="ear_right" id="1:38">
             <Node x="0" y="2" name="ear_in_right" id="1:39">
               <Shape name="ear_in_right__placeholder">
-                <Ellipse width="59.4" height="64.768" name="P"/>
+                <Ellipse width="56.43" height="61.5296" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFE8B7A3" name="C"/></Fill>
               </Shape>
             </Node>
@@ -151,121 +151,121 @@
               </Shape>
             </Node>
             <Shape name="ear_right__placeholder">
-              <Ellipse width="108" height="117.76" name="P"/>
+              <Ellipse width="102.6" height="111.872" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
             </Shape>
           </Node>
-          <Node x="0" y="25.5232" name="ctrl_face" id="1:41">
-            <Node x="-2.48" y="-5.9232" name="ctrl_eyes" id="1:42">
+          <Node x="0" y="24.247" name="ctrl_face" id="1:41">
+            <Node x="-2.356" y="-5.627" name="ctrl_eyes" id="1:42">
               <Node x="0" y="0" name="ctrl_pupils" id="1:43">
-                <Node x="-61.36" y="0" name="pupil_left" id="1:44">
-                  <Node x="-6.006" y="-6.006" name="pupil_light_left" id="1:45">
+                <Node x="-58.292" y="0" name="pupil_left" id="1:44">
+                  <Node x="-5.7057" y="-5.7057" name="pupil_light_left" id="1:45">
                     <Shape name="pupil_light_left__placeholder">
-                      <Ellipse width="12.012" height="12.012" name="P"/>
+                      <Ellipse width="11.4114" height="11.4114" name="P"/>
                       <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                     </Shape>
                   </Node>
                   <Shape name="pupil_left__placeholder">
-                    <Ellipse width="34.32" height="34.32" name="P"/>
+                    <Ellipse width="32.604" height="32.604" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF1A1411" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="61.36" y="0" name="pupil_right" id="1:46">
-                  <Node x="-6.006" y="-6.006" name="pupil_light_right" id="1:47">
+                <Node x="58.292" y="0" name="pupil_right" id="1:46">
+                  <Node x="-5.7057" y="-5.7057" name="pupil_light_right" id="1:47">
                     <Shape name="pupil_light_right__placeholder">
-                      <Ellipse width="12.012" height="12.012" name="P"/>
+                      <Ellipse width="11.4114" height="11.4114" name="P"/>
                       <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                     </Shape>
                   </Node>
                   <Shape name="pupil_right__placeholder">
-                    <Ellipse width="34.32" height="34.32" name="P"/>
+                    <Ellipse width="32.604" height="32.604" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF1A1411" name="C"/></Fill>
                   </Shape>
                 </Node>
               </Node>
-              <Node x="-61.36" y="0" name="eye_left" id="1:48">
-                <Node x="0" y="-18.876" name="eyelid_top_left" id="1:49">
+              <Node x="-58.292" y="0" name="eye_left" id="1:48">
+                <Node x="0" y="-17.9322" name="eyelid_top_left" id="1:49">
                   <Shape name="eyelid_top_left__placeholder">
-                    <Ellipse width="48.048" height="15.444" name="P"/>
+                    <Ellipse width="45.6456" height="14.6718" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="18.876" name="eyelid_bottom_left" id="1:50">
+                <Node x="0" y="17.9322" name="eyelid_bottom_left" id="1:50">
                   <Shape name="eyelid_bottom_left__placeholder">
-                    <Ellipse width="48.048" height="12.012" name="P"/>
+                    <Ellipse width="45.6456" height="11.4114" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="eye_left__placeholder">
-                  <Ellipse width="44.616" height="44.616" name="P"/>
+                  <Ellipse width="42.3852" height="42.3852" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFEDE3D3" name="C"/></Fill>
                 </Shape>
               </Node>
-              <Node x="61.36" y="0" name="eye_right" id="1:51">
-                <Node x="0" y="-18.876" name="eyelid_top_right" id="1:52">
+              <Node x="58.292" y="0" name="eye_right" id="1:51">
+                <Node x="0" y="-17.9322" name="eyelid_top_right" id="1:52">
                   <Shape name="eyelid_top_right__placeholder">
-                    <Ellipse width="48.048" height="15.444" name="P"/>
+                    <Ellipse width="45.6456" height="14.6718" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="18.876" name="eyelid_bottom_right" id="1:53">
+                <Node x="0" y="17.9322" name="eyelid_bottom_right" id="1:53">
                   <Shape name="eyelid_bottom_right__placeholder">
-                    <Ellipse width="48.048" height="12.012" name="P"/>
+                    <Ellipse width="45.6456" height="11.4114" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="eye_right__placeholder">
-                  <Ellipse width="44.616" height="44.616" name="P"/>
+                  <Ellipse width="42.3852" height="42.3852" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFEDE3D3" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="0" y="94.7168" name="ctrl_mouth" id="1:54">
+            <Node x="0" y="89.981" name="ctrl_mouth" id="1:54">
               <Node x="0" y="0" name="mouth" id="1:55">
-                <Node x="0" y="-5.888" name="teeth" id="1:56">
+                <Node x="0" y="-5.5936" name="teeth" id="1:56">
                   <Shape name="teeth__placeholder">
-                    <Ellipse width="24.024" height="8.832" name="P"/>
+                    <Ellipse width="22.8228" height="8.3904" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="5.888" name="tongue" id="1:57">
+                <Node x="0" y="5.5936" name="tongue" id="1:57">
                   <Shape name="tongue__placeholder">
-                    <Ellipse width="17.16" height="11.776" name="P"/>
+                    <Ellipse width="16.302" height="11.1872" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFE07A8A" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Node x="0" y="0" name="lips" id="1:58">
                   <Shape name="lips__placeholder">
-                    <Ellipse width="34.32" height="7.36" name="P"/>
+                    <Ellipse width="32.604" height="6.992" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF3B2A22" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="mouth__placeholder">
-                  <Ellipse width="34.32" height="29.44" name="P"/>
+                  <Ellipse width="32.604" height="27.968" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF5A2E2E" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="0" y="52.9568" name="ctrl_nose" id="1:59">
+            <Node x="0" y="50.309" name="ctrl_nose" id="1:59">
               <Node x="0" y="0" name="nose" id="1:60">
                 <Shape name="nose__placeholder">
-                  <Ellipse width="56.48" height="41.68" name="P"/>
+                  <Ellipse width="53.656" height="39.596" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF3B2A22" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="-63.84" y="-37.8432" name="ctrl_eyebrow_left" id="1:61">
+            <Node x="-60.648" y="-35.951" name="ctrl_eyebrow_left" id="1:61">
               <Node x="0" y="0" name="eyebrow_left" id="1:62">
                 <Shape name="eyebrow_left__placeholder">
-                  <Ellipse width="44.16" height="12.24" name="P"/>
+                  <Ellipse width="41.952" height="11.628" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="63.84" y="-37.8432" name="ctrl_eyebrow_right" id="1:63">
+            <Node x="60.648" y="-35.951" name="ctrl_eyebrow_right" id="1:63">
               <Node x="0" y="0" name="eyebrow_right" id="1:64">
                 <Shape name="eyebrow_right__placeholder">
-                  <Ellipse width="44.16" height="12.24" name="P"/>
+                  <Ellipse width="41.952" height="11.628" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                 </Shape>
               </Node>
@@ -273,31 +273,31 @@
           </Node>
           <Node name="outfit_head" id="1:65"/>
           <Shape name="head__placeholder">
-            <Ellipse width="368.08" height="319.04" name="P"/>
+            <Ellipse width="349.676" height="303.088" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="106.8124" y="-5.478" rotation="1.6117" name="head_shadow" id="1:66">
+        <Node x="101.4718" y="-5.2041" rotation="1.6117" name="head_shadow" id="1:66">
           <Shape opacity="0.15" name="head_shadow__placeholder">
-            <Ellipse width="294.464" height="57.4272" name="P"/>
+            <Ellipse width="279.7408" height="54.5558" name="P"/>
             <Fill name="F"><SolidColor colorValue="FF000000" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="67.422" y="2.7586" rotation="1.6117" name="scarf_1" id="1:67">
+        <Node x="64.0509" y="2.6207" rotation="1.6117" name="scarf_1" id="1:67">
           <Node x="0" y="16" name="scarf_2" id="1:68">
             <Node x="0" y="14" name="scarf_3" id="1:69">
               <Shape name="scarf_3__placeholder">
-                <Ellipse width="242.928" height="26" name="P"/>
+                <Ellipse width="230.7816" height="26" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFD9534F" name="C"/></Fill>
               </Shape>
             </Node>
             <Shape name="scarf_2__placeholder">
-              <Ellipse width="275.3184" height="30" name="P"/>
+              <Ellipse width="261.5525" height="30" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFD9534F" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="scarf_1__placeholder">
-            <Ellipse width="303.66" height="34" name="P"/>
+            <Ellipse width="288.477" height="34" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFD9534F" name="C"/></Fill>
           </Shape>
         </Node>
@@ -305,30 +305,30 @@
         <Node rotation="1.6117" name="outfit_feet" id="1:71"/>
         <Node rotation="1.6117" name="outfit_accessory" id="1:72"/>
       </Bone>
-      <RootBone x="-0.0165" y="-93.24" length="140.56" rotation="3.4246" name="root_leg_left" id="1:73">
-        <Node x="70.4643" y="5.0705" rotation="-1.854" name="leg_left" id="1:74">
-          <Node x="-14.72" y="68.72" name="foot_left" id="1:75">
+      <RootBone x="-0.0157" y="-88.578" length="133.532" rotation="3.4246" name="root_leg_left" id="1:73">
+        <Node x="66.9411" y="4.817" rotation="-1.854" name="leg_left" id="1:74">
+          <Node x="-13.984" y="65.284" name="foot_left" id="1:75">
             <Shape name="foot_left__placeholder">
-              <Ellipse width="171.76" height="83.44" name="P"/>
+              <Ellipse width="163.172" height="79.268" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="leg_left__placeholder">
-            <Ellipse width="147.2" height="171.76" name="P"/>
+            <Ellipse width="139.84" height="163.172" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
       </RootBone>
-      <RootBone x="0.0165" y="93.24" length="144.0867" rotation="2.9003" name="root_leg_right" id="1:76">
-        <Node x="76.1702" y="-1.5393" rotation="-1.3297" name="leg_right" id="1:77">
-          <Node x="14.72" y="66.32" name="foot_right" id="1:78">
+      <RootBone x="0.0157" y="88.578" length="136.8823" rotation="2.9003" name="root_leg_right" id="1:76">
+        <Node x="72.3617" y="-1.4623" rotation="-1.3297" name="leg_right" id="1:77">
+          <Node x="13.984" y="63.004" name="foot_right" id="1:78">
             <Shape name="foot_right__placeholder">
-              <Ellipse width="186.48" height="83.44" name="P"/>
+              <Ellipse width="177.156" height="79.268" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="leg_right__placeholder">
-            <Ellipse width="157.04" height="176.72" name="P"/>
+            <Ellipse width="149.188" height="167.884" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
@@ -4219,8 +4219,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_crawl" id="1:139">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -4234,8 +4234,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_crawl_turn" id="1:140">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -4249,8 +4249,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_first_steps" id="1:141">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -4264,8 +4264,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_walk" id="1:142">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -4279,8 +4279,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_turn_left" id="1:143">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="481.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="481.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -4294,8 +4294,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_turn_right" id="1:144">
       <KeyedObject objectId="1:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="1:32">
@@ -5293,37 +5293,37 @@
       <Rectangle width="512" height="768" name="P"/>
       <Fill name="F"><SolidColor colorValue="00000000" name="C"/></Fill>
     </Shape>
-    <RootBone x="521.8" y="810.76" length="225.744" rotation="-1.5706" name="root" id="2:14">
-      <RootBone x="237.9678" y="-181.6022" length="135.3685" rotation="3.9272" name="root_arm_left" id="2:15">
-        <Node x="67.6843" y="0" rotation="-2.3566" name="forearm_left" id="2:16">
+    <RootBone x="521.31" y="819.472" length="214.4568" rotation="-1.5706" name="root" id="2:14">
+      <RootBone x="226.0694" y="-172.5221" length="128.6001" rotation="3.9272" name="root_arm_left" id="2:15">
+        <Node x="64.3001" y="-0" rotation="-2.3566" name="forearm_left" id="2:16">
           <Node x="0" y="0" name="forearm_light_left" id="2:17">
-            <Node x="-47.88" y="47.84" name="hand_left" id="2:18">
+            <Node x="-45.486" y="45.448" name="hand_left" id="2:18">
               <Node x="-6" y="-6" name="hand_light_left" id="2:19">
-                <Node x="-16.08" y="-19.76" name="finger_1_nail_left" id="2:20">
+                <Node x="-14.976" y="-18.472" name="finger_1_nail_left" id="2:20">
                   <Shape name="finger_1_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="-24.912" y="6" name="finger_2_nail_left" id="2:21">
+                <Node x="-23.3664" y="6" name="finger_2_nail_left" id="2:21">
                   <Shape name="finger_2_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="-16.08" y="31.76" name="finger_3_nail_left" id="2:22">
+                <Node x="-14.976" y="30.472" name="finger_3_nail_left" id="2:22">
                   <Shape name="finger_3_nail_left__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape opacity="0.35" name="hand_light_left__placeholder">
-                  <Ellipse width="29.44" height="29.44" name="P"/>
+                  <Ellipse width="27.968" height="27.968" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                 </Shape>
               </Node>
               <Shape name="hand_left__placeholder">
-                <Ellipse width="73.6" height="73.6" name="P"/>
+                <Ellipse width="69.92" height="69.92" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
               </Shape>
             </Node>
@@ -5338,36 +5338,36 @@
           </Shape>
         </Node>
       </RootBone>
-      <RootBone x="242.9922" y="181.5969" length="128.4106" rotation="2.356" name="root_arm_right" id="2:23">
-        <Node x="64.2053" y="0" rotation="-0.7854" name="forearm_right" id="2:24">
+      <RootBone x="230.8426" y="172.5171" length="121.9901" rotation="2.356" name="root_arm_right" id="2:23">
+        <Node x="60.995" y="-0" rotation="-0.7854" name="forearm_right" id="2:24">
           <Node x="0" y="0" name="forearm_light_right" id="2:25">
-            <Node x="45.4" y="45.4" name="hand_right" id="2:26">
+            <Node x="43.13" y="43.13" name="hand_right" id="2:26">
               <Node x="6" y="-6" name="hand_light_right" id="2:27">
-                <Node x="17.568" y="-21.496" name="finger_1_nail_right" id="2:28">
+                <Node x="16.3896" y="-20.1212" name="finger_1_nail_right" id="2:28">
                   <Shape name="finger_1_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="26.9952" y="6" name="finger_2_nail_right" id="2:29">
+                <Node x="25.3454" y="6" name="finger_2_nail_right" id="2:29">
                   <Shape name="finger_2_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="17.568" y="33.496" name="finger_3_nail_right" id="2:30">
+                <Node x="16.3896" y="32.1212" name="finger_3_nail_right" id="2:30">
                   <Shape name="finger_3_nail_right__placeholder">
                     <Ellipse width="12" height="12" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape opacity="0.35" name="hand_light_right__placeholder">
-                  <Ellipse width="31.424" height="31.424" name="P"/>
+                  <Ellipse width="29.8528" height="29.8528" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                 </Shape>
               </Node>
               <Shape name="hand_right__placeholder">
-                <Ellipse width="78.56" height="78.56" name="P"/>
+                <Ellipse width="74.632" height="74.632" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
               </Shape>
             </Node>
@@ -5382,24 +5382,24 @@
           </Shape>
         </Node>
       </RootBone>
-      <Bone length="240.6972" rotation="-0.0411" name="root_body" id="2:31">
-        <Node x="-61.2927" y="-2.5078" rotation="1.6117" name="body" id="2:32">
+      <Bone length="228.6624" rotation="-0.0411" name="root_body" id="2:31">
+        <Node x="-58.2281" y="-2.3824" rotation="1.6117" name="body" id="2:32">
           <Shape name="body__placeholder">
-            <Ellipse width="404.88" height="306.72" name="P"/>
+            <Ellipse width="384.636" height="291.384" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="-237.785" y="-9.7291" rotation="1.6117" name="body_base" id="2:33">
+        <Node x="-225.8958" y="-9.2426" rotation="1.6117" name="body_base" id="2:33">
           <Shape name="body_base__placeholder">
-            <Ellipse width="368.08" height="147.2" name="P"/>
+            <Ellipse width="349.676" height="139.84" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="240.6972" y="0" rotation="1.6117" name="head" id="2:34">
-          <Node x="-171.76" y="-144.8" name="ear_left" id="2:35">
+        <Node x="228.6624" y="0" rotation="1.6117" name="head" id="2:34">
+          <Node x="-163.172" y="-137.56" name="ear_left" id="2:35">
             <Node x="0" y="2" name="ear_in_left" id="2:36">
               <Shape name="ear_in_left__placeholder">
-                <Ellipse width="59.4" height="64.768" name="P"/>
+                <Ellipse width="56.43" height="61.5296" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFF2C4D0" name="C"/></Fill>
               </Shape>
             </Node>
@@ -5410,14 +5410,14 @@
               </Shape>
             </Node>
             <Shape name="ear_left__placeholder">
-              <Ellipse width="108" height="117.76" name="P"/>
+              <Ellipse width="102.6" height="111.872" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
             </Shape>
           </Node>
-          <Node x="171.76" y="-144.8" name="ear_right" id="2:38">
+          <Node x="163.172" y="-137.56" name="ear_right" id="2:38">
             <Node x="0" y="2" name="ear_in_right" id="2:39">
               <Shape name="ear_in_right__placeholder">
-                <Ellipse width="59.4" height="64.768" name="P"/>
+                <Ellipse width="56.43" height="61.5296" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFF2C4D0" name="C"/></Fill>
               </Shape>
             </Node>
@@ -5428,121 +5428,121 @@
               </Shape>
             </Node>
             <Shape name="ear_right__placeholder">
-              <Ellipse width="108" height="117.76" name="P"/>
+              <Ellipse width="102.6" height="111.872" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
             </Shape>
           </Node>
-          <Node x="0" y="25.5232" name="ctrl_face" id="2:41">
-            <Node x="-2.48" y="-5.9232" name="ctrl_eyes" id="2:42">
+          <Node x="0" y="24.247" name="ctrl_face" id="2:41">
+            <Node x="-2.356" y="-5.627" name="ctrl_eyes" id="2:42">
               <Node x="0" y="0" name="ctrl_pupils" id="2:43">
-                <Node x="-61.36" y="0" name="pupil_left" id="2:44">
-                  <Node x="-6.006" y="-6.006" name="pupil_light_left" id="2:45">
+                <Node x="-58.292" y="0" name="pupil_left" id="2:44">
+                  <Node x="-5.7057" y="-5.7057" name="pupil_light_left" id="2:45">
                     <Shape name="pupil_light_left__placeholder">
-                      <Ellipse width="12.012" height="12.012" name="P"/>
+                      <Ellipse width="11.4114" height="11.4114" name="P"/>
                       <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                     </Shape>
                   </Node>
                   <Shape name="pupil_left__placeholder">
-                    <Ellipse width="34.32" height="34.32" name="P"/>
+                    <Ellipse width="32.604" height="32.604" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF1A1411" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="61.36" y="0" name="pupil_right" id="2:46">
-                  <Node x="-6.006" y="-6.006" name="pupil_light_right" id="2:47">
+                <Node x="58.292" y="0" name="pupil_right" id="2:46">
+                  <Node x="-5.7057" y="-5.7057" name="pupil_light_right" id="2:47">
                     <Shape name="pupil_light_right__placeholder">
-                      <Ellipse width="12.012" height="12.012" name="P"/>
+                      <Ellipse width="11.4114" height="11.4114" name="P"/>
                       <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                     </Shape>
                   </Node>
                   <Shape name="pupil_right__placeholder">
-                    <Ellipse width="34.32" height="34.32" name="P"/>
+                    <Ellipse width="32.604" height="32.604" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF1A1411" name="C"/></Fill>
                   </Shape>
                 </Node>
               </Node>
-              <Node x="-61.36" y="0" name="eye_left" id="2:48">
-                <Node x="0" y="-18.876" name="eyelid_top_left" id="2:49">
+              <Node x="-58.292" y="0" name="eye_left" id="2:48">
+                <Node x="0" y="-17.9322" name="eyelid_top_left" id="2:49">
                   <Shape name="eyelid_top_left__placeholder">
-                    <Ellipse width="48.048" height="15.444" name="P"/>
+                    <Ellipse width="45.6456" height="14.6718" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="18.876" name="eyelid_bottom_left" id="2:50">
+                <Node x="0" y="17.9322" name="eyelid_bottom_left" id="2:50">
                   <Shape name="eyelid_bottom_left__placeholder">
-                    <Ellipse width="48.048" height="12.012" name="P"/>
+                    <Ellipse width="45.6456" height="11.4114" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="eye_left__placeholder">
-                  <Ellipse width="44.616" height="44.616" name="P"/>
+                  <Ellipse width="42.3852" height="42.3852" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFEDE3D3" name="C"/></Fill>
                 </Shape>
               </Node>
-              <Node x="61.36" y="0" name="eye_right" id="2:51">
-                <Node x="0" y="-18.876" name="eyelid_top_right" id="2:52">
+              <Node x="58.292" y="0" name="eye_right" id="2:51">
+                <Node x="0" y="-17.9322" name="eyelid_top_right" id="2:52">
                   <Shape name="eyelid_top_right__placeholder">
-                    <Ellipse width="48.048" height="15.444" name="P"/>
+                    <Ellipse width="45.6456" height="14.6718" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="18.876" name="eyelid_bottom_right" id="2:53">
+                <Node x="0" y="17.9322" name="eyelid_bottom_right" id="2:53">
                   <Shape name="eyelid_bottom_right__placeholder">
-                    <Ellipse width="48.048" height="12.012" name="P"/>
+                    <Ellipse width="45.6456" height="11.4114" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="eye_right__placeholder">
-                  <Ellipse width="44.616" height="44.616" name="P"/>
+                  <Ellipse width="42.3852" height="42.3852" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FFEDE3D3" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="0" y="94.7168" name="ctrl_mouth" id="2:54">
+            <Node x="0" y="89.981" name="ctrl_mouth" id="2:54">
               <Node x="0" y="0" name="mouth" id="2:55">
-                <Node x="0" y="-5.888" name="teeth" id="2:56">
+                <Node x="0" y="-5.5936" name="teeth" id="2:56">
                   <Shape name="teeth__placeholder">
-                    <Ellipse width="24.024" height="8.832" name="P"/>
+                    <Ellipse width="22.8228" height="8.3904" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFFFFFFF" name="C"/></Fill>
                   </Shape>
                 </Node>
-                <Node x="0" y="5.888" name="tongue" id="2:57">
+                <Node x="0" y="5.5936" name="tongue" id="2:57">
                   <Shape name="tongue__placeholder">
-                    <Ellipse width="17.16" height="11.776" name="P"/>
+                    <Ellipse width="16.302" height="11.1872" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FFE07A8A" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Node x="0" y="0" name="lips" id="2:58">
                   <Shape name="lips__placeholder">
-                    <Ellipse width="34.32" height="7.36" name="P"/>
+                    <Ellipse width="32.604" height="6.992" name="P"/>
                     <Fill name="F"><SolidColor colorValue="FF3B2A22" name="C"/></Fill>
                   </Shape>
                 </Node>
                 <Shape name="mouth__placeholder">
-                  <Ellipse width="34.32" height="29.44" name="P"/>
+                  <Ellipse width="32.604" height="27.968" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF5A2E2E" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="0" y="52.9568" name="ctrl_nose" id="2:59">
+            <Node x="0" y="50.309" name="ctrl_nose" id="2:59">
               <Node x="0" y="0" name="nose" id="2:60">
                 <Shape name="nose__placeholder">
-                  <Ellipse width="56.48" height="41.68" name="P"/>
+                  <Ellipse width="53.656" height="39.596" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF3B2A22" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="-63.84" y="-37.8432" name="ctrl_eyebrow_left" id="2:61">
+            <Node x="-60.648" y="-35.951" name="ctrl_eyebrow_left" id="2:61">
               <Node x="0" y="0" name="eyebrow_left" id="2:62">
                 <Shape name="eyebrow_left__placeholder">
-                  <Ellipse width="44.16" height="12.24" name="P"/>
+                  <Ellipse width="41.952" height="11.628" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                 </Shape>
               </Node>
             </Node>
-            <Node x="63.84" y="-37.8432" name="ctrl_eyebrow_right" id="2:63">
+            <Node x="60.648" y="-35.951" name="ctrl_eyebrow_right" id="2:63">
               <Node x="0" y="0" name="eyebrow_right" id="2:64">
                 <Shape name="eyebrow_right__placeholder">
-                  <Ellipse width="44.16" height="12.24" name="P"/>
+                  <Ellipse width="41.952" height="11.628" name="P"/>
                   <Fill name="F"><SolidColor colorValue="FF8A6A48" name="C"/></Fill>
                 </Shape>
               </Node>
@@ -5550,31 +5550,31 @@
           </Node>
           <Node name="outfit_head" id="2:65"/>
           <Shape name="head__placeholder">
-            <Ellipse width="368.08" height="319.04" name="P"/>
+            <Ellipse width="349.676" height="303.088" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="106.8124" y="-5.478" rotation="1.6117" name="head_shadow" id="2:66">
+        <Node x="101.4718" y="-5.2041" rotation="1.6117" name="head_shadow" id="2:66">
           <Shape opacity="0.15" name="head_shadow__placeholder">
-            <Ellipse width="294.464" height="57.4272" name="P"/>
+            <Ellipse width="279.7408" height="54.5558" name="P"/>
             <Fill name="F"><SolidColor colorValue="FF000000" name="C"/></Fill>
           </Shape>
         </Node>
-        <Node x="67.422" y="2.7586" rotation="1.6117" name="scarf_1" id="2:67">
+        <Node x="64.0509" y="2.6207" rotation="1.6117" name="scarf_1" id="2:67">
           <Node x="0" y="16" name="scarf_2" id="2:68">
             <Node x="0" y="14" name="scarf_3" id="2:69">
               <Shape name="scarf_3__placeholder">
-                <Ellipse width="242.928" height="26" name="P"/>
+                <Ellipse width="230.7816" height="26" name="P"/>
                 <Fill name="F"><SolidColor colorValue="FFF48FB1" name="C"/></Fill>
               </Shape>
             </Node>
             <Shape name="scarf_2__placeholder">
-              <Ellipse width="275.3184" height="30" name="P"/>
+              <Ellipse width="261.5525" height="30" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFF48FB1" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="scarf_1__placeholder">
-            <Ellipse width="303.66" height="34" name="P"/>
+            <Ellipse width="288.477" height="34" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFF48FB1" name="C"/></Fill>
           </Shape>
         </Node>
@@ -5582,30 +5582,30 @@
         <Node rotation="1.6117" name="outfit_feet" id="2:71"/>
         <Node rotation="1.6117" name="outfit_accessory" id="2:72"/>
       </Bone>
-      <RootBone x="-0.0165" y="-93.24" length="140.56" rotation="3.4246" name="root_leg_left" id="2:73">
-        <Node x="70.4643" y="5.0705" rotation="-1.854" name="leg_left" id="2:74">
-          <Node x="-14.72" y="68.72" name="foot_left" id="2:75">
+      <RootBone x="-0.0157" y="-88.578" length="133.532" rotation="3.4246" name="root_leg_left" id="2:73">
+        <Node x="66.9411" y="4.817" rotation="-1.854" name="leg_left" id="2:74">
+          <Node x="-13.984" y="65.284" name="foot_left" id="2:75">
             <Shape name="foot_left__placeholder">
-              <Ellipse width="171.76" height="83.44" name="P"/>
+              <Ellipse width="163.172" height="79.268" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="leg_left__placeholder">
-            <Ellipse width="147.2" height="171.76" name="P"/>
+            <Ellipse width="139.84" height="163.172" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
       </RootBone>
-      <RootBone x="0.0165" y="93.24" length="144.0867" rotation="2.9003" name="root_leg_right" id="2:76">
-        <Node x="76.1702" y="-1.5393" rotation="-1.3297" name="leg_right" id="2:77">
-          <Node x="14.72" y="66.32" name="foot_right" id="2:78">
+      <RootBone x="0.0157" y="88.578" length="136.8823" rotation="2.9003" name="root_leg_right" id="2:76">
+        <Node x="72.3617" y="-1.4623" rotation="-1.3297" name="leg_right" id="2:77">
+          <Node x="13.984" y="63.004" name="foot_right" id="2:78">
             <Shape name="foot_right__placeholder">
-              <Ellipse width="186.48" height="83.44" name="P"/>
+              <Ellipse width="177.156" height="79.268" name="P"/>
               <Fill name="F"><SolidColor colorValue="FFB8946C" name="C"/></Fill>
             </Shape>
           </Node>
           <Shape name="leg_right__placeholder">
-            <Ellipse width="157.04" height="176.72" name="P"/>
+            <Ellipse width="149.188" height="167.884" name="P"/>
             <Fill name="F"><SolidColor colorValue="FFC9A57C" name="C"/></Fill>
           </Shape>
         </Node>
@@ -9496,8 +9496,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_crawl" id="2:139">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">
@@ -9511,8 +9511,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_crawl_turn" id="2:140">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">
@@ -9526,8 +9526,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_first_steps" id="2:141">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">
@@ -9541,8 +9541,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_walk" id="2:142">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">
@@ -9556,8 +9556,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_turn_left" id="2:143">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="481.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="481.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">
@@ -9571,8 +9571,8 @@
     <LinearAnimation loopValue="loop" duration="60" name="move_turn_right" id="2:144">
       <KeyedObject objectId="2:14">
         <KeyedProperty propertyKey="90">
-          <KeyFrameDouble value="521.8" frame="0" interpolationType="cubic"/>
-          <KeyFrameDouble value="561.8" frame="60" interpolationType="cubic"/>
+          <KeyFrameDouble value="521.31" frame="0" interpolationType="cubic"/>
+          <KeyFrameDouble value="561.31" frame="60" interpolationType="cubic"/>
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="2:32">

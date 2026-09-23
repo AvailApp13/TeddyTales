@@ -26,9 +26,11 @@ import { repoRoot, childrenOf } from './rig.mjs';
 
 const PROPORTIONS = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions.json'), 'utf8'));
 
-// figureHeight: рост без капюшона; с капюшоном фигура на 21% выше и должна
-// влезать в 1024 — 800 px оставляют макушке запас в 13 px.
-export const AB = { w: 1024, h: 1024, figureHeight: 800, groundY: 985 };
+// figureHeight: рост без капюшона (макушка под капюшоном -> земля). Остриё
+// капюшона на 28,8% выше макушки (HD-кадр: 420/326 старых px), и вся фигура
+// должна влезать в 1024: 760 px роста -> остриё на y=6. Раньше стояло 800 по
+// вырезу с обрезанным остриём — макушка капюшона вылезала за артборд.
+export const AB = { w: 1024, h: 1024, figureHeight: 760, groundY: 985 };
 const SCALE = AB.figureHeight; // 1.0 роста без капюшона = 800 px артборда
 
 /** Часть сетки -> мировые координаты артборда. */
