@@ -1447,7 +1447,14 @@ class _IdlePose {
   static _IdlePose of(KitchenIdle idle) => switch (idle) {
     KitchenIdle.normal => const _IdlePose(0, 0, _Eyes.open, _Mouth.neutral),
     // Уши приподняты, голова чуть выше, улыбка (ТЗ: `idle_happy`).
-    KitchenIdle.happy => const _IdlePose(0.35, -0.06, _Eyes.open, _Mouth.smile),
+    // Рот обычный: вышитая улыбка и так есть, а открытый рот на долгом
+    // покое читался бы гримасой.
+    KitchenIdle.happy => const _IdlePose(
+      0.35,
+      -0.06,
+      _Eyes.open,
+      _Mouth.neutral,
+    ),
     // Уши и голова опущены, грустное лицо (ТЗ: `idle_sad`).
     KitchenIdle.sad => const _IdlePose(-0.6, 0.22, _Eyes.sad, _Mouth.sad),
     // Голоден: уши чуть вниз, голова чуть ниже; грусть — приступами.
