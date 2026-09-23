@@ -1611,7 +1611,7 @@ class _Jaw {
   static const double biteDrop = 0.035;
   static const double chewDrop = 0.03;
   static const double chewShift = 0.005;
-  static const double cheekBulge = 0.03;
+  static const double cheekBulge = 0.045;
 
   /// Где челюсть начинает двигаться и где движется целиком — доли высоты
   /// головы: нос (0.79–0.85) стоит, ниже него мордочка ходит.
@@ -1654,7 +1654,7 @@ class _MuzzlePainter extends CustomPainter {
   /// Щёки: центры и разброс (доли головы).
   static const double cheekY = 0.84;
   static const double cheekX = 0.24;
-  static const double cheekSpread = 0.09;
+  static const double cheekSpread = 0.11;
 
   @override
   void paint(Canvas canvas, Size size) {
