@@ -53,7 +53,11 @@ Claude Desktop, или в терминале в папке проекта:
 На Mac, при открытом Rive Editor (Early Access):
 
     brew install cloudflared
-    cloudflared tunnel --url http://127.0.0.1:9791
+    cloudflared tunnel --url http://127.0.0.1:9791 --http-host-header 127.0.0.1:9791
+
+Флаг `--http-host-header` обязателен: без него MCP-сервер редактора
+отвечает 403 (защита от DNS rebinding — он принимает только Host
+`127.0.0.1:9791`).
 
 Команда напечатает адрес вида `https://<случайные-слова>.trycloudflare.com`.
 Дальше два варианта:
