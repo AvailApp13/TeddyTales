@@ -52,15 +52,18 @@ class KitchenScene extends StatefulWidget {
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
+  // Ножки подняты на 0.008 против нарезки: круглый верх в упор к низу
+  // скатерти (0.760), иначе висят, «как будто ни к чему не привязаны»
+  // (заказчик 23.09). Припуск сверху уходит под слой стола.
   static const Rect footLeft = Rect.fromLTWH(
     0.361111,
-    0.751953,
+    0.743953,
     0.115741,
     0.050781,
   );
   static const Rect footRight = Rect.fromLTWH(
     0.503472,
-    0.751953,
+    0.743953,
     0.116898,
     0.052083,
   );
@@ -194,6 +197,8 @@ class KitchenScene extends StatefulWidget {
     '$_dir/foot_right.png',
     '$_dir/ear_left.png',
     '$_dir/ear_right.png',
+    '$_dir/ear_left_back.png',
+    '$_dir/ear_right_back.png',
     '$_dir/paw_left.png',
     '$_dir/paw_right.png',
     '$_dir/sleeve_left.png',
@@ -822,6 +827,11 @@ class _KitchenSceneState extends State<KitchenScene>
             ]),
             builder: (context, _) => Stack(
               children: [
+                // Под качающейся ножкой — её же неподвижный верх: при
+                // качании у скатерти открывались бы углы (заказчик 23.09:
+                // «подложки под те части, где видны пробелы»).
+                _footBack(w, h, KitchenScene.footLeft, 'foot_left'),
+                _footBack(w, h, KitchenScene.footRight, 'foot_right'),
                 _foot(w, h, KitchenScene.footLeft, 'foot_left', _footLeft, 1),
                 _foot(
                   w,
@@ -960,6 +970,14 @@ class _KitchenSceneState extends State<KitchenScene>
     );
   }
 
+  /// Подложка ножки: верхние 45 % спрайта, неподвижно.
+  Widget _footBack(double w, double h, Rect box, String name) => _place(
+    box,
+    w,
+    h,
+    ClipRect(clipper: const _TopClipper(fraction: 0.45), child: _image(name)),
+  );
+
   /// Край стола и скатерть: кусок фона комнаты поверх ножек.
   Widget _tableFront(double w, double h) {
     final box = KitchenScene.tableFront;
@@ -1049,18 +1067,19 @@ class _KitchenSceneState extends State<KitchenScene>
             fit: StackFit.expand,
             children: [
               // Уши внутри головы: наклонилась голова — уехали и уши.
-              // Лежат под капюшоном, голова под ними целая, сзади —
-              // стена. Добор — только половина уха со стороны капюшона,
-              // неподвижная: когда ухо гнётся, оно не отходит от
-              // капюшона (23.09: «отходят от капюшона»), а целая копия
-              // читалась вторым ухом со стороны стены.
+              // Лежат под капюшоном, сзади — стена. Подложка — рамка уха
+              // из цельного мишки GPT (там ухо к капюшону вплотную, у
+              // вырезанных спрайтов по шву просвечивала стена), только
+              // половина со стороны капюшона: целая копия читалась вторым
+              // ухом со стороны стены. Заказчик 23.09: «сделать подложки,
+              // не цельное ухо». Режет tool/cut_kitchen_backings.py.
               _inHead(
                 width,
                 height,
                 KitchenScene.earLeft,
                 ClipRect(
-                  clipper: const _HalfClipper(keepRight: true, fraction: 0.55),
-                  child: _image('ear_left'),
+                  clipper: const _HalfClipper(keepRight: true, fraction: 0.6),
+                  child: _image('ear_left_back'),
                 ),
               ),
               _inHead(
@@ -1068,8 +1087,8 @@ class _KitchenSceneState extends State<KitchenScene>
                 height,
                 KitchenScene.earRight,
                 ClipRect(
-                  clipper: const _HalfClipper(keepRight: false, fraction: 0.55),
-                  child: _image('ear_right'),
+                  clipper: const _HalfClipper(keepRight: false, fraction: 0.6),
+                  child: _image('ear_right_back'),
                 ),
               ),
               _inHead(
@@ -1553,6 +1572,20 @@ class _LidPainter extends CustomPainter {
       old.base != base ||
       old.closed != closed ||
       old.look != look;
+}
+
+/// Оставляет [fraction] высоты сверху.
+class _TopClipper extends CustomClipper<Rect> {
+  const _TopClipper({required this.fraction});
+
+  final double fraction;
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTWH(0, 0, size.width, size.height * fraction);
+
+  @override
+  bool shouldReclip(_TopClipper old) => old.fraction != fraction;
 }
 
 /// Оставляет [fraction] ширины с правого или левого края.
