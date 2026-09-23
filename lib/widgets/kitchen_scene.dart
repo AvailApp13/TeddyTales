@@ -709,8 +709,10 @@ class _KitchenSceneState extends State<KitchenScene>
         // настоящее перетирание. Голова чуть кивает и водит в такт.
         munch += (0.5 - 0.5 * math.cos(phase)) * env;
         grind += math.sin(phase) * env;
-        bow += 0.04 * math.sin(phase) * env;
-        side += 0.12 * math.sin(phase / 2 + math.pi / 2) * env;
+        // Голова в такт едва заметно: по карте разности 23.09 её качание
+        // читалось как «дышащее шаром» лицо.
+        bow += 0.02 * math.sin(phase) * env;
+        side += 0.05 * math.sin(phase / 2 + math.pi / 2) * env;
       }
       // Перед вторым кусочком снова посмотрел на еду.
       if (s < 1) lookY += 0.7 * _ramp(t, 3.15, 3.5);
