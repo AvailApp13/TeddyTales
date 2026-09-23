@@ -129,6 +129,21 @@
         }
       }
     },
-    "defaultsWritten": true
+    "defaultsWritten": true,
+    "referenceImage": {
+      "asset": "0-377",
+      "instance": "0-378",
+      "parent": "0-116",
+      "source": "handoff/reference/bear_boy_cutout_hd.png",
+      "sizePx": [
+        642,
+        1053
+      ],
+      "x": 520,
+      "y": 568,
+      "scalePercent": 79.2,
+      "drawOrder": "sendToBack",
+      "note": "Рост без капюшона ~1010 px в вырезе -> 800 px артборда (AB.figureHeight); низ стоп на groundY 985."
+    }
   }
 }
