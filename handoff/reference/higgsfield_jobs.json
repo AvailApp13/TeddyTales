@@ -3,23 +3,25 @@
     "Генерации Higgsfield по HD-кадру bear_boy_front_hd.jpg (23.09.2026).",
     "Один кадр 2:3, 4K, прозрачный фон: все части в одном масштабе и положении, накладываются друг на друга без сдвига.",
     "Скачивать из галереи Higgsfield (аккаунт Руслана); в контейнер Claude загрузка внешних файлов заблокирована.",
-    "Части рисует gpt_image_2_5 по референсу: скрытые под одеждой зоны дорисованы, это не «один в один», проверять глазами."
+    "Части рисует gpt_image_2_5 по референсу: скрытые под одеждой зоны дорисованы, это не «один в один», проверять глазами.",
+    "Раскладка в редактор: tools/scripts/place_parts.mjs <папка на маке> [--replace]; файлы называть по ключам jobs."
   ],
   "source_media": "9726e08b-d88d-4934-96e4-ee898e1abc1c",
   "jobs": {
-    "upscale_4k":       "657c65c2-f215-4d5e-a892-d36bae557bde",
-    "cutout_ai":        "55fd5811-5487-4dae-8dd4-3a52b8a1b0b1",
-    "full_no_tag":      "54f40bd0-45bc-43f4-8fe2-17fac08fae57",
-    "head":             "d83b3c2b-33dd-40c1-872b-2c04b8990afc",
-    "ears":             "27cf515b-41fb-4f2b-afba-a17cf9c161f2",
-    "outfit_head":      "a72000b6-fac6-44fc-9fed-91de3010f6ba",
-    "outfit_body":      "88059011-0732-4d0f-860e-398e0003c7a9",
-    "body":             "0393cfb4-3d55-4d34-b819-61fa1fe113b6",
-    "arm_left":         "443fc8cc-fcb8-43ef-a55c-99f9a8102f44",
-    "arm_right":        "6785090a-5ba8-4faf-a302-1789ee5ade44",
-    "leg_left":         "c8b9dea6-a207-4a42-ba3e-68f2b196d638",
-    "leg_right":        "468741a2-d7f7-419b-9f85-f58d48dca4a7",
-    "outfit_feet":      "19aba9b4-4b7d-4668-861e-5b753829d0cc",
-    "face_features":    "d062dc9b-3678-431d-a491-c3b7b60e54e8"
+    "upscale_4k": "657c65c2-f215-4d5e-a892-d36bae557bde",
+    "cutout_ai": "55fd5811-5487-4dae-8dd4-3a52b8a1b0b1",
+    "full_no_tag": "54f40bd0-45bc-43f4-8fe2-17fac08fae57",
+    "head": "d83b3c2b-33dd-40c1-872b-2c04b8990afc",
+    "ears": "27cf515b-41fb-4f2b-afba-a17cf9c161f2",
+    "outfit_head": "a72000b6-fac6-44fc-9fed-91de3010f6ba",
+    "outfit_body": "ada9a416-6e6d-4048-a25c-275d4bcfebe4",
+    "body": "0393cfb4-3d55-4d34-b819-61fa1fe113b6",
+    "arm_left": "443fc8cc-fcb8-43ef-a55c-99f9a8102f44",
+    "arm_right": "6785090a-5ba8-4faf-a302-1789ee5ade44",
+    "leg_left": "c8b9dea6-a207-4a42-ba3e-68f2b196d638",
+    "leg_right": "468741a2-d7f7-419b-9f85-f58d48dca4a7",
+    "outfit_feet": "19aba9b4-4b7d-4668-861e-5b753829d0cc",
+    "face_features": "d062dc9b-3678-431d-a491-c3b7b60e54e8",
+    "outfit_body_v1_halo": "88059011-0732-4d0f-860e-398e0003c7a9"
   }
 }
