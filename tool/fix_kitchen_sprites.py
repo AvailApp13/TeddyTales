@@ -12,7 +12,8 @@
    жёсткий срез читался кольцом вокруг бусин и носа;
 4. убирает светлую кайму с ушей.
 
-Исходники GPT сохраняются рядом с суффиксом `.gpt.png` один раз.
+Исходники GPT сохраняются один раз в `tool/kitchen_gpt_originals/` (не в
+ассеты — иначе попадут в сборку).
 
     python3 tool/fix_kitchen_sprites.py            # правит ассеты
     python3 tool/fix_kitchen_sprites.py --preview  # только картинка проверки
@@ -34,9 +35,13 @@ def load(path):
     return np.asarray(Image.open(path).convert('RGBA')).astype(float)
 
 
+ORIGINALS = ROOT / 'tool/kitchen_gpt_originals'
+
+
 def keep_original(path: Path):
-    backup = path.with_suffix('.gpt.png')
+    backup = ORIGINALS / path.name
     if not backup.exists():
+        ORIGINALS.mkdir(parents=True, exist_ok=True)
         Image.open(path).save(backup)
 
 
