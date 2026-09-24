@@ -28,7 +28,7 @@ const ORDER = ['smile', 'laugh', 'love', 'surprised', 'sad', 'upset', 'chew', 'l
 const START0 = 90;                                     // покой до первого выражения
 const start = Object.fromEntries(ORDER.map((n, i) => [n, START0 + i * SEG]));
 const END = START0 + ORDER.length * SEG + FADE + 108;
-const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * t * (t * (6 * t - 15) + 10); };   // smootherstep: без толчков
 const env = (u) => sm(0, FADE, u) * (1 - sm(SEG - 4, SEG + FADE - 4, u));   // вход и выход выражения
 const S = Math.sin, PI2 = Math.PI * 2;
 // движения тела по выражению: u — кадр от начала выражения; head — наклон головы на глаз
@@ -55,7 +55,7 @@ function pose(f) {
 }
 // взгляд (бусины основы; работает, пока на глазах нет накладки выражения): смещение в px артборда
 function gaze(f) {
-  const look = (a, b, dx, dy) => { const k = sm(a, a + 8, f) * (1 - sm(b, b + 8, f)); return [dx * k, dy * k]; };
+  const look = (a, b, dx, dy) => { const k = sm(a, a + 18, f) * (1 - sm(b, b + 18, f)); return [dx * k, dy * k]; };
   const parts = [look(40, 75, -2.6, 0), look(1240, 1275, 2.6, 0.4),
     look(start.chew + 30, start.chew + 60, 2.2, 0), look(start.lick + 14, start.lick + 90, 0, -1.6)];
   return parts.reduce((s, [a, b]) => [s[0] + a, s[1] + b], [0, 0]);
@@ -81,21 +81,22 @@ for (let f = 0; f <= END; f += 4) {
   lin(B.root_body, 15, f, b(B.root_body, 15) + HEADK * p.head);
   lin(B.root_leg_left, 15, f, b(B.root_leg_left, 15) - lean);
   lin(B.root_leg_right, 15, f, b(B.root_leg_right, 15) - lean);
-  lin(B.root_arm_right, 15, f, b(B.root_arm_right, 15) - p.arm + 1.3 * p.inhale);
+  lin(B.root_arm_right, 15, f, b(B.root_arm_right, 15) - p.arm + 1.5 * p.inhale);
   lin(B.root_ear_left, 15, f, b(B.root_ear_left, 15) + p.ear);     // левое ухо: + по часовой = вверх
   lin(B.root_ear_right, 15, f, b(B.root_ear_right, 15) - p.ear);
-  lin(B.root_arm_left, 15, f, b(B.root_arm_left, 15) + p.arm - 1.3 * p.inhale);
-  if (B.root_belly) { lin(B.root_belly, 16, f, b(B.root_belly, 16) * (1 + 0.045 * p.inhale)); lin(B.root_belly, 17, f, b(B.root_belly, 17) * (1 + 0.027 * p.inhale)); }
+  lin(B.root_arm_left, 15, f, b(B.root_arm_left, 15) + p.arm - 1.5 * p.inhale);
+  if (B.root_belly) { lin(B.root_belly, 16, f, b(B.root_belly, 16) * (1 + 0.065 * p.inhale)); lin(B.root_belly, 17, f, b(B.root_belly, 17) * (1 + 0.039 * p.inhale)); }
   const [gx, gy] = gaze(f);
   for (const s of ['l', 'r']) { const id = IM[`gaze_bead_${s}`].instance; lin(id, 13, f, b(id, 13) + gx); lin(id, 14, f, b(id, 14) + gy); }
 }
 // прозрачность выражений
-const op = (name, f, v) => key(G[`fx_${name}`], 18, f, v, 'linear');
+const op = (name, f, v, interp = 'linear') => key(G[`fx_${name}`], 18, f, v, interp);
 for (const n of Object.keys(G).filter((g) => g.startsWith('fx_')).map((g) => g.slice(3))) { op(n, 0, 0); op(n, END, 0); }
 for (const n of ORDER) { const s = start[n]; op(n, s, 0); op(n, s + FADE, 100); op(n, s + SEG - 4, 100); op(n, s + SEG + FADE - 4, 0); }
 for (const f0 of BLINKS) {
-  op('blink_half', f0, 0); op('blink_half', f0 + 2, 100); op('blink_half', f0 + 5, 100); op('blink_half', f0 + 8, 0);
-  op('eyes_closed', f0 + 1, 0); op('eyes_closed', f0 + 3, 100); op('eyes_closed', f0 + 4, 100); op('eyes_closed', f0 + 6, 0);
+  // моргание ~0.25 с, как в idle_life: вниз 5 кадров, закрыто 2, вверх 8
+  op('blink_half', f0, 0, 'cubic'); op('blink_half', f0 + 3, 100, 'cubic'); op('blink_half', f0 + 9, 100, 'cubic'); op('blink_half', f0 + 15, 0, 'cubic');
+  op('eyes_closed', f0 + 2, 0, 'cubic'); op('eyes_closed', f0 + 5, 100, 'cubic'); op('eyes_closed', f0 + 7, 100, 'cubic'); op('eyes_closed', f0 + 11, 0, 'cubic');
 }
 
 // ---- таймлайн

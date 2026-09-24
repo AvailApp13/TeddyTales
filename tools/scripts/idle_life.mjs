@@ -6,11 +6,11 @@
  *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/idle_life.mjs [--no-play]
  *
  * Петля 14.4 с (6 вдохов по 2.4 с), без видимого повтора:
- *   дыхание      — животом (D21): на вдохе живот расширяется на 4.5 % (кость
- *                  root_belly), лапы расходятся на 1.3°; корпус и голова на месте;
+ *   дыхание      — животом (D21): на вдохе живот расширяется на 6.5 % (кость
+ *                  root_belly), лапы расходятся на 1.5°; корпус и голова на месте;
  *   голова       — медленный дрейф ±1.5° (две синусоиды), корпус берёт 40 %, ноги
  *                  разворачиваются обратно (D18);
- *   моргание     — 5 раз за петлю с неравными паузами, одно двойное;
+ *   моргание     — 5 раз за петлю с неравными паузами, одно двойное; ~0.25 с;
  *   взгляд       — бусины смещаются влево, вправо, вверх и возвращаются;
  *   уши (D20)    — без резких рывков: приподнимаются на каждом вдохе (6°), по
  *                  очереди плавно поднимаются и опускаются (16°, правое — ещё
@@ -40,19 +40,24 @@ if (!B.root_ear_left || !B.root_ear_right) throw new Error('нет костей 
 
 const NAME = 'idle_life', FPS = 60, BREATH = 144, END = 6 * BREATH;   // 864 кадра
 const S = Math.sin, PI2 = Math.PI * 2;
-const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// переход 0 -> 1 с нулевыми скоростью и ускорением на концах (smootherstep): старт и
+// остановка без толчка — со smoothstep начало «прислушивания» читалось рывком
+const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * t * (t * (6 * t - 15) + 10); };
 
-// ---- сценарий (кадры). Уши — до 14° (проверено в симуляторе вместе с наклоном головы и руками)
-const BLINKS = [70, 262, 282, 540, 780];                               // 262/282 — двойное
-const LOOKS = [[130, 210, -2.6, 0], [400, 470, 2.4, 0.3], [790, 832, 0.8, -1.4]];   // [от, до, dx, dy] px артборда
-// плавные движения ушей: [ухо, от, до, угол°] — подъём/возврат по 0.5 с; − вниз, + вверх; с дыханием ≤ 22°
-const EAR_MOVES = [['right', 190, 260, 16], ['left', 420, 490, 16], ['right', 790, 850, -10]];
-const EAR_BREATH = 6, EAR_BREATH_LAG = 10;                           // уши на вдохе, с запаздыванием
-const BELLY = 4.5, ARMS = 1.3;                                         // вдох: живот +4.5 %, лапы 1.3°
-const LISTEN = { from: 600, to: 760, ear: 16, head: 2.5 };              // прислушивание: уши вверх, голова набок
+// ---- сценарий (кадры). Уши — до 22° (предел, D20). Переходы медленные: замер
+// скорости по кадрам рантайма показал толчки там, где движение занимало 0.13–0.4 с
+const BLINKS = [70, 262, 290, 540, 700];                               // 262/290 — двойное
+const LOOKS = [[110, 200, -2.6, 0], [320, 410, 2.4, 0.3], [790, 840, 0.8, -1.4]];   // [от, до, dx, dy] px артборда
+const LOOK_T = 18;                                                       // перевод взгляда, кадров
+// плавные движения ушей: [ухо, от, до, угол°] — подъём и возврат по EAR_T; − вниз, + вверх; с дыханием ≤ 22°
+const EAR_MOVES = [['right', 150, 270, 16], ['left', 370, 490, 16], ['right', 770, 862, -10]];
+const EAR_T = 45;
+const EAR_BREATH = 6, EAR_BREATH_LAG = 14;                           // уши на вдохе, с запаздыванием
+const BELLY = 6.5, ARMS = 1.5;                                         // вдох: живот +6.5 %, лапы 1.5°
+const LISTEN = { from: 540, to: 760, ear: 16, head: 2, t: 60 };      // вход и выход — по 1 с              // прислушивание: уши вверх, голова набок
 
 // голова: медленный дрейф (периоды делят петлю) + прислушивание
-const listen = (f) => sm(LISTEN.from, LISTEN.from + 24, f) * (1 - sm(LISTEN.to - 30, LISTEN.to, f));
+const listen = (f) => sm(LISTEN.from, LISTEN.from + LISTEN.t, f) * (1 - sm(LISTEN.to - LISTEN.t, LISTEN.to, f));
 const drift = (f) => 1.1 * S(PI2 * f / 432) + 0.5 * S(PI2 * f / 288 + 1.3);
 const headAt = (f) => drift(f) - drift(0) + LISTEN.head * listen(f);        // кадр 0 — покой
 const inhale = (f) => (1 - Math.cos(PI2 * f / BREATH)) / 2;                 // 0 в покое, 1 на вдохе
@@ -87,26 +92,27 @@ const earAt = (side, f) => {
   const lag = side === 'right' ? 4 : 0;                                  // уши двигаются не синхронно
   const eb = (x) => EAR_BREATH * inhale(x - EAR_BREATH_LAG - lag);
   let a = eb(f) - eb(0);                                                 // кадр 0 — покой
-  for (const [s_, f0, f1, deg] of EAR_MOVES) if (s_ === side) a += deg * sm(f0, f0 + 30, f) * (1 - sm(f1 - 30, f1, f));
-  const up = sm(LISTEN.from + lag, LISTEN.from + 20 + lag, f) * (1 - sm(LISTEN.to - 30, LISTEN.to, f));
+  for (const [s_, f0, f1, deg] of EAR_MOVES) if (s_ === side) a += deg * sm(f0, f0 + EAR_T, f) * (1 - sm(f1 - EAR_T, f1, f));
+  const up = sm(LISTEN.from + lag, LISTEN.from + LISTEN.t + lag, f) * (1 - sm(LISTEN.to - LISTEN.t, LISTEN.to, f));
   return a + LISTEN.ear * up;
 };
 for (let f = 0; f <= END; f += STEP) for (const side of ['left', 'right']) earKey(side, f, earAt(side, f));
 // взгляд
-const gaze = new Map([[0, [0, 0]], [END, [0, 0]]]);
-for (const [a, z, dx, dy] of LOOKS) { gaze.set(a, [0, 0]); gaze.set(a + 8, [dx, dy]); gaze.set(z, [dx, dy]); gaze.set(z + 8, [0, 0]); }
-gaze.set(LISTEN.from + 20, [-1.8, -0.4]); gaze.set(LISTEN.to - 30, [-1.8, -0.4]);   // прислушивание — взгляд в сторону
-gaze.set(LISTEN.from + 6, [0, 0]); gaze.set(LISTEN.to - 20, [0, 0]);
+// прислушивание — взгляд в сторону; все переводы взгляда плавные (LOOK_T)
+const looks = [...LOOKS, [LISTEN.from + 20, LISTEN.to - LISTEN.t, -1.8, -0.4]];
+const gazeAt = (f) => looks.reduce(([x, y], [a, z, dx, dy]) => { const k = sm(a, a + LOOK_T, f) * (1 - sm(z, z + LOOK_T, f)); return [x + dx * k, y + dy * k]; }, [0, 0]);
 for (const s of ['l', 'r']) {
   const id = IM[`gaze_bead_${s}`].instance;
-  for (const [f, [dx, dy]] of gaze) { key(id, 13, f, b(id, 13) + dx); key(id, 14, f, b(id, 14) + dy); }
+  for (let f = 0; f <= END; f += 2) { const [dx, dy] = gazeAt(f); lin(id, 13, f, b(id, 13) + dx); lin(id, 14, f, b(id, 14) + dy); }
 }
 // моргание и выражения (все выражения в покое скрыты)
-const op = (name, f, v) => key(G[`fx_${name}`], 18, f, v, 'linear');
+const op = (name, f, v, interp = 'linear') => key(G[`fx_${name}`], 18, f, v, interp);
 for (const n of Object.keys(G).filter((g) => g.startsWith('fx_')).map((g) => g.slice(3))) { op(n, 0, 0); op(n, END, 0); }
+// моргание ~0.25 с: веко опускается за 5 кадров, закрыто 2, поднимается за 8 (медленнее,
+// как у живых); полуприкрытые и закрытые глаза перетекают друг в друга с плавной кривой
 for (const f0 of BLINKS) {
-  op('blink_half', f0, 0); op('blink_half', f0 + 2, 100); op('blink_half', f0 + 5, 100); op('blink_half', f0 + 8, 0);
-  op('eyes_closed', f0 + 1, 0); op('eyes_closed', f0 + 3, 100); op('eyes_closed', f0 + 4, 100); op('eyes_closed', f0 + 6, 0);
+  op('blink_half', f0, 0, 'cubic'); op('blink_half', f0 + 3, 100, 'cubic'); op('blink_half', f0 + 9, 100, 'cubic'); op('blink_half', f0 + 15, 0, 'cubic');
+  op('eyes_closed', f0 + 2, 0, 'cubic'); op('eyes_closed', f0 + 5, 100, 'cubic'); op('eyes_closed', f0 + 7, 100, 'cubic'); op('eyes_closed', f0 + 11, 0, 'cubic');
 }
 
 const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, tracks });
