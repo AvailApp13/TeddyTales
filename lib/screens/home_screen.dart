@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../alarm/wake_alarm.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
+import '../game/food.dart';
 import '../game/game_state.dart';
 import '../game/pet_name.dart';
 import '../game/test_stubs.dart';
@@ -11,6 +12,7 @@ import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
+import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -20,6 +22,8 @@ import '../widgets/kitchen_scene.dart';
 import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
+import '../widgets/dish_carousel.dart';
+import '../widgets/purchase_confirm.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
@@ -115,6 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _room = room;
       _asleep = false;
+      // Ушли с кухни — блюда со стола убираются.
+      _dishesShown = false;
     });
   }
 
@@ -411,6 +417,46 @@ class _HomeScreenState extends State<HomeScreen> {
   KitchenMeal? _meal;
   int _meals = 0;
 
+  /// Стоят ли готовые блюда на столе (дуга, заказчик 24.09).
+  bool _dishesShown = false;
+
+  void _toggleDishes() => setState(() => _dishesShown = !_dishesShown);
+
+  /// Блюдо перед мишкой: окно «Подтвердите покупку» → кормим. Блюда
+  /// уходят со стола, мишка ест и показывает эмоцию — любимое блюдо его
+  /// характера нежит, остальное радует (как было в листе кормления).
+  Future<void> _buyDish(Dish dish) async {
+    final l10n = context.l10n;
+    final confirmed = await confirmPurchase(
+      context: context,
+      picture: Image.asset(dish.image, fit: BoxFit.contain),
+      name: dishName(l10n, dish.id),
+      price: dish.price,
+      coins: widget.game.coins,
+    );
+    if (!confirmed || !mounted) return;
+    if (!widget.game.feedWithDish(dish)) {
+      _soon(l10n.feedNotEnoughCoins);
+      return;
+    }
+    final favourite =
+        favouriteDishByTrait[widget.controller.state.trait] == dish.id;
+    setState(() {
+      _dishesShown = false;
+      _meal = KitchenMeal(
+        id: ++_meals,
+        mood: favourite ? KitchenMood.love : KitchenMood.happy,
+      );
+    });
+    _soon(
+      l10n.feedEatResult(
+        dishName(l10n, dish.id),
+        dish.foodGain.round(),
+        dish.price,
+      ),
+    );
+  }
+
   /// Поглаживания (КП 7.6): показатель любви растёт, а мишка на кухне
   /// отзывается на руку. Счётчик — чтобы сцена увидела каждое касание.
   int _pets = 0;
@@ -485,6 +531,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   alarm: _alarm,
                   onPickAlarm: _pickAlarm,
                   onOpenFeed: _openFeed,
+                  dishesShown: _dishesShown,
+                  onToggleDishes: _toggleDishes,
+                  onBuyDish: _buyDish,
                   onWash: _wash,
                   onToilet: _toilet,
                   onOpenCare: () => _open(
@@ -639,6 +688,9 @@ class _RoomScene extends StatelessWidget {
     required this.alarm,
     required this.onPickAlarm,
     required this.onOpenFeed,
+    required this.dishesShown,
+    required this.onToggleDishes,
+    required this.onBuyDish,
     required this.onWash,
     required this.onToilet,
   });
@@ -683,6 +735,12 @@ class _RoomScene extends StatelessWidget {
 
   /// Открыть кормление с кухни на выбранной вкладке.
   final ValueChanged<FeedTab> onOpenFeed;
+
+  /// Готовые блюда на столе: показаны ли, как открыть и убрать, что делать
+  /// при покупке блюда перед мишкой.
+  final bool dishesShown;
+  final VoidCallback onToggleDishes;
+  final ValueChanged<Dish> onBuyDish;
 
   /// Купание и горшок. Механики пока нет — кнопки честно об этом говорят.
   final VoidCallback onWash;
@@ -848,12 +906,38 @@ class _RoomScene extends StatelessWidget {
         // занимает 86 пикселей от края. Раньше здесь было 100, и кнопка
         // «Приготовить» подходила к ней вплотную — заказчик 20.09 прочитал
         // это как наложение.
+        // Готовые блюда дугой на столе (заказчик 24.09): появляются и
+        // уходят по кнопке «Готовые блюда». Касания ловятся только в полосе
+        // стола — мимо неё мишку по-прежнему можно погладить.
+        if (room == RoomKind.kitchen)
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: IgnorePointer(
+              ignoring: !dishesShown,
+              child: AnimatedOpacity(
+                opacity: dishesShown ? 1 : 0,
+                duration: const Duration(milliseconds: 260),
+                child: DishCarousel(
+                  dishes: FoodCatalog.dishes,
+                  initial: FoodCatalog.dishes.indexWhere(
+                    (d) => d.id == 'pasta',
+                  ),
+                  onBuy: onBuyDish,
+                  onTapElsewhere: onPet,
+                ),
+              ),
+            ),
+          ),
         if (room == RoomKind.kitchen)
           Positioned(
             left: 16,
             right: _pawSpace,
             bottom: 34,
-            child: _KitchenMenu(onOpenFeed: onOpenFeed),
+            child: _KitchenMenu(
+              onOpenFeed: onOpenFeed,
+              dishesShown: dishesShown,
+              onToggleDishes: onToggleDishes,
+            ),
           ),
         // В спальне — «Уложить спать» на ковре, там, где заказчик 22.09
         // обвёл на скрине. Когда уснул, на её месте — «Разбудить», а выше
@@ -1065,9 +1149,15 @@ class _WakeMenu extends StatelessWidget {
 
 /// Две кнопки выбора еды, стоящие прямо на кухне.
 class _KitchenMenu extends StatelessWidget {
-  const _KitchenMenu({required this.onOpenFeed});
+  const _KitchenMenu({
+    required this.onOpenFeed,
+    required this.dishesShown,
+    required this.onToggleDishes,
+  });
 
   final ValueChanged<FeedTab> onOpenFeed;
+  final bool dishesShown;
+  final VoidCallback onToggleDishes;
 
   @override
   Widget build(BuildContext context) {
@@ -1075,10 +1165,13 @@ class _KitchenMenu extends StatelessWidget {
 
     return _ActionRow(
       children: [
+        // Готовые блюда — прямо на стол, не в отдельный лист: нажал — блюда
+        // выехали, нажал ещё раз — убрались.
         _Pill(
           label: l10n.feedTabReady,
           icon: Icons.room_service_outlined,
-          onTap: () => onOpenFeed(FeedTab.ready),
+          selected: dishesShown,
+          onTap: onToggleDishes,
         ),
         const SizedBox(width: 8),
         _Pill(
@@ -1092,16 +1185,24 @@ class _KitchenMenu extends StatelessWidget {
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.icon, required this.onTap});
+  const _Pill({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final String label;
   final IconData icon;
   final VoidCallback onTap;
 
+  /// Включена ли: блюда на столе — кнопка залита зелёным.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: selected ? AppColors.sageDark : AppColors.surface,
       borderRadius: BorderRadius.circular(AppDimens.radiusPill),
       elevation: 3,
       shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
@@ -1113,13 +1214,17 @@ class _Pill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 19, color: AppColors.sageDark),
+              Icon(
+                icon,
+                size: 19,
+                color: selected ? Colors.white : AppColors.sageDark,
+              ),
               const SizedBox(width: 7),
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: selected ? Colors.white : AppColors.textPrimary,
                 ),
               ),
             ],

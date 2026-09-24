@@ -23,6 +23,10 @@ class Dish {
 
   /// Насколько поднимается показатель «Еда».
   final double foodGain;
+
+  /// Картинка блюда для стола на кухне: тарелка без фона, в стиле и
+  /// ракурсе кухни (Higgsfield, 24.09).
+  String get image => 'assets/rooms/kitchen/dishes/$id.webp';
 }
 
 /// Ингредиент мини-игры готовки.

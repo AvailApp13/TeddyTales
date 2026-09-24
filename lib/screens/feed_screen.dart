@@ -33,7 +33,7 @@ String _foodHint(AppLocalizations l10n, BearTrait trait) => switch (trait) {
 /// Пока это только подсветка карточки: разной прибавки «еды» за любимое блюдо
 /// КП не требует, а придумывать её самим — значит разойтись с балансом,
 /// который по КП 10.9 считается отдельно.
-const Map<BearTrait, String> _favouriteDish = {
+const Map<BearTrait, String> favouriteDishByTrait = {
   BearTrait.active: 'pasta',
   BearTrait.curious: 'omelette',
   BearTrait.affectionate: 'cookie',
@@ -144,7 +144,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
     // Любимое блюдо — нежность, остальное — радость: реакция мишки в
     // сцене кухни, ТЗ 7.4.
-    final favourite = _favouriteDish[widget.controller.state.trait] == dish.id;
+    final favourite =
+        favouriteDishByTrait[widget.controller.state.trait] == dish.id;
     _closeWith(
       l10n.feedEatResult(
         dishName(l10n, dish.id),
@@ -290,7 +291,7 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildDishes(BearTrait trait) {
-    final favourite = _favouriteDish[trait];
+    final favourite = favouriteDishByTrait[trait];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
