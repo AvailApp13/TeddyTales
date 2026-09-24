@@ -674,8 +674,8 @@
       "ear_right_shade": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-234043",
-        "instance": "0-234044"
+        "asset": "0-250432",
+        "instance": "0-250433"
       }
     },
     "layersV2Transform": {
@@ -862,6 +862,15 @@
           "root_ear_left"
         ],
         "vertices": 1464
+      },
+      "ear_right_shade": {
+        "meshId": "0-263884",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_right"
+        ],
+        "vertices": 1425
       }
     },
     "faceParts": {
@@ -1101,19 +1110,19 @@
           "right",
           150,
           270,
-          52
+          46
         ],
         [
           "left",
           370,
           490,
-          52
+          46
         ],
         [
           "right",
           770,
           862,
-          38
+          34
         ]
       ],
       "earBreath": 12,
@@ -1122,7 +1131,7 @@
       "listen": {
         "from": 540,
         "to": 760,
-        "ear": 42,
+        "ear": 38,
         "head": 4,
         "t": 60
       }

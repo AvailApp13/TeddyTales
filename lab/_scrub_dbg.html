@@ -1,0 +1,11 @@
+<!doctype html><html><body style="margin:0;background:#282828">
+<canvas id="c" width="1024" height="1024" style="width:1024px;height:1024px"></canvas>
+<script src="/vendor/rive.js"></script>
+<script>
+rive.RuntimeLoader.setWasmUrl('/vendor/rive.wasm');
+window.ready = new Promise((res, rej) => {
+  window.r = new rive.Rive({ src: '/lab/_scrub.riv', canvas: document.getElementById('c'), artboard: 'Bear_Boy', animations: (new URLSearchParams(location.search).get('a') || 'demo_moves'), autoplay: false, assetLoader: (asset, bytes) => { console.log("ASSET", asset.name, asset.fileExtension, asset.isImage, bytes ? bytes.length : -1); return false; },
+    layout: new rive.Layout({ fit: rive.Fit.Contain }), onLoad: () => res(true), onLoadError: (e) => rej(e) });
+});
+window.scrubTo = async (t) => { r.scrub(new URLSearchParams(location.search).get('a') || 'demo_moves', t); await new Promise((q) => requestAnimationFrame(() => requestAnimationFrame(q))); };
+</script></body></html>
