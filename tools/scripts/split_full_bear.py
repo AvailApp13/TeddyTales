@@ -7,9 +7,9 @@
 
     python3 tools/scripts/split_full_bear.py <full.png> <out_dir>
 
-Слои (сзади вперёд, как в редакторе): foot_left, foot_right, shorts, paw_left,
-paw_right, sleeve_left, sleeve_right, shirt (корпус толстовки — поверх рукавов),
-hood_lining, ears, face, hood. Рукава
+Слои (сзади вперёд, как в редакторе): foot_left, foot_right, shorts, shirt
+(корпус толстовки), paw_left, paw_right, sleeve_left, sleeve_right (рука целиком
+поверх корпуса — D16), hood_lining, ears, face, hood. Рукава
 отделены по шву реглана и висят на костях рук вместе с лапами. Каждый пиксель принадлежит ровно одному слою; задний
 слой дополнительно заходит на 3 px под передних соседей, чтобы при сглаживании
 на стыке не просвечивал фон.
@@ -18,8 +18,8 @@ hood_lining, ears, face, hood. Рукава
 полупрозрачных пикселей края заменяется цветом ближайшего непрозрачного
 пикселя (decontaminate), прозрачность волосков сохраняется.
 
-Скрытые продолжения (EXTEND): корпус толстовки продолжается под капюшоном и
-рукавами, рукава — под капюшоном, лапы — под рукавами, стопы — под шортами.
+Скрытые продолжения (EXTEND): корпус толстовки и рукава продолжаются под
+капюшоном (зеркально своей тканью, с тенью), лапы — под рукавами, стопы — под шортами.
 Заполняются инпейнтингом (OpenCV Telea) только из пикселей самого слоя, зона
 ограничена формой части (над краем / в контуре корпуса / в колонках штанины). В покое закрыты
 передними слоями; открываются, когда кости поворачивают части.
@@ -107,21 +107,22 @@ def poly_cov(pts, ss=4):
 # среза получает дробную прозрачность (доля пикселя на его стороне), иначе
 # при подъёме руки / наклоне головы край корпуса и капюшона — «лесенка».
 CUT = {  # слой: (доля пикселя на стороне слоя, соседи по срезу)
-    'shirt': (1 - np.maximum(poly_cov(SLEEVE_L), poly_cov(SLEEVE_R)), ['sleeve_left', 'sleeve_right']),
+    'sleeve_left': (poly_cov(SLEEVE_L), ['shirt']),
+    'sleeve_right': (poly_cov(SLEEVE_R), ['shirt']),
     'hood': (np.clip(bound[None, :] - Y + 0.5, 0, 1), ['shirt', 'sleeve_left', 'sleeve_right']),
 }
 
 # порядок = порядок отрисовки в редакторе (сзади вперёд): ноги, шорты, корпус
-# толстовки (кость root), руки с рукавами (кости рук), голова (кость root_body)
-# порядок = порядок отрисовки (сзади вперёд). Руки (лапа под рукавом) — ПОД
-# корпусом толстовки: корпус перекрывает рукав по шву реглана, под корпусом у
-# рукава скрыт запас ткани — при подъёме руки стык у плеча остаётся тканью (D15).
+# толстовки (кость root), руки — лапа под рукавом (кости рук), голова (root_body).
+# Рука целиком ПОВЕРХ корпуса (D16): рукав — сетка, шов реглана и подмышка
+# держатся за туловище, поэтому корпус у шва не открывается и запаса под
+# корпусом рукаву не нужно.
 regions = {
     'foot_left': biggest(feet & (X < axis)), 'foot_right': biggest(feet & (X >= axis)),
     'shorts': yellow,
+    'shirt': shirt,
     'paw_left': biggest(paws & (X < axis)), 'paw_right': biggest(paws & (X >= axis)),
     'sleeve_left': sleeve_l, 'sleeve_right': sleeve_r,
-    'shirt': shirt,
     'ears': ears, 'face': face,
     'hood': hood,
 }
@@ -192,13 +193,12 @@ def cols_of(mask, shrink):
     return (X >= lo) & (X <= hi)
 face_x0, face_x1 = xs_face.min(), xs_face.max()
 SHIRT_ALL = shirt | sleeve_l | sleeve_r          # толстовка целиком: её контур задаёт линию плеч
-# оси плеч (кости рук) в кадре; подъём левой руки — поворот по часовой (+), правой — против (−)
-SHOULDER = {'cap_left': (468.5, 1153.0, 1), 'cap_right': (907.7, 1153.0, -1)}
-ARMPIT = {'side_left': SLEEVE_L[8], 'side_right': SLEEVE_R[4]}   # нижние точки шва реглана (подмышки)
 EXTEND = {  # слой: [(кто закрывает, глубина px, ограничение формы)]
-    # под рукавами корпус не продолжается: рукава — сетки с весами, у шва держатся за туловище (D14)
+    # под рукавами корпус не продолжается: рукава — сетки, у шва и подмышки держатся за туловище (D16)
     'shirt': [('hood', 80, 'shirt_hull'), ('face', 80, 'shirt_hull')],
-    'sleeve_left': [('hood', 70, 'shirt_hull'), ('shirt', 110, 'cap_left')], 'sleeve_right': [('hood', 70, 'shirt_hull'), ('shirt', 110, 'cap_right')],
+    # рукав под капюшоном — без контура толстовки: угол капюшона на плече при наклоне
+    # головы чуть приподнимается, под ним должна быть ткань плеча, а не фон
+    'sleeve_left': [('hood', 70, 'above')], 'sleeve_right': [('hood', 70, 'above')],
     'paw_left': [('sleeve_left', 45, None)], 'paw_right': [('sleeve_right', 45, None)],
     'foot_left': [('shorts', 60, 'cols')], 'foot_right': [('shorts', 60, 'cols')],
 }
@@ -213,31 +213,6 @@ def extension(own_op, cover, depth, rule):
         # головы обод капюшона у подбородка поднимается выше верха оболочки
         chin = (X >= face_x0) & (X <= face_x1)
         ext &= (hull(SHIRT_ALL, 12) | chin) & above(own_op, depth)
-    elif rule in ('cap_left', 'cap_right'):
-        # запас рукава под корпусом: только то, что при повороте руки в рабочем
-        # диапазоне (−12°…45° подъёма) остаётся под передними слоями — наружу не вылезает
-        px, py, sign = SHOULDER[rule]
-        front = np.isin(full, [order.index(n) + 1 for n in ('shirt', 'hood', 'face', 'ears')]) & (A >= 250)
-        ys_, xs_ = np.where(ext); keep = np.ones(len(ys_), bool)
-        for deg in range(-12, 46, 3):
-            t = np.radians(deg * sign); ct, st = np.cos(t), np.sin(t)
-            rx = np.rint(px + (xs_ - px) * ct - (ys_ - py) * st).astype(int)
-            ry = np.rint(py + (xs_ - px) * st + (ys_ - py) * ct).astype(int)
-            ok = (rx >= 0) & (rx < W) & (ry >= 0) & (ry < H)
-            keep &= ok & front[np.clip(ry, 0, H - 1), np.clip(rx, 0, W - 1)]
-        ext = np.zeros_like(ext); ext[ys_[keep], xs_[keep]] = True
-    elif rule in ('side_left', 'side_right'):
-        # бок корпуса под рукавом: от подмышки прямо вверх (у толстовки бок вертикальный),
-        # а не диагональ контура — иначе при подъёме руки торчит острый клин
-        # линия бока: от подмышки (ax, ay) вниз к внешнему углу подола (hx, hy);
-        # выше подмышки — вертикаль. Заполняется всё, что между линией бока и корпусом.
-        ax_, ay_ = ARMPIT[rule]
-        rows = np.where(own_op.any(1))[0]; hy = int(rows.max() - 25)
-        xs_h = np.where(own_op[hy])[0]; hx = xs_h.min() if rule == 'side_left' else xs_h.max()
-        t = np.clip((Y - ay_) / max(hy - ay_, 1), 0, 1)
-        line_x = ax_ + (hx - ax_) * t
-        side = (X >= line_x) if rule == 'side_left' else (X <= line_x)
-        ext &= hull(own_op | ext, 2) & side
     elif rule == 'cols': ext &= cols_of(own_op, 12)
     return ext
 def texture_detail(own_op, shape, size=72):
@@ -251,14 +226,14 @@ def texture_detail(own_op, shape, size=72):
     reps = (shape[0] // tile.shape[0] + 2, shape[1] // tile.shape[1] + 2, 1)
     return np.tile(tile, reps)[:shape[0], :shape[1]]
 
-def inpaint_into(col, own_op, ext):
+def inpaint_into(col, own_op, ext, detail=True):
     ys, xs = np.where(ext | ndimage.binary_dilation(ext, iterations=20) & own_op)
     if len(ys) == 0: return col
     y0, y1, x0, x1 = max(ys.min() - 4, 0), min(ys.max() + 5, H), max(xs.min() - 4, 0), min(xs.max() + 5, W)
     crop = col[y0:y1, x0:x1].clip(0, 255).astype(np.uint8)
     known = own_op[y0:y1, x0:x1]
     fill = cv2.inpaint(np.ascontiguousarray(crop[..., ::-1]), (~known).astype(np.uint8), 9, cv2.INPAINT_TELEA)[..., ::-1]
-    fill = fill.astype(np.float64) + texture_detail(own_op, fill.shape[:2])
+    fill = fill.astype(np.float64) + (texture_detail(own_op, fill.shape[:2]) if detail else 0)
     e = ext[y0:y1, x0:x1]; out = col.copy(); sub = out[y0:y1, x0:x1]; sub[e] = fill[e]; return out
 
 meta = {'source': src, 'size': [W, H], 'ycut_hood_shirt': int(ycut), 'axisX': float(axis), 'order_back_to_front': order, 'layers': {}}
@@ -267,6 +242,12 @@ for i, n in enumerate(order, 1):
     own = full == i
     front = np.isin(full, list(range(i + 1, len(order) + 1)))
     m = own | (ndimage.binary_dilation(own, iterations=3) & front & (A >= 250))  # заход только под непрозрачное
+    if n == 'shirt':
+        # под рукой, которая уходит, заход корпуса открылся бы полоской у бока:
+        # под лапами его нет, под рукавами — 2 px (под сглаженный край рукава)
+        arm = np.isin(full, [order.index(k) + 1 for k in ('paw_left', 'paw_right', 'sleeve_left', 'sleeve_right')])
+        m = own | (ndimage.binary_dilation(own, iterations=3) & front & ~arm & (A >= 250)) \
+                | (ndimage.binary_dilation(own, iterations=2) & np.isin(full, [order.index(k) + 1 for k in ('sleeve_left', 'sleeve_right')]))
     # полоса захода под соседей красится цветом самого слоя (ближайший свой пиксель),
     # иначе при движении по краю мелькнёт чужой цвет (голубая кайма у лап и т.п.)
     own_op = own & (A >= 250)
@@ -299,7 +280,7 @@ for i, n in enumerate(order, 1):
         nb = np.isin(full, [order.index(k) + 1 for k in nbrs])
         extra = nb & (cov > 0.001) & ndimage.binary_dilation(own, iterations=2)
         col[extra] = clean_i[oy[extra], ox[extra]]
-        zone = own | extra
+        zone = (own | extra) & ndimage.binary_dilation(nb, iterations=2)   # только у самого среза
         alpha = np.where(zone, A * cov, alpha); m = m | extra
     ext_all = np.zeros((H, W), bool); ext_hood = np.zeros((H, W), bool)
     for cover_name, depth, rule in EXTEND.get(n, []):
@@ -307,8 +288,25 @@ for i, n in enumerate(order, 1):
         e = extension(own_op, cover, depth, rule); ext_all |= e
         if cover_name in ('hood', 'face'): ext_hood |= e
     if ext_all.any():
-        col = inpaint_into(col, own_op, ext_all)
+        # под капюшоном — без замощения фактуры: в узкой полосе, что открывается
+        # у ворота, замощение читается сеткой; там гладкая заливка с тенью
+        col = inpaint_into(col, own_op, ext_all & ~ext_hood)
         if ext_hood.any():
+            col = inpaint_into(col, own_op, ext_hood, detail=False)
+            # ткань под капюшоном — зеркальное продолжение своей ткани вверх от края
+            # (в каждой колонке отражение относительно верхнего края слоя): живая
+            # фактура ворота без швов замощения; где отражение не попадает в свой
+            # слой, остаётся гладкая заливка
+            top = np.where(own_op.any(0), own_op.argmax(0), H)
+            yy, xx = np.where(ext_hood)
+            ys_ = 2 * top[xx] - yy + 2
+            ok = (ys_ < H) & (ys_ >= 0)
+            ok[ok] &= own_op[ys_[ok], xx[ok]]
+            mir = np.zeros((H, W), bool); mir[yy[ok], xx[ok]] = True
+            col[yy[ok], xx[ok]] = clean_i[ys_[ok], xx[ok]]
+            # лёгкое размытие отражения: без ступенек между колонками и без
+            # отражённых тёмных точек шва (читались чёрточками у ворота)
+            bl = ndimage.gaussian_filter(col, (1.4, 1.4, 0)); col[mir] = bl[mir]
             # ворот под капюшоном в тени: запас темнеет вглубь (до −22 % на 45 px),
             # иначе при наклоне головы из-под обода выглядывает светлый треугольник
             dd = ndimage.distance_transform_edt(~own_op)
@@ -326,15 +324,20 @@ for i, n in enumerate(order, 1):
     L = layer.astype(np.float64); la = L[..., 3:4] / 255
     recon[..., :3] = L[..., :3] * la + recon[..., :3] * (1 - la)
     recon[..., 3:4] = la * 255 + recon[..., 3:4] * (1 - la)
-# --- подкладка капюшона (D14): при наклоне головы обод капюшона держится за
-# плечи, а лицо поворачивается; открывшееся место внутри капюшона закрывает
-# подкладка. Слой лежит за лицом, в покое целиком закрыт лицом и капюшоном.
+# --- подкладка капюшона (D16): на голове, за лицом; закрывает место внутри
+# капюшона, если кромка капюшона и лицо разойдутся. В покое целиком закрыта.
 hood_own = (full == order.index('hood') + 1) & (A >= 250)
 hole = biggest(ndimage.binary_fill_holes(hood_own | (full == order.index('face') + 1)) & ~hood_own)   # только проём лица, без пустот в острие
 # под подбородком подкладка не нужна (там запас ворота) — выглядывала серым клином из-под обода
 chin_line = np.full(W, float(H)); chin_line[cols] = fb[cols] + 6
 lining = ndimage.binary_dilation(hole, iterations=18) & (hole | hood_own) & (Y < chin_line[None, :])
-lin_col = inpaint_into(clean.copy(), hood_own, lining & ~hood_own)
+# внутренняя сторона капюшона: гладкая заливка из цвета капюшона, затенённая
+# (открывается узкой щелью у подбородка — замощение фактуры читалось сеткой)
+# Заливается только из голубой ткани капюшона: под ободом лежат ворсинки
+# подбородка, их копия в подкладке выглядывала бежевой полоской.
+hood_blue = hood_own & blue & ~ndimage.binary_dilation(face, iterations=6)
+lin_col = inpaint_into(clean.copy(), hood_blue, lining, detail=False)
+lin_col[lining] *= 0.82
 lin_a = np.where(lining, 255.0, 0.0)
 layer = np.dstack([lin_col, lin_a]).clip(0, 255).astype(np.uint8); layer[~lining, :3] = 0
 Image.fromarray(layer, 'RGBA').save(f'{out}/hood_lining.png', optimize=True)

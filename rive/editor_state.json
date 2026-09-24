@@ -606,8 +606,8 @@
         "groupId": "0-248"
       },
       "shirt": {
-        "asset": "0-57120",
-        "instance": "0-57121",
+        "asset": "0-70009",
+        "instance": "0-70010",
         "group": "outfit_body",
         "groupId": "0-247"
       },
@@ -624,20 +624,20 @@
         "groupId": "0-295"
       },
       "sleeve_left": {
-        "asset": "0-57122",
-        "instance": "0-57123",
+        "asset": "0-70251",
+        "instance": "0-70252",
         "group": "sleeve_left",
         "groupId": "0-396"
       },
       "sleeve_right": {
-        "asset": "0-57124",
-        "instance": "0-57125",
+        "asset": "0-70253",
+        "instance": "0-70254",
         "group": "sleeve_right",
         "groupId": "0-397"
       },
       "hood_lining": {
-        "asset": "0-57130",
-        "instance": "0-57131",
+        "asset": "0-57153",
+        "instance": "0-57154",
         "group": "hood_lining",
         "groupId": "0-21711"
       },
@@ -654,8 +654,8 @@
         "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-50070",
-        "instance": "0-50071",
+        "asset": "0-57151",
+        "instance": "0-57152",
         "group": "outfit_head",
         "groupId": "0-226"
       }
@@ -784,12 +784,28 @@
         "vertices": 1831
       },
       "hood": {
-        "meshId": "0-50072",
+        "meshId": "0-62739",
         "bones": [
           "root",
           "root_body"
         ],
         "vertices": 3271
+      },
+      "sleeve_left": {
+        "meshId": "0-70255",
+        "bones": [
+          "root",
+          "root_arm_left"
+        ],
+        "vertices": 1352
+      },
+      "sleeve_right": {
+        "meshId": "0-72967",
+        "bones": [
+          "root",
+          "root_arm_right"
+        ],
+        "vertices": 1432
       }
     }
   }

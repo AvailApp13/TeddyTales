@@ -747,7 +747,7 @@ export const rigSpec = {
     {
       "name": "hood_lining",
       "kind": "art",
-      "parent": "root",
+      "parent": "root_body",
       "artistLayer": true,
       "optional": false
     }

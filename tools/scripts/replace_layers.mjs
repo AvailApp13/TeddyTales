@@ -37,7 +37,19 @@ for (const name of names) {
   } else {
     if (L.instance) await call('delete_objects', { objectIds: [L.instance, L.asset].filter(Boolean) }).catch(() => {});
     const b64 = readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', `${name}.png`)).toString('base64');
-    asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${b64}`, name: `bear_${name}` })).asset;
+    const before = new Set(assets.map((a) => a.id));
+    for (let t = 0; ; t++) {
+      asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${b64}`, name: `bear_${name}` })).asset;
+      // редактор иногда отвечает временным id 0-0, пока ассет не создан, — ждём настоящий по имени
+      for (let w = 0; asset?.id === '0-0' && w < 10; w++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const now = (await call('assets_tool', { command: 'listAssets' })).assets ?? [];
+        const fresh = now.find((a) => a.name === `bear_${name}` && a.type === 'image' && a.id !== '0-0' && !before.has(a.id));
+        if (fresh) asset = { id: fresh.id };
+      }
+      if (asset?.id && asset.id !== '0-0') break;
+      if (t >= 2) throw new Error(`${name}: ассет не создаётся (id 0-0)`);
+    }
   }
   // картинка иногда не создаётся, хотя id вернулся — проверяем и повторяем
   let inst;

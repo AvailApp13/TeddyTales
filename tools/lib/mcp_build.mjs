@@ -278,8 +278,8 @@ export async function reconcileTree({ call, log, rig, catalog, board, layout }) 
  * Привязывает группы рига к костям, поставленным в редакторе вручную.
  * Кости ищутся по именам из спеки; редактор при reparent сохраняет мировое
  * положение (проверено), так что картинка не сдвигается. После привязки
- * выставляет порядок отрисовки: сзади торс, ноги, шорты, руки, толстовка,
- * голова; внутри root_body — тень, шарф, голова.
+ * выставляет порядок отрисовки: сзади торс, ноги, шорты, толстовка, руки,
+ * голова; внутри root_body — тень, шарф, подкладка капюшона, голова.
  */
 export async function bindToBones({ call, log, rig, catalog, board }) {
   const hier = await call('get_artboard_hierarchy', { artboardId: board.id, depth: 14 });
@@ -318,11 +318,12 @@ export async function bindToBones({ call, log, rig, catalog, board }) {
   const front = async (names) => {
     for (const n of names) if (id(n)) await call('reorder_objects', { operations: [{ objectId: id(n), order: 'sendToFront' }] });
   };
-  // руки (лапа под рукавом) — под корпусом толстовки: корпус перекрывает рукав по шву реглана (D15)
-  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'root_arm_right', 'root_arm_left', 'outfit_body', 'outfit_accessory', 'hood_lining', 'root_body']);
+  // руки (лапа под рукавом) — поверх корпуса толстовки: рукав — сетка, шов и
+  // подмышка держатся за туловище (D16); подкладка капюшона — на голове, за лицом
+  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'outfit_body', 'outfit_accessory', 'root_arm_right', 'root_arm_left', 'root_body']);
   await front(['forearm_left', 'sleeve_left']);
   await front(['forearm_right', 'sleeve_right']);
-  await front(['head_shadow', 'scarf_1', 'head']);
+  await front(['head_shadow', 'scarf_1', 'hood_lining', 'head']);
   log('порядок отрисовки выставлен');
   return ops.length;
 }
