@@ -32,19 +32,19 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 const env = (u) => sm(0, FADE, u) * (1 - sm(SEG - 4, SEG + FADE - 4, u));   // вход и выход выражения
 const S = Math.sin, PI2 = Math.PI * 2;
 // движения тела по выражению: u — кадр от начала выражения; head — наклон головы на глаз
-// ear — изгиб ушей, ° (+ вверх, − вниз; D20)
+// ear — изгиб ушей, ° (+ вверх, − вниз; D20), не больше 14°
 const MOVE = {
-  smile: (u, e) => ({ head: 4 * e, ear: 3 * e }),
-  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e, ear: (2 + 4 * S(PI2 * u / 12)) * e }),
-  love: (u, e) => ({ head: 8 * e, arm: 6 * e, ear: 4 * e }),
-  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e, ear: 11 * sm(0, 8, u) * e }),
-  sad: (u, e) => ({ head: -6 * e, y: 3 * e, ear: -10 * e }),
-  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e, ear: -7 * e }),
-  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e, ear: 1.5 * S(PI2 * u / 14) * e }),
+  smile: (u, e) => ({ head: 4 * e, ear: 5 * e }),
+  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e, ear: (4 + 7 * S(PI2 * u / 12)) * e }),
+  love: (u, e) => ({ head: 8 * e, arm: 6 * e, ear: 7 * e }),
+  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e, ear: 14 * sm(0, 8, u) * e }),
+  sad: (u, e) => ({ head: -6 * e, y: 3 * e, ear: -14 * e }),
+  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e, ear: -11 * e }),
+  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e, ear: 3 * S(PI2 * u / 14) * e }),
   lick: (u, e) => ({ head: 5 * e }),
-  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e, ear: -5 * e }),
-  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e, ear: -4 * e }),
-  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e, ear: 2 * e }),
+  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e, ear: -9 * e }),
+  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e, ear: -8 * e }),
+  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e, ear: 4 * e }),
 };
 function pose(f) {
   let head = 0, y = 1.2 * S(PI2 * f / 150), arm = 0, ear = 0;  // дыхание
