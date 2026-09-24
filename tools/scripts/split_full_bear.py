@@ -99,9 +99,10 @@ SLEEVE_R0 = [(880, 1040), (1160, 1040), (1160, 1375), (1060, 1375), (975, 1344),
 # тёмной кромкой-срезом на боку. Граница рукава там сдвинута на CREASE px в корпус:
 # тень уходит с рукавом (как тень на его изнанке), а бок корпуса под этой полосой
 # продолжен чистой тканью (EXTEND 'crease'). В покое картинка та же.
-CREASE = 6
-SLEEVE_L = SLEEVE_L0[:5] + [(x + CREASE, y) for x, y in SLEEVE_L0[5:9]] + SLEEVE_L0[9:]
-SLEEVE_R = SLEEVE_R0[:4] + [(x - CREASE, y) for x, y in SLEEVE_R0[4:7]] + SLEEVE_R0[7:]
+CREASE = int(os.environ.get('SPLIT_CREASE', 10))
+# у самой подмышки сдвиг вдвое меньше — вершина складки плавная, без клюва
+SLEEVE_L = SLEEVE_L0[:4] + [(SLEEVE_L0[4][0] + CREASE // 2, SLEEVE_L0[4][1])] + [(x + CREASE, y) for x, y in SLEEVE_L0[5:9]] + SLEEVE_L0[9:]
+SLEEVE_R = SLEEVE_R0[:4] + [(x - CREASE, y) for x, y in SLEEVE_R0[4:7]] + [(SLEEVE_R0[7][0] - CREASE // 2, SLEEVE_R0[7][1])] + SLEEVE_R0[8:]
 sleeve_l = shirt & poly_mask(SLEEVE_L)
 sleeve_r = shirt & poly_mask(SLEEVE_R)
 shirt = shirt & ~sleeve_l & ~sleeve_r
@@ -252,7 +253,7 @@ def extension(own_op, cover, depth, rule):
         ext &= (hull(SHIRT_ALL, 12) | chin) & above(own_op, depth)
     elif rule == 'crease':
         # бок корпуса под полосой тени складки — до исходной линии шва (ниже подмышек)
-        ext &= ~poly_mask(SLEEVE_L0) & ~poly_mask(SLEEVE_R0) & (Y > SLEEVE_L0[4][1])
+        ext &= ~poly_mask(SLEEVE_L0) & ~poly_mask(SLEEVE_R0) & (Y > SLEEVE_L0[3][1])
     elif rule in ('arm_left', 'arm_right'):
         # запас рукава под капюшоном: над краем рукава, и только то, что при подъёме
         # руки (0…45°, с весами сетки рукава) остаётся под капюшоном/лицом/ушами —
@@ -367,17 +368,30 @@ for i, n in enumerate(order, 1):
         col[extra] = clean_i[oy[extra], ox[extra]]
         zone = (own | extra) & ndimage.binary_dilation(nb, iterations=2) & ~cuff_shadow   # только у самого среза (тень у манжеты — вне многоугольника, не срезать)
         alpha = np.where(zone, A * cov, alpha); m = m | extra
-    ext_all = np.zeros((H, W), bool); ext_hood = np.zeros((H, W), bool)
+    ext_all = np.zeros((H, W), bool); ext_hood = np.zeros((H, W), bool); ext_crease = np.zeros((H, W), bool)
     for cover_name, depth, rule in EXTEND.get(n, []):
         cover = (full == order.index(cover_name) + 1) & (A >= 250) & ~m
         e = extension(own_op, cover, depth, rule)
         if n.startswith('paw_'): e &= alphas['shirt'] <= 0      # лапа поверх корпуса: запас не туда, где корпус
         ext_all |= e
         if cover_name in ('hood', 'face'): ext_hood |= e
+        if rule == 'crease': ext_crease |= e
+    if ext_crease.any():
+        # бок корпуса под складкой — зеркальное продолжение соседней ткани корпуса
+        # (отражение через ближайшую точку края): тон и фактура те же, что у самого
+        # края бока, без полосы-шва.
+        _, (ny, nx) = ndimage.distance_transform_edt(~own_op, return_indices=True)
+        yy, xx = np.where(ext_crease)
+        sy = np.clip(2 * ny[yy, xx] - yy, 0, H - 1); sx = np.clip(2 * nx[yy, xx] - xx, 0, W - 1)
+        ok = own_op[sy, sx]
+        col[yy[ok], xx[ok]] = clean_i[sy[ok], sx[ok]]
+        ext_crease[yy[~ok], xx[~ok]] = False        # не попали в корпус — заполнит инпейнтинг
+        # размытие по запасу и 2 px края корпуса: без ступенек и без шва между ними
+        bl = ndimage.gaussian_filter(col, (1.5, 1.5, 0)); col[ext_crease] = bl[ext_crease]
     if ext_all.any():
         # под капюшоном — без замощения фактуры: в узкой полосе, что открывается
         # у ворота, замощение читается сеткой; там гладкая заливка с тенью
-        col = inpaint_into(col, own_op, ext_all & ~ext_hood)
+        col = inpaint_into(col, own_op, ext_all & ~ext_hood & ~ext_crease)
         if ext_hood.any():
             col = inpaint_into(col, own_op, ext_hood, detail=False)
             # ткань под капюшоном — зеркальное продолжение своей ткани вверх от края

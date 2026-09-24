@@ -55,7 +55,7 @@
     1013,
     1520
    ],
-   "px": 207818
+   "px": 206698
   },
   "paw_left": {
    "bbox": [
@@ -73,7 +73,7 @@
     1146,
     1399
    ],
-   "px": 14701
+   "px": 14697
   },
   "sleeve_left": {
    "bbox": [
@@ -82,7 +82,7 @@
     470,
     1345
    ],
-   "px": 38432
+   "px": 38986
   },
   "sleeve_right": {
    "bbox": [
@@ -91,7 +91,7 @@
     1127,
     1363
    ],
-   "px": 40184
+   "px": 40754
   },
   "ears": {
    "bbox": [
@@ -134,13 +134,13 @@
  "extensions": {
   "foot_left": 13365,
   "foot_right": 13032,
-  "shirt": 33320,
+  "shirt": 34095,
   "paw_left": 7626,
   "paw_right": 7696,
   "sleeve_left": 4736,
   "sleeve_right": 4503
  },
  "check": {
-  "alphaMaxError": 134.50196078431372
+  "alphaMaxError": 63.74901960784314
  }
 }
