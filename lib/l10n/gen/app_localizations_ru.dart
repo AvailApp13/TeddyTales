@@ -1429,11 +1429,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String signInSoonBody(String method) {
-    return 'Вход через $method ещё не подключён. Пропускаем в приложение.';
+    return 'Вход через $method появится позже. Пока зарегистрируйтесь или войдите по почте.';
   }
 
   @override
-  String get signInSoonTitle => 'Раздел в разработке';
+  String get signInSoonTitle => 'Данная функция ещё в разработке';
 
   @override
   String get signInTagline => 'Плюшевый малыш, который растёт вместе с тобой';
@@ -1756,23 +1756,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.';
 
   @override
-  String get emailSentTitle => 'Проверьте почту';
-
-  @override
-  String emailSentBody(String email) {
-    return 'Мы отправили письмо на $email. Откройте его и подтвердите адрес, затем войдите с паролем.';
-  }
-
-  @override
-  String get emailResend => 'Отправить письмо ещё раз';
-
-  @override
-  String get emailResent => 'Письмо отправлено ещё раз';
-
-  @override
-  String get emailGoSignIn => 'Я подтвердил — войти';
-
-  @override
   String get emailErrorInvalid => 'Проверьте адрес почты';
 
   @override
@@ -1788,7 +1771,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get emailErrorNotConfirmed =>
-      'Почта не подтверждена — откройте письмо со ссылкой';
+      'Почта не подтверждена — введите код из письма';
 
   @override
   String get emailErrorDisabled => 'Регистрация по почте пока выключена';
@@ -1825,4 +1808,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileAccountWallet => 'Кошелёк';
+
+  @override
+  String get emailCodeTitle => 'Введите код из письма';
+
+  @override
+  String emailCodeBody(String email, int length) {
+    return 'Мы отправили код из $length цифр на $email. Если письма нет, загляните в «Спам».';
+  }
+
+  @override
+  String get emailCodeField => 'Код';
+
+  @override
+  String get emailCodeSubmit => 'Подтвердить';
+
+  @override
+  String get emailCodeResend => 'Отправить код ещё раз';
+
+  @override
+  String emailCodeResendIn(int seconds) {
+    return 'Отправить ещё раз через $seconds с';
+  }
+
+  @override
+  String get emailCodeSent => 'Новый код отправлен';
+
+  @override
+  String get emailCodeChangeEmail => 'Изменить почту';
+
+  @override
+  String get emailEnterCode => 'Ввести код из письма';
+
+  @override
+  String get emailErrorCode => 'Код неверный или устарел — запросите новый';
 }

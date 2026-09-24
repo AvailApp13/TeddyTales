@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../backend/email_auth.dart';
 import '../l10n/l10n.dart';
@@ -12,8 +15,10 @@ import '../theme/app_colors.dart';
 /// регистрации; экран только собирает почту с паролем и объясняет, что
 /// дальше.
 ///
-/// Если в Supabase включено подтверждение почты, после регистрации экран
-/// просит открыть письмо и войти. Если выключено — пускает сразу.
+/// После регистрации на почту приходит код из шести цифр; войти можно,
+/// только введя его (заказчик 24.09). Для этого в Supabase включено
+/// подтверждение почты, а в письме стоит код (`docs/account.md`). Если
+/// подтверждение выключено, сервер пускает сразу — экран это тоже умеет.
 class EmailAuthScreen extends StatefulWidget {
   const EmailAuthScreen({
     super.key,
@@ -37,6 +42,13 @@ class EmailAuthScreen extends StatefulWidget {
 class _EmailAuthScreenState extends State<EmailAuthScreen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final TextEditingController _code = TextEditingController();
+
+  /// Сколько секунд ждать до повторной отправки кода. Supabase не шлёт
+  /// письма чаще раза в минуту — кнопка не обещает то, чего не будет.
+  static const int _resendPause = 60;
+  int _resendIn = 0;
+  Timer? _resendTimer;
 
   late bool _signIn = widget.startWithSignIn;
   bool _busy = false;
@@ -48,14 +60,62 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   /// Ответ сервера. Сбрасывается правкой любого поля.
   EmailAuthError? _serverError;
 
-  /// Почта, на которую ушло письмо подтверждения.
+  /// Почта, на которую ушло письмо с кодом. Не `null` — экран ввода кода.
   String? _sentTo;
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _email.dispose();
     _password.dispose();
+    _code.dispose();
     super.dispose();
+  }
+
+  /// Перейти к вводу кода для [email]. [justSent] — письмо только что ушло,
+  /// повторная отправка откроется через минуту.
+  void _askCode(String email, {required bool justSent}) {
+    _code.clear();
+    setState(() {
+      _busy = false;
+      _serverError = null;
+      _sentTo = email;
+    });
+    if (justSent) _startResendPause();
+  }
+
+  void _startResendPause() {
+    _resendTimer?.cancel();
+    setState(() => _resendIn = _resendPause);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return timer.cancel();
+      setState(() => _resendIn--);
+      if (_resendIn <= 0) timer.cancel();
+    });
+  }
+
+  Future<void> _verify() async {
+    final email = _sentTo;
+    final auth = widget.auth;
+    if (email == null || _busy || !isSignUpCode(_code.text)) return;
+    if (auth == null) {
+      setState(() => _serverError = EmailAuthError.network);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _serverError = null;
+    });
+    try {
+      await auth.verifySignUpCode(email, _code.text);
+      await widget.onSignedIn();
+    } on EmailAuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _serverError = error.error;
+      });
+    }
   }
 
   EmailAuthError? get _emailError => checkEmail(_email.text);
@@ -85,10 +145,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
         final outcome = await auth.signUpWithEmail(email, _password.text);
         if (outcome == SignUpOutcome.confirmEmail) {
           if (!mounted) return;
-          setState(() {
-            _busy = false;
-            _sentTo = email;
-          });
+          _askCode(email, justSent: true);
           return;
         }
       }
@@ -108,9 +165,10 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
     if (email == null || auth == null) return;
     final messenger = ScaffoldMessenger.of(context);
     final l10n = context.l10n;
+    _startResendPause();
     try {
       await auth.resendConfirmation(email);
-      messenger.showSnackBar(SnackBar(content: Text(l10n.emailResent)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.emailCodeSent)));
     } on EmailAuthException catch (error) {
       messenger.showSnackBar(
         SnackBar(content: Text(_errorText(l10n, error.error))),
@@ -127,6 +185,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
         EmailAuthError.alreadyRegistered => l10n.emailErrorExists,
         EmailAuthError.wrongCredentials => l10n.emailErrorCredentials,
         EmailAuthError.notConfirmed => l10n.emailErrorNotConfirmed,
+        EmailAuthError.badCode => l10n.emailErrorCode,
         EmailAuthError.disabled => l10n.emailErrorDisabled,
         EmailAuthError.rateLimited => l10n.emailErrorRateLimit,
         EmailAuthError.network => l10n.emailErrorNetwork,
@@ -243,6 +302,14 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (serverError == EmailAuthError.notConfirmed)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => _askCode(_email.text.trim(), justSent: false),
+                child: Text(l10n.emailEnterCode),
+              ),
+            ),
           if (serverError == EmailAuthError.alreadyRegistered && !_signIn)
             Align(
               alignment: Alignment.centerLeft,
@@ -284,6 +351,9 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
   }
 
   Widget _sent(AppLocalizations l10n, String email) {
+    final serverError = _serverError;
+    final ready = isSignUpCode(_code.text);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -294,7 +364,7 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          l10n.emailSentTitle,
+          l10n.emailCodeTitle,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 22,
@@ -304,25 +374,97 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
         ),
         const SizedBox(height: 10),
         Text(
-          l10n.emailSentBody(email),
+          l10n.emailCodeBody(email, signUpCodeLength),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
+        TextField(
+          key: const ValueKey('code'),
+          controller: _code,
+          enabled: !_busy,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          autofillHints: const [AutofillHints.oneTimeCode],
+          textAlign: TextAlign.center,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
+          style: const TextStyle(
+            fontSize: 28,
+            letterSpacing: 10,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
+          decoration: InputDecoration(
+            hintText: '•' * signUpCodeLength,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            setState(() => _serverError = null);
+            // Код вставили или набрали целиком — проверяем сразу, без
+            // лишнего нажатия. Длиннее шести тоже бывает: длина кода
+            // настраивается в Supabase.
+            if (value.length == signUpCodeLength) _verify();
+          },
+          onSubmitted: (_) => _verify(),
+        ),
+        if (serverError != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _errorText(l10n, serverError),
+            key: const ValueKey('code-error'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
         FilledButton(
-          onPressed: () => setState(() {
-            _sentTo = null;
-            _signIn = true;
-            _tried = false;
-          }),
+          onPressed: _busy || !ready ? null : _verify,
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
             backgroundColor: AppColors.sageDark,
           ),
-          child: Text(l10n.emailGoSignIn),
+          child: _busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  l10n.emailCodeSubmit,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
         ),
         const SizedBox(height: 8),
-        TextButton(onPressed: _resend, child: Text(l10n.emailResend)),
+        TextButton(
+          onPressed: _resendIn > 0 || _busy ? null : _resend,
+          child: Text(
+            _resendIn > 0
+                ? l10n.emailCodeResendIn(_resendIn)
+                : l10n.emailCodeResend,
+          ),
+        ),
+        TextButton(
+          onPressed: _busy
+              ? null
+              : () => setState(() {
+                  _sentTo = null;
+                  _serverError = null;
+                }),
+          child: Text(l10n.emailCodeChangeEmail),
+        ),
       ],
     );
   }

@@ -34,6 +34,14 @@ class _FakeAuth implements AccountAuth {
   }
 
   @override
+  Future<void> verifySignUpCode(String email, String code) async {
+    calls.add('code:$email:$code');
+    if (code != '123456') {
+      throw const EmailAuthException(EmailAuthError.badCode);
+    }
+  }
+
+  @override
   Future<void> resendConfirmation(String email) async =>
       calls.add('resend:$email');
 
@@ -136,7 +144,9 @@ void main() {
       expect(entered, [1]);
     });
 
-    testWidgets('с подтверждением — просит открыть письмо', (tester) async {
+    testWidgets('после регистрации — код из письма, без него не пускает', (
+      tester,
+    ) async {
       final (auth, entered) = await open(
         tester,
         auth: _FakeAuth()..outcome = SignUpOutcome.confirmEmail,
@@ -145,17 +155,57 @@ void main() {
       await tester.tap(find.text('Зарегистрироваться'));
       await tester.pumpAndSettle();
 
-      expect(entered, isEmpty);
-      expect(find.text('Проверьте почту'), findsOneWidget);
+      expect(entered, isEmpty, reason: 'без кода не пускает');
+      expect(find.text('Введите код из письма'), findsOneWidget);
       expect(find.textContaining('mama@example.com'), findsOneWidget);
+      expect(find.text('Отправить ещё раз через 60 с'), findsOneWidget);
 
-      await tester.tap(find.text('Отправить письмо ещё раз'));
+      // Неверный код: проверка сразу по шестой цифре, человек остаётся.
+      await tester.enterText(find.byKey(const ValueKey('code')), '000000');
       await tester.pumpAndSettle();
+      expect(auth.calls.last, 'code:mama@example.com:000000');
+      expect(
+        find.text('Код неверный или устарел — запросите новый'),
+        findsOneWidget,
+      );
+      expect(entered, isEmpty);
+
+      // Через минуту можно попросить новый код.
+      await tester.pump(const Duration(seconds: 61));
+      await tester.tap(find.text('Отправить код ещё раз'));
+      await tester.pump();
       expect(auth.calls.last, 'resend:mama@example.com');
 
-      await tester.tap(find.text('Я подтвердил — войти'));
+      // Верный код — вошли.
+      await tester.enterText(find.byKey(const ValueKey('code')), '123456');
+      await tester.pump();
+      await tester.pump();
+      expect(auth.calls.last, 'code:mama@example.com:123456');
+      expect(entered, [1]);
+
+      // Досчитать паузу повторной отправки, чтобы не осталось таймеров.
+      await tester.pump(const Duration(seconds: 61));
+    });
+
+    testWidgets('вход с неподтверждённой почтой ведёт к вводу кода', (
+      tester,
+    ) async {
+      await open(tester, auth: _FakeAuth()..fail = EmailAuthError.notConfirmed);
+      await tester.tap(find.text('Вход'));
       await tester.pumpAndSettle();
-      expect(find.text('Войти'), findsWidgets, reason: 'открылся вход');
+      await fill(tester, 'mama@example.com', 'secret1');
+      await tester.tap(find.widgetWithText(FilledButton, 'Войти'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Почта не подтверждена — введите код из письма'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Ввести код из письма'));
+      await tester.pumpAndSettle();
+      expect(find.text('Введите код из письма'), findsOneWidget);
+      // Письмо не отправляли только что — повторная отправка доступна сразу.
+      expect(find.text('Отправить код ещё раз'), findsOneWidget);
     });
 
     testWidgets('неверная форма на сервер не уходит', (tester) async {
@@ -244,6 +294,30 @@ void main() {
       await tester.tap(find.text('Регистрация по почте'));
       await tester.pump();
       expect(email, 1);
+    });
+
+    testWidgets('Apple и Google: «в разработке» сверху, внутрь не пускают', (
+      tester,
+    ) async {
+      var entered = 0;
+      await tester.pumpWidget(
+        _app(SignInScreen(onSignedIn: () => entered++, onEmail: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      for (final button in ['Войти через Apple', 'Войти через Google']) {
+        await tester.tap(find.text(button));
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(find.text('Данная функция ещё в разработке'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+        expect(find.text('Данная функция ещё в разработке'), findsNothing);
+      }
+      expect(entered, 0, reason: 'вход только по почте');
+
+      await tester.tap(find.text('Пропустить и посмотреть приложение'));
+      await tester.pump();
+      expect(entered, 1);
     });
   });
 

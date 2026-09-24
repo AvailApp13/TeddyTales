@@ -48,6 +48,19 @@ const int signInEdgeColor = 0xFFECC9BC;
 /// срезаться ветка с фонариком.
 const double signInLiftLimit = 0.035;
 
+/// Насколько кадр разрешено опустить, когда под лапами остаётся пустое
+/// место, — доля высоты кадра.
+///
+/// Заказчик 24.09: «логотип и мишек опустить чуть ниже, а выбор способа
+/// входа немного выше, чтобы не было пробела». С тремя кнопками вместо пяти
+/// под лапами оставалась пустая полоса ковра. Пустоту делим пополам: сцена
+/// опускается, кнопки поднимаются. Над опущенным кадром открывается полоса —
+/// её закрывает верхний ряд картинки, растянутый вниз
+/// (`assets/ui/signin_top_edge.png`): там размытые шторы и стена, и
+/// продолжение читается как та же комната. Больше этой доли не опускаем —
+/// растянутая полоса стала бы заметна.
+const double signInDropLimit = 0.08;
+
 /// Кадр сцены на конкретном экране и места, за которые цепляются подписи.
 class SignInFrame {
   const SignInFrame._(this.rect);
@@ -106,6 +119,28 @@ class SignInFrame {
         size.height,
       ),
     );
+  }
+
+  /// Тот же кадр, опущенный на [pixels] (не больше [signInDropLimit]).
+  SignInFrame dropped(double pixels) => SignInFrame._(
+    rect.shift(
+      Offset(0, pixels.clamp(0.0, signInDropLimit * rect.height).toDouble()),
+    ),
+  );
+
+  /// Кадр для экрана с панелью высотой [panelHeight]: пустоту между лапами
+  /// и панелью делим пополам — половину забирает опущенная сцена, половину
+  /// поднятая панель. Возвращает кадр и верх панели.
+  ({SignInFrame frame, double panelTop}) settle({
+    required Size scene,
+    required double panelHeight,
+    required double bottomInset,
+  }) {
+    final bottomTop = scene.height - bottomInset - panelHeight;
+    final slack = bottomTop - bearsBottomY;
+    if (slack <= 0) return (frame: this, panelTop: bottomTop);
+    final settled = dropped(slack / 2);
+    return (frame: settled, panelTop: settled.bearsBottomY);
   }
 
   /// Середина просвета между логотипом и мишками — туда встаёт подзаголовок.

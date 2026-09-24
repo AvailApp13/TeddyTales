@@ -79,9 +79,9 @@ class _SignInScreenState extends State<SignInScreen>
   /// нельзя. Полоса, залитая этим цветом, продолжает ковёр без шва.
   static const Color _sceneEdge = Color(signInEdgeColor);
 
-  /// Сколько уведомление висит, прежде чем пустить внутрь. Полторы секунды —
-  /// столько нужно, чтобы прочитать две строки и не заскучать.
-  static const Duration _readTime = Duration(milliseconds: 1600);
+  /// Сколько уведомление висит. Две с половиной секунды — прочитать две
+  /// строки и не заскучать.
+  static const Duration _readTime = Duration(milliseconds: 2600);
 
   // Создаётся сразу, а не по первому обращению: уйти со страницы можно и
   // не тронув баннер (через почту), и тогда ленивое поле рождалось бы в
@@ -114,15 +114,17 @@ class _SignInScreenState extends State<SignInScreen>
       email(context);
       return;
     }
-    // Повторное нажатие, пока идёт переход, ничего не меняет: иначе
-    // `onSignedIn` вызвался бы дважды и экран ушёл бы дважды.
-    if (_pending != null) return;
-
+    // Apple и Google ждут App Store и Google Play. Заказчик 24.09: «при
+    // нажатии сверху уведомление, что функция ещё в разработке; вход у нас
+    // только по почте» — поэтому никуда не пускаем, только сообщаем.
+    // Повторное нажатие показывает уведомление заново и продлевает его.
+    _timer?.cancel();
     setState(() => _pending = method);
     _banner.forward();
-    _timer = Timer(_readTime, () {
+    _timer = Timer(_readTime, () async {
       if (!mounted) return;
-      widget.onSignedIn();
+      await _banner.reverse();
+      if (mounted) setState(() => _pending = null);
     });
   }
 
@@ -140,13 +142,20 @@ class _SignInScreenState extends State<SignInScreen>
 
           // Сначала кадр под самую тесную панель — он говорит, где кончаются
           // лапы, — и уже по этому месту считаются настоящие размеры кнопок.
-          final frame = SignInFrame.of(
+          final fitted = SignInFrame.of(
             scene,
             panelHeight: SignInMetrics.tight.height,
             bottomInset: bottom,
           );
           final metrics = SignInMetrics.of(
-            scene.height - frame.bearsBottomY - bottom,
+            scene.height - fitted.bearsBottomY - bottom,
+          );
+          // Пустоту под лапами делим: сцена чуть ниже, кнопки чуть выше
+          // (заказчик 24.09).
+          final (:frame, :panelTop) = fitted.settle(
+            scene: scene,
+            panelHeight: metrics.height,
+            bottomInset: bottom,
           );
           final side = (scene.width * 0.09).clamp(20.0, 44.0);
 
@@ -172,6 +181,20 @@ class _SignInScreenState extends State<SignInScreen>
                   ),
                 ),
               ),
+              // Над опущенным кадром — его верхний ряд, растянутый вниз:
+              // размытые шторы и стена продолжаются без шва.
+              if (frame.rect.top > 0)
+                Positioned(
+                  left: frame.rect.left,
+                  width: frame.rect.width,
+                  top: 0,
+                  height: frame.rect.top + 1,
+                  child: const Image(
+                    image: AssetImage('assets/ui/signin_top_edge.png'),
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
               // Сама сцена: без заливок поверх неё — под кнопками должен
               // быть тот же ковёр с листьями и звёздами, что на макете.
               Positioned.fromRect(
@@ -207,7 +230,7 @@ class _SignInScreenState extends State<SignInScreen>
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: bottom,
+                top: panelTop,
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 430),
@@ -221,8 +244,8 @@ class _SignInScreenState extends State<SignInScreen>
                               method,
                         ],
                         metrics: metrics,
-                        pending: _pending,
                         onTap: _tap,
+                        onSkip: widget.onSignedIn,
                       ),
                     ),
                   ),
@@ -245,14 +268,16 @@ class _SignInPanel extends StatelessWidget {
   const _SignInPanel({
     required this.methods,
     required this.metrics,
-    required this.pending,
     required this.onTap,
+    required this.onSkip,
   });
 
   final List<_SignInMethod> methods;
   final SignInMetrics metrics;
-  final _SignInMethod? pending;
   final ValueChanged<_SignInMethod> onTap;
+
+  /// «Пропустить и посмотреть приложение» — без регистрации.
+  final VoidCallback onSkip;
 
   @override
   Widget build(BuildContext context) {
@@ -287,13 +312,12 @@ class _SignInPanel extends StatelessWidget {
             method: method,
             label: method.label(l10n),
             height: metrics.buttonHeight,
-            busy: pending == method,
             onTap: () => onTap(method),
           ),
           if (method != methods.last) SizedBox(height: metrics.gap),
         ],
         TextButton(
-          onPressed: () => onTap(_SignInMethod.apple),
+          onPressed: onSkip,
           style: TextButton.styleFrom(
             minimumSize: Size.fromHeight(metrics.skipHeight),
             padding: EdgeInsets.zero,
@@ -331,14 +355,12 @@ class _MethodButton extends StatelessWidget {
     required this.method,
     required this.label,
     required this.height,
-    required this.busy,
     required this.onTap,
   });
 
   final _SignInMethod method;
   final String label;
   final double height;
-  final bool busy;
   final VoidCallback onTap;
 
   @override
@@ -356,7 +378,7 @@ class _MethodButton extends StatelessWidget {
       child: Material(
         color: method.background,
         borderRadius: radius,
-        elevation: busy ? 0 : 1.5,
+        elevation: 1.5,
         shadowColor: AppColors.tan.withValues(alpha: 0.4),
         child: InkWell(
           onTap: onTap,
@@ -403,18 +425,6 @@ class _MethodButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (busy)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(method.foreground),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),

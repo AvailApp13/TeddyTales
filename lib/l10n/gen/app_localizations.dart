@@ -2521,13 +2521,13 @@ abstract class AppLocalizations {
   /// No description provided for @signInSoonBody.
   ///
   /// In ru, this message translates to:
-  /// **'Вход через {method} ещё не подключён. Пропускаем в приложение.'**
+  /// **'Вход через {method} появится позже. Пока зарегистрируйтесь или войдите по почте.'**
   String signInSoonBody(String method);
 
   /// No description provided for @signInSoonTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Раздел в разработке'**
+  /// **'Данная функция ещё в разработке'**
   String get signInSoonTitle;
 
   /// No description provided for @signInTagline.
@@ -3106,36 +3106,6 @@ abstract class AppLocalizations {
   /// **'Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.'**
   String get emailLeadSignIn;
 
-  /// No description provided for @emailSentTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Проверьте почту'**
-  String get emailSentTitle;
-
-  /// No description provided for @emailSentBody.
-  ///
-  /// In ru, this message translates to:
-  /// **'Мы отправили письмо на {email}. Откройте его и подтвердите адрес, затем войдите с паролем.'**
-  String emailSentBody(String email);
-
-  /// No description provided for @emailResend.
-  ///
-  /// In ru, this message translates to:
-  /// **'Отправить письмо ещё раз'**
-  String get emailResend;
-
-  /// No description provided for @emailResent.
-  ///
-  /// In ru, this message translates to:
-  /// **'Письмо отправлено ещё раз'**
-  String get emailResent;
-
-  /// No description provided for @emailGoSignIn.
-  ///
-  /// In ru, this message translates to:
-  /// **'Я подтвердил — войти'**
-  String get emailGoSignIn;
-
   /// No description provided for @emailErrorInvalid.
   ///
   /// In ru, this message translates to:
@@ -3163,7 +3133,7 @@ abstract class AppLocalizations {
   /// No description provided for @emailErrorNotConfirmed.
   ///
   /// In ru, this message translates to:
-  /// **'Почта не подтверждена — откройте письмо со ссылкой'**
+  /// **'Почта не подтверждена — введите код из письма'**
   String get emailErrorNotConfirmed;
 
   /// No description provided for @emailErrorDisabled.
@@ -3231,6 +3201,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Кошелёк'**
   String get profileAccountWallet;
+
+  /// No description provided for @emailCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите код из письма'**
+  String get emailCodeTitle;
+
+  /// No description provided for @emailCodeBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы отправили код из {length} цифр на {email}. Если письма нет, загляните в «Спам».'**
+  String emailCodeBody(String email, int length);
+
+  /// No description provided for @emailCodeField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код'**
+  String get emailCodeField;
+
+  /// No description provided for @emailCodeSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get emailCodeSubmit;
+
+  /// No description provided for @emailCodeResend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить код ещё раз'**
+  String get emailCodeResend;
+
+  /// No description provided for @emailCodeResendIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить ещё раз через {seconds} с'**
+  String emailCodeResendIn(int seconds);
+
+  /// No description provided for @emailCodeSent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый код отправлен'**
+  String get emailCodeSent;
+
+  /// No description provided for @emailCodeChangeEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить почту'**
+  String get emailCodeChangeEmail;
+
+  /// No description provided for @emailEnterCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести код из письма'**
+  String get emailEnterCode;
+
+  /// No description provided for @emailErrorCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код неверный или устарел — запросите новый'**
+  String get emailErrorCode;
 }
 
 class _AppLocalizationsDelegate

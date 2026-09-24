@@ -195,4 +195,57 @@ void main() {
       expect(roomy.legalSize, greaterThan(tight.legalSize));
     });
   });
+
+  group('Без пробела между мишками и кнопками (заказчик 24.09)', () {
+    test('пустота делится: сцена ниже, кнопки выше', () {
+      for (final scene in all) {
+        final fitted = frameOf(scene);
+        final metrics = SignInMetrics.of(
+          scene.height - fitted.bearsBottomY - 8,
+        );
+        final slack = scene.height - 8 - metrics.height - fitted.bearsBottomY;
+        final (:frame, :panelTop) = fitted.settle(
+          scene: scene,
+          panelHeight: metrics.height,
+          bottomInset: 8,
+        );
+
+        // Панель начинается прямо под лапами — со своим просветом.
+        expect(panelTop, closeTo(frame.bearsBottomY, 0.01), reason: '$scene');
+        // Панель не уходит за низ экрана.
+        expect(
+          panelTop + metrics.height,
+          lessThanOrEqualTo(scene.height - 8 + 0.01),
+          reason: '$scene',
+        );
+        // Сцена опущена не больше допустимого.
+        expect(
+          frame.rect.top - fitted.rect.top,
+          lessThanOrEqualTo(signInDropLimit * fitted.rect.height + 0.01),
+          reason: '$scene',
+        );
+        if (slack > 0) {
+          expect(
+            frame.rect.top,
+            greaterThan(fitted.rect.top),
+            reason: '$scene',
+          );
+        }
+      }
+    });
+
+    test('на телефоне заказчика сцена опускается, кнопки поднимаются', () {
+      final fitted = frameOf(phone);
+      final metrics = SignInMetrics.of(phone.height - fitted.bearsBottomY - 8);
+      final (:frame, :panelTop) = fitted.settle(
+        scene: phone,
+        panelHeight: metrics.height,
+        bottomInset: 8,
+      );
+      final before = phone.height - 8 - metrics.height;
+
+      expect(frame.rect.top, greaterThan(20), reason: 'логотип ниже');
+      expect(panelTop, lessThan(before - 20), reason: 'кнопки выше');
+    });
+  });
 }

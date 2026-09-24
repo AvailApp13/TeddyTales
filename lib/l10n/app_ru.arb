@@ -760,7 +760,7 @@
   "signInPrompt": "Выберите способ входа",
   "signInQq": "Войти через QQ",
   "signInSkip": "Пропустить и посмотреть приложение",
-  "signInSoonBody": "Вход через {method} ещё не подключён. Пропускаем в приложение.",
+  "signInSoonBody": "Вход через {method} появится позже. Пока зарегистрируйтесь или войдите по почте.",
   "@signInSoonBody": {
     "placeholders": {
       "method": {
@@ -768,7 +768,7 @@
       }
     }
   },
-  "signInSoonTitle": "Раздел в разработке",
+  "signInSoonTitle": "Данная функция ещё в разработке",
   "signInTagline": "Плюшевый малыш, который растёт вместе с тобой",
   "signInWeChat": "Войти через WeChat",
   "skinJoy": "JOY",
@@ -921,18 +921,6 @@
   "emailSubmitSignIn": "Войти",
   "emailLeadSignUp": "Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.",
   "emailLeadSignIn": "Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.",
-  "emailSentTitle": "Проверьте почту",
-  "emailSentBody": "Мы отправили письмо на {email}. Откройте его и подтвердите адрес, затем войдите с паролем.",
-  "@emailSentBody": {
-    "placeholders": {
-      "email": {
-        "type": "String"
-      }
-    }
-  },
-  "emailResend": "Отправить письмо ещё раз",
-  "emailResent": "Письмо отправлено ещё раз",
-  "emailGoSignIn": "Я подтвердил — войти",
   "emailErrorInvalid": "Проверьте адрес почты",
   "emailErrorPassword": "Пароль не короче {min} знаков",
   "@emailErrorPassword": {
@@ -944,7 +932,7 @@
   },
   "emailErrorExists": "Эта почта уже зарегистрирована — войдите",
   "emailErrorCredentials": "Неверная почта или пароль",
-  "emailErrorNotConfirmed": "Почта не подтверждена — откройте письмо со ссылкой",
+  "emailErrorNotConfirmed": "Почта не подтверждена — введите код из письма",
   "emailErrorDisabled": "Регистрация по почте пока выключена",
   "emailErrorRateLimit": "Слишком много писем подряд — попробуйте позже",
   "emailErrorNetwork": "Нет связи с сервером — попробуйте ещё раз",
@@ -962,5 +950,32 @@
     }
   },
   "profileAccountRegistered": "Зарегистрирован",
-  "profileAccountWallet": "Кошелёк"
+  "profileAccountWallet": "Кошелёк",
+  "emailCodeTitle": "Введите код из письма",
+  "emailCodeBody": "Мы отправили код из {length} цифр на {email}. Если письма нет, загляните в «Спам».",
+  "@emailCodeBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      },
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "emailCodeField": "Код",
+  "emailCodeSubmit": "Подтвердить",
+  "emailCodeResend": "Отправить код ещё раз",
+  "emailCodeResendIn": "Отправить ещё раз через {seconds} с",
+  "@emailCodeResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "emailCodeSent": "Новый код отправлен",
+  "emailCodeChangeEmail": "Изменить почту",
+  "emailEnterCode": "Ввести код из письма",
+  "emailErrorCode": "Код неверный или устарел — запросите новый"
 }

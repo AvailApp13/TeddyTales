@@ -126,6 +126,25 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   }
 
   @override
+  Future<void> verifySignUpCode(String email, String code) async {
+    try {
+      await _client.auth.verifyOTP(
+        type: OtpType.signup,
+        email: email.trim(),
+        token: code.trim(),
+      );
+      _petId = null;
+    } on AuthException catch (error) {
+      throw EmailAuthException(
+        emailErrorFromCode(error.code, statusCode: error.statusCode),
+        cause: error,
+      );
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+  }
+
+  @override
   Future<void> resendConfirmation(String email) async {
     try {
       await _client.auth.resend(type: OtpType.signup, email: email.trim());

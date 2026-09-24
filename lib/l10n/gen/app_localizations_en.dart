@@ -1420,11 +1420,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String signInSoonBody(String method) {
-    return 'Signing in with $method is not wired up yet. Letting you through.';
+    return 'Signing in with $method is coming later. For now, sign up or sign in with e-mail.';
   }
 
   @override
-  String get signInSoonTitle => 'Under construction';
+  String get signInSoonTitle => 'This feature is still in development';
 
   @override
   String get signInTagline => 'A plush little one who grows up with you';
@@ -1746,23 +1746,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in to get your bear, coins and purchases back on any phone.';
 
   @override
-  String get emailSentTitle => 'Check your inbox';
-
-  @override
-  String emailSentBody(String email) {
-    return 'We sent a message to $email. Open it to confirm the address, then sign in with your password.';
-  }
-
-  @override
-  String get emailResend => 'Send again';
-
-  @override
-  String get emailResent => 'Sent again';
-
-  @override
-  String get emailGoSignIn => 'I\'ve confirmed — sign in';
-
-  @override
   String get emailErrorInvalid => 'Check the e-mail address';
 
   @override
@@ -1778,7 +1761,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailErrorNotConfirmed =>
-      'E-mail not confirmed — open the link in our message';
+      'E-mail not confirmed — enter the code from the message';
 
   @override
   String get emailErrorDisabled => 'E-mail sign-up is turned off for now';
@@ -1814,4 +1797,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileAccountWallet => 'Wallet';
+
+  @override
+  String get emailCodeTitle => 'Enter the code from the e-mail';
+
+  @override
+  String emailCodeBody(String email, int length) {
+    return 'We sent a $length-digit code to $email. If you can\'t find it, check the spam folder.';
+  }
+
+  @override
+  String get emailCodeField => 'Code';
+
+  @override
+  String get emailCodeSubmit => 'Confirm';
+
+  @override
+  String get emailCodeResend => 'Send the code again';
+
+  @override
+  String emailCodeResendIn(int seconds) {
+    return 'Send again in $seconds s';
+  }
+
+  @override
+  String get emailCodeSent => 'A new code is on its way';
+
+  @override
+  String get emailCodeChangeEmail => 'Change e-mail';
+
+  @override
+  String get emailEnterCode => 'Enter the code from the e-mail';
+
+  @override
+  String get emailErrorCode => 'Wrong or expired code — request a new one';
 }

@@ -20,8 +20,11 @@ enum EmailAuthError {
   /// Неверная почта или пароль.
   wrongCredentials,
 
-  /// Почта не подтверждена: человек не открыл письмо со ссылкой.
+  /// Почта не подтверждена: человек не ввёл код из письма.
   notConfirmed,
+
+  /// Код из письма неверный или устарел.
+  badCode,
 
   /// Регистрация по почте выключена в настройках Supabase.
   disabled,
@@ -35,6 +38,14 @@ enum EmailAuthError {
   /// Остальное.
   unknown,
 }
+
+/// Длина кода из письма — как в настройках Supabase по умолчанию
+/// (Authentication → Sign In / Providers → Email → Email OTP Length).
+const int signUpCodeLength = 6;
+
+/// Код — только цифры, не короче [signUpCodeLength].
+bool isSignUpCode(String raw) =>
+    RegExp('^[0-9]{$signUpCodeLength,10}\$').hasMatch(raw.trim());
 
 /// Наименьшая длина пароля — как в настройках Supabase по умолчанию.
 const int minPasswordLength = 6;
@@ -54,7 +65,9 @@ enum SignUpOutcome {
   /// Вошли сразу: подтверждение почты в Supabase выключено.
   signedIn,
 
-  /// Ушло письмо со ссылкой; войти можно после подтверждения.
+  /// Ушло письмо с кодом; войти можно, только введя его (заказчик 24.09:
+  /// «после регистрации на почту должен прийти код, и только после этого
+  /// человек заходит»).
   confirmEmail,
 }
 
@@ -83,7 +96,12 @@ abstract interface class AccountAuth {
   /// Бросает [EmailAuthException].
   Future<void> signInWithEmail(String email, String password);
 
-  /// Отправить письмо подтверждения ещё раз.
+  /// Проверить код из письма после регистрации. Верный — человек вошёл.
+  /// Бросает [EmailAuthException] ([EmailAuthError.badCode] — не тот или
+  /// устарел).
+  Future<void> verifySignUpCode(String email, String code);
+
+  /// Отправить письмо с кодом ещё раз.
   Future<void> resendConfirmation(String email);
 
   /// Выйти на этом устройстве.
@@ -97,6 +115,7 @@ EmailAuthError emailErrorFromCode(String? code, {String? statusCode}) =>
       'email_exists' => EmailAuthError.alreadyRegistered,
       'invalid_credentials' => EmailAuthError.wrongCredentials,
       'email_not_confirmed' => EmailAuthError.notConfirmed,
+      'otp_expired' => EmailAuthError.badCode,
       'weak_password' => EmailAuthError.weakPassword,
       'email_address_invalid' => EmailAuthError.invalidEmail,
       'email_provider_disabled' || 'signup_disabled' => EmailAuthError.disabled,

@@ -1348,11 +1348,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String signInSoonBody(String method) {
-    return '$method 登录尚未接入，先带你进入应用。';
+    return '$method 登录稍后开放。目前请使用邮箱注册或登录。';
   }
 
   @override
-  String get signInSoonTitle => '功能开发中';
+  String get signInSoonTitle => '该功能仍在开发中';
 
   @override
   String get signInTagline => '陪你一起长大的毛绒宝宝';
@@ -1659,23 +1659,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get emailLeadSignIn => '登录后，小熊、金币和购买记录会在任何手机上恢复。';
 
   @override
-  String get emailSentTitle => '请查收邮件';
-
-  @override
-  String emailSentBody(String email) {
-    return '我们已向 $email 发送邮件。请打开邮件确认地址，然后用密码登录。';
-  }
-
-  @override
-  String get emailResend => '重新发送';
-
-  @override
-  String get emailResent => '已重新发送';
-
-  @override
-  String get emailGoSignIn => '已确认，去登录';
-
-  @override
   String get emailErrorInvalid => '请检查邮箱地址';
 
   @override
@@ -1690,7 +1673,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get emailErrorCredentials => '邮箱或密码错误';
 
   @override
-  String get emailErrorNotConfirmed => '邮箱尚未确认，请打开邮件中的链接';
+  String get emailErrorNotConfirmed => '邮箱尚未确认，请输入邮件中的验证码';
 
   @override
   String get emailErrorDisabled => '邮箱注册暂未开放';
@@ -1726,4 +1709,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileAccountWallet => '钱包';
+
+  @override
+  String get emailCodeTitle => '输入邮件中的验证码';
+
+  @override
+  String emailCodeBody(String email, int length) {
+    return '我们已向 $email 发送了 $length 位验证码。如果没有收到，请查看垃圾邮件。';
+  }
+
+  @override
+  String get emailCodeField => '验证码';
+
+  @override
+  String get emailCodeSubmit => '确认';
+
+  @override
+  String get emailCodeResend => '重新发送验证码';
+
+  @override
+  String emailCodeResendIn(int seconds) {
+    return '$seconds 秒后可重新发送';
+  }
+
+  @override
+  String get emailCodeSent => '新的验证码已发送';
+
+  @override
+  String get emailCodeChangeEmail => '更换邮箱';
+
+  @override
+  String get emailEnterCode => '输入邮件中的验证码';
+
+  @override
+  String get emailErrorCode => '验证码错误或已过期，请重新获取';
 }
