@@ -6,7 +6,7 @@ import { extractLayerNames, checkLayers, formatReport } from '../lib/check_layer
 import { generateDartContract, generateLabSpec } from '../lib/gen_dart.mjs';
 import { generateRiveProject, loadCatalog } from '../lib/gen_rml.mjs';
 import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
-import { buildInEditor, bonePlan } from '../lib/mcp_build.mjs';
+import { buildInEditor, bonePlan, bindToBones, loadState } from '../lib/mcp_build.mjs';
 import { mkdirSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { serveLab } from '../lib/serve.mjs';
@@ -34,6 +34,7 @@ const USAGE = `teddy - TeddyTales bear rig workbench
   teddy mcp:schema <tool>        print a tool's full description and input schema
   teddy mcp:build                build the rig scaffold inside the open Rive file (everything but bones)
   teddy mcp:bones                print bone coordinates for placing them by hand in the editor
+  teddy mcp:bind                 attach the rig groups to the bones placed in the editor
                                  URL defaults to $RIVE_MCP_URL or http://127.0.0.1:9791/mcp
 `;
 
@@ -76,6 +77,8 @@ function main() {
       return cmdMcpBuild();
     case 'mcp:bones':
       return cmdMcpBones();
+    case 'mcp:bind':
+      return cmdMcpBind();
     case undefined:
     case '-h':
     case '--help':
@@ -355,3 +358,18 @@ async function cmdLab() {
 
 const exitCode = await main();
 if (typeof exitCode === 'number' && exitCode !== 0) process.exit(exitCode);
+
+async function cmdMcpBind() {
+  const client = new RiveMcpClient({ timeoutMs: 120000 });
+  await client.initialize();
+  const call = async (tool, args) => {
+    const t = toolText(await client.callTool(tool, args));
+    let r; try { r = JSON.parse(t); } catch { throw new Error(`${tool}: ${t.slice(0, 300)}`); }
+    if (r.success === false) throw new Error(`${tool}: ${JSON.stringify(r).slice(0, 300)}`);
+    return r;
+  };
+  const info = await call('session_info', {});
+  const st = loadState()[String(info.activeFileId)];
+  if (!st?.artboards?.Bear_Boy) throw new Error(`в rive/editor_state.json нет файла ${info.activeFileId}`);
+  await bindToBones({ call, log: console.log, rig: loadRig(), catalog: loadCatalog(), board: { id: st.artboards.Bear_Boy.id } });
+}

@@ -649,6 +649,15 @@
       },
       "scalePercent": 62.982,
       "source": "handoff/layers_v2"
-    }
+    },
+    "bones": {
+      "root": "0-390",
+      "root_body": "0-391",
+      "root_arm_left": "0-393",
+      "root_arm_right": "0-392",
+      "root_leg_left": "0-394",
+      "root_leg_right": "0-395"
+    },
+    "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind."
   }
 }

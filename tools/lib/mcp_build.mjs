@@ -237,6 +237,12 @@ export async function reconcileTree({ call, log, rig, catalog, board, layout }) 
     const kids = ordered(childrenOf(rig, node.name));
     const slots = catalog.outfitSlots.slots.filter((s) => s.boundTo === node.name);
     if (node.kind === 'bone') {
+      // кость уже стоит в редакторе и группы к ней привязаны (teddy mcp:bind) —
+      // поддерево не трогаем: координаты там в пространстве кости
+      if (idOf(node.name) && kids.some((k) => parentOf.get(idOf(k.name)) === idOf(node.name))) {
+        log(`${node.name}: группы уже на кости — пропускаю`);
+        return;
+      }
       for (const kid of kids) walk(kid, parentId, parentWorld);
       for (const slot of slots) plan(slot.name, parentId, 0, 0);
       return;
@@ -265,4 +271,52 @@ export async function reconcileTree({ call, log, rig, catalog, board, layout }) 
   const r = await call('set_property_values', { propertyValues: positions });
   if (r.errors && Object.keys(r.errors).length) log(`  позиции: ${JSON.stringify(r.errors).slice(0, 300)}`);
   log(`позиции записаны: ${Object.keys(positions).length}`);
+}
+
+
+/**
+ * Привязывает группы рига к костям, поставленным в редакторе вручную.
+ * Кости ищутся по именам из спеки; редактор при reparent сохраняет мировое
+ * положение (проверено), так что картинка не сдвигается. После привязки
+ * выставляет порядок отрисовки: сзади торс, ноги, шорты, руки, толстовка,
+ * голова; внутри root_body — тень, шарф, голова.
+ */
+export async function bindToBones({ call, log, rig, catalog, board }) {
+  const hier = await call('get_artboard_hierarchy', { artboardId: board.id, depth: 14 });
+  const objects = hier.objects ?? [];
+  const byName = new Map();
+  for (const o of objects) if (!byName.has(o.name)) byName.set(o.name, o);
+  const parentOf = new Map();
+  for (const o of objects) for (const c of o.children ?? []) parentOf.set(c, o.id);
+  const isBone = (o) => o && (o.types ?? []).some((t) => /Bone$/.test(t));
+
+  const bones = rig.nodes.filter((n) => n.kind === 'bone');
+  const missing = bones.filter((b) => !isBone(byName.get(b.name))).map((b) => b.name);
+  if (missing.length) throw new Error(`в редакторе нет костей: ${missing.join(', ')} — поставьте и назовите их (teddy mcp:bones)`);
+
+  const ops = [];
+  for (const bone of bones) {
+    const boneId = byName.get(bone.name).id;
+    const kids = rig.nodes.filter((n) => n.parent === bone.name && n.kind !== 'bone').map((n) => n.name);
+    const slots = catalog.outfitSlots.slots.filter((s) => s.boundTo === bone.name).map((s) => s.name);
+    for (const name of [...kids, ...slots]) {
+      const o = byName.get(name);
+      if (!o) { log(`нет группы ${name}`); continue; }
+      if (parentOf.get(o.id) !== boneId) ops.push({ objectId: o.id, newParentId: boneId, position: 'end' });
+    }
+  }
+  if (ops.length) {
+    const r = await call('reparent_objects', { operations: ops });
+    log(`привязано к костям: ${(r.reparented ?? []).length} из ${ops.length}`);
+    for (const e of r.errors ?? []) log(`  ошибка: ${JSON.stringify(e)}`);
+  } else log('группы уже на костях');
+
+  const id = (n) => byName.get(n)?.id;
+  const front = async (names) => {
+    for (const n of names) if (id(n)) await call('reorder_objects', { operations: [{ objectId: id(n), order: 'sendToFront' }] });
+  };
+  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'root_arm_right', 'root_arm_left', 'outfit_body', 'outfit_accessory', 'root_body']);
+  await front(['head_shadow', 'scarf_1', 'head']);
+  log('порядок отрисовки выставлен');
+  return ops.length;
 }

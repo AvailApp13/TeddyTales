@@ -91,6 +91,12 @@
       "topic": "источник пропорций",
       "text": "Раскладка плейсхолдеров и длины костей берутся из rig/bear_proportions.json — размерной сетки, снятой с фото handoff/reference/bear_boy_front.jpg. Части под одеждой помечены как оценка и уточняются по фото без одежды.",
       "status": "derived"
+    },
+    {
+      "id": "D12",
+      "topic": "туловище на root, голова на root_body",
+      "text": "По сетке кость root идёт от таза к груди (туловище), root_body продолжает её от груди к центру головы (шея и голова). Поэтому туловище (body, body_base) и одежда на теле (outfit_body, outfit_feet, outfit_accessory) привязаны к root, как и руки с ногами (D2); к root_body — только голова, тень головы и шарф. Иначе наклон головы поворачивал бы вокруг груди толстовку и шорты, а руки оставались бы на месте. ТЗ 3.1 писало body под root_body; расхождение — из-за того, что в ТЗ root_body был туловищем, а голова висела на нём узлом.",
+      "status": "derived"
     }
   ],
   "artboard": {
@@ -124,17 +130,17 @@
     {
       "name": "body",
       "kind": "art",
-      "parent": "root_body",
-      "status": "spec",
-      "origin": "tz:3.1",
+      "parent": "root",
+      "status": "derived",
+      "origin": "tz:3.1+D12",
       "artistLayer": true
     },
     {
       "name": "body_base",
       "kind": "art",
-      "parent": "root_body",
-      "status": "spec",
-      "origin": "tz:3.1",
+      "parent": "root",
+      "status": "derived",
+      "origin": "tz:3.1+D12",
       "artistLayer": true
     },
     {

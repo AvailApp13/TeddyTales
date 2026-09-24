@@ -320,14 +320,14 @@ export const rigSpec = {
     {
       "name": "body",
       "kind": "art",
-      "parent": "root_body",
+      "parent": "root",
       "artistLayer": true,
       "optional": false
     },
     {
       "name": "body_base",
       "kind": "art",
-      "parent": "root_body",
+      "parent": "root",
       "artistLayer": true,
       "optional": false
     },

@@ -804,13 +804,13 @@
   "outfitSlots": {
     "section": "4.9",
     "status": "spec",
-    "doc": "Одежда двигается вместе с телом и не съезжает - каждый слот привязывается к костям, а не к артборду.",
+    "doc": "Одежда двигается вместе с телом и не съезжает - каждый слот привязывается к костям, а не к артборду. Слоты на теле привязаны к root (туловище), головной убор — к head (решение D12 в bear_rig.json).",
     "slots": [
       {
         "name": "outfit_body",
         "label": "комплект",
         "count": 8,
-        "boundTo": "root_body"
+        "boundTo": "root"
       },
       {
         "name": "outfit_head",
@@ -822,13 +822,13 @@
         "name": "outfit_feet",
         "label": "обувь",
         "count": 2,
-        "boundTo": "root_body"
+        "boundTo": "root"
       },
       {
         "name": "outfit_accessory",
         "label": "аксессуар",
         "count": 3,
-        "boundTo": "root_body"
+        "boundTo": "root"
       }
     ],
     "surface": "room",
