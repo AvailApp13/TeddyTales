@@ -355,6 +355,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dishYogurt => 'Yogurt';
 
   @override
+  String get dishDescPorridge => 'with berries and honey';
+
+  @override
+  String get dishDescSoup => 'with carrots and peas';
+
+  @override
+  String get dishDescSandwich => 'with cheese and ham';
+
+  @override
+  String get dishDescFruit => 'strawberry, banana, grapes';
+
+  @override
+  String get dishDescYogurt => 'with granola and berries';
+
+  @override
+  String get dishDescCookie => 'chocolate chip and teddy bears';
+
+  @override
+  String get dishDescSalad => 'cucumber, tomato, corn';
+
+  @override
+  String get dishDescPasta => 'with tomato sauce';
+
+  @override
+  String get dishDescOmelette => 'with green onion';
+
+  @override
+  String get dishDescPie => 'with raspberries and blueberries';
+
+  @override
   String get feedCookHint =>
       'Add the ingredients in order. Slip up? We\'ll simply try again.';
 

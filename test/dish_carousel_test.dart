@@ -2,8 +2,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/game/food.dart';
+import 'package:teddy_tales/l10n/l10n.dart';
 import 'package:teddy_tales/widgets/dish_carousel.dart';
 import 'package:teddy_tales/widgets/kitchen_scene.dart';
 
@@ -151,6 +153,14 @@ void main() {
       arc = DishArc(count: dishes.length, initial: initial ?? pasta);
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ru'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
@@ -198,7 +208,7 @@ void main() {
       frame.height * DishArcGeometry.sideBottom - 18,
     );
 
-    testWidgets('паста перед мишкой, соседи по бокам, у каждого цена', (
+    testWidgets('паста перед мишкой, соседи по бокам, цена — на табло', (
       tester,
     ) async {
       await pump(tester);
@@ -206,7 +216,53 @@ void main() {
       expect(find.byKey(const ValueKey('dish-pasta')), findsOneWidget);
       expect(find.byKey(ValueKey('dish-${dishes[pasta - 1].id}')), findsOne);
       expect(find.byKey(ValueKey('dish-${dishes[pasta + 1].id}')), findsOne);
-      expect(find.text('${dishes[pasta].price}'), findsWidgets);
+      // Одно табло: название, описание и цена блюда перед мишкой.
+      expect(find.byKey(const ValueKey('dish-price-board')), findsOneWidget);
+      final board = find.byKey(const ValueKey('dish-board-pasta'));
+      expect(board, findsOneWidget);
+      expect(
+        find.descendant(
+          of: board,
+          matching: find.textContaining('Паста', findRichText: true),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: board,
+          matching: find.textContaining(
+            'с томатным соусом',
+            findRichText: true,
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: board, matching: find.text('12')),
+        findsOneWidget,
+      );
+      // Под самими блюдами цен больше нет.
+      expect(find.text('${dishes[pasta - 1].price}'), findsNothing);
+    });
+
+    testWidgets('табло меняет надпись вслед за прокруткой', (tester) async {
+      await pump(tester);
+      // Полпути к омлету: на табло катятся обе надписи.
+      arc.offset = pasta + 0.5;
+      await tester.pump();
+      expect(find.byKey(const ValueKey('dish-board-pasta')), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('dish-board-${dishes[pasta + 1].id}')),
+        findsOneWidget,
+      );
+      // Доехали — осталась одна, новая.
+      arc.offset = pasta + 1.0;
+      await tester.pump();
+      expect(find.byKey(const ValueKey('dish-board-pasta')), findsNothing);
+      expect(
+        find.byKey(ValueKey('dish-board-${dishes[pasta + 1].id}')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('центральное блюдо стоит ниже и крупнее боковых', (

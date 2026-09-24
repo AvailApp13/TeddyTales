@@ -25,6 +25,23 @@ String dishName(AppLocalizations l10n, String id) => switch (id) {
   _ => _dishFallback(id),
 };
 
+/// Короткое описание блюда для табло на скатерти (заказчик 24.09):
+/// «Паста — с томатным соусом». Нет ключа — пустая строка, табло покажет
+/// одно название.
+String dishDescription(AppLocalizations l10n, String id) => switch (id) {
+  'porridge' => l10n.dishDescPorridge,
+  'soup' => l10n.dishDescSoup,
+  'sandwich' => l10n.dishDescSandwich,
+  'fruit' => l10n.dishDescFruit,
+  'yogurt' => l10n.dishDescYogurt,
+  'cookie' => l10n.dishDescCookie,
+  'salad' => l10n.dishDescSalad,
+  'pasta' => l10n.dishDescPasta,
+  'omelette' => l10n.dishDescOmelette,
+  'pie' => l10n.dishDescPie,
+  _ => '',
+};
+
 /// Название рецепта по [Recipe.id].
 String recipeName(AppLocalizations l10n, String id) => switch (id) {
   'cookie' => l10n.recipeCookie,

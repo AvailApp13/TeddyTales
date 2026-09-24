@@ -6,6 +6,8 @@ import 'package:flutter/physics.dart';
 
 import '../game/food.dart';
 import '../theme/app_colors.dart';
+import '../l10n/food_l10n.dart';
+import '../l10n/l10n.dart';
 import 'scene_label.dart';
 
 /// Готовые блюда прямо на столе кухни — дугой, с прокруткой по кругу.
@@ -127,7 +129,8 @@ class DishArc extends ChangeNotifier {
   }
 }
 
-/// Блюда, тени и цены — картинка без касаний. Лежит поверх сцены кухни.
+/// Блюда, тени и табло с ценой — картинка без касаний. Лежит поверх сцены
+/// кухни.
 class DishPlates extends StatelessWidget {
   const DishPlates({super.key, required this.arc, required this.dishes});
 
@@ -144,7 +147,6 @@ class DishPlates extends StatelessWidget {
             final size = constraints.biggest;
             // Рисуем от дальних к ближним: центральное — поверх соседей.
             final drawn = arc._placed(dishes, size).reversed.toList();
-            final scale = size.height / 844;
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -173,22 +175,15 @@ class DishPlates extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    key: ValueKey('dish-price-${p.index}'),
-                    left: p.rect.center.dx - 60 * scale,
-                    width: 120 * scale,
-                    top: p.priceTop,
-                    child: Opacity(
-                      opacity: p.alpha,
-                      child: Center(
-                        child: _PriceChip(
-                          price: dishes[p.index].price,
-                          scale: scale,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
+                // Табло на скатерти: название, описание и цена блюда перед
+                // мишкой (заказчик 24.09, вариант B — «как подписи комнат»).
+                _PriceBoard(
+                  key: const ValueKey('dish-price-board'),
+                  arc: arc,
+                  dishes: dishes,
+                  size: size,
+                ),
               ],
             );
           },
@@ -358,7 +353,6 @@ class _Placed {
     required this.tilt,
     required this.alpha,
     required this.land,
-    required this.priceTop,
     required this.tableY,
   });
 
@@ -403,7 +397,6 @@ class _Placed {
       tilt: -DishArcGeometry.sideTilt * side * lift,
       alpha: alpha,
       land: land,
-      priceTop: bottom + size.height * lerpDouble(6, 18, land)! / 844,
       tableY: size.height * DishArcGeometry.tableShadowY,
     );
   }
@@ -416,7 +409,6 @@ class _Placed {
 
   /// 1 — стоит на столе, 0 — парит сбоку.
   final double land;
-  final double priceTop;
   final double tableY;
 }
 
@@ -457,43 +449,184 @@ class _ShadowPainter extends CustomPainter {
   bool shouldRepaint(_ShadowPainter old) => true;
 }
 
-/// Цена под блюдом: монетка и число в кремовой капсуле.
-class _PriceChip extends StatelessWidget {
-  const _PriceChip({required this.price, required this.scale});
+/// Табло с ценой на свисающей скатерти — одно на всю дугу.
+///
+/// Заказчик 24.09: вместо капсулы под каждым блюдом — одно табло, «в стиле
+/// подписей кнопок комнат»: тёмная капсула, белое название, описание
+/// потише, монетка и цена. Показывает блюдо перед мишкой; при прокрутке
+/// надпись катится вслед за пальцем: уходящая уезжает вверх и гаснет,
+/// приходящая выезжает снизу, ширина капсулы плавно подстраивается.
+class _PriceBoard extends StatelessWidget {
+  const _PriceBoard({
+    super.key,
+    required this.arc,
+    required this.dishes,
+    required this.size,
+  });
 
-  final int price;
-  final double scale;
+  final DishArc arc;
+  final List<Dish> dishes;
+  final Size size;
+
+  /// Центр табло в долях кадра: на свисающей части скатерти, под блюдом.
+  static const Offset center = Offset(0.5, 0.716);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7 * scale, vertical: 3 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.2),
-            blurRadius: 4 * scale,
-            offset: Offset(0, 1 * scale),
+    final l10n = context.l10n;
+    final scale = size.height / 844;
+    final count = dishes.length;
+    final base = arc.offset.floorToDouble();
+    final t = arc.offset - base;
+    final from = (base.toInt() % count + count) % count;
+    final to = (from + 1) % count;
+
+    _BoardLine line(int i) => _BoardLine(
+      name: dishName(l10n, dishes[i].id),
+      description: dishDescription(l10n, dishes[i].id),
+      price: dishes[i].price,
+      scale: scale,
+    );
+    final a = line(from);
+    final b = line(to);
+
+    final height = 22 * scale;
+    final pad = 10 * scale;
+    final width = lerpDouble(a.width, b.width, t)! + pad * 2;
+    final cx = size.width * center.dx;
+    final cy = size.height * center.dy;
+
+    return Positioned(
+      left: cx - width / 2,
+      top: cy - height / 2,
+      width: width,
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.textPrimary.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textPrimary.withValues(alpha: 0.25),
+              blurRadius: 10 * scale,
+              offset: Offset(0, 3 * scale),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              _rolled(a, -height * t, 1 - t, dishes[from].id),
+              if (t > 0) _rolled(b, height * (1 - t), t, dishes[to].id),
+            ],
           ),
-        ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 11 * scale,
-            height: 11 * scale,
-            decoration: const BoxDecoration(
-              color: AppColors.coin,
-              shape: BoxShape.circle,
+    );
+  }
+
+  Widget _rolled(_BoardLine line, double dy, double opacity, String id) {
+    return Positioned.fill(
+      key: ValueKey('dish-board-$id'),
+      child: Transform.translate(
+        offset: Offset(0, dy),
+        child: Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: OverflowBox(
+            maxWidth: double.infinity,
+            child: Center(child: line),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка табло: «Паста  с томатным соусом  ● 12».
+class _BoardLine extends StatelessWidget {
+  const _BoardLine({
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.scale,
+  });
+
+  final String name;
+  final String description;
+  final int price;
+  final double scale;
+
+  TextStyle get _name =>
+      sceneText(size: 11 * scale, weight: 800, color: Colors.white);
+  TextStyle get _description => sceneText(
+    size: 10 * scale,
+    weight: 600,
+    color: Colors.white.withValues(alpha: 0.72),
+  );
+  TextStyle get _price => sceneText(
+    size: 11.5 * scale,
+    weight: 900,
+    color: const Color(0xFFFFECBE),
+  );
+
+  String get _text => description.isEmpty ? name : '$name  $description';
+
+  double get _gap => 8 * scale;
+  double get _coin => 10 * scale;
+
+  /// Ширина строки без полей капсулы — по ней табло меняет ширину.
+  double get width {
+    double measure(InlineSpan span) {
+      final painter = TextPainter(
+        text: span,
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      final w = painter.width;
+      painter.dispose();
+      return w;
+    }
+
+    return measure(_span) +
+        _gap +
+        _coin +
+        4 * scale +
+        measure(TextSpan(text: '$price', style: _price));
+  }
+
+  InlineSpan get _span => TextSpan(
+    text: name,
+    style: _name,
+    children: [
+      if (description.isNotEmpty)
+        TextSpan(text: '  $description', style: _description),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text.rich(_span, maxLines: 1, semanticsLabel: _text),
+        SizedBox(width: _gap),
+        Container(
+          width: _coin,
+          height: _coin,
+          decoration: BoxDecoration(
+            color: AppColors.coin,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFFE2AA46),
+              width: 0.8 * scale,
             ),
           ),
-          SizedBox(width: 4 * scale),
-          Text('$price', style: sceneText(size: 11 * scale, weight: 800)),
-        ],
-      ),
+        ),
+        SizedBox(width: 4 * scale),
+        Text('$price', style: _price),
+      ],
     );
   }
 }

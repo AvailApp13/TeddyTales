@@ -359,6 +359,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dishYogurt => 'Йогурт';
 
   @override
+  String get dishDescPorridge => 'с ягодами и мёдом';
+
+  @override
+  String get dishDescSoup => 'с морковкой и горошком';
+
+  @override
+  String get dishDescSandwich => 'с сыром и ветчиной';
+
+  @override
+  String get dishDescFruit => 'клубника, банан, виноград';
+
+  @override
+  String get dishDescYogurt => 'с гранолой и ягодами';
+
+  @override
+  String get dishDescCookie => 'шоколадное и мишки';
+
+  @override
+  String get dishDescSalad => 'огурец, помидоры, кукуруза';
+
+  @override
+  String get dishDescPasta => 'с томатным соусом';
+
+  @override
+  String get dishDescOmelette => 'с зелёным луком';
+
+  @override
+  String get dishDescPie => 'с малиной и черникой';
+
+  @override
   String get feedCookHint =>
       'Добавляй продукты по порядку. Ошибёшься — просто попробуем ещё раз.';
 

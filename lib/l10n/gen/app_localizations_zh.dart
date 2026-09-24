@@ -322,6 +322,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dishYogurt => '酸奶';
 
   @override
+  String get dishDescPorridge => '配莓果和蜂蜜';
+
+  @override
+  String get dishDescSoup => '配胡萝卜和豌豆';
+
+  @override
+  String get dishDescSandwich => '配奶酪和火腿';
+
+  @override
+  String get dishDescFruit => '草莓、香蕉、葡萄';
+
+  @override
+  String get dishDescYogurt => '配燕麦脆和莓果';
+
+  @override
+  String get dishDescCookie => '巧克力曲奇和小熊饼干';
+
+  @override
+  String get dishDescSalad => '黄瓜、番茄、玉米';
+
+  @override
+  String get dishDescPasta => '配番茄酱';
+
+  @override
+  String get dishDescOmelette => '配小葱';
+
+  @override
+  String get dishDescPie => '配覆盆子和蓝莓';
+
+  @override
   String get feedCookHint => '按顺序加入食材。放错了也没关系，再试一次就好。';
 
   @override

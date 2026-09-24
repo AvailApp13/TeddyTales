@@ -682,6 +682,66 @@ abstract class AppLocalizations {
   /// **'Йогурт'**
   String get dishYogurt;
 
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с ягодами и мёдом'**
+  String get dishDescPorridge;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с морковкой и горошком'**
+  String get dishDescSoup;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с сыром и ветчиной'**
+  String get dishDescSandwich;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'клубника, банан, виноград'**
+  String get dishDescFruit;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с гранолой и ягодами'**
+  String get dishDescYogurt;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'шоколадное и мишки'**
+  String get dishDescCookie;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'огурец, помидоры, кукуруза'**
+  String get dishDescSalad;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с томатным соусом'**
+  String get dishDescPasta;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с зелёным луком'**
+  String get dishDescOmelette;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с малиной и черникой'**
+  String get dishDescPie;
+
   /// No description provided for @feedCookHint.
   ///
   /// In ru, this message translates to:
