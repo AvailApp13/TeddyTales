@@ -654,7 +654,7 @@
       }
     }
   },
-  "roomItemBought": "{name} куплено",
+  "roomItemBought": "Куплено: {name}",
   "@roomItemPlaced": {
     "placeholders": {
       "name": {
@@ -702,24 +702,6 @@
   "settingsSignOutHint": "Вернёт к выбору способа входа",
   "settingsTitle": "Настройки",
   "settingsVersion": "Версия",
-  "@shopBuyFor": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "shopBuyFor": "Купить за {total}",
-  "shopCartDisclaimer": "Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).",
-  "shopCartEmpty": "Корзина пуста",
-  "@shopCheckoutDone": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "shopCheckoutDone": "{count, plural, one{Куплен {count} предмет} few{Куплено {count} предмета} other{Куплено {count} предметов}}",
   "shopGroupLater": "Пригодится, когда подрастёт",
   "shopGroupNow": "Малышу сейчас",
   "shopNotEnoughCoins": "Не хватает монет",
@@ -744,8 +726,6 @@
       }
     }
   },
-  "shopAddToCart": "В корзину",
-  "shopRemoveFromCart": "Убрать из корзины",
   "shopZoom": "Рассмотреть",
   "shopOwnedLabel": "Куплено",
   "shopTabClothes": "Одежда",
@@ -977,5 +957,29 @@
   "emailCodeSent": "Новый код отправлен",
   "emailCodeChangeEmail": "Изменить почту",
   "emailEnterCode": "Ввести код из письма",
-  "emailErrorCode": "Код неверный или устарел — запросите новый"
+  "emailErrorCode": "Код неверный или устарел — запросите новый",
+  "buyConfirmTitle": "Подтвердите покупку",
+  "buyConfirmBalance": "На счету {coins} · останется {left}",
+  "@buyConfirmBalance": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "buyConfirmAction": "Купить",
+  "buyConfirmCancel": "Отмена",
+  "buyNotEnoughTitle": "Не хватает монет",
+  "buyNotEnough": "{missing, plural, one{Не хватает {missing} монеты} other{Не хватает {missing} монет}}",
+  "@buyNotEnough": {
+    "placeholders": {
+      "missing": {
+        "type": "int"
+      }
+    }
+  },
+  "buyNotEnoughOk": "Понятно"
 }

@@ -7,6 +7,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import 'item_picture.dart';
+import 'purchase_confirm.dart';
 import '../theme/app_theme.dart';
 
 /// Что можно сделать с местом в комнате.
@@ -56,16 +57,22 @@ class _SlotSheet extends StatelessWidget {
     _toast(context, context.l10n.roomItemRemoved(name));
   }
 
-  void _put(BuildContext context, ShopItem item) {
+  Future<void> _put(BuildContext context, ShopItem item) async {
     final l10n = context.l10n;
     final name = shopItemName(l10n, item.id);
     final wasOwned = game.isOwned(item.id);
 
-    // Не куплено — покупаем. Не хватило монет: место остаётся как было, и
-    // говорить об этом не нужно — человек видит, что комната не изменилась.
-    if (!wasOwned && !game.buy(item.id)) {
-      _toast(context, l10n.roomNotEnoughCoins);
-      return;
+    // Не куплено — сначала окно «Купить?» (заказчик 24.09: каждая покупка
+    // с подтверждением). Отказался или не хватило монет — место остаётся
+    // как было: окно само сказало, сколько не хватает.
+    if (!wasOwned) {
+      final bought = await buyItemConfirmed(
+        context: context,
+        game: game,
+        item: item,
+        showToast: false,
+      );
+      if (!bought || !context.mounted) return;
     }
 
     game.placeInSlot(slot.id, item.id);

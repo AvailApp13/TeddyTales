@@ -1212,7 +1212,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String roomItemBought(String name) {
-    return '$name куплено';
+    return 'Куплено: $name';
   }
 
   @override
@@ -1321,30 +1321,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsVersion => 'Версия';
 
   @override
-  String shopBuyFor(int total) {
-    return 'Купить за $total';
-  }
-
-  @override
-  String get shopCartDisclaimer =>
-      'Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).';
-
-  @override
-  String get shopCartEmpty => 'Корзина пуста';
-
-  @override
-  String shopCheckoutDone(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Куплено $count предметов',
-      few: 'Куплено $count предмета',
-      one: 'Куплен $count предмет',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get shopGroupLater => 'Пригодится, когда подрастёт';
 
   @override
@@ -1377,12 +1353,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get furnishNoSlot => 'Для этой вещи здесь нет места';
-
-  @override
-  String get shopAddToCart => 'В корзину';
-
-  @override
-  String get shopRemoveFromCart => 'Убрать из корзины';
 
   @override
   String get shopZoom => 'Рассмотреть';
@@ -1842,4 +1812,35 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get emailErrorCode => 'Код неверный или устарел — запросите новый';
+
+  @override
+  String get buyConfirmTitle => 'Подтвердите покупку';
+
+  @override
+  String buyConfirmBalance(int coins, int left) {
+    return 'На счету $coins · останется $left';
+  }
+
+  @override
+  String get buyConfirmAction => 'Купить';
+
+  @override
+  String get buyConfirmCancel => 'Отмена';
+
+  @override
+  String get buyNotEnoughTitle => 'Не хватает монет';
+
+  @override
+  String buyNotEnough(int missing) {
+    String _temp0 = intl.Intl.pluralLogic(
+      missing,
+      locale: localeName,
+      other: 'Не хватает $missing монет',
+      one: 'Не хватает $missing монеты',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get buyNotEnoughOk => 'Понятно';
 }

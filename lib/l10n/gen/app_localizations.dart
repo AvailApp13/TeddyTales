@@ -2137,7 +2137,7 @@ abstract class AppLocalizations {
   /// No description provided for @roomItemBought.
   ///
   /// In ru, this message translates to:
-  /// **'{name} куплено'**
+  /// **'Куплено: {name}'**
   String roomItemBought(String name);
 
   /// No description provided for @roomItemPlaced.
@@ -2338,30 +2338,6 @@ abstract class AppLocalizations {
   /// **'Версия'**
   String get settingsVersion;
 
-  /// No description provided for @shopBuyFor.
-  ///
-  /// In ru, this message translates to:
-  /// **'Купить за {total}'**
-  String shopBuyFor(int total);
-
-  /// No description provided for @shopCartDisclaimer.
-  ///
-  /// In ru, this message translates to:
-  /// **'Корзины нет в КП — она с макета, я её отношу ко второй версии, но собрал, чтобы было видно поведение. Цены — плейсхолдеры (КП 10.9).'**
-  String get shopCartDisclaimer;
-
-  /// No description provided for @shopCartEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Корзина пуста'**
-  String get shopCartEmpty;
-
-  /// No description provided for @shopCheckoutDone.
-  ///
-  /// In ru, this message translates to:
-  /// **'{count, plural, one{Куплен {count} предмет} few{Куплено {count} предмета} other{Куплено {count} предметов}}'**
-  String shopCheckoutDone(int count);
-
   /// No description provided for @shopGroupLater.
   ///
   /// In ru, this message translates to:
@@ -2421,18 +2397,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Для этой вещи здесь нет места'**
   String get furnishNoSlot;
-
-  /// No description provided for @shopAddToCart.
-  ///
-  /// In ru, this message translates to:
-  /// **'В корзину'**
-  String get shopAddToCart;
-
-  /// No description provided for @shopRemoveFromCart.
-  ///
-  /// In ru, this message translates to:
-  /// **'Убрать из корзины'**
-  String get shopRemoveFromCart;
 
   /// No description provided for @shopZoom.
   ///
@@ -3261,6 +3225,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Код неверный или устарел — запросите новый'**
   String get emailErrorCode;
+
+  /// No description provided for @buyConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердите покупку'**
+  String get buyConfirmTitle;
+
+  /// No description provided for @buyConfirmBalance.
+  ///
+  /// In ru, this message translates to:
+  /// **'На счету {coins} · останется {left}'**
+  String buyConfirmBalance(int coins, int left);
+
+  /// No description provided for @buyConfirmAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купить'**
+  String get buyConfirmAction;
+
+  /// No description provided for @buyConfirmCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get buyConfirmCancel;
+
+  /// No description provided for @buyNotEnoughTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get buyNotEnoughTitle;
+
+  /// No description provided for @buyNotEnough.
+  ///
+  /// In ru, this message translates to:
+  /// **'{missing, plural, one{Не хватает {missing} монеты} other{Не хватает {missing} монет}}'**
+  String buyNotEnough(int missing);
+
+  /// No description provided for @buyNotEnoughOk.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понятно'**
+  String get buyNotEnoughOk;
 }
 
 class _AppLocalizationsDelegate

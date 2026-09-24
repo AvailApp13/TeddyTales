@@ -1243,28 +1243,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsVersion => '版本';
 
   @override
-  String shopBuyFor(int total) {
-    return '花 $total 购买';
-  }
-
-  @override
-  String get shopCartDisclaimer =>
-      '购物车不在需求文档里——它来自设计稿，属于第二版内容，这里先做出来是为了展示购买流程。价格为占位数据（需求 10.9）。';
-
-  @override
-  String get shopCartEmpty => '购物车是空的';
-
-  @override
-  String shopCheckoutDone(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '已购买$count件物品',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get shopGroupLater => '长大后会用到';
 
   @override
@@ -1297,12 +1275,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get furnishNoSlot => '这里没有合适的位置';
-
-  @override
-  String get shopAddToCart => '加入购物车';
-
-  @override
-  String get shopRemoveFromCart => '从购物车移除';
 
   @override
   String get shopZoom => '放大查看';
@@ -1743,4 +1715,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get emailErrorCode => '验证码错误或已过期，请重新获取';
+
+  @override
+  String get buyConfirmTitle => '确认购买';
+
+  @override
+  String buyConfirmBalance(int coins, int left) {
+    return '余额 $coins · 购买后剩余 $left';
+  }
+
+  @override
+  String get buyConfirmAction => '购买';
+
+  @override
+  String get buyConfirmCancel => '取消';
+
+  @override
+  String get buyNotEnoughTitle => '金币不足';
+
+  @override
+  String buyNotEnough(int missing) {
+    return '还差 $missing 枚金币';
+  }
+
+  @override
+  String get buyNotEnoughOk => '知道了';
 }

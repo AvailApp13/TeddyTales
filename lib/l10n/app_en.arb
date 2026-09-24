@@ -411,10 +411,6 @@
   "settingsSignOutHint": "Takes you back to the sign-in options",
   "settingsTitle": "Settings",
   "settingsVersion": "Version",
-  "shopBuyFor": "Buy for {total}",
-  "shopCartDisclaimer": "The cart isn't in the brief — it comes from the mockup and belongs to version two, but it's built here so the flow is visible. Prices are placeholders (brief 10.9).",
-  "shopCartEmpty": "Cart is empty",
-  "shopCheckoutDone": "{count, plural, one{Bought {count} item} other{Bought {count} items}}",
   "shopGroupLater": "For when they grow up",
   "shopGroupNow": "For your little one now",
   "shopNotEnoughCoins": "Not enough coins",
@@ -425,8 +421,6 @@
   "furnishPlaced": "{name} is in place",
   "furnishRemoved": "{name} taken away",
   "furnishNoSlot": "No spot for this here",
-  "shopAddToCart": "Add to cart",
-  "shopRemoveFromCart": "Remove from cart",
   "shopZoom": "Take a closer look",
   "shopOwnedLabel": "Owned",
   "shopTabClothes": "Clothes",
@@ -564,5 +558,12 @@
   "emailCodeSent": "A new code is on its way",
   "emailCodeChangeEmail": "Change e-mail",
   "emailEnterCode": "Enter the code from the e-mail",
-  "emailErrorCode": "Wrong or expired code — request a new one"
+  "emailErrorCode": "Wrong or expired code — request a new one",
+  "buyConfirmTitle": "Confirm your purchase",
+  "buyConfirmBalance": "You have {coins} · {left} left after",
+  "buyConfirmAction": "Buy",
+  "buyConfirmCancel": "Cancel",
+  "buyNotEnoughTitle": "Not enough coins",
+  "buyNotEnough": "{missing, plural, one{You need {missing} more coin} other{You need {missing} more coins}}",
+  "buyNotEnoughOk": "OK"
 }

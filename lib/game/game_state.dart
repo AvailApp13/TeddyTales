@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 import '../bear/bear_action.dart';
@@ -109,7 +107,6 @@ class GameState extends ChangeNotifier {
   /// магазин и комната, и он же уходит на сервер. Слоты — это где именно.
   final Map<String, String> _slots = {};
 
-  final List<String> _cart = [];
   final Map<String, int> _eduProgress = {};
   final Map<String, bool> _notifications = {
     for (final k in NotificationKind.values) k.id: k.onByDefault,
@@ -138,7 +135,6 @@ class GameState extends ChangeNotifier {
 
   Set<String> get owned => Set.unmodifiable(_owned);
   Set<String> get placed => Set.unmodifiable(_placed);
-  List<String> get cart => List.unmodifiable(_cart);
   bool get quietHours => _quietHours;
 
   bool isOwned(String id) => _owned.contains(id);
@@ -194,7 +190,6 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isInCart(String id) => _cart.contains(id);
   bool isNotificationOn(String id) => _notifications[id] ?? false;
 
   /// Сколько уровней категории пройдено (КП 9.2, по 10 на категорию).
@@ -206,9 +201,6 @@ class GameState extends ChangeNotifier {
     _playerAge = age.clamp(1, 120);
     notifyListeners();
   }
-
-  int get cartTotal =>
-      _cart.fold(0, (sum, id) => sum + ItemCatalog.byId(id).price);
 
   // --- Кошелёк (КП 11.1) ---------------------------------------------------
 
@@ -261,51 +253,8 @@ class GameState extends ChangeNotifier {
 
   // --- Магазин (КП 11.2) ---------------------------------------------------
 
-  void toggleCart(String id) {
-    if (_cart.remove(id)) {
-      notifyListeners();
-      return;
-    }
-    if (isOwned(id)) return;
-    _cart.add(id);
-    notifyListeners();
-  }
-
-  /// Покупает всё, что в корзине. `false`, если денег не хватает.
-  ///
-  /// Как и разовая покупка: на экране сразу, а сервер проводит каждую вещь
-  /// по своей цене и списывает с кошелька кабинета (КП 11.1). До 24.09
-  /// корзина до сервера не доходила вовсе — монеты уходили только на экране,
-  /// и при следующем входе покупки пропадали.
-  bool checkout() {
-    final total = cartTotal;
-    if (total == 0 || !spend(total)) return false;
-    final bought = List<String>.of(_cart);
-    _owned.addAll(bought);
-    _cart.clear();
-    notifyListeners();
-
-    final ask = onBuy;
-    if (ask != null) unawaited(_confirmPurchases(ask, bought));
-    return true;
-  }
-
-  /// Проводит покупки на сервере по одной, по порядку: ответы тогда
-  /// приходят в том же порядке, и на экране остаётся баланс после последней,
-  /// а не после той, что ответила позже. Отказанную возвращаем вместе с
-  /// монетами.
-  Future<void> _confirmPurchases(
-    Future<bool> Function(String itemId) ask,
-    List<String> ids,
-  ) async {
-    for (final id in ids) {
-      if (await ask(id)) continue;
-      _owned.remove(id);
-      earn(ItemCatalog.byId(id).price);
-    }
-  }
-
-  /// Разовая покупка предмета мимо корзины.
+  /// Покупка предмета. Корзины нет (заказчик 24.09): каждая вещь
+  /// покупается отдельно, после окна подтверждения.
   ///
   /// Списание идёт локально сразу, чтобы кнопка отвечала без задержки, а
   /// сервер подтверждает следом и присылает настоящий баланс. Цену он берёт

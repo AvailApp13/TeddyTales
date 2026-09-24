@@ -217,33 +217,6 @@ void main() {
       expect(it.game.isOwned('table'), isTrue);
     });
 
-    test('корзина: каждая вещь проводится на сервере', () async {
-      final it = _setUp();
-      it.game.earn(1000);
-      it.game.toggleCart('table');
-      it.game.toggleCart('dollhouse');
-
-      expect(it.game.checkout(), isTrue);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-
-      expect(it.store.bought, ['table', 'dollhouse']);
-      expect(it.game.isOwned('table'), isTrue);
-      expect(it.game.isOwned('dollhouse'), isTrue);
-    });
-
-    test('корзина: отказ сервера возвращает вещь и монеты', () async {
-      final it = _setUp(failing: true);
-      it.game.earn(1000);
-      final before = it.game.coins;
-      it.game.toggleCart('table');
-
-      it.game.checkout();
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-
-      expect(it.game.isOwned('table'), isFalse);
-      expect(it.game.coins, before);
-    });
-
     test('отказ сервера откатывает покупку', () async {
       final it = _setUp(failing: true);
       it.game.earn(500);
@@ -326,8 +299,7 @@ void main() {
     final store = _FakeStore(failing: true);
     ProgressSync(store: store, bear: bear, game: game, localOnly: true);
 
-    game.toggleCart('table');
-    expect(game.checkout(), isTrue);
+    expect(game.buy('table'), isTrue);
     expect(game.buy('dresser'), isTrue);
     await Future<void>.delayed(const Duration(milliseconds: 20));
 

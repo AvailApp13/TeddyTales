@@ -1313,29 +1313,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsVersion => 'Version';
 
   @override
-  String shopBuyFor(int total) {
-    return 'Buy for $total';
-  }
-
-  @override
-  String get shopCartDisclaimer =>
-      'The cart isn\'t in the brief — it comes from the mockup and belongs to version two, but it\'s built here so the flow is visible. Prices are placeholders (brief 10.9).';
-
-  @override
-  String get shopCartEmpty => 'Cart is empty';
-
-  @override
-  String shopCheckoutDone(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Bought $count items',
-      one: 'Bought $count item',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get shopGroupLater => 'For when they grow up';
 
   @override
@@ -1368,12 +1345,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get furnishNoSlot => 'No spot for this here';
-
-  @override
-  String get shopAddToCart => 'Add to cart';
-
-  @override
-  String get shopRemoveFromCart => 'Remove from cart';
 
   @override
   String get shopZoom => 'Take a closer look';
@@ -1831,4 +1802,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailErrorCode => 'Wrong or expired code — request a new one';
+
+  @override
+  String get buyConfirmTitle => 'Confirm your purchase';
+
+  @override
+  String buyConfirmBalance(int coins, int left) {
+    return 'You have $coins · $left left after';
+  }
+
+  @override
+  String get buyConfirmAction => 'Buy';
+
+  @override
+  String get buyConfirmCancel => 'Cancel';
+
+  @override
+  String get buyNotEnoughTitle => 'Not enough coins';
+
+  @override
+  String buyNotEnough(int missing) {
+    String _temp0 = intl.Intl.pluralLogic(
+      missing,
+      locale: localeName,
+      other: 'You need $missing more coins',
+      one: 'You need $missing more coin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get buyNotEnoughOk => 'OK';
 }

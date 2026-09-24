@@ -8,6 +8,7 @@ import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import 'item_picture.dart';
+import 'purchase_confirm.dart';
 import 'scene_label.dart';
 
 /// Товар во весь экран: картинка крупно, название, цена и покупка.
@@ -88,7 +89,6 @@ class _ItemPreviewState extends State<_ItemPreview> {
       builder: (context, _) {
         final item = widget.items[_current];
         final owned = widget.game.isOwned(item.id);
-        final inCart = widget.game.isInCart(item.id);
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -170,13 +170,16 @@ class _ItemPreviewState extends State<_ItemPreview> {
                       ),
                       const SizedBox(height: 16),
                       // Кнопка остаётся на месте, меняются только картинка,
-                      // название и цена: так набирают корзину не выходя из
-                      // просмотра.
+                      // название и цена. Покупка — с подтверждением, по
+                      // одной вещи (корзины нет, заказчик 24.09).
                       _PreviewAction(
                         item: item,
                         owned: owned,
-                        inCart: inCart,
-                        onTap: () => widget.game.toggleCart(item.id),
+                        onTap: () => buyItemConfirmed(
+                          context: context,
+                          game: widget.game,
+                          item: item,
+                        ),
                       ),
                     ],
                   ),
@@ -230,19 +233,16 @@ class _ArrowButton extends StatelessWidget {
   }
 }
 
-/// Кнопка под картинкой: положить в корзину, вынуть обратно или напомнить,
-/// что вещь уже куплена.
+/// Кнопка под картинкой: купить или напомнить, что вещь уже куплена.
 class _PreviewAction extends StatelessWidget {
   const _PreviewAction({
     required this.item,
     required this.owned,
-    required this.inCart,
     required this.onTap,
   });
 
   final ShopItem item;
   final bool owned;
-  final bool inCart;
   final VoidCallback onTap;
 
   @override
@@ -270,8 +270,8 @@ class _PreviewAction extends StatelessWidget {
       child: FilledButton(
         onPressed: onTap,
         style: FilledButton.styleFrom(
-          backgroundColor: inCart ? AppColors.surface : AppColors.sage,
-          foregroundColor: inCart ? AppColors.textPrimary : Colors.white,
+          backgroundColor: AppColors.sage,
+          foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(56),
           shape: const StadiumBorder(),
           elevation: 5,
@@ -280,18 +280,14 @@ class _PreviewAction extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(inCart ? Icons.remove_rounded : Icons.add_rounded, size: 20),
+            const Icon(Icons.shopping_bag_outlined, size: 20),
             const SizedBox(width: 8),
             Text(
-              inCart ? l10n.shopRemoveFromCart : l10n.shopAddToCart,
-              style: sceneText(
-                size: 15,
-                weight: 800,
-                color: inCart ? AppColors.textPrimary : Colors.white,
-              ),
+              l10n.buyConfirmAction,
+              style: sceneText(size: 15, weight: 800, color: Colors.white),
             ),
             const SizedBox(width: 12),
-            _PriceChip(price: item.price, onDark: !inCart),
+            _PriceChip(price: item.price, onDark: true),
           ],
         ),
       ),

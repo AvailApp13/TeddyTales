@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/item_picture.dart';
 import '../widgets/item_preview.dart';
+import '../widgets/purchase_confirm.dart';
 import '../widgets/scene_label.dart';
 
 /// Магазин предметов (КП 11.2).
@@ -31,7 +32,7 @@ import '../widgets/scene_label.dart';
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key, required this.game, this.focusItemId});
 
-  /// Кошелёк, инвентарь и корзина — один источник правды на все экраны:
+  /// Кошелёк и инвентарь — один источник правды на все экраны:
   /// купленное здесь должно тут же появиться в комнате и в гардеробе.
   final GameState game;
 
@@ -77,29 +78,6 @@ class _ShopScreenState extends State<ShopScreen> {
     return null;
   }
 
-  void _checkout() {
-    // Количество запоминаем до оплаты: `checkout` очищает корзину.
-    final count = widget.game.cart.length;
-
-    // Кнопка при нехватке монет и так не нажимается, но решение принимает
-    // `checkout` — держать здесь вторую проверку цены значило бы завести второй
-    // источник правды о стоимости (КП 10.9 цены ещё будут меняться).
-    if (!widget.game.checkout()) {
-      _toast(context.l10n.shopNotEnoughCoins);
-      return;
-    }
-
-    _toast(context.l10n.shopCheckoutDone(count));
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,7 +106,6 @@ class _ShopScreenState extends State<ShopScreen> {
             builder: (context, _) {
               final game = widget.game;
               final stage = game.bear.state.stage;
-              final total = game.cartTotal;
 
               // Витрина делится надвое: сначала то, что малышу нужно сейчас,
               // ниже — то, что пригодится потом. Замков здесь нет и быть не
@@ -207,28 +184,9 @@ class _ShopScreenState extends State<ShopScreen> {
                               showcase: showcase,
                               game: game,
                             ),
-                          const SizedBox(height: 10),
-                          Text(
-                            context.l10n.shopCartDisclaimer,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.5,
-                                ),
-                          ),
                         ],
                       ),
                     ),
-                  ),
-                  _CartBar(
-                    count: game.cart.length,
-                    total: total,
-                    // Пустая корзина и нехватка монет гасят кнопку одинаково: в
-                    // обоих случаях платить нечем или не за что, и объяснять это
-                    // ребёнку всплывающей подписью после тапа хуже, чем сразу
-                    // показать неактивную кнопку.
-                    enabled: game.cart.isNotEmpty && total <= game.coins,
-                    onTap: _checkout,
                   ),
                 ],
               );
@@ -304,8 +262,10 @@ class _ItemGrid extends StatelessWidget {
         return _ItemTile(
           item: item,
           owned: game.isOwned(item.id),
-          inCart: game.isInCart(item.id),
-          onTap: () => game.toggleCart(item.id),
+          // Корзины нет (заказчик 24.09): нажал — окно «Купить?», и каждая
+          // вещь покупается отдельно.
+          onTap: () =>
+              buyItemConfirmed(context: context, game: game, item: item),
           onZoom: () => showItemPreview(
             context: context,
             items: showcase,
@@ -564,14 +524,12 @@ class _ItemTile extends StatelessWidget {
   const _ItemTile({
     required this.item,
     required this.owned,
-    required this.inCart,
     required this.onTap,
     required this.onZoom,
   });
 
   final ShopItem item;
   final bool owned;
-  final bool inCart;
   final VoidCallback onTap;
 
   /// Рассмотреть вещь крупно.
@@ -602,12 +560,7 @@ class _ItemTile extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [Colors.white, AppColors.surface],
             ),
-            border: Border.all(
-              // Отобранное в корзину обводим зелёным: значок в углу мелкий,
-              // а набранное нужно находить взглядом, не вчитываясь.
-              color: inCart ? AppColors.sage : AppColors.outline,
-              width: inCart ? 2 : 1,
-            ),
+            border: Border.all(color: AppColors.outline),
             boxShadow: [
               BoxShadow(
                 color: AppColors.tan.withValues(alpha: 0.22),
@@ -654,15 +607,14 @@ class _ItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (owned || inCart)
-                Positioned(
+              if (owned)
+                const Positioned(
                   top: 8,
                   right: 8,
-                  child: _CornerBadge(icon: owned ? Icons.check : Icons.add),
+                  child: _CornerBadge(icon: Icons.check),
                 ),
               // Лупа слева, чтобы не спорить с галочкой «куплено» справа.
-              // Тап по самой карточке по-прежнему кладёт вещь в корзину:
-              // разглядывать хочется не каждую, а покупать — быстро.
+              // Тап по самой карточке — покупка с подтверждением.
               Positioned(top: 6, left: 6, child: _ZoomButton(onTap: onZoom)),
             ],
           ),
@@ -767,93 +719,10 @@ class _ZoomButton extends StatelessWidget {
   }
 }
 
-/// Кнопка оплаты во всю ширину: сумма и счётчик набранного.
-class _CartBar extends StatelessWidget {
-  const _CartBar({
-    required this.count,
-    required this.total,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final int count;
-  final int total;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.pagePadding,
-        10,
-        AppDimens.pagePadding,
-        14,
-      ),
-      child: FilledButton(
-        onPressed: enabled ? onTap : null,
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(54),
-          shape: const StadiumBorder(),
-          elevation: 4,
-          shadowColor: AppColors.sageDark.withValues(alpha: 0.55),
-          // Погашенная кнопка остаётся зелёной, просто бледной: серый
-          // «выключенный» вид из темы Material читается как поломка, а не как
-          // «ещё ничего не выбрано».
-          disabledBackgroundColor: AppColors.sage.withValues(alpha: 0.45),
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.45),
-        ),
-        child: count == 0
-            ? Text(
-                context.l10n.shopCartEmpty,
-                style: sceneText(size: 14, weight: 800, color: Colors.white),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    context.l10n.shopBuyFor(total),
-                    style: sceneText(
-                      size: 14,
-                      weight: 800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _CountBadge(count: count),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-/// Счётчик предметов в корзине на кнопке оплаты.
-class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$count',
-        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
 /// Шапка листа: круглая кнопка «назад», заголовок по центру, кошелёк справа.
 ///
 /// Кошелёк на этом экране обязателен: здесь тратят монеты (КП 11.1), и остаток
-/// должен быть перед глазами в тот момент, когда набирают корзину.
+/// должен быть перед глазами в тот момент, когда выбирают покупку.
 class _SheetHeader extends StatelessWidget {
   const _SheetHeader({required this.title, required this.coins});
 

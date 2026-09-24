@@ -11,6 +11,7 @@ import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/purchase_confirm.dart';
 import '../widgets/kitchen_scene.dart';
 
 /// Подсказка от характера питомца (КП 8.1 — «подсказка от характера»).
@@ -119,8 +120,20 @@ class _FeedScreenState extends State<FeedScreen> {
 
   // --- Готовые блюда (КП 8.2) ----------------------------------------------
 
-  void _eat(Dish dish) {
+  Future<void> _eat(Dish dish) async {
     final l10n = context.l10n;
+
+    // Каждое блюдо — с подтверждением (заказчик 24.09): окно показывает
+    // цену и сколько останется на счету, а при нехватке — сколько не
+    // хватает.
+    final confirmed = await confirmPurchase(
+      context: context,
+      picture: Text(dish.emoji, style: const TextStyle(fontSize: 64)),
+      name: dishName(l10n, dish.id),
+      price: dish.price,
+      coins: widget.game.coins,
+    );
+    if (!confirmed || !mounted) return;
 
     // Хватает ли монет, решает кошелёк, а не экран: иначе проверка и списание
     // разъедутся.
