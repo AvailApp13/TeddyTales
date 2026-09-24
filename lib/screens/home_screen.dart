@@ -104,7 +104,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   /// Открытая комната. Живёт в памяти экрана: это не прогресс, а взгляд —
   /// куда человек сейчас смотрит. Уходить на сервер здесь нечему.
   RoomKind _room = RoomKind.nursery;
@@ -443,6 +444,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _closeGap =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 650),
+        )..addListener(
+          () =>
+              _dishArc.gap = 1 - Curves.easeOutCubic.transform(_closeGap.value),
+        );
     _eaten.addListener(_onEatenChanged);
     EatenDishes.open().then((eaten) {
       if (!mounted) {
@@ -464,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _closeGap.dispose();
     _hungerTimer?.cancel();
     _eaten
       ..removeListener(_onEatenChanged)
@@ -494,11 +504,25 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     }
+    // Съели блюдо перед мишкой — на его месте пусто, и блюда справа
+    // плавно съезжают туда (заказчик 24.09: «происходит сдвиг блюд»).
+    final eatenCenter =
+        after.length < before.length &&
+        before.isNotEmpty &&
+        _eaten.isEaten(before[_dishArc.current.clamp(0, before.length - 1)].id);
     setState(() {
       _table = after;
       _dishArc.reset(count: after.length, current: current);
     });
+    if (eatenCenter && _dishesShown && after.isNotEmpty) {
+      _dishArc.gap = 1;
+      _closeGap.forward(from: 0);
+    }
   }
+
+  /// Сдвиг блюд на место съеденного — плавно, с торможением, в тон
+  /// доводке после свайпа. Создаётся сразу в initState.
+  late final AnimationController _closeGap;
 
   /// Вход на кухню — перед мишкой паста (или первое, что осталось).
   void _resetArc() {
@@ -531,12 +555,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _soon(l10n.feedNotEnoughCoins);
       return;
     }
-    // Съеденное уходит со стола до следующего голода (заказчик 24.09).
+    // Съеденное уходит со стола до следующего голода (заказчик 24.09),
+    // остальные сдвигаются на его место.
     _eaten.eat(dish.id);
     final favourite =
         favouriteDishByTrait[widget.controller.state.trait] == dish.id;
+    // Стол закрывается, только когда мишка наелся — шкала «Еда» полна; или
+    // когда блюд не осталось. Иначе можно сразу выбрать следующее.
+    final full = widget.controller.stats.food >= 99.5;
     setState(() {
-      _dishesShown = false;
+      if (full || _table.isEmpty) _dishesShown = false;
       _meal = KitchenMeal(
         id: ++_meals,
         mood: favourite ? KitchenMood.love : KitchenMood.happy,

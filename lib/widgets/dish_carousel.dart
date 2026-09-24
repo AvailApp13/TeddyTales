@@ -122,6 +122,16 @@ class DishArc extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Пустое место на месте съеденного блюда: 1 — блюда справа ещё стоят
+  /// там, где стояли, 0 — съехали влево и закрыли его.
+  double get gap => _gap;
+  double _gap = 0;
+  set gap(double value) {
+    if (value == _gap) return;
+    _gap = value;
+    notifyListeners();
+  }
+
   /// Блюдо перед мишкой.
   int get current => count == 0 ? 0 : (_offset.round() % count + count) % count;
 
@@ -129,11 +139,18 @@ class DishArc extends ChangeNotifier {
   List<_Placed> _placed(List<Dish> dishes, Size size, {double? at}) {
     final offset = at ?? _offset;
     final count = dishes.length;
+    // Пока пустое место не закрылось, блюда от центра и правее стоят на
+    // шаг дальше — там, где были до того, как съели центральное.
+    double slot(int i) {
+      final s = DishArcGeometry.slot(i, offset, count);
+      return _gap > 0 && s > -0.5 ? s + _gap : s;
+    }
+
     final placed = [
       for (var i = 0; i < count; i++)
         _Placed.at(
           i,
-          DishArcGeometry.slot(i, offset, count),
+          slot(i),
           size,
           DishArcGeometry.tableFit[dishes[i].id] ?? 1,
         ),

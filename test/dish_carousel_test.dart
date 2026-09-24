@@ -437,6 +437,31 @@ void main() {
       expect(current(tester), three[0].id);
     });
 
+    testWidgets('съели центральное — правые блюда съезжают на его место', (
+      tester,
+    ) async {
+      await pump(tester);
+      final key = ValueKey('dish-${dishes[pasta + 1].id}');
+      final side = tester.getRect(find.byKey(key));
+      // Пустое место ещё не закрыто: блюдо стоит там, где стояло справа,
+      // хотя по счёту оно уже «перед мишкой».
+      arc
+        ..reset(count: dishes.length, current: pasta + 1)
+        ..gap = 1;
+      await tester.pump();
+      expect(
+        tester.getRect(find.byKey(key)).center.dx,
+        closeTo(side.center.dx, 1),
+      );
+      // Закрылось — оно в центре.
+      arc.gap = 0;
+      await tester.pump();
+      expect(
+        tester.getRect(find.byKey(key)).center.dx,
+        closeTo(frame.width * DishArcGeometry.centerX, 1),
+      );
+    });
+
     testWidgets('по кругу: с последнего блюда на первое', (tester) async {
       await pump(tester, initial: dishes.length - 1);
       expect(current(tester), dishes.last.id);
