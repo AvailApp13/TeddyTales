@@ -32,12 +32,12 @@ for (const name of names) {
   const L = file.layersV2[name]; const g = byName.get(L.group);
   let asset;
   const assets = (await call('assets_tool', { command: 'listAssets' })).assets ?? [];
+  const before = new Set(assets.map((a) => a.id));
   if (!L.instance && assets.some((a) => a.id === L.asset && a.type === 'image')) {
     asset = { id: L.asset };                                   // картинки нет, ассет уже загружен — берём его
   } else {
     if (L.instance) await call('delete_objects', { objectIds: [L.instance, L.asset].filter(Boolean) }).catch(() => {});
     const b64 = readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', `${name}.png`)).toString('base64');
-    const before = new Set(assets.map((a) => a.id));
     for (let t = 0; ; t++) {
       asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${b64}`, name: `bear_${name}` })).asset;
       // редактор иногда отвечает временным id 0-0, пока ассет не создан, — ждём настоящий по имени
@@ -54,7 +54,25 @@ for (const name of names) {
   // картинка иногда не создаётся, хотя id вернулся — проверяем и повторяем
   let inst;
   for (let t = 0; ; t++) {
-    inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId: asset.id, parentId: rigId, name: `${name}_img`, x: WORLD.x, y: WORLD.y } } });
+    // ассет после загрузки иногда ещё не готов («not an ImageAsset») — ждём и повторяем
+    try {
+      inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId: asset.id, parentId: rigId, name: `${name}_img`, x: WORLD.x, y: WORLD.y } } });
+    } catch (e) {
+      if (!/not an ImageAsset/.test(e.message) || t >= 12) throw e;
+      // ждём именно этот ассет: искать «похожий» по имени нельзя — подхватится
+      // старый ассет от прошлой неудачной загрузки со старой картинкой.
+      // Если за ~10 с он так и не появился в списке — загрузка не состоялась, грузим заново.
+      console.log(`  ${name}: ассет ${asset.id} ещё не готов, жду`);
+      await new Promise((r) => setTimeout(r, 2500));
+      if (t % 4 === 3) {
+        const now = (await call('assets_tool', { command: 'listAssets' })).assets ?? [];
+        if (!now.some((a) => a.id === asset.id)) {
+          console.log(`  ${name}: ассета ${asset.id} нет — загружаю заново`);
+          asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', `${name}.png`)).toString('base64')}`, name: `bear_${name}` })).asset;
+        }
+      }
+      continue;
+    }
     const q = await call('query_objects', { objectIds: [inst.imageId] }).catch(() => ({ objects: [] }));
     if ((q.objects ?? []).some((o) => o.id === inst.imageId && o.types[0] === 'Image')) break;
     if (t >= 3) throw new Error(`${name}: картинка не создаётся`);

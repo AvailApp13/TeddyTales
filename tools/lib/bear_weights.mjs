@@ -43,7 +43,10 @@ export function loadWeights() {
 
   const SLEEVE_BAND = 90;   // ширина полосы растяжения у шва, px кадра
   const sleeveW = (seam, arm) => (x, y) => {
-    const w = smooth(6, SLEEVE_BAND, polyDist(seam, x, y));
+    // ниже подмышки край рукава (он лежит вдоль бока) сразу идёт с рукой:
+    // иначе он почти стоит и при подъёме тянется вдоль бока тонкой «лентой»
+    const armpitY = seam.at(-1)[1];
+    const w = Math.max(smooth(6, SLEEVE_BAND, polyDist(seam, x, y)), smooth(armpitY - 10, armpitY + 70, y));
     return { root: 1 - w, [arm]: w };
   };
   const HOOD_BAND = [12, 110];  // от основания капюшона: root -> голова (стенки, остриё)
