@@ -97,11 +97,23 @@ abstract final class DishArcGeometry {
 
 /// Сдвиг дуги: общий для блюд в сцене и для слоя касаний.
 class DishArc extends ChangeNotifier {
-  DishArc({required this.count, int initial = 0})
-    : _offset = initial.toDouble();
+  DishArc({required int count, int initial = 0})
+    : _count = count,
+      _offset = initial.toDouble();
 
-  final int count;
+  int _count;
   double _offset;
+
+  /// Сколько блюд на дуге. Меняется: съеденное блюдо уходит со стола до
+  /// следующего голода (заказчик 24.09).
+  int get count => _count;
+
+  /// Дуга стала из [count] блюд, перед мишкой — [current].
+  void reset({required int count, required int current}) {
+    _count = count;
+    _offset = current.toDouble();
+    notifyListeners();
+  }
 
   double get offset => _offset;
   set offset(double value) {
@@ -111,11 +123,12 @@ class DishArc extends ChangeNotifier {
   }
 
   /// Блюдо перед мишкой.
-  int get current => (_offset.round() % count + count) % count;
+  int get current => count == 0 ? 0 : (_offset.round() % count + count) % count;
 
   /// Все блюда на своих местах: ближние к центру — первыми.
   List<_Placed> _placed(List<Dish> dishes, Size size, {double? at}) {
     final offset = at ?? _offset;
+    final count = dishes.length;
     final placed = [
       for (var i = 0; i < count; i++)
         _Placed.at(
@@ -203,6 +216,7 @@ class DishCarousel extends StatefulWidget {
     required this.dishes,
     required this.onBuy,
     this.onTapElsewhere,
+    this.onClose,
   });
 
   final DishArc arc;
@@ -210,6 +224,9 @@ class DishCarousel extends StatefulWidget {
 
   /// Нажали на блюдо перед мишкой — купить (окно подтверждения снаружи).
   final ValueChanged<Dish> onBuy;
+
+  /// Крестик под табло — убрать блюда со стола (заказчик 24.09).
+  final VoidCallback? onClose;
 
   /// Нажали мимо блюд — отдать касание дальше (погладить мишку).
   final VoidCallback? onTapElsewhere;
@@ -291,7 +308,58 @@ class _DishCarouselState extends State<DishCarousel>
     _springTo(target, velocity: velocity.clamp(-6.0, 6.0));
   }
 
+  /// Круглая кнопка в стиле табло: тёмный кружок, белый крестик. Стоит
+  /// под табло на свисающей скатерти.
+  Widget _closeButton(BuildContext context, Size size, VoidCallback onClose) {
+    final scale = size.height / 844;
+    final diameter = 24 * scale;
+    final boardBottom =
+        size.height * _PriceBoard.center.dy + _PriceBoard.height(scale) / 2;
+    return Positioned(
+      key: const ValueKey('dish-close'),
+      left: size.width * _PriceBoard.center.dx - diameter / 2 - 8 * scale,
+      top: boardBottom + 6 * scale - 8 * scale,
+      // Поле для пальца шире самого кружка.
+      width: diameter + 16 * scale,
+      height: diameter + 16 * scale,
+      child: Semantics(
+        button: true,
+        label: context.l10n.dishesClose,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onClose,
+          child: Center(
+            child: Container(
+              width: diameter,
+              height: diameter,
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary.withValues(alpha: 0.88),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textPrimary.withValues(alpha: 0.25),
+                    blurRadius: 10 * scale,
+                    offset: Offset(0, 3 * scale),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 15 * scale,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onTap(Offset local, Size size) {
+    if (widget.dishes.isEmpty) {
+      widget.onTapElsewhere?.call();
+      return;
+    }
     // Блюдо ещё доезжает после свайпа — касание засчитываем по тому, где
     // оно встанет: человек видит, какое блюдо садится перед мишкой, и
     // жмёт на него. Раньше такое касание терялось, и окна «Купить» не
@@ -340,19 +408,23 @@ class _DishCarouselState extends State<DishCarousel>
                 ),
               ),
             ),
+            // Крестик под табло: убрать блюда со стола (заказчик 24.09).
+            if (widget.onClose case final onClose?)
+              _closeButton(context, size, onClose),
             // Для тестов и озвучки: какое блюдо сейчас перед мишкой.
-            Positioned(
-              key: const ValueKey('dish-carousel-current'),
-              left: 0,
-              top: 0,
-              child: ListenableBuilder(
-                listenable: _arc,
-                builder: (context, _) => Semantics(
-                  label: widget.dishes[_arc.current].id,
-                  child: const SizedBox.shrink(),
+            if (widget.dishes.isNotEmpty)
+              Positioned(
+                key: const ValueKey('dish-carousel-current'),
+                left: 0,
+                top: 0,
+                child: ListenableBuilder(
+                  listenable: _arc,
+                  builder: (context, _) => Semantics(
+                    label: widget.dishes[_arc.current].id,
+                    child: const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
           ],
         );
       },
@@ -487,8 +559,12 @@ class _PriceBoard extends StatelessWidget {
   /// Центр табло в долях кадра: на свисающей части скатерти, под блюдом.
   static const Offset center = Offset(0.5, 0.716);
 
+  /// Высота капсулы на экране высотой 844 × [scale].
+  static double height(double scale) => 22 * scale;
+
   @override
   Widget build(BuildContext context) {
+    if (dishes.isEmpty) return const SizedBox.shrink();
     final l10n = context.l10n;
     final scale = size.height / 844;
     final count = dishes.length;
@@ -506,7 +582,7 @@ class _PriceBoard extends StatelessWidget {
     final a = line(from);
     final b = line(to);
 
-    final height = 22 * scale;
+    final height = _PriceBoard.height(scale);
     final pad = 10 * scale;
     final width = lerpDouble(a.width, b.width, t)! + pad * 2;
     final cx = size.width * center.dx;

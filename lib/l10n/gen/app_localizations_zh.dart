@@ -322,6 +322,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dishYogurt => '酸奶';
 
   @override
+  String get dishesClose => '收起菜品';
+
+  @override
+  String get dishesAllEaten => '全都吃完啦！小熊饿了，菜就会回来。';
+
+  @override
   String get dishDescPorridge => '配莓果和蜂蜜';
 
   @override

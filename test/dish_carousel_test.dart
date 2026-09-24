@@ -141,10 +141,12 @@ void main() {
     late List<Dish> bought;
     late int elsewhere;
     late DishArc arc;
+    late int closed;
 
     setUp(() {
       bought = [];
       elsewhere = 0;
+      closed = 0;
     });
 
     tearDown(() => arc.dispose());
@@ -177,6 +179,7 @@ void main() {
                         dishes: dishes,
                         onBuy: bought.add,
                         onTapElsewhere: () => elsewhere++,
+                        onClose: () => closed++,
                       ),
                     ),
                   ],
@@ -364,6 +367,74 @@ void main() {
       expect(bought.map((d) => d.id), [dishes[pasta + 1].id]);
       expect(elsewhere, 0);
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('крестик под табло убирает блюда', (tester) async {
+      await pump(tester);
+      final close = find.byKey(const ValueKey('dish-close'));
+      expect(close, findsOneWidget);
+      // Крестик ниже табло, по центру.
+      final board = tester.getRect(
+        find.byKey(const ValueKey('dish-price-board')),
+      );
+      final rect = tester.getRect(close);
+      expect(rect.center.dx, closeTo(board.center.dx, 1));
+      expect(rect.top, greaterThan(board.center.dy));
+      await tester.tap(close);
+      await tester.pump();
+      expect(closed, 1);
+      expect(bought, isEmpty);
+      expect(elsewhere, 0);
+    });
+
+    testWidgets('дуга из меньшего числа блюд крутится по кругу', (
+      tester,
+    ) async {
+      // Три блюда осталось — прокрутка всё так же замкнута.
+      final three = [dishes[0], dishes[1], dishes[2]];
+      arc = DishArc(count: 3, initial: 2);
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ru'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox.fromSize(
+                size: frame,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: DishPlates(arc: arc, dishes: three),
+                    ),
+                    Positioned.fill(
+                      child: DishCarousel(
+                        arc: arc,
+                        dishes: three,
+                        onBuy: bought.add,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(current(tester), three[2].id);
+      await tester.timedDrag(
+        find.byKey(const ValueKey('dish-carousel-band')),
+        Offset(-frame.width * DishArcGeometry.step, 0),
+        const Duration(seconds: 1),
+      );
+      await tester.pumpAndSettle();
+      expect(current(tester), three[0].id);
     });
 
     testWidgets('по кругу: с последнего блюда на первое', (tester) async {

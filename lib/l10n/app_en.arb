@@ -97,6 +97,8 @@
   "dishSandwich": "Sandwich",
   "dishSoup": "Soup",
   "dishYogurt": "Yogurt",
+  "dishesClose": "Clear the table",
+  "dishesAllEaten": "All eaten! The dishes will be back when your bear gets hungry.",
   "dishDescPorridge": "with berries and honey",
   "dishDescSoup": "with carrots and peas",
   "dishDescSandwich": "with cheese and ham",

@@ -682,6 +682,18 @@ abstract class AppLocalizations {
   /// **'Йогурт'**
   String get dishYogurt;
 
+  /// Подпись крестика под табло блюд (для озвучки).
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать блюда со стола'**
+  String get dishesClose;
+
+  /// Все готовые блюда съедены — вернутся при следующем голоде (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё съедено! Блюда вернутся, когда мишка проголодается.'**
+  String get dishesAllEaten;
+
   /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
   ///
   /// In ru, this message translates to:

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
 import '../alarm/wake_alarm.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
+import '../game/eaten_dishes.dart';
 import '../game/food.dart';
 import '../game/game_state.dart';
 import '../game/pet_name.dart';
@@ -121,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _asleep = false;
       // Ушли с кухни — блюда со стола убираются.
       _dishesShown = false;
-      _dishArc.offset = _firstDish.toDouble();
+      _resetArc();
     });
   }
 
@@ -421,22 +424,102 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Стоят ли готовые блюда на столе (дуга, заказчик 24.09).
   bool _dishesShown = false;
 
+  /// Съеденные блюда: их нет на столе до следующего голода (заказчик
+  /// 24.09). Пока список поднимается с телефона — пустой.
+  EatenDishes _eaten = EatenDishes(returnAfter: null);
+
+  /// Проверка «не проголодался ли мишка» — раз в полминуты: блюда
+  /// возвращаются на стол без перезахода на кухню.
+  Timer? _hungerTimer;
+
+  /// Блюда на столе — каталог без съеденных, в том же порядке.
+  List<Dish> _table = FoodCatalog.dishes;
+
   /// Какое блюдо перед мишкой. При входе на кухню — паста.
-  static final int _firstDish = FoodCatalog.dishes.indexWhere(
-    (d) => d.id == 'pasta',
-  );
   final DishArc _dishArc = DishArc(
     count: FoodCatalog.dishes.length,
-    initial: _firstDish,
+    initial: FoodCatalog.dishes.indexWhere((d) => d.id == 'pasta'),
   );
 
   @override
+  void initState() {
+    super.initState();
+    _eaten.addListener(_onEatenChanged);
+    EatenDishes.open().then((eaten) {
+      if (!mounted) {
+        eaten.dispose();
+        return;
+      }
+      _eaten
+        ..removeListener(_onEatenChanged)
+        ..dispose();
+      _eaten = eaten..addListener(_onEatenChanged);
+      _refreshEaten();
+      _onEatenChanged();
+    });
+    _hungerTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshEaten(),
+    );
+  }
+
+  @override
   void dispose() {
+    _hungerTimer?.cancel();
+    _eaten
+      ..removeListener(_onEatenChanged)
+      ..dispose();
     _dishArc.dispose();
     super.dispose();
   }
 
-  void _toggleDishes() => setState(() => _dishesShown = !_dishesShown);
+  void _refreshEaten() => _eaten.refresh(food: widget.controller.stats.food);
+
+  /// Состав стола поменялся: перед мишкой остаётся то же блюдо, а если его
+  /// съели — следующее за ним.
+  void _onEatenChanged() {
+    final before = _table;
+    final after = [
+      for (final dish in FoodCatalog.dishes)
+        if (!_eaten.isEaten(dish.id)) dish,
+    ];
+    if (after.length == before.length) return;
+    var current = 0;
+    if (before.isNotEmpty && after.isNotEmpty) {
+      final at = _dishArc.current.clamp(0, before.length - 1);
+      for (var k = 0; k < before.length; k++) {
+        final index = after.indexOf(before[(at + k) % before.length]);
+        if (index >= 0) {
+          current = index;
+          break;
+        }
+      }
+    }
+    setState(() {
+      _table = after;
+      _dishArc.reset(count: after.length, current: current);
+    });
+  }
+
+  /// Вход на кухню — перед мишкой паста (или первое, что осталось).
+  void _resetArc() {
+    final pasta = _table.indexWhere((d) => d.id == 'pasta');
+    _dishArc.reset(count: _table.length, current: pasta < 0 ? 0 : pasta);
+  }
+
+  void _toggleDishes() {
+    if (!_dishesShown) {
+      _refreshEaten();
+      if (_table.isEmpty) {
+        _soon(context.l10n.dishesAllEaten);
+        return;
+      }
+    }
+    setState(() => _dishesShown = !_dishesShown);
+  }
+
+  /// Крестик под табло — блюда уходят со стола.
+  void _hideDishes() => setState(() => _dishesShown = false);
 
   /// Блюдо перед мишкой: окно «Подтвердите покупку» → кормим. Блюда
   /// уходят со стола, мишка ест и показывает эмоцию — любимое блюдо его
@@ -455,6 +538,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _soon(l10n.feedNotEnoughCoins);
       return;
     }
+    // Съеденное уходит со стола до следующего голода (заказчик 24.09).
+    _eaten.eat(dish.id);
     final favourite =
         favouriteDishByTrait[widget.controller.state.trait] == dish.id;
     setState(() {
@@ -549,7 +634,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   onOpenFeed: _openFeed,
                   dishesShown: _dishesShown,
                   dishArc: _dishArc,
+                  dishes: _table,
                   onToggleDishes: _toggleDishes,
+                  onHideDishes: _hideDishes,
                   onBuyDish: _buyDish,
                   onWash: _wash,
                   onToilet: _toilet,
@@ -707,7 +794,9 @@ class _RoomScene extends StatelessWidget {
     required this.onOpenFeed,
     required this.dishesShown,
     required this.dishArc,
+    required this.dishes,
     required this.onToggleDishes,
+    required this.onHideDishes,
     required this.onBuyDish,
     required this.onWash,
     required this.onToilet,
@@ -758,7 +847,13 @@ class _RoomScene extends StatelessWidget {
   /// при покупке блюда перед мишкой.
   final bool dishesShown;
   final DishArc dishArc;
+
+  /// Блюда на столе — без съеденных.
+  final List<Dish> dishes;
   final VoidCallback onToggleDishes;
+
+  /// Крестик под табло.
+  final VoidCallback onHideDishes;
   final ValueChanged<Dish> onBuyDish;
 
   /// Купание и горшок. Механики пока нет — кнопки честно об этом говорят.
@@ -936,7 +1031,7 @@ class _RoomScene extends StatelessWidget {
             child: AnimatedOpacity(
               opacity: dishesShown ? 1 : 0,
               duration: const Duration(milliseconds: 260),
-              child: DishPlates(arc: dishArc, dishes: FoodCatalog.dishes),
+              child: DishPlates(arc: dishArc, dishes: dishes),
             ),
           ),
         if (room == RoomKind.kitchen && dishesShown)
@@ -944,9 +1039,10 @@ class _RoomScene extends StatelessWidget {
             rect: frame.rect,
             child: DishCarousel(
               arc: dishArc,
-              dishes: FoodCatalog.dishes,
+              dishes: dishes,
               onBuy: onBuyDish,
               onTapElsewhere: onPet,
+              onClose: onHideDishes,
             ),
           ),
         if (room == RoomKind.kitchen)

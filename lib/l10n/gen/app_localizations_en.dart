@@ -355,6 +355,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dishYogurt => 'Yogurt';
 
   @override
+  String get dishesClose => 'Clear the table';
+
+  @override
+  String get dishesAllEaten =>
+      'All eaten! The dishes will be back when your bear gets hungry.';
+
+  @override
   String get dishDescPorridge => 'with berries and honey';
 
   @override

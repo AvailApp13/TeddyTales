@@ -359,6 +359,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dishYogurt => 'Йогурт';
 
   @override
+  String get dishesClose => 'Убрать блюда со стола';
+
+  @override
+  String get dishesAllEaten =>
+      'Всё съедено! Блюда вернутся, когда мишка проголодается.';
+
+  @override
   String get dishDescPorridge => 'с ягодами и мёдом';
 
   @override
