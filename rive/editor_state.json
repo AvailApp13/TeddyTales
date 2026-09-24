@@ -624,14 +624,14 @@
         "groupId": "0-295"
       },
       "sleeve_left": {
-        "asset": "0-95912",
-        "instance": "0-95913",
+        "asset": "0-102186",
+        "instance": "0-102188",
         "group": "sleeve_left",
         "groupId": "0-396"
       },
       "sleeve_right": {
-        "asset": "0-95914",
-        "instance": "0-95915",
+        "asset": "0-102189",
+        "instance": "0-102190",
         "group": "sleeve_right",
         "groupId": "0-397"
       },
@@ -763,7 +763,7 @@
       "name": "demo_moves",
       "fps": 60,
       "frames": 600,
-      "keys": 114
+      "keys": 173
     },
     "skins": {
       "shorts": {
@@ -792,20 +792,20 @@
         "vertices": 3271
       },
       "sleeve_left": {
-        "meshId": "0-95916",
+        "meshId": "0-102191",
         "bones": [
           "root",
           "root_arm_left"
         ],
-        "vertices": 1351
+        "vertices": 1127
       },
       "sleeve_right": {
-        "meshId": "0-98626",
+        "meshId": "0-104453",
         "bones": [
           "root",
           "root_arm_right"
         ],
-        "vertices": 1534
+        "vertices": 1213
       }
     }
   }

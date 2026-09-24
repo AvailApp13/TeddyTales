@@ -137,8 +137,8 @@
   "shirt": 34095,
   "paw_left": 7626,
   "paw_right": 7696,
-  "sleeve_left": 4736,
-  "sleeve_right": 4503
+  "sleeve_left": 1001,
+  "sleeve_right": 848
  },
  "check": {
   "alphaMaxError": 63.74901960784314

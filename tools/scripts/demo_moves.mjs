@@ -36,26 +36,37 @@ const file = state[String(info.activeFileId)];
 const B = file.bones;
 
 // ---- дельты (кадр: градусы) ----
-// голова до ±6°: капюшон наклоняется с головой, углы стоят на плечах — на
-// большем угле из-под обода на поднятой стороне заметнее выглядывает ворот
-const head = { 0: 0, 20: 6, 45: -6, 70: 6, 95: -6, 120: 0, 170: -4, 230: 4, 300: 0,
+// наклон головы на глаз (итоговый, до ±6°). Голова не качается одна: корпус от
+// таза с задержкой LAG кадров берёт LEAN наклона (толстовка, плечи, руки идут с
+// ним), голова относительно тела — остальное. Так голова не выглядит приставленной,
+// а капюшон относительно плеч поворачивается меньше — из-под него ничего не лезет.
+const headLook = { 0: 0, 20: 6, 45: -6, 70: 6, 95: -6, 120: 0, 170: -4, 230: 4, 300: 0,
   330: 3, 360: -3, 390: 3, 420: -3, 450: 3, 480: 0, 505: 6, 525: 6, 550: -6, 570: -6, 590: 0, 600: 0 };
+const LEAN = 0.4, HEAD = 0.65, LAG = 5;
+const scale = (k, m, lag = 0) => Object.fromEntries(Object.entries(k).map(([f, d]) => [+f === 0 || +f === END ? +f : Math.min(END, +f + lag), d * m]));
+const head = scale(headLook, HEAD);
+const lean = scale(headLook, LEAN, LAG);
+// значение дорожки в кадре f (линейно между ключами — для сложения дорожек)
+const at = (k, f) => { const e = Object.entries(k).map(([a, b]) => [+a, b]).sort((x, y) => x[0] - y[0]);
+  for (let i = 1; i < e.length; i++) if (f <= e[i][0]) return e[i - 1][1] + (e[i][1] - e[i - 1][1]) * (f - e[i - 1][0]) / (e[i][0] - e[i - 1][0]); return e.at(-1)[1]; };
+// ноги — дети root: поворот корпуса вычитается, чтобы стопы стояли на месте
+const minusLean = (leg) => Object.fromEntries([...new Set([...Object.keys(leg), ...Object.keys(lean)].map(Number))].sort((a, b) => a - b).map((f) => [f, at(leg, f) - at(lean, f)]));
 const march = (a, b) => { const k = {}; for (let f = 320, i = 0; f <= 460; f += 20, i++) k[f] = i % 2 ? b : a; return k; };
 // лапки качаются только наружу (0…12°): внутрь рукав уходил под капюшон с клином
 const armL = { 0: 0, 120: 0, 155: 32, 175: 20, 195: 36, 215: 20, 235: 32, 265: 0, 300: 0, ...march(12, 0), 480: 0, 510: 40, 560: 40, 595: 0, 600: 0 };
 const armR = { 0: 0, 150: 0, 185: -32, 205: -20, 225: -36, 245: -20, 265: -32, 295: 0, 300: 0, ...march(0, -12), 480: 0, 510: -40, 560: -40, 595: 0, 600: 0 };
-const legL = { 0: 0, 300: 0, ...march(10, -3), 480: 0, 600: 0 };
-const legR = { 0: 0, 300: 0, ...march(3, -10), 480: 0, 600: 0 };
+const legL = minusLean({ 0: 0, 300: 0, ...march(10, -3), 480: 0, 600: 0 });
+const legR = minusLean({ 0: 0, 300: 0, ...march(3, -10), 480: 0, 600: 0 });
 const bounce = { 0: 0, 300: 0 };                         // смещение root вверх, px
 for (let f = 310; f < 480; f += 20) { bounce[f] = -7; bounce[f + 10] = 0; }
 Object.assign(bounce, { 480: 0, 505: -14, 525: 0, 540: -8, 555: 0, 600: 0 });
 
 // ---- база: поза покоя ----
 const base = (await call('query_property_values', { propertyKeys: {
-  [B.root]: [91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15] } })).values;
+  [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15] } })).values;
 const tracks = [
   [B.root_body, 15, head], [B.root_arm_left, 15, armL], [B.root_arm_right, 15, armR],
-  [B.root_leg_left, 15, legL], [B.root_leg_right, 15, legR], [B.root, 91, bounce],
+  [B.root_leg_left, 15, legL], [B.root_leg_right, 15, legR], [B.root, 91, bounce], [B.root, 15, lean],
 ];
 
 // ---- таймлайн ----

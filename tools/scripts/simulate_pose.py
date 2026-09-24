@@ -25,6 +25,7 @@ to_full = lambda xa, ya: (666.5 + (xa - CX) / S, 1000 + (ya - CY) / S)
 PIVOT = {  # поза: ось в артборде
     'head': (524.0, 554.0), 'arm_left': (381, 577), 'arm_right': (658, 577),
     'leg_left': (453, 812), 'leg_right': (582, 812),
+    'body': (517.5, 810.8),   # начало кости root (таз)
 }
 BONE = {'root_body': 'head', 'root_arm_left': 'arm_left', 'root_arm_right': 'arm_right',
         'root_leg_left': 'leg_left', 'root_leg_right': 'leg_right'}           # кость рига -> поза
@@ -34,12 +35,18 @@ SKINNED = ('sleeve_left', 'sleeve_right', 'hood', 'shorts')
 MESH_STEP = 6
 
 
+def _rot(pivot, deg):
+    px, py = to_full(*pivot); t = np.radians(deg); c, s = np.cos(t), np.sin(t)
+    return np.array([[c, -s, px - c * px + s * py], [s, c, py - s * px - c * py], [0, 0, 1]])
+
+
 def bone_affine(pose, ang):
-    """2×3: поворот вокруг оси позы на угол (Rive: + по часовой при y вниз)."""
-    if not pose or not ang.get(pose):
-        return np.array([[1, 0, 0], [0, 1, 0]], np.float64)
-    px, py = to_full(*PIVOT[pose]); t = np.radians(ang[pose]); c, s = np.cos(t), np.sin(t)
-    return np.array([[c, -s, px - c * px + s * py], [s, c, py - s * px - c * py]])
+    """2×3: поворот вокруг оси позы на угол (Rive: + по часовой при y вниз).
+    body=… — наклон кости root от таза: все кости — её дети, поворот внешний."""
+    M = np.eye(3)
+    if pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])
+    if ang.get('body'): M = _rot(PIVOT['body'], ang['body']) @ M
+    return M[:2]
 
 
 def warp_mesh(L, weights, ang, step):
@@ -106,8 +113,8 @@ def main():
         L = np.asarray(Image.open(f'{D}/{n}.png').convert('RGBA'))
         if n in SKINNED:
             L = warp_mesh(L, {'step': dump['step'], 'bones': dump['layers'][n]}, ang, MESH_STEP)
-        elif RIGID.get(n) and ang.get(RIGID[n]):
-            M = bone_affine(RIGID[n], ang)
+        elif (RIGID.get(n) and ang.get(RIGID[n])) or (ang.get('body') and n not in SKINNED):
+            M = bone_affine(RIGID.get(n), ang)
             L = cv2.warpAffine(L, M, (L.shape[1], L.shape[0]), flags=cv2.INTER_LINEAR, borderValue=0)
         la = L[..., 3:4].astype(np.float64) / 255
         canvas[..., :3] = L[..., :3] * la + canvas[..., :3] * (1 - la)
