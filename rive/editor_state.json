@@ -499,7 +499,7 @@
       }
     },
     "defaultsWritten": true,
-    "parts": {
+    "partsRemoved": {
       "arm_left": {
         "asset": "0-344",
         "instance": "0-345",
@@ -585,6 +585,70 @@
         "hidden": true,
         "role": "запас под скрытые зоны"
       }
+    },
+    "layersV2": {
+      "ears": {
+        "asset": "0-354",
+        "instance": "0-355",
+        "group": "head",
+        "groupId": "0-99"
+      },
+      "face": {
+        "asset": "0-356",
+        "instance": "0-357",
+        "group": "head",
+        "groupId": "0-99"
+      },
+      "foot_left": {
+        "asset": "0-358",
+        "instance": "0-359",
+        "group": "foot_left",
+        "groupId": "0-325"
+      },
+      "foot_right": {
+        "asset": "0-360",
+        "instance": "0-361",
+        "group": "foot_right",
+        "groupId": "0-335"
+      },
+      "shorts": {
+        "asset": "0-362",
+        "instance": "0-363",
+        "group": "outfit_feet",
+        "groupId": "0-248"
+      },
+      "paw_left": {
+        "asset": "0-364",
+        "instance": "0-365",
+        "group": "hand_left",
+        "groupId": "0-260"
+      },
+      "paw_right": {
+        "asset": "0-366",
+        "instance": "0-367",
+        "group": "hand_right",
+        "groupId": "0-295"
+      },
+      "shirt": {
+        "asset": "0-368",
+        "instance": "0-369",
+        "group": "outfit_body",
+        "groupId": "0-247"
+      },
+      "hood": {
+        "asset": "0-370",
+        "instance": "0-371",
+        "group": "outfit_head",
+        "groupId": "0-226"
+      }
+    },
+    "layersV2Transform": {
+      "world": {
+        "x": 505.7018314411204,
+        "y": 480.5166984337449
+      },
+      "scalePercent": 62.982,
+      "source": "handoff/layers_v2"
     }
   }
 }
