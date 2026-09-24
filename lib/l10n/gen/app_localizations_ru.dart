@@ -1030,6 +1030,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get nameFirstLead =>
+      'Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.';
+
+  @override
+  String get nameFirstSave => 'Назвать';
+
+  @override
+  String get nameFirstLater => 'Позже';
+
+  @override
   String get nameDialogHint => 'Имя питомца';
 
   @override

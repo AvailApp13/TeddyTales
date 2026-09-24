@@ -297,6 +297,9 @@
       }
     }
   },
+  "nameFirstLead": "Your little one has arrived. What will you call them? You can change the name later in the profile.",
+  "nameFirstSave": "Name",
+  "nameFirstLater": "Later",
   "nameDialogHint": "Pet name",
   "nameDialogNote": "From {min} to {max} characters. Letters, space and hyphen.",
   "@nameDialogNote": {

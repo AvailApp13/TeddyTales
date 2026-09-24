@@ -25,18 +25,29 @@ Future<String?> showRenamePetDialog({
   /// приняли. Диалог сам ничего не знает ни про сеть, ни про хранилище, а
   /// причину получает кодом и переводит сам: язык интерфейса есть у него.
   required Future<PetNameError?> Function(String name) onSubmit,
+
+  /// Первый запуск: имени ещё не давали (КП 2.3). Окно само приходит после
+  /// рождения, поэтому говорит «Назвать» и «Позже», а не «Сохранить» и
+  /// «Отмена», и объясняет, что имя можно поменять.
+  bool firstRun = false,
 }) {
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => _RenameDialog(current: current, onSubmit: onSubmit),
+    builder: (context) =>
+        _RenameDialog(current: current, onSubmit: onSubmit, firstRun: firstRun),
   );
 }
 
 class _RenameDialog extends StatefulWidget {
-  const _RenameDialog({required this.current, required this.onSubmit});
+  const _RenameDialog({
+    required this.current,
+    required this.onSubmit,
+    required this.firstRun,
+  });
 
   final String current;
+  final bool firstRun;
   final Future<PetNameError?> Function(String name) onSubmit;
 
   @override
@@ -121,6 +132,15 @@ class _RenameDialogState extends State<_RenameDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.firstRun) ...[
+            Text(
+              l10n.nameFirstLead,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.4),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _controller,
             autofocus: true,
@@ -156,7 +176,9 @@ class _RenameDialogState extends State<_RenameDialog> {
       actions: [
         TextButton(
           onPressed: _sending ? null : () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
+          child: Text(
+            widget.firstRun ? l10n.nameFirstLater : l10n.commonCancel,
+          ),
         ),
         FilledButton(
           onPressed: _localError != null || _sending ? null : _submit,
@@ -166,7 +188,9 @@ class _RenameDialogState extends State<_RenameDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(l10n.nameDialogSave),
+              : Text(
+                  widget.firstRun ? l10n.nameFirstSave : l10n.nameDialogSave,
+                ),
         ),
       ],
     );

@@ -954,6 +954,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get nameFirstLead => '小宝宝出生了。给它起个名字吧？之后可以在个人资料里修改。';
+
+  @override
+  String get nameFirstSave => '起名';
+
+  @override
+  String get nameFirstLater => '稍后';
+
+  @override
   String get nameDialogHint => '宠物名字';
 
   @override

@@ -297,6 +297,9 @@
       }
     }
   },
+  "nameFirstLead": "小宝宝出生了。给它起个名字吧？之后可以在个人资料里修改。",
+  "nameFirstSave": "起名",
+  "nameFirstLater": "稍后",
   "nameDialogHint": "宠物名字",
   "nameDialogNote": "{min} 到 {max} 个字符，仅限字母、空格和连字符。",
   "@nameDialogNote": {

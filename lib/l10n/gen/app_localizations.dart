@@ -1798,6 +1798,24 @@ abstract class AppLocalizations {
   /// **'Теперь малыша зовут {name}'**
   String nameChanged(String name);
 
+  /// No description provided for @nameFirstLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.'**
+  String get nameFirstLead;
+
+  /// No description provided for @nameFirstSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Назвать'**
+  String get nameFirstSave;
+
+  /// No description provided for @nameFirstLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get nameFirstLater;
+
   /// No description provided for @nameDialogHint.
   ///
   /// In ru, this message translates to:

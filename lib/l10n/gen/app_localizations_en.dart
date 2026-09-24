@@ -1021,6 +1021,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get nameFirstLead =>
+      'Your little one has arrived. What will you call them? You can change the name later in the profile.';
+
+  @override
+  String get nameFirstSave => 'Name';
+
+  @override
+  String get nameFirstLater => 'Later';
+
+  @override
   String get nameDialogHint => 'Pet name';
 
   @override

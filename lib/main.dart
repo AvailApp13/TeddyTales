@@ -16,6 +16,7 @@ import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
 import 'alarm/wake_alarm.dart';
 import 'game/test_stubs.dart';
+import 'widgets/rename_pet_dialog.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
@@ -198,6 +199,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TeddyTales',
+      navigatorKey: _navigator,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       // Язык один на всё приложение: реплики питомца и интерфейс
@@ -240,6 +242,35 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     cancelFallback: widget.notifications?.cancelWake,
   );
 
+  /// Навигатор приложения: окно имени открывается поверх любого экрана.
+  final GlobalKey<NavigatorState> _navigator = GlobalKey<NavigatorState>();
+
+  /// Спрашивали ли имя в этот запуск. «Позже» — спросим в следующий.
+  bool _askedName = false;
+
+  /// Первый запуск: имени ещё не давали (КП 2.3).
+  ///
+  /// Только при связи: имя проверяет сервер по списку модератора, без него
+  /// принять имя нельзя, а спрашивать и отказывать — хуже, чем подождать.
+  /// Сцена рождения (КП 2.1, 2.2) встанет перед этим окном, когда придёт
+  /// её анимация.
+  void _askNameOnFirstRun() {
+    if (_askedName || !_signedIn) return;
+    if (!widget.boot.isOnline || widget.boot.snapshot.named) return;
+    _askedName = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _navigator.currentContext;
+      if (context == null) return;
+      showRenamePetDialog(
+        context: context,
+        current: '',
+        onSubmit: _rename,
+        firstRun: true,
+      );
+    });
+  }
+
   /// Переименовать питомца. `null` — сервер имя принял.
   ///
   /// Текст ошибки от сервера человеку не показываем: он на языке базы и
@@ -255,6 +286,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   }
 
   Widget _home() {
+    _askNameOnFirstRun();
     return HomeScreen(
       controller: _bear,
       game: _game,

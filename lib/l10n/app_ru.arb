@@ -550,6 +550,9 @@
       }
     }
   },
+  "nameFirstLead": "Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.",
+  "nameFirstSave": "Назвать",
+  "nameFirstLater": "Позже",
   "nameDialogHint": "Имя питомца",
   "nameDialogNote": "От {min} до {max} знаков. Буквы, пробел и дефис.",
   "@nameDialogNote": {
