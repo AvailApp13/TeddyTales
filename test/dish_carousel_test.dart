@@ -48,7 +48,7 @@ void main() {
         DishArcGeometry.plate('pasta', 1, size).width / size.width,
         closeTo(0.168 * 0.94, 0.001),
       );
-      for (final bowl in ['soup', 'yogurt']) {
+      for (final bowl in ['soup', 'yogurt', 'porridge']) {
         expect(DishArcGeometry.plate(bowl, 0, size).width, lessThan(mid.width));
       }
     });

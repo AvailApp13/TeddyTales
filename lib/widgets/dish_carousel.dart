@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 import '../game/food.dart';
 import '../theme/app_colors.dart';
@@ -19,9 +20,10 @@ import 'scene_label.dart';
 /// И ещё (24.09): «тарелка перед мишкой закрывает лапки — так не должно
 /// быть ни с одним блюдом; каждое блюдо садится плавно и не задевает
 /// лапки». Поэтому:
-/// - блюдо перед мишкой на 18 % меньше первого размера (заказчик 24.09:
-///   «на 15–20 %»), боковые — на 6 %; высокие миски — чуть меньше
-///   ([tableFit]); центральное стоит ближе к краю стола. В покое ни одно
+/// - блюдо перед мишкой на 20 % меньше первого размера (заказчик 24.09:
+///   «на 15–20 %»), боковые — на 6 %; глубокие миски (каша, суп, йогурт)
+///   ещё меньше ([tableFit]). Стоит там же, где в согласованном макете, —
+///   не у края стола. Картинки блюд не меняются. В покое ни одно
 ///   не касается лапок — проверено по маскам картинок
 ///   (`tool/check_dish_paws.py`);
 /// - по пути с края на середину блюдо сначала садится на стол у края и
@@ -43,19 +45,25 @@ abstract final class DishArcGeometry {
   static const double centerX = 0.5;
   static const double step = 0.276;
 
-  /// Донышко: перед мишкой — у переднего края стола, по бокам — приподнято.
-  static const double centerBottom = 0.695;
+  /// Донышко: перед мишкой — на столе, там же, где в согласованном макете;
+  /// по бокам — приподнято. Заказчик 24.09: «не убирать на край стола —
+  /// поменять размер».
+  static const double centerBottom = 0.6754;
   static const double sideBottom = 0.6043;
 
   /// Ширина тарелки перед мишкой и по бокам. Первые были 0.261 и 0.168;
   /// заказчик 24.09 попросил сначала на 5–7 % меньше, потом центральное —
-  /// на 15–20 %: оно закрывало лапки.
-  static const double centerWidth = 0.215;
+  /// на 15–20 %: оно закрывало лапки. Центральное — на 20 %.
+  static const double centerWidth = 0.209;
   static const double sideWidth = 0.158;
 
   /// Высокие миски уже тарелок: при общей ширине их край заходил бы на
   /// лапки. Доли подобраны по маскам с запасом 4 px кадра.
-  static const Map<String, double> tableFit = {'soup': 0.97, 'yogurt': 0.98};
+  static const Map<String, double> tableFit = {
+    'porridge': 0.92,
+    'soup': 0.85,
+    'yogurt': 0.87,
+  };
 
   /// С какой доли пути к краю блюдо начинает подниматься. До неё оно едет
   /// по столу — ниже лапок.
@@ -218,45 +226,45 @@ class DishCarousel extends StatefulWidget {
 
 class _DishCarouselState extends State<DishCarousel>
     with SingleTickerProviderStateMixin {
-  // Доводка после свайпа. Создаётся сразу, а не лениво: иначе при уходе
-  // с кухни без касаний её создавал бы dispose().
+  // Доводка после свайпа — пружиной. Создаётся сразу, а не лениво:
+  // иначе при уходе с кухни без касаний её создавал бы dispose().
   late final AnimationController _snap;
-  CurvedAnimation? _curve;
-  Tween<double> _snapTween = Tween(begin: 0, end: 0);
+  double _target = 0;
+
+  /// Пружина без отскока (критическое затухание). Заказчик 24.09:
+  /// «уменьшить резкость движения». Жёсткость 55 — блюдо доезжает примерно
+  /// за 0.7 с, трогается и тормозит плавно, скорость пальца не теряется.
+  static final SpringDescription _spring = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 55,
+    ratio: 1,
+  );
 
   DishArc get _arc => widget.arc;
 
   @override
   void initState() {
     super.initState();
-    _snap = AnimationController(vsync: this)
-      ..addListener(() {
-        final curve = _curve;
-        if (curve != null) _arc.offset = _snapTween.evaluate(curve);
+    _snap = AnimationController.unbounded(vsync: this)
+      ..addListener(() => _arc.offset = _snap.value)
+      ..addStatusListener((status) {
+        // Пружина останавливается «около» цели — ставим ровно на место.
+        if (status == AnimationStatus.completed) _arc.offset = _target;
       });
   }
 
   @override
   void dispose() {
-    _curve?.dispose();
     _snap.dispose();
     super.dispose();
   }
 
-  /// Мягкая доводка: блюдо не щёлкает на место, а плавно доезжает и
-  /// садится (заказчик 24.09: «анимация очень мягкая»).
-  void _animateTo(
-    double target, {
-    Duration duration = const Duration(milliseconds: 650),
-    Curve curve = Curves.easeOutCubic,
-  }) {
-    _curve?.dispose();
-    _curve = CurvedAnimation(parent: _snap, curve: curve);
-    _snapTween = Tween(begin: _arc.offset, end: target);
-    _snap
-      ..duration = duration
-      ..reset()
-      ..forward();
+  /// Доехать до [target] пружиной, начиная со скорости [velocity]
+  /// (блюд в секунду).
+  void _springTo(double target, {double velocity = 0}) {
+    _target = target;
+    _snap.value = _arc.offset;
+    _snap.animateWith(SpringSimulation(_spring, _arc.offset, target, velocity));
   }
 
   void _onDragUpdate(DragUpdateDetails details, double width) {
@@ -265,14 +273,18 @@ class _DishCarouselState extends State<DishCarousel>
   }
 
   void _onDragEnd(DragEndDetails details, double width) {
-    // Бросок пальцем докручивает на одно блюдо, даже если сдвинули мало.
-    final velocity = details.velocity.pixelsPerSecond.dx / width;
+    final stepPx = width * DishArcGeometry.step;
+    // Скорость пальца в блюдах за секунду: блюдо продолжает движение с ней.
+    final velocity = -details.velocity.pixelsPerSecond.dx / stepPx;
     final offset = _arc.offset;
     var target = offset.roundToDouble();
-    if (velocity.abs() > 0.8 && (target - offset).abs() < 0.5) {
-      target = velocity < 0 ? offset.ceilToDouble() : offset.floorToDouble();
+    // Бросок пальцем докручивает на одно блюдо, даже если сдвинули мало.
+    if (velocity.abs() > 0.8 * width / stepPx &&
+        (target - offset).abs() < 0.5) {
+      target = velocity > 0 ? offset.ceilToDouble() : offset.floorToDouble();
     }
-    _animateTo(target);
+    // Быстрый бросок — не дальше соседнего блюда: иначе улетало бы мимо.
+    _springTo(target, velocity: velocity.clamp(-6.0, 6.0));
   }
 
   void _onTap(Offset local, Size size) {
@@ -283,11 +295,7 @@ class _DishCarouselState extends State<DishCarousel>
         widget.onBuy(widget.dishes[hit.index]);
       } else {
         // Боковое — подкатываем в центр, покупают уже его.
-        _animateTo(
-          _arc.offset + hit.s.roundToDouble(),
-          duration: const Duration(milliseconds: 750),
-          curve: Curves.easeInOutCubic,
-        );
+        _springTo(_arc.offset + hit.s.roundToDouble());
       }
       return;
     }
@@ -359,11 +367,11 @@ class _Placed {
   factory _Placed.at(int index, double s, Size size, double fit) {
     final k = math.min(s.abs(), 1.0);
     final side = s < 0 ? -1.0 : 1.0;
-    // По горизонтали блюдо быстро уходит от центра и плавно подходит к
-    // краю; вверх поднимается только на последнем участке — когда уже
-    // миновало лапки. Садится обратно в том же порядке: сначала на стол
-    // у края, потом низом к мишке.
-    final across = s.abs() <= 1 ? math.sin(math.pi / 2 * k) : s.abs();
+    // По горизонтали блюдо идёт за пальцем один к одному (раньше у центра
+    // оно бежало в 1.6 раза быстрее пальца — заказчик назвал это резкостью).
+    // Вверх поднимается только на последнем участке пути к краю; садится
+    // обратно так же плавно.
+    final across = s.abs();
     final t = ((k - DishArcGeometry.liftFrom) / (1 - DishArcGeometry.liftFrom))
         .clamp(0.0, 1.0);
     final lift = t * t * (3 - 2 * t);

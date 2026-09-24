@@ -34,10 +34,10 @@ PAW_RIGHT = (0.562500, 0.579427, 0.086806, 0.037760)
 
 # Из DishArcGeometry.
 CENTER_X, STEP = 0.5, 0.276
-CENTER_BOTTOM, SIDE_BOTTOM = 0.695, 0.6043
-CENTER_WIDTH, SIDE_WIDTH = 0.215, 0.158
+CENTER_BOTTOM, SIDE_BOTTOM = 0.6754, 0.6043
+CENTER_WIDTH, SIDE_WIDTH = 0.209, 0.158
 LIFT_FROM, SIDE_TILT = 0.55, 0.105
-TABLE_FIT = {'soup': 0.97, 'yogurt': 0.98}
+TABLE_FIT = {'porridge': 0.92, 'soup': 0.85, 'yogurt': 0.87}
 
 DISHES = ['porridge', 'soup', 'sandwich', 'fruit', 'yogurt', 'cookie',
           'salad', 'pasta', 'omelette', 'pie']
