@@ -6,13 +6,14 @@
  *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/idle_life.mjs [--no-play]
  *
  * Петля 14.4 с (6 вдохов по 2.4 с), без видимого повтора:
- *   дыхание      — корпус поднимается на 1.2 px, лапы чуть расходятся на вдохе;
+ *   дыхание      — корпус поднимается на 2 px, лапы расходятся на 1.3° на вдохе;
  *   голова       — медленный дрейф ±1.5° (две синусоиды), корпус берёт 40 %, ноги
  *                  разворачиваются обратно (D18);
  *   моргание     — 5 раз за петлю с неравными паузами, одно двойное;
  *   взгляд       — бусины смещаются влево, вправо, вверх и возвращаются;
- *   уши (D20)    — одиночные подёргивания (резкий изгиб, отскок, затухание) и
- *                  «прислушивание»: оба уха вверх, голова набок, взгляд в сторону.
+ *   уши (D20)    — без резких рывков: чуть приподнимаются на каждом вдохе, одно
+ *                  плавное движение правым ухом и «прислушивание» — оба уха
+ *                  вверх, голова набок, взгляд в сторону.
  * Все дорожки на последнем кадре равны первому — шов петли не виден.
  * Случайность интервалов — на стороне приложения: машина состояний может
  * запускать петлю с разной скорости/смещения; внутри петли паузы уже неравные.
@@ -37,8 +38,10 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 // ---- сценарий (кадры). Уши — до 14° (проверено в симуляторе вместе с наклоном головы и руками)
 const BLINKS = [70, 262, 282, 540, 780];                               // 262/282 — двойное
 const LOOKS = [[130, 210, -2.6, 0], [400, 470, 2.4, 0.3], [790, 832, 0.8, -1.4]];   // [от, до, dx, dy] px артборда
-const TWITCH = [[196, 'left', -12], [455, 'right', -13], [520, 'left', 10]];          // [кадр, ухо, угол°]; − вниз, + вверх
-const LISTEN = { from: 600, to: 760, ear: 12.7, head: 2.5 };              // прислушивание: уши вверх, голова набок
+// плавные движения ушей: [ухо, от, до, угол°] — подъём/возврат по 0.5 с; − вниз, + вверх
+const EAR_MOVES = [['right', 420, 500, 7]];
+const EAR_BREATH = 2.5, EAR_BREATH_LAG = 10;                         // уши на вдохе, с запаздыванием
+const LISTEN = { from: 600, to: 760, ear: 11.5, head: 2.5 };              // прислушивание: уши вверх, голова набок
 
 // голова: медленный дрейф (периоды делят петлю) + прислушивание
 const listen = (f) => sm(LISTEN.from, LISTEN.from + 24, f) * (1 - sm(LISTEN.to - 30, LISTEN.to, f));
@@ -54,27 +57,25 @@ const b = (id, k) => base[id][String(k)];
 const LEAN = 0.4, HEADK = 0.65, LAG = 5;
 for (let f = 0; f <= END; f += 6) {
   const breath = S(PI2 * f / BREATH), h = headAt(f), lean = LEAN * headAt((f - LAG + END) % END);
-  key(B.root, 91, f, b(B.root, 91) - 1.2 * breath);                     // вдох — корпус чуть вверх
+  key(B.root, 91, f, b(B.root, 91) - 2 * breath);                       // вдох — корпус вверх
   key(B.root, 15, f, b(B.root, 15) + lean);
   key(B.root_body, 15, f, b(B.root_body, 15) + HEADK * h);
   key(B.root_leg_left, 15, f, b(B.root_leg_left, 15) - lean);
   key(B.root_leg_right, 15, f, b(B.root_leg_right, 15) - lean);
-  key(B.root_arm_left, 15, f, b(B.root_arm_left, 15) - 0.8 * breath);   // лапы чуть расходятся на вдохе
-  key(B.root_arm_right, 15, f, b(B.root_arm_right, 15) + 0.8 * breath);
+  key(B.root_arm_left, 15, f, b(B.root_arm_left, 15) - 1.3 * breath);   // лапы расходятся на вдохе
+  key(B.root_arm_right, 15, f, b(B.root_arm_right, 15) + 1.3 * breath);
 }
-// уши: знак для левого + (по часовой) = вверх, для правого — наоборот
+// уши: знак для левого + (по часовой) = вверх, для правого — наоборот.
+// Всё плавное (ключи каждые 6 кадров): дыхание + движения + прислушивание.
 const earKey = (side, f, deg) => { const id = B[`root_ear_${side}`]; key(id, 15, f, b(id, 15) + (side === 'left' ? deg : -deg)); };
-const ears = { left: new Map(), right: new Map() };                      // кадр -> угол, складываются
-const addEar = (side, f, deg) => ears[side].set(f, (ears[side].get(f) ?? 0) + deg);
-for (const side of ['left', 'right']) { addEar(side, 0, 0); addEar(side, END, 0); }
-for (const [f0, side, a] of TWITCH)                                     // рывок 4 кадра, отскок, затухание
-  for (const [df, k] of [[-1, 0], [4, 1], [10, -0.35], [17, 0.12], [24, 0]]) addEar(side, f0 + df, a * k);
-for (const side of ['left', 'right']) {
-  const lag = side === 'right' ? 4 : 0;                                  // уши поднимаются не синхронно
-  for (const [f, k] of [[LISTEN.from + lag, 0], [LISTEN.from + 16 + lag, 1.1], [LISTEN.from + 26 + lag, 1], [LISTEN.to - 30, 1], [LISTEN.to, 0]])
-    addEar(side, f, LISTEN.ear * k);
-}
-for (const side of ['left', 'right']) for (const [f, a] of ears[side]) earKey(side, f, a);
+const earAt = (side, f) => {
+  const lag = side === 'right' ? 4 : 0;                                  // уши двигаются не синхронно
+  let a = EAR_BREATH * S(PI2 * (f - EAR_BREATH_LAG - lag) / BREATH);
+  for (const [s_, f0, f1, deg] of EAR_MOVES) if (s_ === side) a += deg * sm(f0, f0 + 30, f) * (1 - sm(f1 - 30, f1, f));
+  const up = sm(LISTEN.from + lag, LISTEN.from + 20 + lag, f) * (1 - sm(LISTEN.to - 30, LISTEN.to, f));
+  return a + LISTEN.ear * up;
+};
+for (let f = 0; f <= END; f += 6) for (const side of ['left', 'right']) earKey(side, f, earAt(side, f));
 // взгляд
 const gaze = new Map([[0, [0, 0]], [END, [0, 0]]]);
 for (const [a, z, dx, dy] of LOOKS) { gaze.set(a, [0, 0]); gaze.set(a + 8, [dx, dy]); gaze.set(z, [dx, dy]); gaze.set(z + 8, [0, 0]); }
@@ -96,5 +97,5 @@ const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, trac
 console.log(`таймлайн ${NAME} (${anim.id}): ${(END / FPS).toFixed(1)} с, ${anim.keys} ключей на ${tracks.size} дорожках`);
 const PLAY = !process.argv.includes('--no-play');
 if (PLAY) { await playInStateMachine(call, anim.id); console.log('машина состояний играет', NAME); }
-file.idleLife = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: anim.keys, blinks: BLINKS, twitch: TWITCH, listen: LISTEN };
+file.idleLife = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: anim.keys, blinks: BLINKS, earMoves: EAR_MOVES, earBreath: EAR_BREATH, listen: LISTEN };
 writeFileSync(sp, JSON.stringify(state, null, 2) + '\n');
