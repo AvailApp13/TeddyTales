@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 
-import { RiveMcpClient, parseSse, toolText } from '../lib/rive_mcp.mjs';
+import { RiveMcpClient, parseSse, toolText, jsonCaller } from '../lib/rive_mcp.mjs';
 
 /** Mock сервера Rive: JSON на initialize, SSE на tools/*, требует session id. */
 function startMock({ sse = true } = {}) {
@@ -101,4 +101,31 @@ test('недоступный сервер даёт подсказку про р�
 test('parseSse собирает многострочные data и пропускает мусор', () => {
   const text = ': keepalive\n\nevent: message\ndata: {"jsonrpc":"2.0",\ndata: "id":1,"result":{}}\n\ndata: not json\n\n';
   assert.deepEqual(parseSse(text), [{ jsonrpc: '2.0', id: 1, result: {} }]);
+});
+
+/** Заглушка клиента: отдаёт тексты ответов по очереди. */
+const stubClient = (texts) => {
+  const calls = [];
+  return { calls, callTool: async (name, args) => { calls.push(name); return { content: [{ type: 'text', text: texts.shift() }] }; } };
+};
+
+test('jsonCaller повторяет идемпотентный вызов после текста ошибки вместо JSON', async () => {
+  const client = stubClient(['Error: Linear Animation with id 0-6 not found', '{"success":true,"v":1}']);
+  const call = jsonCaller(client, { delayMs: 1 });
+  assert.deepEqual(await call('animation_editor', { command: 'queryKeyFrames' }), { success: true, v: 1 });
+  assert.equal(client.calls.length, 2);
+});
+
+test('jsonCaller не повторяет загрузку ассета (иначе дубли)', async () => {
+  const client = stubClient(['Error: upload failed', '{"success":true}']);
+  const call = jsonCaller(client, { delayMs: 1 });
+  await assert.rejects(call('upload_asset', { file: 'data:' }), /не JSON/);
+  assert.equal(client.calls.length, 1);
+});
+
+test('jsonCaller: success:false — ошибка без повтора', async () => {
+  const client = stubClient(['{"success":false,"error":"bad"}', '{"success":true}']);
+  const call = jsonCaller(client, { delayMs: 1 });
+  await assert.rejects(call('query_objects', {}), /bad/);
+  assert.equal(client.calls.length, 1);
 });

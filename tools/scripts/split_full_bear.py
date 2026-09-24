@@ -245,9 +245,14 @@ for i, n in enumerate(order, 1):
     if n == 'shirt':
         # под рукой, которая уходит, заход корпуса открылся бы полоской у бока:
         # под лапами его нет, под рукавами — 2 px (под сглаженный край рукава)
+        # Выше подмышки шов неподвижен (вес рукава там — туловище): заход 6 px, иначе
+        # сетка рукава, срезающая его сглаженный край, оставляла просвет фона чёрточкой.
         arm = np.isin(full, [order.index(k) + 1 for k in ('paw_left', 'paw_right', 'sleeve_left', 'sleeve_right')])
+        sleeves = np.isin(full, [order.index(k) + 1 for k in ('sleeve_left', 'sleeve_right')])
+        seam_zone = Y < np.where(X < axis, SLEEVE_L[4][1], SLEEVE_R[7][1])      # выше подмышек
         m = own | (ndimage.binary_dilation(own, iterations=3) & front & ~arm & (A >= 250)) \
-                | (ndimage.binary_dilation(own, iterations=2) & np.isin(full, [order.index(k) + 1 for k in ('sleeve_left', 'sleeve_right')]))
+                | (ndimage.binary_dilation(own, iterations=2) & sleeves) \
+                | (ndimage.binary_dilation(own, iterations=6) & sleeves & seam_zone & (A >= 250))
     # полоса захода под соседей красится цветом самого слоя (ближайший свой пиксель),
     # иначе при движении по краю мелькнёт чужой цвет (голубая кайма у лап и т.п.)
     own_op = own & (A >= 250)
@@ -328,8 +333,9 @@ for i, n in enumerate(order, 1):
 # капюшона, если кромка капюшона и лицо разойдутся. В покое целиком закрыта.
 hood_own = (full == order.index('hood') + 1) & (A >= 250)
 hole = biggest(ndimage.binary_fill_holes(hood_own | (full == order.index('face') + 1)) & ~hood_own)   # только проём лица, без пустот в острие
-# под подбородком подкладка не нужна (там запас ворота) — выглядывала серым клином из-под обода
-chin_line = np.full(W, float(H)); chin_line[cols] = fb[cols] + 6
+# у подбородка подкладка не нужна: кромка обода идёт вместе с подбородком. Ниже
+# линии подбородка она при наклоне головы выглядывала серой полоской из-под обода
+chin_line = np.full(W, float(H)); chin_line[cols] = fb[cols] - 12
 lining = ndimage.binary_dilation(hole, iterations=18) & (hole | hood_own) & (Y < chin_line[None, :])
 # внутренняя сторона капюшона: гладкая заливка из цвета капюшона, затенённая
 # (открывается узкой щелью у подбородка — замощение фактуры читалось сеткой)

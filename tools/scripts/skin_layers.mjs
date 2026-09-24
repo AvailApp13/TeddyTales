@@ -15,7 +15,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
+import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
 import { loadWeights } from '../lib/bear_weights.mjs';
 
@@ -24,13 +24,7 @@ const state = JSON.parse(readFileSync(statePath, 'utf8'));
 const meta = JSON.parse(readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', 'layers.json'), 'utf8'));
 const [W, H] = meta.size;
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
-const call = async (t, a) => {
-  for (let i = 0; i < 6; i++) {
-    try { const r = JSON.parse(toolText(await c.callTool(t, a))); if (r.success === false) throw new Error(`${t}: ${JSON.stringify(r).slice(0, 400)}`); return r; }
-    catch (e) { if (!/ENOTFOUND|DNS|пустой ответ/.test(e.message)) throw e; await new Promise((r) => setTimeout(r, 8000)); }
-  }
-  throw new Error(`${t}: нет связи`);
-};
+const call = jsonCaller(c, { log: console.log });   // повторы при кратких сбоях редактора
 const info = await call('session_info', {});
 const file = state[String(info.activeFileId)];
 const B = file.bones; const LV = file.layersV2;

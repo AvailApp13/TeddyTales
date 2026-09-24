@@ -606,8 +606,8 @@
         "groupId": "0-248"
       },
       "shirt": {
-        "asset": "0-70009",
-        "instance": "0-70010",
+        "asset": "0-76437",
+        "instance": "0-76438",
         "group": "outfit_body",
         "groupId": "0-247"
       },
@@ -636,8 +636,8 @@
         "groupId": "0-397"
       },
       "hood_lining": {
-        "asset": "0-57153",
-        "instance": "0-57154",
+        "asset": "0-76079",
+        "instance": "0-76081",
         "group": "hood_lining",
         "groupId": "0-21711"
       },

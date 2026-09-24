@@ -12,7 +12,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
+import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
 import { AB } from '../lib/gen_rml.mjs';
 
@@ -23,7 +23,7 @@ const S = AB.figureHeight / photo.bodyHeightPx; const [W, H] = meta.size;
 const WORLD = { x: AB.w / 2 + (W / 2 - photo.axisX) * S, y: AB.groundY - (photo.groundY - H / 2) * S };
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 180000 }); await c.initialize();
-const call = async (t, a) => { const r = JSON.parse(toolText(await c.callTool(t, a))); if (r.success === false) throw new Error(`${t}: ${JSON.stringify(r).slice(0, 300)}`); return r; };
+const call = jsonCaller(c, { log: console.log });   // повторы при кратких сбоях редактора
 const file = state[String((await call('session_info', {})).activeFileId)];
 const hier = await call('get_artboard_hierarchy', { artboardId: file.artboards.Bear_Boy.id, depth: 14 });
 const byName = new Map(); for (const o of hier.objects ?? []) if (!byName.has(o.name)) byName.set(o.name, o);

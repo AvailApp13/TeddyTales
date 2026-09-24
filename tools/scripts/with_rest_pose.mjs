@@ -13,18 +13,12 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
+import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
 
 const cmd = process.argv.slice(process.argv.indexOf('--') + 1);
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
-const call = async (t, a) => {
-  for (let i = 0; i < 6; i++) {
-    try { const r = JSON.parse(toolText(await c.callTool(t, a))); if (r.success === false) throw new Error(`${t}: ${JSON.stringify(r).slice(0, 300)}`); return r; }
-    catch (e) { if (!/ENOTFOUND|DNS|пустой ответ/.test(e.message)) throw e; await new Promise((r) => setTimeout(r, 8000)); }
-  }
-  throw new Error(`${t}: нет связи`);
-};
+const call = jsonCaller(c, { log: console.log });   // повторы при кратких сбоях редактора
 const anims = (await call('animation_editor', { command: 'listLinearAnimations', data: {} })).linearAnimations ?? [];
 const ids = anims.map((a) => a.id);
 const kf = (await call('animation_editor', { command: 'queryKeyFrames', data: { queryKeyFrames: { animationIds: ids } } })).keyframes ?? {};

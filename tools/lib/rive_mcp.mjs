@@ -127,3 +127,31 @@ export function toolText(result) {
     .map((c) => (c.type === 'text' ? c.text : `[${c.type}]`))
     .join('\n');
 }
+
+/**
+ * Вызов инструмента с разбором JSON-ответа и повторами при кратких сбоях
+ * редактора: DNS туннеля, пустой ответ, текст ошибки вместо JSON (редактор
+ * иногда на секунду «не видит» таймлайн или объект). Повторяются только
+ * идемпотентные операции — чтение, запись свойств, перенос, порядок, ключи;
+ * загрузка ассета, создание и удаление объектов не повторяются (дубли).
+ */
+const IDEMPOTENT = /^(session_info|get_|query_|set_property_values|reparent_objects|reorder_objects|rename_objects|animation_editor|mesh_rigging_tool)$/;
+export function jsonCaller(client, { tries = 6, delayMs = 3000, log = () => {} } = {}) {
+  return async (tool, args) => {
+    const retryable = IDEMPOTENT.test(tool) && !(tool === 'mesh_rigging_tool' && args?.command === 'generateMesh')
+      || (tool === 'assets_tool' && args?.command === 'listAssets');
+    for (let i = 0; ; i++) {
+      try {
+        const text = toolText(await client.callTool(tool, args));
+        let r; try { r = JSON.parse(text); } catch { throw new Error(`${tool}: не JSON: ${text.slice(0, 200)}`); }
+        if (r.success === false) throw new Error(`${tool}: ${JSON.stringify(r).slice(0, 300)}`);
+        return r;
+      } catch (e) {
+        const transient = /ENOTFOUND|DNS|fetch failed|пустой ответ|не JSON|not found/i.test(e.message);
+        if (!retryable || !transient || i >= tries - 1) throw e;
+        log(`  повтор ${tool} (${e.message.slice(0, 80)})`);
+        await new Promise((r) => setTimeout(r, delayMs * (1 + (i >> 1))));
+      }
+    }
+  };
+}
