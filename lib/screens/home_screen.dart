@@ -15,7 +15,6 @@ import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
-import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -27,6 +26,7 @@ import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
+import '../widgets/feed_burst.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
@@ -127,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen>
       _dishesShown = false;
       _recipesShown = false;
       _cooking = null;
+      _dropCookPending();
       _resetArc();
     });
   }
@@ -461,6 +462,39 @@ class _HomeScreenState extends State<HomeScreen>
   /// Сколько раз положили не тот продукт: мишка мотает головой.
   int _refusals = 0;
 
+  /// Пузырь сытости (заказчик 24.09): съеденное летит пузырьком с «+N» в
+  /// кружок «Еда», монеты делают «у-у» в момент удара. Заменил строку
+  /// «Пирог · еда +40, −15 монет» внизу экрана.
+  final FeedFx _fx = FeedFx();
+
+  /// Готовка засчитана, а пузырь ещё не вылетел: мишка ест.
+  Recipe? _cookPending;
+
+  /// Где на экране тарелка перед мишкой — оттуда рождается пузырь.
+  static Offset Function(Size) _plateSpot(String plateId) => (size) {
+    final frame = RoomFrame.of(size, RoomKind.kitchen).rect;
+    final plate = DishArcGeometry.plate(
+      plateId,
+      0,
+      frame.size,
+    ).shift(frame.topLeft);
+    return Offset(plate.center.dx, plate.bottom - plate.width * 0.3);
+  };
+
+  /// Запомнить числа до еды: на экране они сменятся, когда пузырь ударит.
+  void _holdStats() => _fx.hold(
+    food: widget.controller.stats.food,
+    coins: widget.game.profile.coins,
+  );
+
+  /// Готовку бросили после того, как блюдо засчитали: пузыря не будет,
+  /// числа просто добегают до настоящих.
+  void _dropCookPending() {
+    if (_cookPending == null) return;
+    _cookPending = null;
+    _fx.settle();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -500,6 +534,7 @@ class _HomeScreenState extends State<HomeScreen>
       ..dispose();
     _dishArc.dispose();
     _recipeArc.dispose();
+    _fx.dispose();
     super.dispose();
   }
 
@@ -565,6 +600,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (_dishesShown) {
         _recipesShown = false;
         _cooking = null;
+        _dropCookPending();
       }
     });
   }
@@ -576,6 +612,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (_cooking != null) {
         _cooking = null;
         _recipesShown = false;
+        _dropCookPending();
         return;
       }
       _recipesShown = !_recipesShown;
@@ -596,21 +633,32 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Крестик во время готовки — бросить её.
-  void _stopCooking() => setState(() => _cooking = null);
+  void _stopCooking() => setState(() {
+    _cooking = null;
+    _dropCookPending();
+  });
 
   /// Положили не тот продукт — мишка мотает головой.
   void _wrongIngredient() => setState(() => _refusals++);
 
   /// Всё собрано, блюдо появилось на столе: награда и еда — те же, что
-  /// у готовки в листе кормления (КП 8.5).
+  /// у готовки в листе кормления (КП 8.5). На экране они появятся, когда
+  /// мишка доест и пузырь ударит в кружок «Еда».
   void _cooked(Recipe recipe) {
-    final l10n = context.l10n;
+    _holdStats();
     widget.game.completeRecipe(recipe);
-    _soon(
-      l10n.feedCookResult(
-        recipeName(l10n, recipe.id),
-        recipe.reward,
-        recipe.foodGain.round(),
+    _cookPending = recipe;
+  }
+
+  /// Мишка доел приготовленное — тарелка тает, вылетает пузырь.
+  void _cookEaten(Recipe recipe) {
+    if (_cookPending == null) return;
+    _cookPending = null;
+    _fx.launch(
+      FeedLaunch(
+        origin: _plateSpot(recipe.id),
+        gain: recipe.foodGain.round(),
+        coins: recipe.reward,
       ),
     );
   }
@@ -629,7 +677,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Мишка доел, тарелка ушла.
-  void _finishCooking() => setState(() => _cooking = null);
+  void _finishCooking() => setState(() {
+    _cooking = null;
+    _dropCookPending();
+  });
 
   /// Крестик под табло — блюда уходят со стола.
   void _hideDishes() => setState(() => _dishesShown = false);
@@ -641,10 +692,22 @@ class _HomeScreenState extends State<HomeScreen>
   /// любимое блюдо его характера нежит, остальное радует.
   void _buyDish(Dish dish) {
     final l10n = context.l10n;
+    final food = widget.controller.stats.food;
+    final coins = widget.game.profile.coins;
     if (!widget.game.feedWithDish(dish)) {
       _soon(l10n.feedNotEnoughCoins);
       return;
     }
+    // Тарелка уходит со стола — на её месте рождается пузырь с «+N». Числа
+    // наверху сменятся, когда он ударит в кружок «Еда» (заказчик 24.09).
+    _fx.hold(food: food, coins: coins);
+    _fx.launch(
+      FeedLaunch(
+        origin: _plateSpot(dish.id),
+        gain: dish.foodGain.round(),
+        coins: -dish.price,
+      ),
+    );
     // Съеденное уходит со стола до следующего голода (заказчик 24.09),
     // остальные сдвигаются на его место.
     _eaten.eat(dish.id);
@@ -660,13 +723,6 @@ class _HomeScreenState extends State<HomeScreen>
         mood: favourite ? KitchenMood.love : KitchenMood.happy,
       );
     });
-    _soon(
-      l10n.feedEatResult(
-        dishName(l10n, dish.id),
-        dish.foodGain.round(),
-        dish.price,
-      ),
-    );
   }
 
   /// Поглаживания (КП 7.6): показатель любви растёт, а мишка на кухне
@@ -762,6 +818,7 @@ class _HomeScreenState extends State<HomeScreen>
                     onWrong: _wrongIngredient,
                     onCooked: _cooked,
                     onServe: _serveCooked,
+                    onEaten: _cookEaten,
                     onFinished: _finishCooking,
                   ),
                   onWash: _wash,
@@ -801,6 +858,7 @@ class _HomeScreenState extends State<HomeScreen>
                         PetHeader(
                           profile: profile,
                           age: age,
+                          fx: _fx,
                           onOpenProfile: () => _open(_profileScreen()),
                         ),
                         const SizedBox(height: 14),
@@ -808,6 +866,7 @@ class _HomeScreenState extends State<HomeScreen>
                           stats: state.stats,
                           stage: state.stage,
                           onAction: _runAction,
+                          fx: _fx,
                         ),
                         const SizedBox(height: 10),
                         // Реплика идёт следом за кольцами в одной колонке, а
@@ -840,6 +899,17 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                 ),
+              // Пузырь сытости летит над комнатой и кольцами. Касаний не
+              // ловит.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: FeedBurstLayer(
+                    fx: _fx,
+                    liveFood: () => widget.controller.stats.food,
+                    liveCoins: () => widget.game.profile.coins,
+                  ),
+                ),
+              ),
               // Разделы. Лежат выше всего: разлетевшиеся кружки должны
               // перекрывать и комнату, и кольца показателей.
               if (!_furnishing)
@@ -1232,6 +1302,7 @@ class _RoomScene extends StatelessWidget {
               onWrong: cookCallbacks.onWrong,
               onCooked: cookCallbacks.onCooked,
               onServe: cookCallbacks.onServe,
+              onEaten: cookCallbacks.onEaten,
               onFinished: cookCallbacks.onFinished,
             ),
           ),
@@ -1556,5 +1627,6 @@ typedef CookCallbacks = ({
   VoidCallback onWrong,
   ValueChanged<Recipe> onCooked,
   ValueChanged<Recipe> onServe,
+  ValueChanged<Recipe> onEaten,
   VoidCallback onFinished,
 });

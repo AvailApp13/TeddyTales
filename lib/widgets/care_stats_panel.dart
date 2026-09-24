@@ -7,6 +7,7 @@ import '../bear/bear_rig_spec.dart';
 import '../bear/bear_stats.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'feed_burst.dart';
 import 'scene_label.dart';
 
 /// Один показатель.
@@ -62,11 +63,16 @@ class CareStatsPanel extends StatefulWidget {
     required this.stats,
     required this.stage,
     this.onAction,
+    this.fx,
   });
 
   final BearCareStats stats;
   final BearStage stage;
   final ValueChanged<BearAction>? onAction;
+
+  /// Пузырь сытости: кружок «Еда» ловит его, подпрыгивает и считает
+  /// проценты вверх (заказчик 24.09).
+  final FeedFx? fx;
 
   /// Высота панели: кольцо и подпись под ним.
   static const double height = _ringSize + 4 + 16;
@@ -246,21 +252,47 @@ class _CareStatsPanelState extends State<CareStatsPanel>
             opacity: local,
             child: Transform.scale(
               scale: 0.55 + 0.45 * local,
-              child: Center(
-                child: _StatRing(
-                  stat: tile,
-                  enabled:
-                      widget.onAction != null &&
-                      (!kStageLocksOnStats ||
-                          tile.action.isAvailableOn(widget.stage)),
-                  onTap: () => _pick(tile.action),
-                ),
-              ),
+              child: Center(child: _statRing(tile)),
             ),
           ),
         ),
       ),
     ];
+  }
+}
+
+extension on _CareStatsPanelState {
+  Widget _statRing(CareStat tile) {
+    final enabled =
+        widget.onAction != null &&
+        (!kStageLocksOnStats || tile.action.isAvailableOn(widget.stage));
+    final fx = widget.fx;
+    if (fx == null || tile.action != BearAction.feed) {
+      return _StatRing(
+        stat: tile,
+        enabled: enabled,
+        onTap: () => _pick(tile.action),
+      );
+    }
+    // «Еда» слушает пузырь: пока он летит — прежний процент, после удара
+    // проценты бегут вверх, кружок подпрыгивает и вспыхивает.
+    return ListenableBuilder(
+      listenable: fx,
+      builder: (context, _) => _StatRing(
+        stat: CareStat(
+          label: tile.label,
+          icon: tile.icon,
+          value: fx.food(tile.value),
+          color: tile.color,
+          action: tile.action,
+        ),
+        enabled: enabled,
+        onTap: () => _pick(tile.action),
+        ringKey: fx.foodRing,
+        bump: fx.foodBump,
+        hot: fx.counting,
+      ),
+    );
   }
 }
 
@@ -402,11 +434,23 @@ class _StatRing extends StatelessWidget {
     required this.stat,
     required this.enabled,
     required this.onTap,
+    this.ringKey,
+    this.bump,
+    this.hot = false,
   });
 
   final CareStat stat;
   final bool enabled;
   final VoidCallback onTap;
+
+  /// Ключ самого кольца — по нему пузырь сытости находит цель.
+  final Key? ringKey;
+
+  /// Удар пузыря: 0…1 от удара до покоя, `null` — покой.
+  final double? bump;
+
+  /// Проценты бегут — число в подписи золотое.
+  final bool hot;
 
   @override
   Widget build(BuildContext context) {
@@ -418,23 +462,26 @@ class _StatRing extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: CareStatsPanel._ringSize,
-              height: CareStatsPanel._ringSize,
-              child: CustomPaint(
-                painter: _RingPainter(
-                  value: stat.value.clamp(0, 100) / 100,
-                  color: stat.color,
-                ),
-                child: Center(
-                  child: Container(
-                    width: CareStatsPanel._ringSize - 13,
-                    height: CareStatsPanel._ringSize - 13,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
+            _bumped(
+              SizedBox(
+                key: ringKey,
+                width: CareStatsPanel._ringSize,
+                height: CareStatsPanel._ringSize,
+                child: CustomPaint(
+                  painter: _RingPainter(
+                    value: stat.value.clamp(0, 100) / 100,
+                    color: stat.color,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: CareStatsPanel._ringSize - 13,
+                      height: CareStatsPanel._ringSize - 13,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(stat.icon, size: 22, color: stat.color),
                     ),
-                    child: Icon(stat.icon, size: 22, color: stat.color),
                   ),
                 ),
               ),
@@ -451,6 +498,7 @@ class _StatRing extends StatelessWidget {
               child: SceneLabel(
                 text: stat.label,
                 trailing: '${stat.value.round()}%',
+                trailingColor: hot ? const Color(0xFFFFE3A0) : null,
                 size: 10,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 7,
@@ -459,6 +507,36 @@ class _StatRing extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+extension on _StatRing {
+  /// Кружок, по которому ударил пузырь: подпрыгнул, чуть раздулся,
+  /// вспыхнул золотым ободком и, покачавшись, сел на место.
+  Widget _bumped(Widget ring) {
+    final t = bump;
+    if (t == null) return ring;
+    final b = FeedFx.bounce(t);
+    final flash = math.pow(1 - t, 2).toDouble();
+    return Transform.translate(
+      offset: Offset(0, -9 * b),
+      child: Transform.scale(
+        scale: 1 + 0.13 * b,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFFD58A).withValues(alpha: 0.85 * flash),
+                blurRadius: 16,
+                spreadRadius: 3 * flash,
+              ),
+            ],
+          ),
+          child: ring,
         ),
       ),
     );

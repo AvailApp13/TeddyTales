@@ -42,6 +42,7 @@ class KitchenCooking extends StatefulWidget {
     this.onWrong,
     this.onCooked,
     this.onServe,
+    this.onEaten,
     this.onFinished,
     this.random,
   });
@@ -61,6 +62,10 @@ class KitchenCooking extends StatefulWidget {
 
   /// Блюдо встало на стол — мишка начинает есть.
   final ValueChanged<Recipe>? onServe;
+
+  /// Мишка доел, тарелка начинает таять — отсюда вылетает пузырь
+  /// сытости (заказчик 24.09).
+  final ValueChanged<Recipe>? onEaten;
 
   /// Мишка доел, тарелка ушла — готовку можно убирать.
   final VoidCallback? onFinished;
@@ -229,6 +234,7 @@ class _KitchenCookingState extends State<KitchenCooking>
     widget.onCooked?.call(_recipe);
     _later(KitchenCooking.serveDelay, () => widget.onServe?.call(_recipe));
     _later(KitchenCooking.serveDelay + KitchenCooking.eatHold, () {
+      widget.onEaten?.call(_recipe);
       _leave.forward(from: 0).whenComplete(() {
         if (mounted) widget.onFinished?.call();
       });
