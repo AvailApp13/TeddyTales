@@ -23,6 +23,8 @@ create table if not exists auth.users (
   email text,
   is_anonymous boolean not null default false,
   raw_app_meta_data jsonb not null default '{}'::jsonb,
+  raw_user_meta_data jsonb not null default '{}'::jsonb,
+  email_confirmed_at timestamptz,
   created_at timestamptz not null default now()
 );
 
