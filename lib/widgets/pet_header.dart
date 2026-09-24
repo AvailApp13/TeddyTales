@@ -129,7 +129,7 @@ class _ProfileButton extends StatelessWidget {
   }
 }
 
-class _CoinBalance extends StatelessWidget {
+class _CoinBalance extends StatefulWidget {
   const _CoinBalance({
     required this.coins,
     this.bump,
@@ -147,72 +147,95 @@ class _CoinBalance extends StatelessWidget {
   final double? chip;
 
   @override
+  State<_CoinBalance> createState() => _CoinBalanceState();
+}
+
+class _CoinBalanceState extends State<_CoinBalance> {
+  // Плашка «−7» живёт в оверлее, а к кнопке привязана ссылкой: в колонке
+  // шапки кольца показателей идут следом и рисовались поверх неё — «−7»
+  // пряталось под кружком «Игра» (заказчик 24.09: «чтобы он был поверх
+  // всего»).
+  final _link = LayerLink();
+  final _portal = OverlayPortalController()..show();
+
+  @override
   Widget build(BuildContext context) {
-    final t = bump;
+    final t = widget.bump;
     final pill = _pill(context, t);
-    final c = chip;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        if (t == null)
-          pill
-        else
-          // Кнопка вздыхает: раздувается и, покачавшись, сдувается. Вокруг —
-          // тёплое свечение.
-          Transform.scale(
-            scale: 1 + 0.16 * FeedFx.bounce(t),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimens.radiusPill),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(
-                      0xFFFFD58A,
-                    ).withValues(alpha: 0.8 * math.pow(1 - t, 2)),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: pill,
-            ),
-          ),
-        if (c != null && delta != 0)
-          Positioned(
-            key: const ValueKey('coins-delta'),
-            left: 26,
-            top: 34 + 22 * Curves.easeOutCubic.transform(c),
-            child: Opacity(
-              opacity: (c < 0.15 ? c / 0.15 : 1 - (c - 0.15) / 0.85).clamp(
-                0.0,
-                1.0,
-              ),
-              child: Transform.scale(
-                scale: c < 0.15 ? 0.6 + 0.4 * (c / 0.15) : 1,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 2.5,
-                  ),
+    return OverlayPortal(
+      controller: _portal,
+      overlayChildBuilder: _chip,
+      child: CompositedTransformTarget(
+        link: _link,
+        child: t == null
+            ? pill
+            // Кнопка вздыхает: раздувается и, покачавшись, сдувается. Вокруг
+            // — тёплое свечение.
+            : Transform.scale(
+                scale: 1 + 0.16 * FeedFx.bounce(t),
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: delta < 0
-                        ? const Color(0xFFD6705F)
-                        : AppColors.sageDark,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(
+                          0xFFFFD58A,
+                        ).withValues(alpha: 0.8 * math.pow(1 - t, 2)),
+                        blurRadius: 18,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    delta < 0 ? '−${-delta}' : '+$delta',
-                    style: sceneText(
-                      size: 12.5,
-                      weight: 900,
-                      color: Colors.white,
-                    ),
+                  child: pill,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _chip(BuildContext context) {
+    final c = widget.chip;
+    final delta = widget.delta;
+    if (c == null || delta == 0) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.topLeft,
+      child: CompositedTransformFollower(
+        link: _link,
+        showWhenUnlinked: false,
+        offset: Offset(26, 34 + 22 * Curves.easeOutCubic.transform(c)),
+        child: IgnorePointer(
+          child: Opacity(
+            key: const ValueKey('coins-delta'),
+            opacity: (c < 0.15 ? c / 0.15 : 1 - (c - 0.15) / 0.85).clamp(
+              0.0,
+              1.0,
+            ),
+            child: Transform.scale(
+              scale: c < 0.15 ? 0.6 + 0.4 * (c / 0.15) : 1,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: delta < 0
+                      ? const Color(0xFFD6705F)
+                      : AppColors.sageDark,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  delta < 0 ? '−${-delta}' : '+$delta',
+                  style: sceneText(
+                    size: 12.5,
+                    weight: 900,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
           ),
-      ],
+        ),
+      ),
     );
   }
 
@@ -246,7 +269,7 @@ class _CoinBalance extends StatelessWidget {
           ),
           const SizedBox(width: 7),
           Text(
-            '$coins',
+            '${widget.coins}',
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
