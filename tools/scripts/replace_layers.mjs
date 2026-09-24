@@ -1,30 +1,55 @@
+#!/usr/bin/env node
+/**
+ * Заменяет картинки слоёв мишки v2 в открытом файле свежими PNG из
+ * handoff/layers_v2 (после перенарезки). Запускать в позе покоя:
+ *   RIVE_MCP_URL=... node scripts/with_rest_pose.mjs -- node scripts/replace_layers.mjs hood_lining [...]
+ *
+ * В Rive картинка на сцене держится за ассет: удаление ассета удаляет и её,
+ * а подменить ассет свойством нельзя. Поэтому: старые картинка и ассет
+ * удаляются, новый ассет -> картинка в rig с общим трансформом -> своя группа.
+ * Сетки (skin) удаляются вместе с картинкой: для слоёв из skin_layers.mjs
+ * после замены запустить его снова.
+ */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { RiveMcpClient, toolText } from '/home/user/TeddyTales/tools/lib/rive_mcp.mjs';
-const S = process.env.S; const statePath = '/home/user/TeddyTales/rive/editor_state.json';
-const state = JSON.parse(readFileSync(statePath, 'utf8')); const file = Object.values(state)[0]; const parts = file.parts; const boardId = file.artboards.Bear_Boy.id; const PL = file.photoLayers;
+import { resolve } from 'node:path';
+import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
+import { repoRoot } from '../lib/rig.mjs';
+import { AB } from '../lib/gen_rml.mjs';
+
+const names = process.argv.slice(2);
+const meta = JSON.parse(readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', 'layers.json'), 'utf8'));
+const photo = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions.json'), 'utf8')).photo;
+const S = AB.figureHeight / photo.bodyHeightPx; const [W, H] = meta.size;
+const WORLD = { x: AB.w / 2 + (W / 2 - photo.axisX) * S, y: AB.groundY - (photo.groundY - H / 2) * S };
+const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 180000 }); await c.initialize();
-const call = async (t, a) => { for (let i = 0; i < 6; i++) { try { const r = JSON.parse(toolText(await c.callTool(t, a))); if (r.success === false) throw new Error(JSON.stringify(r)); return r; } catch (err) { if (!/ENOTFOUND|DNS/.test(err.message)) throw err; await new Promise(r => setTimeout(r, 8000)); } } throw new Error('DNS'); };
-const hier = await call('get_artboard_hierarchy', { artboardId: boardId, depth: 12 });
-const byName = new Map(); const parentOf = new Map();
-for (const o of hier.objects ?? []) { if (!byName.has(o.name)) byName.set(o.name, o); for (const ch of o.children ?? []) parentOf.set(ch, o.id); }
-const ids = new Set(); for (const o of hier.objects ?? []) { let cur = o.id; while (cur && cur !== boardId) { ids.add(cur); cur = parentOf.get(cur); } }
-const keys = {}; for (const id of ids) keys[id] = [13, 14]; const vals = (await call('query_property_values', { propertyKeys: keys })).values ?? {};
-const worldOf = (id) => { let x = 0, y = 0, cur = id; while (cur && cur !== boardId) { x += vals[cur]?.['13'] ?? 0; y += vals[cur]?.['14'] ?? 0; cur = parentOf.get(cur); } return { x, y }; };
-const WORLD = { x: 518, y: 494 }, SCALE = 93.25;
-const upload = async (name) => (await call('upload_asset', { file: `data:image/png;name=${name}.png;base64,${readFileSync(`${S}/photo_layers/${name}.png`).toString('base64')}`, name })).asset.id;
-const place = async (assetId, parentName, name) => { const parent = byName.get(parentName); const pw = worldOf(parent.id);
-  const inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId, parentId: parent.id, name: `${name}_img`, x: WORLD.x - pw.x, y: WORLD.y - pw.y } } });
-  await call('set_property_values', { propertyValues: { [inst.imageId]: { 13: WORLD.x - pw.x, 14: WORLD.y - pw.y, 16: SCALE, 17: SCALE } } });
-  await call('reorder_objects', { operations: [{ objectId: inst.imageId, order: 'sendToFront' }] }); return inst.imageId; };
-const list = process.argv.slice(2); // name:parent
-for (const item of list) { const [name, parentName] = item.split(':');
-  if (PL[name]) { await call('delete_objects', { objectIds: [PL[name].instance, PL[name].asset].filter(Boolean) }); }
-  const asset = await upload(name); const instance = await place(asset, parentName, name);
-  PL[name] = { asset, instance, parent: byName.get(parentName).id, world: WORLD, scalePercent: SCALE }; console.log(name, '->', asset, instance); }
-const hide = (process.env.HIDE ?? '').split(',').filter(Boolean); const pv = {};
-for (const n of hide) { pv[parts[n].instance] = { 18: 0 }; parts[n].hidden = true; }
-if (hide.length) await call('set_property_values', { propertyValues: pv });
-writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n');
-const r = await c.callTool('capture_artboard', { artboardId: boardId, longEdge: 1024 });
-const img = (r.content ?? []).find(x => x.type === 'image'); if (img) writeFileSync(`${S}/${process.env.OUT ?? 'editor_v5.png'}`, Buffer.from(img.data, 'base64'));
-console.log('готово');
+const call = async (t, a) => { const r = JSON.parse(toolText(await c.callTool(t, a))); if (r.success === false) throw new Error(`${t}: ${JSON.stringify(r).slice(0, 300)}`); return r; };
+const file = state[String((await call('session_info', {})).activeFileId)];
+const hier = await call('get_artboard_hierarchy', { artboardId: file.artboards.Bear_Boy.id, depth: 14 });
+const byName = new Map(); for (const o of hier.objects ?? []) if (!byName.has(o.name)) byName.set(o.name, o);
+const rigId = byName.get('rig').id;
+for (const name of names) {
+  const L = file.layersV2[name]; const g = byName.get(L.group);
+  let asset;
+  const assets = (await call('assets_tool', { command: 'listAssets' })).assets ?? [];
+  if (!L.instance && assets.some((a) => a.id === L.asset && a.type === 'image')) {
+    asset = { id: L.asset };                                   // картинки нет, ассет уже загружен — берём его
+  } else {
+    if (L.instance) await call('delete_objects', { objectIds: [L.instance, L.asset].filter(Boolean) }).catch(() => {});
+    const b64 = readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', `${name}.png`)).toString('base64');
+    asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${b64}`, name: `bear_${name}` })).asset;
+  }
+  const inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId: asset.id, parentId: rigId, name: `${name}_img`, x: WORLD.x, y: WORLD.y } } });
+  await call('reparent_objects', { operations: [{ objectId: inst.imageId, newParentId: rigId, position: 'end' }] });
+  await call('set_property_values', { propertyValues: { [inst.imageId]: { 13: WORLD.x, 14: WORLD.y, 15: 0, 16: S * 100, 17: S * 100, 18: 100 } } });
+  for (let t = 0; ; t++) {
+    const rr = await call('reparent_objects', { operations: [{ objectId: inst.imageId, newParentId: g.id, position: 'end' }] });
+    if ((rr.reparented ?? []).some((x) => x.id === inst.imageId)) break;
+    if (t >= 4) throw new Error(`${name}: не переносится в ${L.group}`);
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  Object.assign(L, { asset: asset.id, instance: inst.imageId });
+  if (file.skins?.[name]) delete file.skins[name];
+  console.log(`${name}: ${inst.imageId} (ассет ${asset.id}) -> ${L.group}`);
+}
+writeFileSync(sp, JSON.stringify(state, null, 2) + '\n');

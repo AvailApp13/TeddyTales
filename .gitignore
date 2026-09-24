@@ -34,3 +34,5 @@ handoff/incoming/*
 # Сборка Rive CLI; сам .riv живёт в app/assets/rive/
 rive/bear/build/
 __pycache__/
+lab/_scrub.*
+rive/_keys_backup.json

@@ -146,8 +146,8 @@ def cols_of(mask, shrink):
 SHIRT_ALL = shirt | sleeve_l | sleeve_r          # толстовка целиком: её контур задаёт линию плеч
 ARMPIT = {'side_left': SLEEVE_L[6], 'side_right': SLEEVE_R[4]}   # нижние точки шва реглана (подмышки)
 EXTEND = {  # слой: [(кто закрывает, глубина px, ограничение формы)]
-    'shirt': [('hood', 50, 'shirt_hull'), ('face', 50, 'shirt_hull'), ('sleeve_left', 120, 'side_left'), ('sleeve_right', 120, 'side_right'),
-              ('paw_left', 120, 'side_left'), ('paw_right', 120, 'side_right')],
+    # под рукавами корпус не продолжается: рукава — сетки с весами, у шва держатся за туловище (D14)
+    'shirt': [('hood', 50, 'shirt_hull'), ('face', 50, 'shirt_hull')],
     'sleeve_left': [('hood', 40, 'shirt_hull')], 'sleeve_right': [('hood', 40, 'shirt_hull')],
     'paw_left': [('sleeve_left', 45, None)], 'paw_right': [('sleeve_right', 45, None)],
     'foot_left': [('shorts', 60, 'cols')], 'foot_right': [('shorts', 60, 'cols')],
@@ -202,9 +202,21 @@ for i, n in enumerate(order, 1):
     # полоса захода под соседей красится цветом самого слоя (ближайший свой пиксель),
     # иначе при движении по краю мелькнёт чужой цвет (голубая кайма у лап и т.п.)
     own_op = own & (A >= 250)
+    # кромка у соседних слоёв (2 px) несёт смешанный цвет соседа (голубой+бежевый на
+    # подгибе рукава над лапой и т.п.). В движении кромка уходит от соседа и светится —
+    # красим её цветом своего слоя, взятым в 4 px от шва.
+    others = (full > 0) & (full != i) & (A >= 250)
+    near = own & ndimage.binary_dilation(others, iterations=2)
+    if near.any():
+        core = own_op & ~ndimage.binary_dilation(others, iterations=4)
+        if core.any():
+            _, (cy_, cx_) = ndimage.distance_transform_edt(~core, return_indices=True)
+            clean_i = clean.copy(); clean_i[near] = clean[cy_[near], cx_[near]]
+        else: clean_i = clean
+    else: clean_i = clean
     _, (oy, ox) = ndimage.distance_transform_edt(~own_op, return_indices=True)
-    col = clean.copy(); alpha = A * m; strip = m & ~own
-    col[strip] = clean[oy[strip], ox[strip]]
+    col = clean_i.copy(); alpha = A * m; strip = m & ~own
+    col[strip] = clean_i[oy[strip], ox[strip]]
     ext_all = np.zeros((H, W), bool)
     for cover_name, depth, rule in EXTEND.get(n, []):
         cover = (full == order.index(cover_name) + 1) & (A >= 250) & ~m
@@ -212,7 +224,7 @@ for i, n in enumerate(order, 1):
     if ext_all.any():
         col = inpaint_into(col, own_op, ext_all)
         # внешний край продолжения (там, где за ним фон, а не сам слой) смягчается на ~1.5 px
-        soft = ndimage.gaussian_filter((ext_all | own_op).astype(np.float64), 1.2)
+        soft = ndimage.gaussian_filter((ext_all | m).astype(np.float64), 1.2)
         alpha = np.where(ext_all, np.clip(soft * 2 - 0.5, 0, 1) * 255, alpha); m = m | ext_all
         meta.setdefault('extensions', {})[n] = int(ext_all.sum())
     layer = np.dstack([col, alpha]).clip(0, 255).astype(np.uint8)
@@ -224,6 +236,21 @@ for i, n in enumerate(order, 1):
     L = layer.astype(np.float64); la = L[..., 3:4] / 255
     recon[..., :3] = L[..., :3] * la + recon[..., :3] * (1 - la)
     recon[..., 3:4] = la * 255 + recon[..., 3:4] * (1 - la)
+# --- подкладка капюшона (D14): при наклоне головы обод капюшона держится за
+# плечи, а лицо поворачивается; открывшееся место внутри капюшона закрывает
+# подкладка. Слой лежит за лицом, в покое целиком закрыт лицом и капюшоном.
+hood_own = (full == order.index('hood') + 1) & (A >= 250)
+hole = biggest(ndimage.binary_fill_holes(hood_own | (full == order.index('face') + 1)) & ~hood_own)   # только проём лица, без пустот в острие
+lining = ndimage.binary_dilation(hole, iterations=18) & (hole | hood_own)
+lin_col = inpaint_into(clean.copy(), hood_own, lining & ~hood_own)
+lin_a = np.where(lining, 255.0, 0.0)
+layer = np.dstack([lin_col, lin_a]).clip(0, 255).astype(np.uint8); layer[~lining, :3] = 0
+Image.fromarray(layer, 'RGBA').save(f'{out}/hood_lining.png', optimize=True)
+ys, xs = np.where(lining)
+meta['layers']['hood_lining'] = {'bbox': [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1], 'px': int(lining.sum()), 'hidden': True}
+fi = meta['order_back_to_front'].index('ears')
+meta['order_back_to_front'].insert(fi, 'hood_lining')
+
 alpha_err = np.abs(recon[..., 3] - A).max()
 meta['check'] = {'alphaMaxError': float(alpha_err)}
 json.dump(meta, open(f'{out}/layers.json', 'w'), indent=1, ensure_ascii=False)

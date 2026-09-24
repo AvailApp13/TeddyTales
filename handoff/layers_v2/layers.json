@@ -15,6 +15,7 @@
   "paw_right",
   "sleeve_left",
   "sleeve_right",
+  "hood_lining",
   "ears",
   "face",
   "hood"
@@ -118,12 +119,22 @@
     1128
    ],
    "px": 175129
+  },
+  "hood_lining": {
+   "bbox": [
+    399,
+    636,
+    956,
+    1118
+   ],
+   "px": 202450,
+   "hidden": true
   }
  },
  "extensions": {
   "foot_left": 13365,
   "foot_right": 13032,
-  "shirt": 35206,
+  "shirt": 15022,
   "paw_left": 8215,
   "paw_right": 7929,
   "sleeve_left": 2

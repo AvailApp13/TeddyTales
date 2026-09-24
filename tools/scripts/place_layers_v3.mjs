@@ -31,7 +31,7 @@ const [W, H] = meta.size;
 const WORLD = { x: AB.w / 2 + (W / 2 - photo.axisX) * S, y: AB.groundY - (photo.groundY - H / 2) * S };
 const GROUP = { ears: 'head', face: 'head', hood: 'outfit_head', shirt: 'outfit_body', shorts: 'outfit_feet',
   paw_left: 'hand_left', paw_right: 'hand_right', sleeve_left: 'sleeve_left', sleeve_right: 'sleeve_right',
-  foot_left: 'foot_left', foot_right: 'foot_right' };
+  foot_left: 'foot_left', foot_right: 'foot_right', hood_lining: 'hood_lining' };
 const deg = (r) => (r * 180) / Math.PI;
 
 const statePath = resolve(repoRoot, 'rive', 'editor_state.json');
@@ -76,9 +76,8 @@ if (boneBack.length) await call('reparent_objects', { operations: boneBack.map((
 
 // ---- 2. группы рукавов (id берём из иерархии по имени: ответ group_editor его не отдаёт)
 ({ byName, parentOf, byId } = await hierarchy());
-for (const side of ['left', 'right']) {
-  const name = `sleeve_${side}`;
-  const sh = plan[`root_arm_${side}`];
+const NEW_GROUPS = { sleeve_left: plan.root_arm_left, sleeve_right: plan.root_arm_right, hood_lining: { x: plan.root_body.x, y: plan.root_body.y } };
+for (const [name, sh] of Object.entries(NEW_GROUPS)) {
   if (!id(name)) { await call('group_editor', { name, parentId: rigId, x: sh.x, y: sh.y }); ({ byName, parentOf, byId } = await hierarchy()); }
   const gid = id(name); if (!gid) throw new Error(`группа ${name} не создалась`);
   if (parentOf.get(gid) === board.id || parentOf.get(gid) === undefined) await call('reparent_objects', { operations: [{ objectId: gid, newParentId: rigId, position: 'end' }] });
@@ -89,6 +88,7 @@ for (const side of ['left', 'right']) {
 
 // ---- 3. слои
 const old = Object.values(file.layersV2 ?? {}).flatMap((p) => [p.instance, p.asset]).filter(Boolean);
+file.skins = {};   // сетки удаляются вместе с картинками — перепривязать: scripts/skin_layers.mjs
 if (old.length) { await call('delete_objects', { objectIds: old }).catch((e) => console.log('удаление:', e.message)); console.log('удалено прежних объектов:', old.length); }
 file.layersV2 = {};
 for (const name of meta.order_back_to_front) {
@@ -98,7 +98,13 @@ for (const name of meta.order_back_to_front) {
   const inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId: asset.id, parentId: rigId, name: `${name}_img`, x: WORLD.x, y: WORLD.y } } });
   if (parentOf.get(inst.imageId) !== rigId) await call('reparent_objects', { operations: [{ objectId: inst.imageId, newParentId: rigId, position: 'end' }] });
   await call('set_property_values', { propertyValues: { [inst.imageId]: { 13: WORLD.x, 14: WORLD.y, 16: S * 100, 17: S * 100, 15: 0, 18: 100 } } });
-  await call('reparent_objects', { operations: [{ objectId: inst.imageId, newParentId: g.id, position: 'end' }] });
+  // редактор иногда молча не переносит только что созданную картинку — повторяем до успеха
+  for (let tries = 0; ; tries++) {
+    const rr = await call('reparent_objects', { operations: [{ objectId: inst.imageId, newParentId: g.id, position: 'end' }] });
+    if ((rr.reparented ?? []).some((x) => x.id === inst.imageId)) break;
+    if (tries >= 4) throw new Error(`${name}: не переносится в ${GROUP[name]}: ${JSON.stringify(rr)}`);
+    await new Promise((r) => setTimeout(r, 1500));
+  }
   file.layersV2[name] = { asset: asset.id, instance: inst.imageId, group: GROUP[name], groupId: g.id };
   console.log(`${name.padEnd(12)} -> ${GROUP[name]} (${inst.imageId})`);
 }

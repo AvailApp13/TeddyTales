@@ -588,68 +588,74 @@
     },
     "layersV2": {
       "foot_left": {
-        "asset": "0-420",
-        "instance": "0-421",
+        "asset": "0-21712",
+        "instance": "0-21713",
         "group": "foot_left",
         "groupId": "0-325"
       },
       "foot_right": {
-        "asset": "0-422",
-        "instance": "0-423",
+        "asset": "0-21714",
+        "instance": "0-21715",
         "group": "foot_right",
         "groupId": "0-335"
       },
       "shorts": {
-        "asset": "0-424",
-        "instance": "0-425",
+        "asset": "0-21716",
+        "instance": "0-21717",
         "group": "outfit_feet",
         "groupId": "0-248"
       },
       "shirt": {
-        "asset": "0-426",
-        "instance": "0-427",
+        "asset": "0-21718",
+        "instance": "0-21719",
         "group": "outfit_body",
         "groupId": "0-247"
       },
       "paw_left": {
-        "asset": "0-428",
-        "instance": "0-429",
+        "asset": "0-21720",
+        "instance": "0-21721",
         "group": "hand_left",
         "groupId": "0-260"
       },
       "paw_right": {
-        "asset": "0-430",
-        "instance": "0-431",
+        "asset": "0-21722",
+        "instance": "0-21723",
         "group": "hand_right",
         "groupId": "0-295"
       },
       "sleeve_left": {
-        "asset": "0-432",
-        "instance": "0-433",
+        "asset": "0-21724",
+        "instance": "0-21725",
         "group": "sleeve_left",
         "groupId": "0-396"
       },
       "sleeve_right": {
-        "asset": "0-434",
-        "instance": "0-435",
+        "asset": "0-21726",
+        "instance": "0-21727",
         "group": "sleeve_right",
         "groupId": "0-397"
       },
+      "hood_lining": {
+        "asset": "0-49807",
+        "instance": "0-49808",
+        "group": "hood_lining",
+        "groupId": "0-21711"
+      },
       "ears": {
-        "asset": "0-436",
-        "instance": "0-437",
+        "asset": "0-21730",
+        "instance": "0-21731",
         "group": "head",
         "groupId": "0-99"
       },
       "face": {
-        "asset": "0-438",
-        "instance": "0-439",
+        "asset": "0-21732",
+        "instance": "0-21733",
         "group": "head",
         "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-440",
-        "instance": "0-441",
+        "asset": "0-21734",
+        "instance": "0-21735",
         "group": "outfit_head",
         "groupId": "0-226"
       }
@@ -758,6 +764,65 @@
       "fps": 60,
       "frames": 600,
       "keys": 114
+    },
+    "skins": {
+      "sleeve_left": {
+        "meshId": "0-21736",
+        "bones": [
+          "root",
+          "root_arm_left"
+        ],
+        "vertices": 1272
+      },
+      "sleeve_right": {
+        "meshId": "0-24288",
+        "bones": [
+          "root",
+          "root_arm_right"
+        ],
+        "vertices": 1242
+      },
+      "hood": {
+        "meshId": "0-26780",
+        "bones": [
+          "root",
+          "root_body"
+        ],
+        "vertices": 3271
+      },
+      "shorts": {
+        "meshId": "0-33330",
+        "bones": [
+          "root",
+          "root_leg_left",
+          "root_leg_right"
+        ],
+        "vertices": 3228
+      },
+      "paw_left": {
+        "meshId": "0-39795",
+        "bones": [
+          "root",
+          "root_arm_left"
+        ],
+        "vertices": 1739
+      },
+      "paw_right": {
+        "meshId": "0-43281",
+        "bones": [
+          "root",
+          "root_arm_right"
+        ],
+        "vertices": 1423
+      },
+      "face": {
+        "meshId": "0-46135",
+        "bones": [
+          "root",
+          "root_body"
+        ],
+        "vertices": 1831
+      }
     }
   }
 }

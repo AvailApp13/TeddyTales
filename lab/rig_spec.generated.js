@@ -743,6 +743,13 @@ export const rigSpec = {
       "parent": "root_arm_right",
       "artistLayer": true,
       "optional": false
+    },
+    {
+      "name": "hood_lining",
+      "kind": "art",
+      "parent": "root",
+      "artistLayer": true,
+      "optional": false
     }
   ],
   "simulation": {
