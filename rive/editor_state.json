@@ -751,6 +751,13 @@
         "length": 131,
         "angleDeg": 77
       }
-    ]
+    ],
+    "demoMoves": {
+      "animationId": "0-6",
+      "name": "demo_moves",
+      "fps": 60,
+      "frames": 600,
+      "keys": 114
+    }
   }
 }
