@@ -2386,6 +2386,18 @@ abstract class AppLocalizations {
   /// **'Язык · КП 16.1'**
   String get settingsSectionLanguage;
 
+  /// No description provided for @settingsSectionSound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук'**
+  String get settingsSectionSound;
+
+  /// No description provided for @settingsSounds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звуки в игре'**
+  String get settingsSounds;
+
   /// No description provided for @settingsSectionNotifications.
   ///
   /// In ru, this message translates to:

@@ -1271,6 +1271,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionLanguage => '语言 · КП 16.1';
 
   @override
+  String get settingsSectionSound => '声音';
+
+  @override
+  String get settingsSounds => '游戏音效';
+
+  @override
   String get settingsSectionNotifications => '通知 · КП 13.1、13.2';
 
   @override

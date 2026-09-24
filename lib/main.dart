@@ -15,6 +15,7 @@ import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
 import 'alarm/wake_alarm.dart';
+import 'audio/sounds.dart';
 import 'game/test_stubs.dart';
 import 'widgets/rename_pet_dialog.dart';
 import 'screens/dev_screen.dart';
@@ -47,6 +48,9 @@ Future<void> main() async {
 
   // Напоминания не обязательны для игры: не поднялись — она работает молча.
   final notifications = await NotificationService.create();
+
+  // Звуки грузятся в фоне: игра не ждёт их, первый «блоп» — ждёт.
+  Sounds.start();
 
   // Замедленная съёмка для проверки плавности по кадрам: сборка с
   // --dart-define=SLOW_MOTION=8 идёт в восемь раз медленнее, и моргание в

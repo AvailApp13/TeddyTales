@@ -765,6 +765,8 @@
   "settingsQuietHours": "Тихие часы 22:00 — 8:00",
   "settingsSectionAccount": "Аккаунт",
   "settingsSectionLanguage": "Язык · КП 16.1",
+  "settingsSectionSound": "Звук",
+  "settingsSounds": "Звуки в игре",
   "settingsSectionNotifications": "Уведомления · КП 13.1, 13.2",
   "settingsSignOut": "Выйти",
   "settingsSignOutConfirmBody": "Прогресс останется на сервере и вернётся при следующем входе.",

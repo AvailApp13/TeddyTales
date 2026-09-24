@@ -1356,6 +1356,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsSectionLanguage => 'Язык · КП 16.1';
 
   @override
+  String get settingsSectionSound => 'Звук';
+
+  @override
+  String get settingsSounds => 'Звуки в игре';
+
+  @override
   String get settingsSectionNotifications => 'Уведомления · КП 13.1, 13.2';
 
   @override

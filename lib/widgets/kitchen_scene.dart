@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 
+import '../audio/sounds.dart';
 import '../bear/bear_rig_spec.dart' show BearTrait;
 import '../game/room_kind.dart';
 import '../theme/app_colors.dart';
@@ -470,6 +471,7 @@ class _KitchenSceneState extends State<KitchenScene>
 
   @override
   void dispose() {
+    if (_eating) Sounds.stop(Sfx.chew);
     _run++;
     _earNext?.cancel();
     _pictures.dispose();
@@ -854,6 +856,9 @@ class _KitchenSceneState extends State<KitchenScene>
       // Довольное лицо с первым кусочком: глаза-улыбка под веком, пока
       // жуёт, и до конца еды.
       _at(run, 1150, () => _eyesTo(run, _Eyes.happy));
+      // Жевание записано ровно под [_eatMotion]: укусы и жевки совпадают
+      // с челюстью.
+      Sounds.play(Sfx.chew);
       await _play(run, 6.7, _eatMotion);
       switch (mood) {
         case KitchenMood.happy:
@@ -869,7 +874,8 @@ class _KitchenSceneState extends State<KitchenScene>
       await _wait(run, 500);
       await _idle(run);
     } on _Stopped {
-      // Сценарий сменили.
+      // Сценарий сменили — жевание обрывается вместе с ним.
+      Sounds.stop(Sfx.chew);
     } finally {
       _eating = false;
     }

@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../audio/sounds.dart';
+
 /// Пузырь сытости: съеденное блюдо превращается в пузырик с «+N», тот
 /// змейкой летит вверх, бьётся о кружок «Еда» и лопается — кружок
 /// подпрыгивает, проценты бегут вверх, а монеты делают «у-у»: кнопка
@@ -234,6 +236,7 @@ class _Burst {
   Offset? origin;
   bool impacted = false;
   bool born = false;
+  bool flew = false;
   double lastSpark = 0;
 }
 
@@ -342,6 +345,11 @@ class _FeedBurstLayerState extends State<FeedBurstLayer>
     final t = _clock;
     _countFrom = t;
     if (!l.isSettle) {
+      // «Пуньк», перелив процентов и звон монет — всё в момент удара.
+      Sounds.play(Sfx.bubblePop);
+      if (l.gain > 0) Sounds.play(Sfx.fill);
+      if (l.coins < 0) Sounds.play(Sfx.coinsSpend);
+      if (l.coins > 0) Sounds.play(Sfx.coinsEarn);
       _bumpFrom = t;
       if (l.coins != 0) {
         _coinFrom = t;
@@ -445,6 +453,11 @@ class _FeedBurstLayerState extends State<FeedBurstLayer>
       if (!b.born) {
         b.born = true;
         _birthSparkles(b.origin!, t);
+        Sounds.play(Sfx.bubbleBorn);
+      }
+      if (!b.flew && bt >= FeedBurstLayer.birth) {
+        b.flew = true;
+        Sounds.play(Sfx.bubbleFly);
       }
       final flying =
           bt > FeedBurstLayer.birth &&

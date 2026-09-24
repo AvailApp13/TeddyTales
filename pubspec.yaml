@@ -29,6 +29,7 @@ dependencies:
   flutter_local_notifications: ^22.3.1
   timezone: ^0.11.1
   video_player: ^2.14.0
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +62,8 @@ flutter:
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.
     # Исходники и нарезка листов лежат рядом, но в приложение не попадают.
     - assets/shop/items/
+    # Звуки кухни (24.09): синтезированы tool/make_sfx.py.
+    - assets/audio/
 
   fonts:
     # Семейство обязано называться буквально «Roboto».

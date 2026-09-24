@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../audio/sounds.dart';
 import '../bear/bear.dart';
 import '../game/game_state.dart';
 import '../l10n/l10n.dart';
@@ -106,6 +107,22 @@ class SettingsScreen extends StatelessWidget {
                               onChanged: game.setQuietHours,
                             ),
                           ],
+                        ),
+
+                        // Звуки кухни (24.09). Выбор хранится на телефоне, а не
+                        // в [GameState]: это настройка устройства, как громкость.
+                        _SectionTitle(l10n.settingsSectionSound),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: Sounds.on,
+                          builder: (context, on, _) => _TogglesCard(
+                            rows: [
+                              _ToggleRow(
+                                title: l10n.settingsSounds,
+                                value: on,
+                                onChanged: Sounds.setOn,
+                              ),
+                            ],
+                          ),
                         ),
 
                         if (onSignOut != null) ...[

@@ -419,6 +419,8 @@
   "settingsQuietHours": "Quiet hours 22:00 — 8:00",
   "settingsSectionAccount": "Account",
   "settingsSectionLanguage": "Language · КП 16.1",
+  "settingsSectionSound": "Sound",
+  "settingsSounds": "Game sounds",
   "settingsSectionNotifications": "Notifications · КП 13.1, 13.2",
   "settingsSignOut": "Sign out",
   "settingsSignOutConfirmBody": "Your progress stays on the server and comes back next time you sign in.",

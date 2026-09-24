@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/audio/sounds.dart';
 import 'package:teddy_tales/widgets/feed_burst.dart';
 
 /// Пузырь сытости (заказчик 24.09): съеденное летит пузырьком с «+N» в
@@ -146,6 +147,38 @@ void main() {
     await tester.pump();
     expect(fx.food(food), 87);
     expect(fx.coins(coins), 5002);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('звуки: «блоп», свист в полёте, у кружка «пуньк», перелив и '
+      'монеты', (tester) async {
+    final played = <Sfx>[];
+    Sounds.debugOnPlay = played.add;
+    addTearDown(() => Sounds.debugOnPlay = null);
+    await pump(tester);
+    eat();
+    await tester.pump();
+    await run(tester, 0.1);
+    expect(played, [Sfx.bubbleBorn]);
+    await run(tester, FeedBurstLayer.birth);
+    expect(played, [Sfx.bubbleBorn, Sfx.bubbleFly]);
+    await run(tester, FeedBurstLayer.impactAt - FeedBurstLayer.birth);
+    expect(played, [
+      Sfx.bubbleBorn,
+      Sfx.bubbleFly,
+      Sfx.bubblePop,
+      Sfx.fill,
+      Sfx.coinsSpend,
+    ]);
+
+    // Звук выключен в настройках — тишина.
+    played.clear();
+    Sounds.on.value = false;
+    addTearDown(() => Sounds.on.value = true);
+    eat();
+    await tester.pump();
+    await run(tester, 3);
+    expect(played, isEmpty);
     await tester.pumpWidget(const SizedBox());
   });
 

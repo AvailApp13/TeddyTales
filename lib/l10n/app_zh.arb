@@ -419,6 +419,8 @@
   "settingsQuietHours": "免打扰时段 22:00 — 8:00",
   "settingsSectionAccount": "账号",
   "settingsSectionLanguage": "语言 · КП 16.1",
+  "settingsSectionSound": "声音",
+  "settingsSounds": "游戏音效",
   "settingsSectionNotifications": "通知 · КП 13.1、13.2",
   "settingsSignOut": "退出登录",
   "settingsSignOutConfirmBody": "进度保存在服务器，下次登录会恢复。",

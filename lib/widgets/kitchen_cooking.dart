@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../audio/sounds.dart';
 import '../game/food.dart';
 import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
@@ -209,6 +210,7 @@ class _KitchenCookingState extends State<KitchenCooking>
       }
     });
     _hop.forward(from: 0);
+    Sounds.play(right ? Sfx.cookRight : Sfx.cookWrong);
     if (right) {
       _fill.animateTo(
         _step.toDouble(),
