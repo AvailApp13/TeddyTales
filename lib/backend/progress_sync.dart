@@ -23,6 +23,11 @@ import 'progress_store.dart';
 /// уровень начислялись бы дважды: один раз серверной функцией обучения,
 /// второй — как обычное событие ухода.
 ///
+/// Кормление `feed` — тоже: мишку кормят блюдом за монеты или рецептом, и
+/// сытость с деньгами считают их собственные функции (feed_dish,
+/// complete_recipe). Отправь его ещё и как уход — сытость прибавилась бы
+/// дважды, а монеты за «покормил» пришли бы вдобавок к списанию за блюдо.
+///
 /// ## Когда сети нет
 ///
 /// Действие кладётся в очередь и ждёт. Показатели при этом двигает локальный
@@ -41,6 +46,8 @@ class ProgressSync {
   }) {
     bear.onAction = _onAction;
     game.onBuy = buy;
+    game.onDish = dish;
+    game.onRecipe = (recipeId) => unawaited(recipe(recipeId));
     game.onLevelDone = (categoryId, level) =>
         unawaited(levelDone(categoryId, level));
     game.onPlace = (itemId, {required placed}) =>
@@ -55,8 +62,9 @@ class ProgressSync {
   /// положить свежий снимок в кеш на устройстве.
   final void Function(PetSnapshot snapshot)? onSnapshot;
 
-  /// Действия, которые не доехали.
-  final List<BearAction> _queue = [];
+  /// Действия, которые не доехали. Уход, блюда и рецепты — в одной
+  /// очереди: все они двигают одну и ту же сытость.
+  final List<_Job> _queue = [];
 
   /// Отправка идёт по одному: два одновременных вызова серверных функций
   /// пересчитывают показатели от одного и того же замера, и эффект второго
@@ -72,7 +80,6 @@ class ProgressSync {
 
   /// Действия, которые сервер учитывает как уход (КП 6.4).
   static const Set<BearAction> _careActions = {
-    BearAction.feed,
     BearAction.wash,
     BearAction.sleep,
     BearAction.wake,
@@ -84,9 +91,26 @@ class ProgressSync {
 
   void _onAction(BearAction action) {
     if (!_careActions.contains(action)) return;
-    _queue.add(action);
-    unawaited(_drain());
+    _enqueue(_Job((store) => store.recordCare(action)));
   }
+
+  Future<bool> _enqueue(_Job job) {
+    _queue.add(job);
+    unawaited(_drain());
+    return job.done.future;
+  }
+
+  /// Блюдо за монеты (КП 8.2). `true` — сервер списал и накормил, `false`
+  /// — отказал (не хватило монет, нет такого блюда).
+  ///
+  /// Без связи ответ ждёт, пока блюдо не уедет: монеты уже списаны на
+  /// экране, и вернуть их можно только по отказу сервера.
+  Future<bool> dish(String dishId) =>
+      _enqueue(_Job((store) => store.feedDish(dishId)));
+
+  /// Приготовленный рецепт (КП 8.4): награду начисляет сервер.
+  Future<bool> recipe(String recipeId) =>
+      _enqueue(_Job((store) => store.completeRecipe(recipeId)));
 
   /// Сообщает о пройденном уровне обучения (КП 9.5).
   ///
@@ -143,10 +167,20 @@ class ProgressSync {
     _sending = true;
     try {
       while (_queue.isNotEmpty) {
-        final action = _queue.first;
+        final job = _queue.first;
         try {
-          _apply(await store.recordCare(action));
+          _apply(await job.send(store));
+          job.done.complete(true);
         } on Object catch (error) {
+          if (error is ProgressStoreException && error.isRejected) {
+            // Сервер ответил отказом. Повтор не поможет — убираем и идём
+            // дальше, а тот, кто ждёт ответа, откатит своё.
+            debugPrint('[TeddyTales] сервер отказал: $error');
+            _online = true;
+            job.done.complete(false);
+            _queue.removeAt(0);
+            continue;
+          }
           // Не вышло — оставляем действие в очереди и прекращаем попытки.
           // Повторять сразу бессмысленно: если сети нет, она не появится
           // за миллисекунду, а очередь при этом разрослась бы до сотен
@@ -182,8 +216,18 @@ class ProgressSync {
   void dispose() {
     bear.onAction = null;
     game.onBuy = null;
+    game.onDish = null;
+    game.onRecipe = null;
     game.onLevelDone = null;
     game.onPlace = null;
     _queue.clear();
   }
+}
+
+/// Одно отправление на сервер и тот, кто ждёт его итога.
+class _Job {
+  _Job(this.send);
+
+  final Future<PetSnapshot> Function(ProgressStore store) send;
+  final Completer<bool> done = Completer<bool>();
 }

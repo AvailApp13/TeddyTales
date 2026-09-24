@@ -136,4 +136,58 @@ void main() {
       expect(outfit.bottomId, 0);
     });
   });
+
+  group('Личный кабинет (миграция 0010)', () {
+    Map<String, dynamic> accountJson() => {
+      ..._serverJson(),
+      'pet': {
+        ...(_serverJson()['pet'] as Map<String, dynamic>)..remove('coins'),
+        'named_at': '2026-09-24T09:00:00+00:00',
+      },
+      'account': {
+        'coins': 5000,
+        'locale': 'ru',
+        'player_age': 6,
+        'quiet_hours': true,
+        'created_at': '2026-09-24T08:00:00+00:00',
+        'is_anonymous': false,
+        'email': null,
+        'providers': ['anonymous', 'apple'],
+      },
+    };
+
+    test('кошелёк берётся с кабинета, а не с мишки', () {
+      final snapshot = PetSnapshot.fromJson(accountJson());
+      expect(snapshot.profile.coins, 5000);
+    });
+
+    test('способ входа и возраст читаются', () {
+      final account = PetSnapshot.fromJson(accountJson()).account;
+      expect(account.isAnonymous, isFalse);
+      expect(account.hasApple, isTrue);
+      expect(account.playerAge, 6);
+      expect(account.email, isNull);
+    });
+
+    test('без кабинета в ответе — анонимный, кошелёк с мишки', () {
+      final snapshot = PetSnapshot.fromJson(_serverJson());
+      expect(snapshot.account.isAnonymous, isTrue);
+      expect(snapshot.profile.coins, 1250);
+    });
+
+    test('имя не давали — приложение спросит', () {
+      final json = accountJson();
+      json['pet'] = {
+        ...json['pet'] as Map<String, dynamic>,
+        'name': PetProfile.defaultName,
+        'named_at': null,
+      };
+      expect(PetSnapshot.fromJson(json).named, isFalse);
+    });
+
+    test('имя, данное до отметки named_at, считается', () {
+      final json = _serverJson();
+      expect(PetSnapshot.fromJson(json).named, isTrue);
+    });
+  });
 }

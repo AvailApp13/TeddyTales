@@ -7,6 +7,7 @@ import 'package:teddy_tales/bear/bear_action.dart';
 import 'package:teddy_tales/bear/bear_controller.dart';
 import 'package:teddy_tales/bear/bear_state.dart';
 import 'package:teddy_tales/bear/bear_stats.dart';
+import 'package:teddy_tales/game/food.dart';
 import 'package:teddy_tales/game/game_state.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 
@@ -17,6 +18,11 @@ class _FakeStore implements ProgressStore {
   _FakeStore({this.failing = false});
 
   bool failing;
+
+  /// Отказ сервера кодом (например, TT402), а не обрыв связи.
+  String? rejectWith;
+  final List<String> dishes = [];
+  final List<String> recipes = [];
   final List<BearAction> care = [];
   final List<String> bought = [];
   final List<(String, int)> levels = [];
@@ -46,6 +52,25 @@ class _FakeStore implements ProgressStore {
     bought.add(itemId);
     return answer;
   }
+
+  @override
+  Future<PetSnapshot> feedDish(String dishId) async {
+    if (failing) throw const ProgressStoreException('нет сети');
+    final code = rejectWith;
+    if (code != null) throw ProgressStoreException('отказ', code: code);
+    dishes.add(dishId);
+    return answer;
+  }
+
+  @override
+  Future<PetSnapshot> completeRecipe(String recipeId) async {
+    if (failing) throw const ProgressStoreException('нет сети');
+    recipes.add(recipeId);
+    return answer;
+  }
+
+  @override
+  Future<void> deleteAccount() async {}
 
   @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
@@ -101,9 +126,9 @@ void main() {
   group('Отправка прогресса на сервер (КП 1.4)', () {
     test('действие ухода уходит, откуда бы его ни позвали', () async {
       final it = _setUp();
-      it.bear.feedBear();
+      it.bear.washBear();
       await Future<void>.delayed(Duration.zero);
-      expect(it.store.care, [BearAction.feed]);
+      expect(it.store.care, [BearAction.wash]);
     });
 
     test('тап по мишке тоже доезжает', () async {
@@ -115,15 +140,11 @@ void main() {
 
     test('порядок действий сохраняется', () async {
       final it = _setUp();
-      it.bear.feedBear();
+      it.bear.petBear();
       it.bear.washBear();
       it.bear.playWithBear();
       await Future<void>.delayed(const Duration(milliseconds: 10));
-      expect(it.store.care, [
-        BearAction.feed,
-        BearAction.wash,
-        BearAction.play,
-      ]);
+      expect(it.store.care, [BearAction.pet, BearAction.wash, BearAction.play]);
     });
 
     test('обучение идёт своим путём, а не как уход', () async {
@@ -139,7 +160,7 @@ void main() {
     test('ответ сервера главнее локального состояния', () async {
       final it = _setUp();
       it.store.answer = _snapshotWith(coins: 999);
-      it.bear.feedBear();
+      it.bear.washBear();
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       expect(it.game.coins, 999, reason: 'баланс берётся у сервера');
@@ -150,7 +171,7 @@ void main() {
   group('Когда сети нет (КП 1.1)', () {
     test('действия не теряются, а ждут в очереди', () async {
       final it = _setUp(failing: true);
-      it.bear.feedBear();
+      it.bear.petBear();
       it.bear.washBear();
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
@@ -161,21 +182,21 @@ void main() {
 
     test('накопленное уходит, когда связь вернулась', () async {
       final it = _setUp(failing: true);
-      it.bear.feedBear();
+      it.bear.washBear();
       it.bear.playWithBear();
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       it.store.failing = false;
       await it.sync.retry();
 
-      expect(it.store.care, [BearAction.feed, BearAction.play]);
+      expect(it.store.care, [BearAction.wash, BearAction.play]);
       expect(it.sync.pendingCount, 0);
       expect(it.sync.isOnline, isTrue);
     });
 
     test('очередь не растёт бесконечно от одной неудачи', () async {
       final it = _setUp(failing: true);
-      it.bear.feedBear();
+      it.bear.washBear();
       await Future<void>.delayed(const Duration(milliseconds: 20));
       // Одна попытка — одно действие в очереди, без лавины повторов.
       expect(it.sync.pendingCount, 1);
@@ -213,10 +234,66 @@ void main() {
     });
   });
 
+  group('Еда из кошелька кабинета (КП 8.2, 8.4)', () {
+    test('блюдо уходит на сервер, а не как «покормил»', () async {
+      final it = _setUp();
+      it.game.earn(100);
+      expect(it.game.feedWithDish(FoodCatalog.dishes.first), isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.store.dishes, [FoodCatalog.dishes.first.id]);
+      // Иначе сытость прибавилась бы дважды, а за «покормил» пришли бы
+      // монеты вдобавок к списанию.
+      expect(it.store.care, isEmpty);
+      expect(it.game.coins, 100, reason: 'баланс — с сервера');
+    });
+
+    test('рецепт уходит на сервер, награду считает он', () async {
+      final it = _setUp();
+      it.game.completeRecipe(FoodCatalog.recipes.first);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.store.recipes, [FoodCatalog.recipes.first.id]);
+      expect(it.store.care, isEmpty);
+    });
+
+    test('отказ сервера возвращает монеты и не держит очередь', () async {
+      final it = _setUp();
+      it.game.earn(50);
+      it.store.rejectWith = ProgressStoreException.notEnoughCoins;
+
+      it.game.feedWithDish(FoodCatalog.dishes.first);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.game.coins, 50, reason: 'монеты вернулись');
+      expect(it.sync.pendingCount, 0);
+      expect(it.sync.isOnline, isTrue, reason: 'отказ — не обрыв связи');
+
+      it.bear.washBear();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(it.store.care, [BearAction.wash], reason: 'очередь идёт дальше');
+    });
+
+    test('без сети блюдо ждёт в очереди, монеты не возвращаются', () async {
+      final it = _setUp(failing: true);
+      it.game.earn(50);
+      final price = FoodCatalog.dishes.first.price;
+
+      it.game.feedWithDish(FoodCatalog.dishes.first);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(it.sync.pendingCount, 1);
+      expect(it.game.coins, 50 - price);
+
+      it.store.failing = false;
+      await it.sync.retry();
+      expect(it.store.dishes, [FoodCatalog.dishes.first.id]);
+    });
+  });
+
   test('после dispose мост больше не слушает', () async {
     final it = _setUp();
     it.sync.dispose();
-    it.bear.feedBear();
+    it.bear.washBear();
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(it.store.care, isEmpty);
   });
@@ -235,7 +312,7 @@ void main() {
       onSnapshot: saved.add,
     );
 
-    bear.feedBear();
+    bear.washBear();
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(saved, hasLength(1));
   });

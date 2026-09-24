@@ -69,32 +69,24 @@ class SupabaseStore implements ProgressStore {
 
   @override
   Future<PetSnapshot> load() async {
-    // Идентификатор питомца заранее неизвестен: его создаёт сервер при
-    // первом входе (КП 2.4). Поэтому сначала спрашиваем, какой питомец наш,
-    // и только потом берём снимок.
-    final id = _petId ?? await _findPet();
-    return _snapshot('pet_snapshot', {'p_pet_id': id});
+    // Вход в личный кабинет. Сервер сам находит мишку того, кто вошёл
+    // (кабинет создаётся вместе с учётной записью, КП 2.4), отмечает визит
+    // и отдаёт снимок. Отсюда же берётся id мишки для всех действий.
+    final snapshot = await _snapshot('open_account', const {});
+    if (snapshot.petId.isEmpty) {
+      throw const ProgressStoreException(
+        'open_account вернула снимок без мишки',
+      );
+    }
+    _petId = snapshot.petId;
+    return snapshot;
   }
 
-  Future<String> _findPet() async {
-    try {
-      final rows = await _client.from('pets').select('id').limit(1);
-      if (rows.isEmpty) {
-        throw const ProgressStoreException(
-          'У игрока нет питомца: триггер регистрации не отработал',
-        );
-      }
-      return _petId = rows.first['id'].toString();
-    } on ProgressStoreException {
-      rethrow;
-    } on Object catch (error) {
-      throw ProgressStoreException('Не удалось найти питомца', cause: error);
-    }
-  }
+  Future<String> _pet() async => _petId ?? (await load()).petId;
 
   @override
   Future<PetSnapshot> recordCare(BearAction action) async {
-    final id = _petId ?? await _findPet();
+    final id = await _pet();
     return _snapshot('record_care', {
       'p_pet_id': id,
       'p_action': _actionName(action),
@@ -103,13 +95,28 @@ class SupabaseStore implements ProgressStore {
 
   @override
   Future<PetSnapshot> buyItem(String itemId) async {
-    final id = _petId ?? await _findPet();
+    final id = await _pet();
     return _snapshot('buy_item', {'p_pet_id': id, 'p_item_id': itemId});
   }
 
   @override
+  Future<PetSnapshot> feedDish(String dishId) async {
+    final id = await _pet();
+    return _snapshot('feed_dish', {'p_pet_id': id, 'p_dish_id': dishId});
+  }
+
+  @override
+  Future<PetSnapshot> completeRecipe(String recipeId) async {
+    final id = await _pet();
+    return _snapshot('complete_recipe', {
+      'p_pet_id': id,
+      'p_recipe_id': recipeId,
+    });
+  }
+
+  @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
-    final id = _petId ?? await _findPet();
+    final id = await _pet();
     return _snapshot('complete_level', {
       'p_pet_id': id,
       'p_category': categoryId,
@@ -119,7 +126,7 @@ class SupabaseStore implements ProgressStore {
 
   @override
   Future<PetSnapshot> renamePet(String name, {String locale = 'ru'}) async {
-    final id = _petId ?? await _findPet();
+    final id = await _pet();
     return _snapshot('rename_pet', {
       'p_pet_id': id,
       'p_name': name,
@@ -167,6 +174,25 @@ class SupabaseStore implements ProgressStore {
     }
   }
 
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      await _client.rpc<dynamic>('delete_my_account');
+    } on PostgrestException catch (error) {
+      throw ProgressStoreException(
+        'Не удалось удалить аккаунт',
+        cause: error,
+        code: error.code,
+      );
+    } on Object catch (error) {
+      throw ProgressStoreException('Не удалось удалить аккаунт', cause: error);
+    }
+    _petId = null;
+    // Учётной записи больше нет, её сессия недействительна. Выходим только
+    // здесь, на устройстве: на сервере выходить уже некому.
+    await _client.auth.signOut(scope: SignOutScope.local);
+  }
+
   Future<PetSnapshot> _snapshot(
     String function,
     Map<String, dynamic> params,
@@ -179,6 +205,14 @@ class SupabaseStore implements ProgressStore {
       return PetSnapshot.fromJson(Map<String, dynamic>.from(result));
     } on ProgressStoreException {
       rethrow;
+    } on PostgrestException catch (error) {
+      // Сервер ответил отказом: код TT402 «не хватает монет» и прочие —
+      // по ним приложение отличает отказ от обрыва связи.
+      throw ProgressStoreException(
+        'Ошибка вызова $function',
+        cause: error,
+        code: error.code,
+      );
     } on Object catch (error) {
       throw ProgressStoreException('Ошибка вызова $function', cause: error);
     }

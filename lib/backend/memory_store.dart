@@ -68,6 +68,18 @@ class MemoryStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> feedDish(String dishId) async {
+    // Как и покупка: списать монеты может только сервер (КП 11.1). Мост
+    // держит блюдо в очереди и отправит, когда появится связь.
+    throw const ProgressStoreException('Еда за монеты — только при связи');
+  }
+
+  @override
+  Future<PetSnapshot> completeRecipe(String recipeId) async {
+    throw const ProgressStoreException('Награда за рецепт — только при связи');
+  }
+
+  @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
     pending.add(BearAction.learn);
     return _snapshot;
@@ -96,17 +108,14 @@ class MemoryStore implements ProgressStore {
     } else {
       next.remove(itemId);
     }
-    _snapshot = PetSnapshot(
-      petId: _snapshot.petId,
-      profile: _snapshot.profile,
-      state: _snapshot.state,
-      inventory: _snapshot.inventory,
-      placed: next,
-      eduProgress: _snapshot.eduProgress,
-      serverTime: _snapshot.serverTime,
-    );
+    _snapshot = _snapshot.copyWith(placed: next);
   }
 
   @override
   Future<Map<String, dynamic>> config() async => _config;
+
+  @override
+  Future<void> deleteAccount() async {
+    throw const ProgressStoreException('Аккаунт удаляется только при связи');
+  }
 }

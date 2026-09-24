@@ -88,7 +88,16 @@ class LocalCache {
       'zodiac': s.profile.zodiac?.name,
       'stage': s.state.stage.name,
       'trait': s.state.trait.name,
+      // Точного момента кеш не знает — важно лишь, что имя уже давали.
+      'named_at': s.named ? s.serverTime.toIso8601String() : null,
+    },
+    'account': {
       'coins': s.profile.coins,
+      'is_anonymous': s.account.isAnonymous,
+      'email': s.account.email,
+      'providers': s.account.providers.toList(),
+      'player_age': s.account.playerAge,
+      'locale': s.account.locale,
     },
     'stats': {
       'food': s.state.stats.food,

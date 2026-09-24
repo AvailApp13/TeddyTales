@@ -25,6 +25,8 @@ class PetSnapshot {
     required this.placed,
     required this.eduProgress,
     required this.serverTime,
+    this.account = const AccountInfo(),
+    this.named = true,
   });
 
   /// Идентификатор питомца — с ним ходят все действия ухода и покупки.
@@ -47,19 +49,30 @@ class PetSnapshot {
   /// доверяя ни тем ни другим по отдельности.
   final DateTime serverTime;
 
+  /// Личный кабинет: как вошли, возраст, язык (КП 1.2, 1.3).
+  final AccountInfo account;
+
+  /// Дал ли человек имя малышу (КП 2.3). `false` — приложение спросит имя
+  /// на первом запуске.
+  final bool named;
+
   factory PetSnapshot.fromJson(Map<String, dynamic> json) {
     final pet = _map(json['pet']);
     final stats = _map(json['stats']);
     final outfit = _map(json['outfit']);
+    // Кошелёк живёт на кабинете (миграция 0010). Старый ответ сервера и
+    // старый кеш держали его на мишке — их тоже читаем.
+    final account = _map(json['account']);
+    final name = _name(pet['name']);
 
     return PetSnapshot(
       petId: pet['id']?.toString() ?? '',
       profile: PetProfile(
-        name: _name(pet['name']),
+        name: name,
         birthAt: _time(pet['birth_at']) ?? DateTime.now(),
         skin: _skin(pet['skin']),
         zodiac: _zodiac(pet['zodiac']),
-        coins: _int(pet['coins']),
+        coins: _int(account['coins'] ?? pet['coins']),
       ),
       state: BearState(
         stats: BearCareStats(
@@ -85,8 +98,32 @@ class PetSnapshot {
       placed: _ids(json['placed']),
       eduProgress: _progress(json['edu']),
       serverTime: _time(json['server_time']) ?? DateTime.now(),
+      account: AccountInfo(
+        isAnonymous: account['is_anonymous'] != false,
+        email: _text(account['email']),
+        providers: _ids(account['providers']),
+        playerAge: _intOrNull(account['player_age']),
+        locale: _text(account['locale']),
+      ),
+      // Имя, данное до появления отметки named_at, тоже считается: такой
+      // человек уже называл малыша в профиле, спрашивать заново незачем.
+      named: pet['named_at'] != null || name != PetProfile.defaultName,
     );
   }
+
+  /// Тот же снимок с другим кабинетом — для кеша и тестов.
+  PetSnapshot copyWith({Set<String>? placed, AccountInfo? account}) =>
+      PetSnapshot(
+        petId: petId,
+        profile: profile,
+        state: state,
+        inventory: inventory,
+        placed: placed ?? this.placed,
+        eduProgress: eduProgress,
+        serverTime: serverTime,
+        account: account ?? this.account,
+        named: named,
+      );
 
   // --- Разбор отдельных значений ------------------------------------------
   //
@@ -101,6 +138,13 @@ class PetSnapshot {
     final name = value?.toString().trim() ?? '';
     return name.isEmpty ? PetProfile.defaultName : name;
   }
+
+  static String? _text(Object? value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+
+  static int? _intOrNull(Object? value) => value == null ? null : _int(value);
 
   static int _int(Object? value) => switch (value) {
     int v => v,
@@ -156,4 +200,35 @@ class PetSnapshot {
         entry.key.toString(): _int(entry.value),
     };
   }
+}
+
+/// Личный кабинет пользователя: как он вошёл и что о себе сказал.
+///
+/// Учётная запись создаётся сама при первом запуске, без регистрации
+/// (КП 1.2), — это [isAnonymous]. Вход через Apple, Google или почту
+/// привязывается к ней же (КП 1.3): id не меняется, кошелёк и мишка
+/// остаются, а в [providers] появляется способ входа.
+class AccountInfo {
+  const AccountInfo({
+    this.isAnonymous = true,
+    this.email,
+    this.providers = const {},
+    this.playerAge,
+    this.locale,
+  });
+
+  /// Без привязанного входа: удалишь приложение — потеряешь мишку.
+  final bool isAnonymous;
+
+  final String? email;
+
+  /// Способы входа: `apple`, `google`, `email`… Пусто — только анонимный.
+  final Set<String> providers;
+
+  /// Возраст игрока (КП 9.1). `null` — ещё не спрашивали.
+  final int? playerAge;
+
+  final String? locale;
+
+  bool get hasApple => providers.contains('apple');
 }

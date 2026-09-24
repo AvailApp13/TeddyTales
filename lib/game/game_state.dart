@@ -78,6 +78,12 @@ class GameState extends ChangeNotifier {
   /// Покупка предмета. Возвращает `false`, если сервер отказал.
   Future<bool> Function(String itemId)? onBuy;
 
+  /// Блюдо за монеты. Возвращает `false`, если сервер отказал.
+  Future<bool> Function(String dishId)? onDish;
+
+  /// Приготовленный рецепт: награду начисляет сервер.
+  void Function(String recipeId)? onRecipe;
+
   /// Пройденный уровень обучения.
   void Function(String categoryId, int level)? onLevelDone;
 
@@ -215,9 +221,19 @@ class GameState extends ChangeNotifier {
   // --- Еда (КП 8) ----------------------------------------------------------
 
   /// Покормить готовым блюдом. Возвращает `false`, если не хватило монет.
+  ///
+  /// Как и покупка предмета: на экране списывается сразу, чтобы мишка ел
+  /// без задержки, а сервер списывает с кошелька кабинета по своей цене и
+  /// присылает настоящий баланс (КП 11.1).
   bool feedWithDish(Dish dish) {
     if (!spend(dish.price)) return false;
     bear.feedBear(amount: dish.foodGain);
+
+    onDish?.call(dish.id).then((ok) {
+      // Сервер отказал — монеты возвращаем. Сытость поправит следующий
+      // ответ сервера: съеденное на экране не отбираем.
+      if (!ok) earn(dish.price);
+    });
     return true;
   }
 
@@ -225,6 +241,7 @@ class GameState extends ChangeNotifier {
   void completeRecipe(Recipe recipe) {
     earn(recipe.reward);
     bear.feedBear(amount: recipe.foodGain);
+    onRecipe?.call(recipe.id);
   }
 
   // --- Магазин (КП 11.2) ---------------------------------------------------
