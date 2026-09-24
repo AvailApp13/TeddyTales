@@ -97,6 +97,12 @@
       "topic": "туловище на root, голова на root_body",
       "text": "По сетке кость root идёт от таза к груди (туловище), root_body продолжает её от груди к центру головы (шея и голова). Поэтому туловище (body, body_base) и одежда на теле (outfit_body, outfit_feet, outfit_accessory) привязаны к root, как и руки с ногами (D2); к root_body — только голова, тень головы и шарф. Иначе наклон головы поворачивал бы вокруг груди толстовку и шорты, а руки оставались бы на месте. ТЗ 3.1 писало body под root_body; расхождение — из-за того, что в ТЗ root_body был туловищем, а голова висела на нём узлом.",
       "status": "derived"
+    },
+    {
+      "id": "D13",
+      "topic": "рукава на костях рук, ось головы на шее",
+      "text": "Толстовка разрезана по шву реглана: корпус (outfit_body) остаётся на root, рукава sleeve_left/sleeve_right висят на root_arm_* вместе с лапами — при подъёме руки рукав идёт с лапой, лапа не отрывается от рукава. Оси плеч стоят на верхней точке шва. Кость root заканчивается на шее (низ головы + 0.03 роста), а не на груди: голова поворачивается вокруг шеи, щель под подбородком при наклоне не открывается. Под капюшоном, рукавами и шортами слои продолжаются скрыто (tools/scripts/split_full_bear.py, EXTEND).",
+      "status": "derived"
     }
   ],
   "artboard": {
@@ -608,6 +614,22 @@
       "parent": "leg_right",
       "status": "derived",
       "origin": "reference",
+      "artistLayer": true
+    },
+    {
+      "name": "sleeve_left",
+      "kind": "art",
+      "parent": "root_arm_left",
+      "status": "derived",
+      "origin": "reference+D13",
+      "artistLayer": true
+    },
+    {
+      "name": "sleeve_right",
+      "kind": "art",
+      "parent": "root_arm_right",
+      "status": "derived",
+      "origin": "reference+D13",
       "artistLayer": true
     }
   ],

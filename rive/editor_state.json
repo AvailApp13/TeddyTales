@@ -587,57 +587,69 @@
       }
     },
     "layersV2": {
-      "ears": {
-        "asset": "0-354",
-        "instance": "0-355",
-        "group": "head",
-        "groupId": "0-99"
-      },
-      "face": {
-        "asset": "0-356",
-        "instance": "0-357",
-        "group": "head",
-        "groupId": "0-99"
-      },
       "foot_left": {
-        "asset": "0-358",
-        "instance": "0-359",
+        "asset": "0-420",
+        "instance": "0-421",
         "group": "foot_left",
         "groupId": "0-325"
       },
       "foot_right": {
-        "asset": "0-360",
-        "instance": "0-361",
+        "asset": "0-422",
+        "instance": "0-423",
         "group": "foot_right",
         "groupId": "0-335"
       },
       "shorts": {
-        "asset": "0-362",
-        "instance": "0-363",
+        "asset": "0-424",
+        "instance": "0-425",
         "group": "outfit_feet",
         "groupId": "0-248"
       },
+      "shirt": {
+        "asset": "0-426",
+        "instance": "0-427",
+        "group": "outfit_body",
+        "groupId": "0-247"
+      },
       "paw_left": {
-        "asset": "0-364",
-        "instance": "0-365",
+        "asset": "0-428",
+        "instance": "0-429",
         "group": "hand_left",
         "groupId": "0-260"
       },
       "paw_right": {
-        "asset": "0-366",
-        "instance": "0-367",
+        "asset": "0-430",
+        "instance": "0-431",
         "group": "hand_right",
         "groupId": "0-295"
       },
-      "shirt": {
-        "asset": "0-368",
-        "instance": "0-369",
-        "group": "outfit_body",
-        "groupId": "0-247"
+      "sleeve_left": {
+        "asset": "0-432",
+        "instance": "0-433",
+        "group": "sleeve_left",
+        "groupId": "0-396"
+      },
+      "sleeve_right": {
+        "asset": "0-434",
+        "instance": "0-435",
+        "group": "sleeve_right",
+        "groupId": "0-397"
+      },
+      "ears": {
+        "asset": "0-436",
+        "instance": "0-437",
+        "group": "head",
+        "groupId": "0-99"
+      },
+      "face": {
+        "asset": "0-438",
+        "instance": "0-439",
+        "group": "head",
+        "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-370",
-        "instance": "0-371",
+        "asset": "0-440",
+        "instance": "0-441",
         "group": "outfit_head",
         "groupId": "0-226"
       }
@@ -648,7 +660,8 @@
         "y": 480.5166984337449
       },
       "scalePercent": 62.982,
-      "source": "handoff/layers_v2"
+      "source": "handoff/layers_v2",
+      "step": "D13"
     },
     "bones": {
       "root": "0-390",
@@ -658,6 +671,86 @@
       "root_leg_left": "0-394",
       "root_leg_right": "0-395"
     },
-    "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind."
+    "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind.",
+    "bonesPlan": [
+      {
+        "name": "root",
+        "from": {
+          "x": 518,
+          "y": 812
+        },
+        "to": {
+          "x": 524,
+          "y": 554
+        },
+        "length": 258,
+        "angleDeg": -89
+      },
+      {
+        "name": "root_body",
+        "from": {
+          "x": 524,
+          "y": 554
+        },
+        "to": {
+          "x": 510,
+          "y": 378
+        },
+        "length": 176,
+        "angleDeg": -94
+      },
+      {
+        "name": "root_arm_left",
+        "from": {
+          "x": 381,
+          "y": 577
+        },
+        "to": {
+          "x": 280,
+          "y": 677
+        },
+        "length": 143,
+        "angleDeg": 135
+      },
+      {
+        "name": "root_arm_right",
+        "from": {
+          "x": 658,
+          "y": 577
+        },
+        "to": {
+          "x": 757,
+          "y": 673
+        },
+        "length": 139,
+        "angleDeg": 44
+      },
+      {
+        "name": "root_leg_left",
+        "from": {
+          "x": 453,
+          "y": 812
+        },
+        "to": {
+          "x": 428,
+          "y": 938
+        },
+        "length": 128,
+        "angleDeg": 101
+      },
+      {
+        "name": "root_leg_right",
+        "from": {
+          "x": 582,
+          "y": 812
+        },
+        "to": {
+          "x": 612,
+          "y": 939
+        },
+        "length": 131,
+        "angleDeg": 77
+      }
+    ]
   }
 }

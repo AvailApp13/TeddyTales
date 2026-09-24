@@ -315,7 +315,10 @@ export async function bindToBones({ call, log, rig, catalog, board }) {
   const front = async (names) => {
     for (const n of names) if (id(n)) await call('reorder_objects', { operations: [{ objectId: id(n), order: 'sendToFront' }] });
   };
-  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'root_arm_right', 'root_arm_left', 'outfit_body', 'outfit_accessory', 'root_body']);
+  // корпус толстовки — под руками: рукава (на костях рук) рисуются поверх него (D13)
+  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'outfit_body', 'outfit_accessory', 'root_arm_right', 'root_arm_left', 'root_body']);
+  await front(['forearm_left', 'sleeve_left']);
+  await front(['forearm_right', 'sleeve_right']);
   await front(['head_shadow', 'scarf_1', 'head']);
   log('порядок отрисовки выставлен');
   return ops.length;

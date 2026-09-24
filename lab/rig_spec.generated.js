@@ -729,6 +729,20 @@ export const rigSpec = {
       "parent": "leg_right",
       "artistLayer": true,
       "optional": false
+    },
+    {
+      "name": "sleeve_left",
+      "kind": "art",
+      "parent": "root_arm_left",
+      "artistLayer": true,
+      "optional": false
+    },
+    {
+      "name": "sleeve_right",
+      "kind": "art",
+      "parent": "root_arm_right",
+      "artistLayer": true,
+      "optional": false
     }
   ],
   "simulation": {

@@ -7,35 +7,19 @@
  "ycut_hood_shirt": 1071,
  "axisX": 677.0,
  "order_back_to_front": [
-  "ears",
-  "face",
   "foot_left",
   "foot_right",
   "shorts",
+  "shirt",
   "paw_left",
   "paw_right",
-  "shirt",
+  "sleeve_left",
+  "sleeve_right",
+  "ears",
+  "face",
   "hood"
  ],
  "layers": {
-  "ears": {
-   "bbox": [
-    337,
-    546,
-    1013,
-    776
-   ],
-   "px": 47006
-  },
-  "face": {
-   "bbox": [
-    417,
-    654,
-    938,
-    1100
-   ],
-   "px": 177132
-  },
   "foot_left": {
    "bbox": [
     401,
@@ -63,6 +47,15 @@
    ],
    "px": 119145
   },
+  "shirt": {
+   "bbox": [
+    359,
+    1072,
+    1013,
+    1520
+   ],
+   "px": 208387
+  },
   "paw_left": {
    "bbox": [
     213,
@@ -70,25 +63,52 @@
     376,
     1405
    ],
-   "px": 15157
+   "px": 15288
   },
   "paw_right": {
    "bbox": [
-    1001,
+    997,
     1223,
     1146,
     1399
    ],
-   "px": 14291
+   "px": 14425
   },
-  "shirt": {
+  "sleeve_left": {
    "bbox": [
     234,
+    1071,
+    470,
+    1356
+   ],
+   "px": 39028
+  },
+  "sleeve_right": {
+   "bbox": [
+    885,
     1068,
     1127,
-    1520
+    1356
    ],
-   "px": 287253
+   "px": 39573
+  },
+  "ears": {
+   "bbox": [
+    337,
+    546,
+    1013,
+    776
+   ],
+   "px": 47006
+  },
+  "face": {
+   "bbox": [
+    417,
+    654,
+    938,
+    1100
+   ],
+   "px": 177132
   },
   "hood": {
    "bbox": [
@@ -100,7 +120,15 @@
    "px": 175129
   }
  },
+ "extensions": {
+  "foot_left": 13365,
+  "foot_right": 13032,
+  "shirt": 35206,
+  "paw_left": 8215,
+  "paw_right": 7929,
+  "sleeve_left": 2
+ },
  "check": {
-  "alphaMaxError": 4.901960784313729
+  "alphaMaxError": 5.0
  }
 }

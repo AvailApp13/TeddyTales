@@ -7,14 +7,21 @@
 
     python3 tools/scripts/split_full_bear.py <full.png> <out_dir>
 
-Слои (сзади вперёд): ears, face, feet_left, feet_right, shorts, paw_left,
-paw_right, shirt, hood. Каждый пиксель принадлежит ровно одному слою; задний
+Слои (сзади вперёд, как в редакторе): foot_left, foot_right, shorts, shirt
+(корпус толстовки), paw_left, paw_right, sleeve_left, sleeve_right, ears, face, hood. Рукава
+отделены по шву реглана и висят на костях рук вместе с лапами. Каждый пиксель принадлежит ровно одному слою; задний
 слой дополнительно заходит на 3 px под передних соседей, чтобы при сглаживании
 на стыке не просвечивал фон.
 
 Светлый ореол по краю меха (от белого фона генерации) снимается: цвет
 полупрозрачных пикселей края заменяется цветом ближайшего непрозрачного
 пикселя (decontaminate), прозрачность волосков сохраняется.
+
+Скрытые продолжения (EXTEND): корпус толстовки продолжается под капюшоном и
+рукавами, рукава — под капюшоном, лапы — под рукавами, стопы — под шортами.
+Заполняются инпейнтингом (OpenCV Telea) только из пикселей самого слоя, зона
+ограничена формой части (над краем / в контуре корпуса / в колонках штанины). В покое закрыты
+передними слоями; открываются, когда кости поворачивают части.
 """
 import json, sys
 import numpy as np
@@ -76,12 +83,29 @@ xs_face = np.where(face.any(0))[0]; axis = (xs_face.min() + xs_face.max()) / 2
 ears = fur & ~face & (Y < ycut) & ~ndimage.binary_fill_holes(blue | face)
 paws = fur & ~face & (Y >= ycut) & (Y < ymid_shorts)
 feet = fur & ~face & (Y >= ymid_shorts)
+# рукава реглана: отделяются от корпуса по шву (многоугольники в координатах кадра,
+# сняты по шву на bear_boy_v2_full.png). Оси костей плеч стоят на верхней точке шва.
+from PIL import ImageDraw
+def poly_mask(pts):
+    im_ = Image.new('L', (W, H), 0); ImageDraw.Draw(im_).polygon(pts, fill=1); return np.asarray(im_).astype(bool)
+# подгиб рукава внизу доходит до ~1350: нижняя граница опущена, иначе полоска
+# подгиба остаётся в корпусе и торчит «хвостиком», когда рука поднята
+SLEEVE_L = [(200, 1040), (472, 1040), (466, 1110), (452, 1180), (440, 1240), (425, 1285), (410, 1318), (404, 1352), (200, 1352)]
+SLEEVE_R = [(880, 1040), (1160, 1040), (1160, 1352), (966, 1352), (960, 1320), (940, 1290), (918, 1250), (905, 1190), (893, 1120)]
+sleeve_l = shirt & poly_mask(SLEEVE_L)
+sleeve_r = shirt & poly_mask(SLEEVE_R)
+shirt = shirt & ~sleeve_l & ~sleeve_r
+
+# порядок = порядок отрисовки в редакторе (сзади вперёд): ноги, шорты, корпус
+# толстовки (кость root), руки с рукавами (кости рук), голова (кость root_body)
 regions = {
-    'ears': ears, 'face': face,
     'foot_left': biggest(feet & (X < axis)), 'foot_right': biggest(feet & (X >= axis)),
     'shorts': yellow,
+    'shirt': shirt,
     'paw_left': biggest(paws & (X < axis)), 'paw_right': biggest(paws & (X >= axis)),
-    'shirt': shirt, 'hood': hood,
+    'sleeve_left': sleeve_l, 'sleeve_right': sleeve_r,
+    'ears': ears, 'face': face,
+    'hood': hood,
 }
 order = list(regions)  # сзади вперёд
 
@@ -103,6 +127,72 @@ for i, n in enumerate(order, 1):
     border = (full == i) & ndimage.binary_dilation(front, iterations=5)
     full[border] = full[fy[border], fx[border]]
 
+# --- скрытые продолжения: что откроется при движении. Слой продолжается под
+# переднего соседа; цвет восстанавливается инпейнтингом (OpenCV Telea) только
+# из пикселей самого слоя. Зона ограничена формой части, чтобы при повороте
+# продолжение не вылезало за силуэт. В покое продолжение закрыто.
+import cv2
+def above(mask, depth):
+    """Пиксели не выше depth над верхним краем маски в той же колонке."""
+    top = np.where(mask.any(0), mask.argmax(0), H + 10)
+    return (Y >= top[None, :] - depth) & (Y < top[None, :] + 5)
+def hull(mask, grow):
+    pts = np.argwhere(mask)[:, ::-1].astype(np.int32)
+    h = cv2.convexHull(pts); hm = np.zeros((H, W), np.uint8); cv2.fillConvexPoly(hm, h, 1)
+    return ndimage.binary_dilation(hm.astype(bool), iterations=grow)
+def cols_of(mask, shrink):
+    xs = np.where(mask.any(0))[0]; lo, hi = xs.min() + shrink, xs.max() - shrink
+    return (X >= lo) & (X <= hi)
+SHIRT_ALL = shirt | sleeve_l | sleeve_r          # толстовка целиком: её контур задаёт линию плеч
+ARMPIT = {'side_left': SLEEVE_L[6], 'side_right': SLEEVE_R[4]}   # нижние точки шва реглана (подмышки)
+EXTEND = {  # слой: [(кто закрывает, глубина px, ограничение формы)]
+    'shirt': [('hood', 50, 'shirt_hull'), ('face', 50, 'shirt_hull'), ('sleeve_left', 120, 'side_left'), ('sleeve_right', 120, 'side_right'),
+              ('paw_left', 120, 'side_left'), ('paw_right', 120, 'side_right')],
+    'sleeve_left': [('hood', 40, 'shirt_hull')], 'sleeve_right': [('hood', 40, 'shirt_hull')],
+    'paw_left': [('sleeve_left', 45, None)], 'paw_right': [('sleeve_right', 45, None)],
+    'foot_left': [('shorts', 60, 'cols')], 'foot_right': [('shorts', 60, 'cols')],
+}
+def extension(own_op, cover, depth, rule):
+    dist = ndimage.distance_transform_edt(~own_op)
+    ext = cover & (dist <= depth) & ~own_op
+    if rule == 'above': ext &= above(own_op, depth)
+    elif rule == 'hull': ext &= hull(own_op, 6)
+    elif rule == 'shirt_hull': ext &= hull(SHIRT_ALL, 2) & above(own_op, depth)
+    elif rule in ('side_left', 'side_right'):
+        # бок корпуса под рукавом: от подмышки прямо вверх (у толстовки бок вертикальный),
+        # а не диагональ контура — иначе при подъёме руки торчит острый клин
+        # линия бока: от подмышки (ax, ay) вниз к внешнему углу подола (hx, hy);
+        # выше подмышки — вертикаль. Заполняется всё, что между линией бока и корпусом.
+        ax_, ay_ = ARMPIT[rule]
+        rows = np.where(own_op.any(1))[0]; hy = int(rows.max() - 25)
+        xs_h = np.where(own_op[hy])[0]; hx = xs_h.min() if rule == 'side_left' else xs_h.max()
+        t = np.clip((Y - ay_) / max(hy - ay_, 1), 0, 1)
+        line_x = ax_ + (hx - ax_) * t
+        side = (X >= line_x) if rule == 'side_left' else (X <= line_x)
+        ext &= hull(own_op | ext, 2) & side
+    elif rule == 'cols': ext &= cols_of(own_op, 12)
+    return ext
+def texture_detail(own_op, shape, size=72):
+    """Высокочастотная фактура слоя (трикотаж, ворс), замощённая на shape."""
+    dist = ndimage.distance_transform_edt(own_op)
+    cy, cx = np.unravel_index(np.argmax(dist), dist.shape)
+    r = int(min(size // 2, max(dist.max() - 2, 4)))
+    patch = clean[cy - r:cy + r, cx - r:cx + r].astype(np.float64)
+    hp = patch - ndimage.gaussian_filter(patch, (3, 3, 0))
+    tile = np.concatenate([hp, hp[::-1]], 0); tile = np.concatenate([tile, tile[:, ::-1]], 1)   # зеркальное замощение без швов
+    reps = (shape[0] // tile.shape[0] + 2, shape[1] // tile.shape[1] + 2, 1)
+    return np.tile(tile, reps)[:shape[0], :shape[1]]
+
+def inpaint_into(col, own_op, ext):
+    ys, xs = np.where(ext | ndimage.binary_dilation(ext, iterations=20) & own_op)
+    if len(ys) == 0: return col
+    y0, y1, x0, x1 = max(ys.min() - 4, 0), min(ys.max() + 5, H), max(xs.min() - 4, 0), min(xs.max() + 5, W)
+    crop = col[y0:y1, x0:x1].clip(0, 255).astype(np.uint8)
+    known = own_op[y0:y1, x0:x1]
+    fill = cv2.inpaint(np.ascontiguousarray(crop[..., ::-1]), (~known).astype(np.uint8), 9, cv2.INPAINT_TELEA)[..., ::-1]
+    fill = fill.astype(np.float64) + texture_detail(own_op, fill.shape[:2])
+    e = ext[y0:y1, x0:x1]; out = col.copy(); sub = out[y0:y1, x0:x1]; sub[e] = fill[e]; return out
+
 meta = {'source': src, 'size': [W, H], 'ycut_hood_shirt': int(ycut), 'axisX': float(axis), 'order_back_to_front': order, 'layers': {}}
 recon = np.zeros((H, W, 4))
 for i, n in enumerate(order, 1):
@@ -111,10 +201,21 @@ for i, n in enumerate(order, 1):
     m = own | (ndimage.binary_dilation(own, iterations=3) & front & (A >= 250))  # заход только под непрозрачное
     # полоса захода под соседей красится цветом самого слоя (ближайший свой пиксель),
     # иначе при движении по краю мелькнёт чужой цвет (голубая кайма у лап и т.п.)
-    _, (oy, ox) = ndimage.distance_transform_edt(~(own & (A >= 250)), return_indices=True)
-    col = clean.copy(); strip = m & ~own
+    own_op = own & (A >= 250)
+    _, (oy, ox) = ndimage.distance_transform_edt(~own_op, return_indices=True)
+    col = clean.copy(); alpha = A * m; strip = m & ~own
     col[strip] = clean[oy[strip], ox[strip]]
-    layer = np.dstack([col, A * m]).clip(0, 255).astype(np.uint8)
+    ext_all = np.zeros((H, W), bool)
+    for cover_name, depth, rule in EXTEND.get(n, []):
+        cover = (full == order.index(cover_name) + 1) & (A >= 250) & ~m
+        ext_all |= extension(own_op, cover, depth, rule)
+    if ext_all.any():
+        col = inpaint_into(col, own_op, ext_all)
+        # внешний край продолжения (там, где за ним фон, а не сам слой) смягчается на ~1.5 px
+        soft = ndimage.gaussian_filter((ext_all | own_op).astype(np.float64), 1.2)
+        alpha = np.where(ext_all, np.clip(soft * 2 - 0.5, 0, 1) * 255, alpha); m = m | ext_all
+        meta.setdefault('extensions', {})[n] = int(ext_all.sum())
+    layer = np.dstack([col, alpha]).clip(0, 255).astype(np.uint8)
     layer[~m, :3] = 0
     Image.fromarray(layer, 'RGBA').save(f'{out}/{n}.png', optimize=True)
     ys, xs = np.where(own)

@@ -123,12 +123,13 @@ function mid(a, b, w, h) {
  */
 export function boneLayout() {
   const hips = { x: (G.hip_left.x + G.hip_right.x) / 2, y: (G.hip_left.y + G.hip_right.y) / 2 };
-  const chest = { x: G.body.x, y: G.body.y - G.body.h * 0.2 };
+  // шея: чуть ниже шара головы (D13) — голова поворачивается вокруг шеи, а не груди
+  const neck = { x: G.body.x, y: G.head.y + G.head.h / 2 + 0.03 * SCALE };
   const headC = { x: G.head.x, y: G.head.y };
   const seg = (from, to) => ({ x: from.x, y: from.y, length: Math.hypot(to.x - from.x, to.y - from.y), angle: Math.atan2(to.y - from.y, to.x - from.x) });
   return {
-    root: seg(hips, chest),                         // таз -> грудь, вверх
-    root_body: seg(chest, headC),                   // грудь -> центр головы
+    root: seg(hips, neck),                          // таз -> шея, вверх
+    root_body: seg(neck, headC),                    // шея -> центр головы
     root_arm_left: seg(G.shoulder_left, G.hand_left),
     root_arm_right: seg(G.shoulder_right, G.hand_right),
     root_leg_left: seg(G.hip_left, G.foot_left),
