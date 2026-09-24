@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../bear/bear_action.dart';
 import '../bear/bear_controller.dart';
+import '../backend/pet_snapshot.dart' show AccountInfo;
 import '../bear/bear_state.dart';
 import 'food.dart';
 import 'pet_profile.dart';
@@ -28,7 +29,9 @@ class GameState extends ChangeNotifier {
     Set<String>? owned,
     Set<String>? placed,
     int walletFloor = kTestWallet,
-  }) : // Не «выдать 5000», а «поднять до 5000»: если на счету больше —
+    AccountInfo? account,
+  }) : _account = account,
+       // Не «выдать 5000», а «поднять до 5000»: если на счету больше —
        // например, заработано или пришло с сервера, — отнимать нельзя.
        //
        // Порог берётся параметром, а не константой напрямую: тесты про
@@ -117,6 +120,16 @@ class GameState extends ChangeNotifier {
   /// у приложения пока нет вообще, с его появлением возраст уедет туда же,
   /// куда кошелёк и прогресс.
   int? _playerAge;
+
+  /// Личный кабинет: как вошёл, почта, когда зарегистрирован. `null` —
+  /// сервера не было (офлайн), показывать нечего.
+  AccountInfo? get account => _account;
+  AccountInfo? _account;
+
+  void setAccount(AccountInfo account) {
+    _account = account;
+    notifyListeners();
+  }
 
   PetProfile get profile => _profile;
   int get coins => _profile.coins;

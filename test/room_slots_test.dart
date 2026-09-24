@@ -163,7 +163,10 @@ void main() {
       // серединой.
       expect(box.top + box.height / 2, closeTo(slot.y, 0.001));
       // И она выше стыка стены с полом.
-      expect(box.top + box.height, lessThan(cameraOf(RoomKind.nursery).floorLine));
+      expect(
+        box.top + box.height,
+        lessThan(cameraOf(RoomKind.nursery).floorLine),
+      );
     });
 
     test('вещь не всюду помещается', () {
@@ -234,11 +237,7 @@ void main() {
       game.placeInSlot('nursery.floor_left', 'armchair');
 
       // Без первой записи на сервере остались бы стоять обе вещи разом.
-      expect(events, [
-        ('bed', true),
-        ('bed', false),
-        ('armchair', true),
-      ]);
+      expect(events, [('bed', true), ('bed', false), ('armchair', true)]);
     });
   });
 }

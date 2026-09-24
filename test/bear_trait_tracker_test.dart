@@ -19,7 +19,9 @@ void spread(
     tracker.record(
       action,
       at: t0.add(
-        Duration(microseconds: span.inMicroseconds * i ~/ (count == 1 ? 1 : count)),
+        Duration(
+          microseconds: span.inMicroseconds * i ~/ (count == 1 ? 1 : count),
+        ),
       ),
     );
   }
@@ -38,10 +40,7 @@ void main() {
       final tracker = BearTraitTracker();
       spread(tracker, BearAction.play, 20, const Duration(hours: 20));
 
-      expect(
-        tracker.resolve(now: t0.add(const Duration(hours: 20))),
-        isNull,
-      );
+      expect(tracker.resolve(now: t0.add(const Duration(hours: 20))), isNull);
     });
 
     test('пустая история — ничего не определено', () {
@@ -89,32 +88,40 @@ void main() {
       final tracker = BearTraitTracker();
       spread(tracker, BearAction.play, 24, const Duration(days: 3));
 
-      expect(tracker.resolve(now: t0.add(const Duration(days: 3))),
-          BearTrait.active);
+      expect(
+        tracker.resolve(now: t0.add(const Duration(days: 3))),
+        BearTrait.active,
+      );
     });
 
     test('много учимся → любознательный', () {
       final tracker = BearTraitTracker();
       spread(tracker, BearAction.learn, 24, const Duration(days: 3));
 
-      expect(tracker.resolve(now: t0.add(const Duration(days: 3))),
-          BearTrait.curious);
+      expect(
+        tracker.resolve(now: t0.add(const Duration(days: 3))),
+        BearTrait.curious,
+      );
     });
 
     test('много гладим → ласковый', () {
       final tracker = BearTraitTracker();
       spread(tracker, BearAction.pet, 24, const Duration(days: 3));
 
-      expect(tracker.resolve(now: t0.add(const Duration(days: 3))),
-          BearTrait.affectionate);
+      expect(
+        tracker.resolve(now: t0.add(const Duration(days: 3))),
+        BearTrait.affectionate,
+      );
     });
 
     test('много укладываем → спокойный', () {
       final tracker = BearTraitTracker();
       spread(tracker, BearAction.sleep, 24, const Duration(days: 3));
 
-      expect(tracker.resolve(now: t0.add(const Duration(days: 3))),
-          BearTrait.calm);
+      expect(
+        tracker.resolve(now: t0.add(const Duration(days: 3))),
+        BearTrait.calm,
+      );
     });
 
     test('ничья между чертами характер не меняет', () {
@@ -143,10 +150,7 @@ void main() {
       withClock(Clock.fixed(t0.add(const Duration(days: 4))), () {
         tracker.restore([
           BearActionRecord(BearAction.play, t0),
-          BearActionRecord(
-            BearAction.pet,
-            t0.add(const Duration(days: 4)),
-          ),
+          BearActionRecord(BearAction.pet, t0.add(const Duration(days: 4))),
         ]);
       });
 
@@ -197,8 +201,10 @@ void main() {
       );
       spread(tracker, BearAction.play, 24, const Duration(days: 3));
 
-      expect(tracker.resolve(now: t0.add(const Duration(days: 3))),
-          BearTrait.active);
+      expect(
+        tracker.resolve(now: t0.add(const Duration(days: 3))),
+        BearTrait.active,
+      );
     });
 
     test('знак есть, а таблицы нет — bonus нулевой', () {

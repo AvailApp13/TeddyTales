@@ -137,8 +137,7 @@ class RoomFrame {
   ///
   /// Не по центру: заказчик просил сдвинуть примерно на 10% правее, со
   /// стороны зрителя.
-  double get bearCenterX =>
-      rect.left + rect.width * (0.5 + camera.bearOffsetX);
+  double get bearCenterX => rect.left + rect.width * (0.5 + camera.bearOffsetX);
 
   /// Сдвиг мишки вправо от центра, в долях ширины.
   static const double bearOffsetX = 0.10;

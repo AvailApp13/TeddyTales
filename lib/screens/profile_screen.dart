@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../backend/pet_snapshot.dart' show AccountInfo;
 
 import '../bear/bear.dart';
 import '../game/game_calendar.dart';
@@ -94,6 +97,28 @@ class ProfileScreen extends StatelessWidget {
       );
   }
 
+  static String _date(BuildContext context, DateTime at) => DateFormat.yMMMMd(
+    Localizations.localeOf(context).toLanguageTag(),
+  ).format(at.toLocal());
+
+  /// Личный кабинет (заказчик 24.09): как вошёл, когда зарегистрирован,
+  /// сколько монет в кошельке.
+  List<_InfoRow> _accountRows(BuildContext context, AccountInfo account) {
+    final l10n = context.l10n;
+    final email = account.email;
+    final login = email == null
+        ? l10n.profileAccountGuest
+        : account.emailConfirmed || account.providers.contains('apple')
+        ? email
+        : l10n.profileAccountUnconfirmed(email);
+    return [
+      _InfoRow(l10n.profileAccountLogin, login),
+      if (account.registeredAt case final at?)
+        _InfoRow(l10n.profileAccountRegistered, _date(context, at)),
+      _InfoRow(l10n.profileAccountWallet, '${game.coins}'),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,6 +181,13 @@ class ProfileScreen extends StatelessWidget {
                                   ? l10n.profileSexGirl
                                   : l10n.profileSexBoy,
                             ),
+                            // День рождения — день регистрации: мишка
+                            // появляется на свет вместе с кабинетом
+                            // (заказчик 24.09).
+                            _InfoRow(
+                              l10n.profileBirthdayLabel,
+                              _date(context, profile.birthAt),
+                            ),
                             _InfoRow(
                               l10n.profileAgeLabel,
                               formatAge(l10n, age),
@@ -164,10 +196,8 @@ class ProfileScreen extends StatelessWidget {
                               l10n.profileZodiacLabel,
                               // ДОПУЩЕНИЕ: пока сервера нет, показываем Льва —
                               // ровно как в прототипе, чтобы строка не пустовала.
-                              zodiacTitle(
-                                context.l10n,
-                                profile.zodiac ?? BearZodiac.leo,
-                              ),
+                              '${(profile.zodiac ?? BearZodiac.leo).symbol} '
+                              '${zodiacTitle(context.l10n, profile.zodiac ?? BearZodiac.leo)}',
                               // Пометка стоит только здесь: остальные две
                               // заглушки объяснены подписью внизу экрана, и три
                               // одинаковых ярлыка подряд превратили бы карточку
@@ -190,6 +220,11 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+
+                        if (game.account case final account?) ...[
+                          _SectionTitle(l10n.profileSectionAccount),
+                          _InfoRows(rows: _accountRows(context, account)),
+                        ],
 
                         _SectionTitle(l10n.profileSectionTrait),
                         _InfoRows(

@@ -172,8 +172,11 @@ class SignInMetrics {
       skipHeight +
       legalSize * 2.8;
 
+  /// Сколько кнопок входа на экране: Apple, Google, почта (заказчик 24.09).
+  static const int buttons = 3;
+
   /// Сколько места займёт панель целиком.
-  double get height => 5 * buttonHeight + 4 * gap + chrome;
+  double get height => buttons * buttonHeight + (buttons - 1) * gap + chrome;
 
   /// Панель, ужатая до предела: по ней считается, надо ли тянуть кадр вверх.
   static const SignInMetrics tight = SignInMetrics._(0);

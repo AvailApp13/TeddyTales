@@ -179,7 +179,9 @@ class _ItemCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Expanded(child: Center(child: ItemPicture(item: item))),
+            Expanded(
+              child: Center(child: ItemPicture(item: item)),
+            ),
             const SizedBox(height: 2),
             Text(
               shopItemName(context.l10n, item.id),

@@ -205,6 +205,7 @@ class ProgressSync {
     // своим часам (КП 1.5), монеты начислил по своим правилам.
     bear.restoreState(snapshot.state);
     game.setProfile(snapshot.profile);
+    game.setAccount(snapshot.account);
     onSnapshot?.call(snapshot);
   }
 

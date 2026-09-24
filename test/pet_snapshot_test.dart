@@ -153,6 +153,8 @@ void main() {
         'is_anonymous': false,
         'email': null,
         'providers': ['anonymous', 'apple'],
+        'registered_at': '2026-09-24T08:00:00+00:00',
+        'email_confirmed': true,
       },
     };
 
@@ -167,6 +169,8 @@ void main() {
       expect(account.hasApple, isTrue);
       expect(account.playerAge, 6);
       expect(account.email, isNull);
+      expect(account.registeredAt, DateTime.utc(2026, 9, 24, 8));
+      expect(account.emailConfirmed, isTrue);
     });
 
     test('без кабинета в ответе — анонимный, кошелёк с мишки', () {

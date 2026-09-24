@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../bear/bear_action.dart';
+import 'email_auth.dart';
 import 'pet_snapshot.dart';
 import 'progress_store.dart';
 
@@ -38,7 +40,7 @@ abstract final class BackendConfig {
 /// ничего не считает. Вся игровая арифметика — начисление монет, падение
 /// показателей, цена предмета — живёт в функциях базы, потому что считать
 /// это на клиенте значит позволить клиенту считать это как ему выгодно.
-class SupabaseStore implements ProgressStore {
+class SupabaseStore implements ProgressStore, AccountAuth {
   SupabaseStore(this._client);
 
   /// Поднимает Supabase и отдаёт хранилище. Вызывается один раз при старте.
@@ -61,9 +63,92 @@ class SupabaseStore implements ProgressStore {
   Future<void> signIn() async {
     if (isSignedIn) return;
     try {
-      await _client.auth.signInAnonymously();
+      await _client.auth.signInAnonymously(data: _signUpData());
     } on Object catch (error) {
       throw ProgressStoreException('Не удалось войти', cause: error);
+    }
+  }
+
+  // --- Почта (КП 1.3) ------------------------------------------------------
+
+  /// Метаданные регистрации. Пояс нужен серверу, чтобы знак зодиака
+  /// считался по дате у человека, а не по Гринвичу (миграция 0011).
+  static Map<String, dynamic> _signUpData() => {
+    'tz_offset_min': DateTime.now().timeZoneOffset.inMinutes,
+  };
+
+  @override
+  Future<SignUpOutcome> signUpWithEmail(String email, String password) async {
+    final AuthResponse response;
+    try {
+      response = await _client.auth.signUp(
+        email: email.trim(),
+        password: password,
+        data: _signUpData(),
+      );
+    } on AuthException catch (error) {
+      throw EmailAuthException(
+        emailErrorFromCode(error.code, statusCode: error.statusCode),
+        cause: error,
+      );
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+    // При включённом подтверждении Supabase на занятую почту не говорит
+    // «занято» — чтобы по форме нельзя было перебирать чужие адреса, — а
+    // отдаёт пользователя без способов входа. Так и узнаём.
+    final identities = response.user?.identities;
+    if (response.session == null && identities != null && identities.isEmpty) {
+      throw const EmailAuthException(EmailAuthError.alreadyRegistered);
+    }
+    _petId = null;
+    return response.session != null
+        ? SignUpOutcome.signedIn
+        : SignUpOutcome.confirmEmail;
+  }
+
+  @override
+  Future<void> signInWithEmail(String email, String password) async {
+    try {
+      await _client.auth.signInWithPassword(
+        email: email.trim(),
+        password: password,
+      );
+      _petId = null;
+    } on AuthException catch (error) {
+      throw EmailAuthException(
+        emailErrorFromCode(error.code, statusCode: error.statusCode),
+        cause: error,
+      );
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+  }
+
+  @override
+  Future<void> resendConfirmation(String email) async {
+    try {
+      await _client.auth.resend(type: OtpType.signup, email: email.trim());
+    } on AuthException catch (error) {
+      throw EmailAuthException(
+        emailErrorFromCode(error.code, statusCode: error.statusCode),
+        cause: error,
+      );
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    _petId = null;
+    try {
+      await _client.auth.signOut();
+    } on Object catch (error) {
+      // Без сети сервер о выходе не узнает, но на устройстве сессию снять
+      // надо в любом случае — человек нажал «Выйти».
+      debugPrint('[TeddyTales] выход без сервера: $error');
+      await _client.auth.signOut(scope: SignOutScope.local);
     }
   }
 

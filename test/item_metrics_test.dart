@@ -16,11 +16,7 @@ void main() {
   test('у каждой вещи с картинкой есть размер', () {
     for (final item in ItemCatalog.all) {
       if (!item.photo) continue;
-      expect(
-        metricsOf(item.id),
-        isNotNull,
-        reason: 'нет размера у ${item.id}',
-      );
+      expect(metricsOf(item.id), isNotNull, reason: 'нет размера у ${item.id}');
     }
   });
 
@@ -93,9 +89,7 @@ void main() {
       final file = File('assets/shop/items/${entry.key}.webp');
       expect(file.existsSync(), isTrue, reason: 'нет картинки ${entry.key}');
 
-      final codec = await ui.instantiateImageCodec(
-        await file.readAsBytes(),
-      );
+      final codec = await ui.instantiateImageCodec(await file.readAsBytes());
       final frame = await codec.getNextFrame();
       final aspect = frame.image.height / frame.image.width;
       frame.image.dispose();
@@ -104,7 +98,8 @@ void main() {
       expect(
         entry.value.aspect,
         closeTo(aspect, 0.005),
-        reason: 'у ${entry.key} в таблице ${entry.value.aspect}, '
+        reason:
+            'у ${entry.key} в таблице ${entry.value.aspect}, '
             'а картинка ${aspect.toStringAsFixed(3)}',
       );
     }
@@ -138,10 +133,16 @@ void main() {
 
       expect(left, lessThanOrEqualTo(1), reason: '$id: поле слева');
       expect(top, lessThanOrEqualTo(1), reason: '$id: поле сверху');
-      expect(right, greaterThanOrEqualTo(image.width - 2),
-          reason: '$id: поле справа');
-      expect(bottom, greaterThanOrEqualTo(image.height - 2),
-          reason: '$id: поле снизу');
+      expect(
+        right,
+        greaterThanOrEqualTo(image.width - 2),
+        reason: '$id: поле справа',
+      );
+      expect(
+        bottom,
+        greaterThanOrEqualTo(image.height - 2),
+        reason: '$id: поле снизу',
+      );
     }
   });
 }

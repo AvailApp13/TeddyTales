@@ -84,11 +84,7 @@ void main() {
         final atEdge =
             body / (1.0 - camera.eyeLine) * camera.cameraOverWall * 2.5;
 
-        expect(
-          atEdge,
-          lessThan(camera.bearMetres(body)),
-          reason: room.name,
-        );
+        expect(atEdge, lessThan(camera.bearMetres(body)), reason: room.name);
       }
     });
 
@@ -132,11 +128,7 @@ void main() {
       // дорисовывать больше нечего. Слой RoomCeiling оставлен: спальня, о
       // которой он говорил, может прийти и без него.
       for (final room in RoomKind.values) {
-        expect(
-          RoomFrame.of(phone, room).ceilingHeight,
-          0,
-          reason: room.name,
-        );
+        expect(RoomFrame.of(phone, room).ceilingHeight, 0, reason: room.name);
       }
     });
 
@@ -234,7 +226,11 @@ void main() {
       // Поставь поверх нарисованного живого — на стуле и в кровати окажется
       // по двое.
       for (final room in [RoomKind.kitchen, RoomKind.bedroom]) {
-        expect(RoomFrame.of(phone, room).bearSlices, isEmpty, reason: room.name);
+        expect(
+          RoomFrame.of(phone, room).bearSlices,
+          isEmpty,
+          reason: room.name,
+        );
       }
     });
 

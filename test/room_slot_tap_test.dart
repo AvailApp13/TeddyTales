@@ -105,11 +105,7 @@ void main() {
       Offset(200, 600), // середина
       Offset(300, 590), // правый край, под игрушкой справа
     ]) {
-      final taps = await tapAt(
-        tester,
-        point,
-        picked: ItemCatalog.byId('rug'),
-      );
+      final taps = await tapAt(tester, point, picked: ItemCatalog.byId('rug'));
       expect(taps.map((slot) => slot.id), ['nursery.rug'], reason: '$point');
     }
   });

@@ -137,14 +137,15 @@ class _CeilingPainter extends CustomPainter {
       shade.center,
       shadeWidth * 0.95,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFFFFF0CC).withValues(alpha: 0.55),
-            const Color(0xFFFFF0CC).withValues(alpha: 0),
-          ],
-        ).createShader(
-          Rect.fromCircle(center: shade.center, radius: shadeWidth * 0.95),
-        ),
+        ..shader =
+            RadialGradient(
+              colors: [
+                const Color(0xFFFFF0CC).withValues(alpha: 0.55),
+                const Color(0xFFFFF0CC).withValues(alpha: 0),
+              ],
+            ).createShader(
+              Rect.fromCircle(center: shade.center, radius: shadeWidth * 0.95),
+            ),
     );
 
     canvas.drawPath(

@@ -1717,4 +1717,112 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get wakeAlarmFailed =>
       'Будильник поставить не удалось. Попробуйте ещё раз';
+
+  @override
+  String get signInEmail => 'Регистрация по почте';
+
+  @override
+  String get emailTitle => 'Почта';
+
+  @override
+  String get emailTabSignUp => 'Регистрация';
+
+  @override
+  String get emailTabSignIn => 'Вход';
+
+  @override
+  String get emailField => 'Электронная почта';
+
+  @override
+  String get emailPassword => 'Пароль';
+
+  @override
+  String emailPasswordHint(int min) {
+    return 'Не короче $min знаков';
+  }
+
+  @override
+  String get emailSubmitSignUp => 'Зарегистрироваться';
+
+  @override
+  String get emailSubmitSignIn => 'Войти';
+
+  @override
+  String get emailLeadSignUp =>
+      'Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.';
+
+  @override
+  String get emailLeadSignIn =>
+      'Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.';
+
+  @override
+  String get emailSentTitle => 'Проверьте почту';
+
+  @override
+  String emailSentBody(String email) {
+    return 'Мы отправили письмо на $email. Откройте его и подтвердите адрес, затем войдите с паролем.';
+  }
+
+  @override
+  String get emailResend => 'Отправить письмо ещё раз';
+
+  @override
+  String get emailResent => 'Письмо отправлено ещё раз';
+
+  @override
+  String get emailGoSignIn => 'Я подтвердил — войти';
+
+  @override
+  String get emailErrorInvalid => 'Проверьте адрес почты';
+
+  @override
+  String emailErrorPassword(int min) {
+    return 'Пароль не короче $min знаков';
+  }
+
+  @override
+  String get emailErrorExists => 'Эта почта уже зарегистрирована — войдите';
+
+  @override
+  String get emailErrorCredentials => 'Неверная почта или пароль';
+
+  @override
+  String get emailErrorNotConfirmed =>
+      'Почта не подтверждена — откройте письмо со ссылкой';
+
+  @override
+  String get emailErrorDisabled => 'Регистрация по почте пока выключена';
+
+  @override
+  String get emailErrorRateLimit =>
+      'Слишком много писем подряд — попробуйте позже';
+
+  @override
+  String get emailErrorNetwork => 'Нет связи с сервером — попробуйте ещё раз';
+
+  @override
+  String get emailErrorUnknown => 'Не получилось — попробуйте ещё раз';
+
+  @override
+  String get profileBirthdayLabel => 'День рождения';
+
+  @override
+  String get profileSectionAccount => 'Личный кабинет';
+
+  @override
+  String get profileAccountLogin => 'Вход';
+
+  @override
+  String get profileAccountGuest => 'Без регистрации';
+
+  @override
+  String profileAccountUnconfirmed(String email) {
+    return '$email · не подтверждена';
+  }
+
+  @override
+  String get profileAccountRegistered => 'Зарегистрирован';
+
+  @override
+  String get profileAccountWallet => 'Кошелёк';
 }

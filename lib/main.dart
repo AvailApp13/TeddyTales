@@ -18,6 +18,7 @@ import 'alarm/wake_alarm.dart';
 import 'game/test_stubs.dart';
 import 'widgets/rename_pet_dialog.dart';
 import 'screens/dev_screen.dart';
+import 'screens/email_auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'theme/app_theme.dart';
@@ -51,14 +52,88 @@ Future<void> main() async {
   // --dart-define=SLOW_MOTION=8 идёт в восемь раз медленнее, и моргание в
   // 90 мс раскладывается на кадры. В обычной сборке множитель 1.
   timeDilation = kSlowMotion;
-  runApp(TeddyTalesApp(boot: boot, notifications: notifications));
+  runApp(AppRoot(boot: boot, notifications: notifications));
+}
+
+/// Держит текущий запуск и перезапускает приложение при смене человека.
+///
+/// Вход, регистрация и выход меняют всё сразу: кабинет, кошелёк, мишку,
+/// покупки. Проще и надёжнее, чем подменять каждое поле, — собрать игру
+/// заново от нового снимка: ключ меняется, и всё состояние создаётся с нуля.
+class AppRoot extends StatefulWidget {
+  const AppRoot({super.key, required this.boot, this.notifications});
+
+  final BootResult boot;
+  final NotificationService? notifications;
+
+  @override
+  State<AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<AppRoot> {
+  late BootResult _boot = widget.boot;
+  int _generation = 0;
+
+  /// Пустить сразу, минуя стартовую страницу: гость без сети.
+  bool _enter = false;
+
+  Future<void> _restart({bool guest = false}) async {
+    final boot = await Bootstrap.start(guest: guest);
+    if (!mounted) return;
+    setState(() {
+      _boot = boot;
+      _enter = guest;
+      _generation++;
+    });
+  }
+
+  Future<void> _signOut() async {
+    await _boot.auth?.signOut();
+    // Кеш — снимок прежнего человека. Следующий, кто войдёт на этом
+    // телефоне, не должен увидеть чужого мишку даже на секунду.
+    await _boot.cache?.clear();
+    await _restart();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TeddyTalesApp(
+      key: ValueKey(_generation),
+      boot: _boot,
+      notifications: widget.notifications,
+      enter: _enter,
+      onSignedIn: () => _restart(),
+      onGuest: () => _restart(guest: true),
+      onSignedOut: _signOut,
+    );
+  }
 }
 
 class TeddyTalesApp extends StatefulWidget {
-  const TeddyTalesApp({super.key, required this.boot, this.notifications});
+  const TeddyTalesApp({
+    super.key,
+    required this.boot,
+    this.notifications,
+    this.enter = false,
+    this.onSignedIn,
+    this.onGuest,
+    this.onSignedOut,
+  });
 
   /// С чем запустились: хранилище прогресса и состояние на момент старта.
   final BootResult boot;
+
+  /// Пустить внутрь, даже если сессии нет (гость без сети).
+  final bool enter;
+
+  /// Вошли по почте: перезапустить от нового кабинета.
+  final Future<void> Function()? onSignedIn;
+
+  /// «Пропустить» и способы входа, которые ещё не подключены.
+  final Future<void> Function()? onGuest;
+
+  /// Выйти из аккаунта.
+  final Future<void> Function()? onSignedOut;
 
   /// Напоминания об уходе. `null` — механизм не поднялся.
   final NotificationService? notifications;
@@ -95,6 +170,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   late final GameState _game = GameState(
     bear: _bear,
     profile: _profile,
+    account: widget.boot.isOnline ? widget.boot.snapshot.account : null,
     // Пустые наборы означают, что сервера не было: тогда GameState сам
     // выдаст стартовый набор из двенадцати предметов (КП 10.8).
     owned: widget.boot.snapshot.inventory.isEmpty
@@ -119,13 +195,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   BearLanguage _language = BearLanguage.ru;
 
-  /// Прошёл ли пользователь экран входа.
-  ///
-  /// Настоящей сессии за этим пока нет: ни один способ входа не подключён,
-  /// и любая кнопка просто пускает внутрь. Флаг живёт в памяти намеренно —
-  /// когда появится Supabase, его место займёт состояние сессии, и менять
-  /// придётся одну строку, а не разметку экранов.
-  bool _signedIn = !kShowSignIn;
+  /// Пускать ли дальше стартовой страницы: есть сессия (человек уже
+  /// входил на этом телефоне), гость или стартовая страница выключена.
+  late bool _signedIn = widget.boot.hasSession || widget.enter || !kShowSignIn;
 
   /// Карточка питомца. С сервера, если он ответил; иначе — прежние
   /// демонстрационные значения из макета, чтобы офлайн не выглядел пустым
@@ -212,17 +284,33 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: _signedIn
-          ? _home()
-          : SignInScreen(onSignedIn: () => setState(() => _signedIn = true)),
+      home: _signedIn ? _home() : _start(),
+    );
+  }
+
+  /// Стартовая страница: Apple, Google, ниже почта (КП 1.2, 1.3).
+  Widget _start() {
+    return SignInScreen(
+      onSignedIn: () {
+        final guest = widget.onGuest;
+        if (guest == null) {
+          setState(() => _signedIn = true);
+        } else {
+          guest();
+        }
+      },
+      onEmail: (context) => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => EmailAuthScreen(
+            auth: widget.boot.auth,
+            onSignedIn: () async => widget.onSignedIn?.call(),
+          ),
+        ),
+      ),
     );
   }
 
   /// Выход из аккаунта (КП 14.2).
-  ///
-  /// Пока за флагом нет настоящей сессии, выход — это возврат на экран
-  /// входа. Когда появится Supabase, сюда добавится `signOut()` хранилища, а
-  /// разметка экранов не изменится: они знают только про обратный вызов.
   ///
   /// Напоминания снимаем обязательно. Они запланированы на часы вперёд и
   /// говорят от лица питомца — «малыш проголодался» человеку, который из
@@ -232,7 +320,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // Будильник «проснёмся вместе» тоже от лица питомца — снимаем. Из
     // «Часов» Android он не снимается, это ограничение самой системы.
     _wakeAlarm.cancel();
-    setState(() => _signedIn = false);
+    final out = widget.onSignedOut;
+    if (out == null) {
+      setState(() => _signedIn = false);
+    } else {
+      out();
+    }
   }
 
   /// Будильник «проснёмся вместе»: в будильник телефона, а где его нет —

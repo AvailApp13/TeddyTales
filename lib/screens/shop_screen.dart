@@ -112,120 +112,127 @@ class _ShopScreenState extends State<ShopScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.surface, AppColors.background, Color(0xFFF3E7D2)],
+            colors: [
+              AppColors.surface,
+              AppColors.background,
+              Color(0xFFF3E7D2),
+            ],
             stops: [0, 0.55, 1],
           ),
         ),
         child: SafeArea(
-        child: AnimatedBuilder(
-          // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
-          // переход может случиться прямо на этом экране.
-          animation: Listenable.merge([widget.game, widget.game.bear]),
-          builder: (context, _) {
-            final game = widget.game;
-            final stage = game.bear.state.stage;
-            final total = game.cartTotal;
+          child: AnimatedBuilder(
+            // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
+            // переход может случиться прямо на этом экране.
+            animation: Listenable.merge([widget.game, widget.game.bear]),
+            builder: (context, _) {
+              final game = widget.game;
+              final stage = game.bear.state.stage;
+              final total = game.cartTotal;
 
-            // Витрина делится надвое: сначала то, что малышу нужно сейчас,
-            // ниже — то, что пригодится потом. Замков здесь нет и быть не
-            // должно (КП 11.2 не знает никаких ограничений на покупку) —
-            // купить можно всё, но человеку с новорождённым первым должен
-            // попадаться ночник, а не письменный стол.
-            // Внутри каждой группы вперёд идут вещи со своей картинкой.
-            // Позиции, на которые картинок ещё не прислали, показываются
-            // значком, и вперемешку с фотографиями это читается как брак —
-            // а собранные внизу они выглядят просто как «ещё не завезли».
-            // Подкатегории вкладки — в том порядке, в каком они объявлены в
-            // каталоге: сначала крупное, потом мелочь.
-            final groups = _tab.groups;
-            final shown = [
-              for (final i in _tab.items)
-                if (_group == null || i.group == _group) i,
-            ];
-            final now = [
-              for (final i in shown)
-                if (i.suitsAt(stage)) i,
-            ];
-            final later = [
-              for (final i in shown)
-                if (!i.suitsAt(stage)) i,
-            ];
-            // Порядок показа раздела целиком: по нему листают в просмотре.
-            final showcase = [...now, ...later];
+              // Витрина делится надвое: сначала то, что малышу нужно сейчас,
+              // ниже — то, что пригодится потом. Замков здесь нет и быть не
+              // должно (КП 11.2 не знает никаких ограничений на покупку) —
+              // купить можно всё, но человеку с новорождённым первым должен
+              // попадаться ночник, а не письменный стол.
+              // Внутри каждой группы вперёд идут вещи со своей картинкой.
+              // Позиции, на которые картинок ещё не прислали, показываются
+              // значком, и вперемешку с фотографиями это читается как брак —
+              // а собранные внизу они выглядят просто как «ещё не завезли».
+              // Подкатегории вкладки — в том порядке, в каком они объявлены в
+              // каталоге: сначала крупное, потом мелочь.
+              final groups = _tab.groups;
+              final shown = [
+                for (final i in _tab.items)
+                  if (_group == null || i.group == _group) i,
+              ];
+              final now = [
+                for (final i in shown)
+                  if (i.suitsAt(stage)) i,
+              ];
+              final later = [
+                for (final i in shown)
+                  if (!i.suitsAt(stage)) i,
+              ];
+              // Порядок показа раздела целиком: по нему листают в просмотре.
+              final showcase = [...now, ...later];
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _SheetHeader(title: context.l10n.shopTitle, coins: game.coins),
-                _TabsRow(current: _tab, onSelected: _openTab),
-                // Второй ряд — подкатегории этой вкладки. Один род вещей
-                // делить не на что, поэтому ряд появляется от двух.
-                if (groups.length > 1)
-                  _GroupsRow(
-                    groups: groups,
-                    current: _group,
-                    onSelected: (group) => setState(() => _group = group),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SheetHeader(
+                    title: context.l10n.shopTitle,
+                    coins: game.coins,
                   ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimens.pagePadding,
-                      0,
-                      AppDimens.pagePadding,
-                      AppDimens.pagePadding,
+                  _TabsRow(current: _tab, onSelected: _openTab),
+                  // Второй ряд — подкатегории этой вкладки. Один род вещей
+                  // делить не на что, поэтому ряд появляется от двух.
+                  if (groups.length > 1)
+                    _GroupsRow(
+                      groups: groups,
+                      current: _group,
+                      onSelected: (group) => setState(() => _group = group),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Заголовки появляются только когда есть что
-                        // разделять: на взрослой стадии подходит всё, и
-                        // подпись «малышу сейчас» над единственной сеткой
-                        // читалась бы как насмешка.
-                        if (later.isNotEmpty && now.isNotEmpty) ...[
-                          _GroupTitle(context.l10n.shopGroupNow),
-                          _ItemGrid(
-                            items: now,
-                            showcase: showcase,
-                            game: game,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimens.pagePadding,
+                        0,
+                        AppDimens.pagePadding,
+                        AppDimens.pagePadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Заголовки появляются только когда есть что
+                          // разделять: на взрослой стадии подходит всё, и
+                          // подпись «малышу сейчас» над единственной сеткой
+                          // читалась бы как насмешка.
+                          if (later.isNotEmpty && now.isNotEmpty) ...[
+                            _GroupTitle(context.l10n.shopGroupNow),
+                            _ItemGrid(
+                              items: now,
+                              showcase: showcase,
+                              game: game,
+                            ),
+                            _GroupTitle(context.l10n.shopGroupLater),
+                            _ItemGrid(
+                              items: later,
+                              showcase: showcase,
+                              game: game,
+                            ),
+                          ] else
+                            _ItemGrid(
+                              items: now.isEmpty ? later : now,
+                              showcase: showcase,
+                              game: game,
+                            ),
+                          const SizedBox(height: 10),
+                          Text(
+                            context.l10n.shopCartDisclaimer,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
                           ),
-                          _GroupTitle(context.l10n.shopGroupLater),
-                          _ItemGrid(
-                            items: later,
-                            showcase: showcase,
-                            game: game,
-                          ),
-                        ] else
-                          _ItemGrid(
-                            items: now.isEmpty ? later : now,
-                            showcase: showcase,
-                            game: game,
-                          ),
-                        const SizedBox(height: 10),
-                        Text(
-                          context.l10n.shopCartDisclaimer,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                height: 1.5,
-                              ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                _CartBar(
-                  count: game.cart.length,
-                  total: total,
-                  // Пустая корзина и нехватка монет гасят кнопку одинаково: в
-                  // обоих случаях платить нечем или не за что, и объяснять это
-                  // ребёнку всплывающей подписью после тапа хуже, чем сразу
-                  // показать неактивную кнопку.
-                  enabled: game.cart.isNotEmpty && total <= game.coins,
-                  onTap: _checkout,
-                ),
-              ],
-            );
-          },
+                  _CartBar(
+                    count: game.cart.length,
+                    total: total,
+                    // Пустая корзина и нехватка монет гасят кнопку одинаково: в
+                    // обоих случаях платить нечем или не за что, и объяснять это
+                    // ребёнку всплывающей подписью после тапа хуже, чем сразу
+                    // показать неактивную кнопку.
+                    enabled: game.cart.isNotEmpty && total <= game.coins,
+                    onTap: _checkout,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -492,9 +499,7 @@ class _GroupChip extends StatelessWidget {
               style: sceneText(
                 size: 12.5,
                 weight: selected ? 800 : 600,
-                color: selected
-                    ? AppColors.sageDark
-                    : AppColors.textSecondary,
+                color: selected ? AppColors.sageDark : AppColors.textSecondary,
               ),
             ),
           ),

@@ -902,5 +902,65 @@
   },
   "wakeAlarmPreview": "На телефоне будильник на {time} встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит",
   "wakeAlarmDenied": "Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона",
-  "wakeAlarmFailed": "Будильник поставить не удалось. Попробуйте ещё раз"
+  "wakeAlarmFailed": "Будильник поставить не удалось. Попробуйте ещё раз",
+  "signInEmail": "Регистрация по почте",
+  "emailTitle": "Почта",
+  "emailTabSignUp": "Регистрация",
+  "emailTabSignIn": "Вход",
+  "emailField": "Электронная почта",
+  "emailPassword": "Пароль",
+  "emailPasswordHint": "Не короче {min} знаков",
+  "@emailPasswordHint": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "emailSubmitSignUp": "Зарегистрироваться",
+  "emailSubmitSignIn": "Войти",
+  "emailLeadSignUp": "Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.",
+  "emailLeadSignIn": "Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.",
+  "emailSentTitle": "Проверьте почту",
+  "emailSentBody": "Мы отправили письмо на {email}. Откройте его и подтвердите адрес, затем войдите с паролем.",
+  "@emailSentBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "emailResend": "Отправить письмо ещё раз",
+  "emailResent": "Письмо отправлено ещё раз",
+  "emailGoSignIn": "Я подтвердил — войти",
+  "emailErrorInvalid": "Проверьте адрес почты",
+  "emailErrorPassword": "Пароль не короче {min} знаков",
+  "@emailErrorPassword": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "emailErrorExists": "Эта почта уже зарегистрирована — войдите",
+  "emailErrorCredentials": "Неверная почта или пароль",
+  "emailErrorNotConfirmed": "Почта не подтверждена — откройте письмо со ссылкой",
+  "emailErrorDisabled": "Регистрация по почте пока выключена",
+  "emailErrorRateLimit": "Слишком много писем подряд — попробуйте позже",
+  "emailErrorNetwork": "Нет связи с сервером — попробуйте ещё раз",
+  "emailErrorUnknown": "Не получилось — попробуйте ещё раз",
+  "profileBirthdayLabel": "День рождения",
+  "profileSectionAccount": "Личный кабинет",
+  "profileAccountLogin": "Вход",
+  "profileAccountGuest": "Без регистрации",
+  "profileAccountUnconfirmed": "{email} · не подтверждена",
+  "@profileAccountUnconfirmed": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "profileAccountRegistered": "Зарегистрирован",
+  "profileAccountWallet": "Кошелёк"
 }

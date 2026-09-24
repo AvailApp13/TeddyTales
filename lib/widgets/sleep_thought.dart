@@ -51,8 +51,9 @@ class _SleepThoughtState extends State<SleepThought>
 
   /// Ролик готовится заранее: к моменту, когда облако выросло, он должен
   /// уже идти, а не догружаться в пустом облаке.
-  late final VideoPlayerController _dream =
-      VideoPlayerController.asset(widget.dream);
+  late final VideoPlayerController _dream = VideoPlayerController.asset(
+    widget.dream,
+  );
   bool _dreamReady = false;
 
   /// Облако ждёт, пока мишка уснёт: появиться раньше закрытых глаз —
@@ -66,13 +67,16 @@ class _SleepThoughtState extends State<SleepThought>
     _grow.addStatusListener(_onGrow);
     _dream.setLooping(true);
     _dream.setVolume(0);
-    _dream.initialize().then((_) {
-      if (!mounted) return;
-      setState(() => _dreamReady = true);
-      if (_grow.value > 0) _dream.play();
-    }).catchError((Object _) {
-      // Без ролика облако остаётся пустым — как было до него.
-    });
+    _dream
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          setState(() => _dreamReady = true);
+          if (_grow.value > 0) _dream.play();
+        })
+        .catchError((Object _) {
+          // Без ролика облако остаётся пустым — как было до него.
+        });
   }
 
   /// Ролик идёт, пока облако видно, и стоит, пока его нет.
@@ -292,11 +296,17 @@ class _OutsideCloud extends CustomClipper<Path> {
 /// размера: одинаковые читаются как шестерёнка.
 Path cloudPath(Rect r) {
   var path = Path()
-    ..addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(r.left + r.width * 0.06, r.top + r.height * 0.28,
-          r.width * 0.88, r.height * 0.52),
-      Radius.circular(r.height * 0.26),
-    ));
+    ..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          r.left + r.width * 0.06,
+          r.top + r.height * 0.28,
+          r.width * 0.88,
+          r.height * 0.52,
+        ),
+        Radius.circular(r.height * 0.26),
+      ),
+    );
   const bumps = [
     // Центр (в долях облака) и радиус (в долях высоты).
     (0.22, 0.30, 0.30),
@@ -310,10 +320,12 @@ Path cloudPath(Rect r) {
   ];
   for (final (cx, cy, radius) in bumps) {
     final bump = Path()
-      ..addOval(Rect.fromCircle(
-        center: Offset(r.left + r.width * cx, r.top + r.height * cy),
-        radius: r.height * radius,
-      ));
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(r.left + r.width * cx, r.top + r.height * cy),
+          radius: r.height * radius,
+        ),
+      );
     path = Path.combine(PathOperation.union, path, bump);
   }
   return path;
@@ -345,9 +357,15 @@ class _ThoughtPainter extends CustomPainter {
     void draw(Path path, double grown, double shadow) {
       final alpha = grown.clamp(0.0, 1.0);
       canvas.drawShadow(
-          path, Color.fromRGBO(32, 48, 64, alpha), shadow * alpha, true);
+        path,
+        Color.fromRGBO(32, 48, 64, alpha),
+        shadow * alpha,
+        true,
+      );
       canvas.drawPath(
-          path, Paint()..color = AppColors.surface.withValues(alpha: alpha));
+        path,
+        Paint()..color = AppColors.surface.withValues(alpha: alpha),
+      );
       canvas.drawPath(
         path,
         Paint()
@@ -362,11 +380,13 @@ class _ThoughtPainter extends CustomPainter {
     void bubble(Offset center, double radius, double grown, double tilt) {
       if (grown <= 0) return;
       final path = Path()
-        ..addOval(Rect.fromCenter(
-          center: Offset.zero,
-          width: 2 * radius * grown,
-          height: 1.72 * radius * grown,
-        ));
+        ..addOval(
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: 2 * radius * grown,
+            height: 1.72 * radius * grown,
+          ),
+        );
       canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(tilt);
@@ -415,10 +435,14 @@ class _RimPainter extends CustomPainter {
     // Контур в текущем масштабе строится от выросшей рамки, без
     // трансформации пути: см. [_OutsideCloud.ring].
     final grownCloud = MatrixUtils.transformRect(
-        cloudGrowth(cloud, 0.6 + 0.4 * grown), cloud);
+      cloudGrowth(cloud, 0.6 + 0.4 * grown),
+      cloud,
+    );
     final path = cloudPath(grownCloud);
     canvas.save();
-    canvas.clipPath(_OutsideCloud.ring(path.getBounds().inflate(40), grownCloud));
+    canvas.clipPath(
+      _OutsideCloud.ring(path.getBounds().inflate(40), grownCloud),
+    );
     canvas.drawShadow(path, Color.fromRGBO(32, 48, 64, alpha), 8 * alpha, true);
     canvas.restore();
     canvas.drawPath(

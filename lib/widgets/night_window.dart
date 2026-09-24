@@ -95,7 +95,8 @@ class _NightWindowState extends State<NightWindow>
       _spawn(t);
       // Иногда две подряд: вторая чуть позже и из другого места.
       if (_dice.nextInt(3) == 0) _spawn(t + 0.22 + _dice.nextDouble() * 0.2);
-      _nextShot = t +
+      _nextShot =
+          t +
           NightWindow.shotEvery +
           _dice.nextDouble() * NightWindow.shotSpread;
     }
@@ -107,14 +108,18 @@ class _NightWindowState extends State<NightWindow>
     // Старт в верхней части неба, полёт вниз и вбок; чаще направо —
     // так летят «настоящие», но не все, иначе это конвейер.
     final right = _dice.nextInt(4) != 0;
-    _shots.add(_Shot(
-      from: Offset(
-        right ? 0.05 + _dice.nextDouble() * 0.45 : 0.5 + _dice.nextDouble() * 0.45,
-        0.04 + _dice.nextDouble() * 0.5,
+    _shots.add(
+      _Shot(
+        from: Offset(
+          right
+              ? 0.05 + _dice.nextDouble() * 0.45
+              : 0.5 + _dice.nextDouble() * 0.45,
+          0.04 + _dice.nextDouble() * 0.5,
+        ),
+        dir: Offset(right ? 1 : -1, 0.45 + _dice.nextDouble() * 0.3),
+        born: born,
       ),
-      dir: Offset(right ? 1 : -1, 0.45 + _dice.nextDouble() * 0.3),
-      born: born,
-    ));
+    );
   }
 
   @override
@@ -130,7 +135,7 @@ class _NightWindowState extends State<NightWindow>
 
 class _NightPainter extends CustomPainter {
   _NightPainter({required this.time, required this.shots})
-      : super(repaint: time);
+    : super(repaint: time);
 
   final ValueNotifier<double> time;
   final List<_Shot> shots;
@@ -164,8 +169,12 @@ class _NightPainter extends CustomPainter {
       final star = NightWindow.stars[i];
       final period = 1.7 + 0.5 * i;
       final wave = 0.5 + 0.5 * math.sin(t * 2 * math.pi / period + i * 1.9);
-      _glow(canvas, Offset(star.dx * w, star.dy * h), 0.011 * w,
-          0.15 + 0.55 * wave);
+      _glow(
+        canvas,
+        Offset(star.dx * w, star.dy * h),
+        0.011 * w,
+        0.15 + 0.55 * wave,
+      );
     }
 
     // Падающие звёзды: штрих со шлейфом, ярче всего на середине пути.
@@ -174,7 +183,8 @@ class _NightPainter extends CustomPainter {
       if (p <= 0) continue;
       final travel = sky.width * 0.62;
       final dir = shot.dir / shot.dir.distance;
-      final head = Offset(
+      final head =
+          Offset(
             sky.left + shot.from.dx * sky.width,
             sky.top + shot.from.dy * sky.height,
           ) +

@@ -1622,4 +1622,108 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wakeAlarmFailed => '无法设置闹钟，请重试';
+
+  @override
+  String get signInEmail => '邮箱注册';
+
+  @override
+  String get emailTitle => '邮箱';
+
+  @override
+  String get emailTabSignUp => '注册';
+
+  @override
+  String get emailTabSignIn => '登录';
+
+  @override
+  String get emailField => '电子邮箱';
+
+  @override
+  String get emailPassword => '密码';
+
+  @override
+  String emailPasswordHint(int min) {
+    return '至少 $min 个字符';
+  }
+
+  @override
+  String get emailSubmitSignUp => '注册';
+
+  @override
+  String get emailSubmitSignIn => '登录';
+
+  @override
+  String get emailLeadSignUp => '宝宝在您注册的那天出生——年龄和星座从这一天开始计算。';
+
+  @override
+  String get emailLeadSignIn => '登录后，小熊、金币和购买记录会在任何手机上恢复。';
+
+  @override
+  String get emailSentTitle => '请查收邮件';
+
+  @override
+  String emailSentBody(String email) {
+    return '我们已向 $email 发送邮件。请打开邮件确认地址，然后用密码登录。';
+  }
+
+  @override
+  String get emailResend => '重新发送';
+
+  @override
+  String get emailResent => '已重新发送';
+
+  @override
+  String get emailGoSignIn => '已确认，去登录';
+
+  @override
+  String get emailErrorInvalid => '请检查邮箱地址';
+
+  @override
+  String emailErrorPassword(int min) {
+    return '密码至少 $min 个字符';
+  }
+
+  @override
+  String get emailErrorExists => '该邮箱已注册，请登录';
+
+  @override
+  String get emailErrorCredentials => '邮箱或密码错误';
+
+  @override
+  String get emailErrorNotConfirmed => '邮箱尚未确认，请打开邮件中的链接';
+
+  @override
+  String get emailErrorDisabled => '邮箱注册暂未开放';
+
+  @override
+  String get emailErrorRateLimit => '邮件发送过于频繁，请稍后再试';
+
+  @override
+  String get emailErrorNetwork => '无法连接服务器，请重试';
+
+  @override
+  String get emailErrorUnknown => '出错了，请重试';
+
+  @override
+  String get profileBirthdayLabel => '生日';
+
+  @override
+  String get profileSectionAccount => '个人账户';
+
+  @override
+  String get profileAccountLogin => '登录方式';
+
+  @override
+  String get profileAccountGuest => '未注册';
+
+  @override
+  String profileAccountUnconfirmed(String email) {
+    return '$email · 未确认';
+  }
+
+  @override
+  String get profileAccountRegistered => '注册日期';
+
+  @override
+  String get profileAccountWallet => '钱包';
 }

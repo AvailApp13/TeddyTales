@@ -1707,4 +1707,111 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wakeAlarmFailed => 'Couldn\'t set the alarm. Please try again';
+
+  @override
+  String get signInEmail => 'Sign up with e-mail';
+
+  @override
+  String get emailTitle => 'E-mail';
+
+  @override
+  String get emailTabSignUp => 'Sign up';
+
+  @override
+  String get emailTabSignIn => 'Sign in';
+
+  @override
+  String get emailField => 'E-mail';
+
+  @override
+  String get emailPassword => 'Password';
+
+  @override
+  String emailPasswordHint(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String get emailSubmitSignUp => 'Create account';
+
+  @override
+  String get emailSubmitSignIn => 'Sign in';
+
+  @override
+  String get emailLeadSignUp =>
+      'Your little one is born on the day you sign up — their age and zodiac sign count from that day.';
+
+  @override
+  String get emailLeadSignIn =>
+      'Sign in to get your bear, coins and purchases back on any phone.';
+
+  @override
+  String get emailSentTitle => 'Check your inbox';
+
+  @override
+  String emailSentBody(String email) {
+    return 'We sent a message to $email. Open it to confirm the address, then sign in with your password.';
+  }
+
+  @override
+  String get emailResend => 'Send again';
+
+  @override
+  String get emailResent => 'Sent again';
+
+  @override
+  String get emailGoSignIn => 'I\'ve confirmed — sign in';
+
+  @override
+  String get emailErrorInvalid => 'Check the e-mail address';
+
+  @override
+  String emailErrorPassword(int min) {
+    return 'Password must be at least $min characters';
+  }
+
+  @override
+  String get emailErrorExists => 'This e-mail is already registered — sign in';
+
+  @override
+  String get emailErrorCredentials => 'Wrong e-mail or password';
+
+  @override
+  String get emailErrorNotConfirmed =>
+      'E-mail not confirmed — open the link in our message';
+
+  @override
+  String get emailErrorDisabled => 'E-mail sign-up is turned off for now';
+
+  @override
+  String get emailErrorRateLimit => 'Too many messages — try again later';
+
+  @override
+  String get emailErrorNetwork => 'Can\'t reach the server — try again';
+
+  @override
+  String get emailErrorUnknown => 'Something went wrong — try again';
+
+  @override
+  String get profileBirthdayLabel => 'Birthday';
+
+  @override
+  String get profileSectionAccount => 'Account';
+
+  @override
+  String get profileAccountLogin => 'Signed in with';
+
+  @override
+  String get profileAccountGuest => 'No account yet';
+
+  @override
+  String profileAccountUnconfirmed(String email) {
+    return '$email · not confirmed';
+  }
+
+  @override
+  String get profileAccountRegistered => 'Registered';
+
+  @override
+  String get profileAccountWallet => 'Wallet';
 }

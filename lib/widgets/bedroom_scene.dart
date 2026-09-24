@@ -40,11 +40,31 @@ class BedroomScene extends StatefulWidget {
   ///
   /// Числа печатает `tool/cut_bedroom_layers.py`: он же режет сами файлы,
   /// так что менять их вручную не надо — пересобрать и переписать.
-  static const Rect bear = Rect.fromLTWH(0.381509, 0.412679, 0.238045, 0.157297);
-  static const Rect earLeft = Rect.fromLTWH(0.385233, 0.464521, 0.057864, 0.036547);
-  static const Rect earRight = Rect.fromLTWH(0.553382, 0.455505, 0.061874, 0.037835);
+  static const Rect bear = Rect.fromLTWH(
+    0.381509,
+    0.412679,
+    0.238045,
+    0.157297,
+  );
+  static const Rect earLeft = Rect.fromLTWH(
+    0.385233,
+    0.464521,
+    0.057864,
+    0.036547,
+  );
+  static const Rect earRight = Rect.fromLTWH(
+    0.553382,
+    0.455505,
+    0.061874,
+    0.037835,
+  );
   static const Rect blanket = Rect.fromLTWH(0, 0.544258, 1, 0.310407);
-  static const Rect glow = Rect.fromLTWH(0.420829, 0.199761, 0.579171, 0.459928);
+  static const Rect glow = Rect.fromLTWH(
+    0.420829,
+    0.199761,
+    0.579171,
+    0.459928,
+  );
 
   /// Зоны глаз — в долях слоя головы. По ним опускается веко.
   static const List<Rect> eyes = [
@@ -112,8 +132,8 @@ class BedroomScene extends StatefulWidget {
   /// от того же мишка «моргал» целиком: лицо переключалось на ещё не
   /// раскодированную картинку, и слой на миг пустел.
   static Future<void> warmUp(BuildContext context) => Future.wait([
-        for (final asset in assets) precacheImage(AssetImage(asset), context),
-      ]);
+    for (final asset in assets) precacheImage(AssetImage(asset), context),
+  ]);
 
   @override
   State<BedroomScene> createState() => _BedroomSceneState();
@@ -196,29 +216,35 @@ class _BedroomSceneState extends State<BedroomScene>
   late final AnimationController _earRight = _earDrive();
 
   AnimationController _earDrive() => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 90),
-        reverseDuration: const Duration(milliseconds: 260),
-      );
+    vsync: this,
+    duration: const Duration(milliseconds: 90),
+    reverseDuration: const Duration(milliseconds: 260),
+  );
 
   late final Animation<double> _earLeftFlick = _flickOf(_earLeft);
   late final Animation<double> _earRightFlick = _flickOf(_earRight);
 
   Animation<double> _flickOf(AnimationController ear) => CurvedAnimation(
-        parent: ear,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInOutSine,
-      );
+    parent: ear,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInOutSine,
+  );
 
   /// Вдох короче выдоха: так дышат во сне. Ровная синусоида читается как
   /// качание, а не как дыхание.
   late final Animation<double> _wave = TweenSequence<double>([
     TweenSequenceItem(
-      tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      tween: Tween(
+        begin: 0.0,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeInOutSine)),
       weight: 42,
     ),
     TweenSequenceItem(
-      tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOutSine)),
+      tween: Tween(
+        begin: 1.0,
+        end: 0.0,
+      ).chain(CurveTween(curve: Curves.easeInOutSine)),
       weight: 58,
     ),
   ]).animate(_breath);
@@ -266,7 +292,14 @@ class _BedroomSceneState extends State<BedroomScene>
       _next?.cancel();
       _earNext?.cancel();
       _plan.clear();
-      for (final drive in [_breath, _lamp, _nodDrive, _earLeft, _earRight, _lid]) {
+      for (final drive in [
+        _breath,
+        _lamp,
+        _nodDrive,
+        _earLeft,
+        _earRight,
+        _lid,
+      ]) {
         drive.stop();
         drive.value = 0;
       }
@@ -299,8 +332,11 @@ class _BedroomSceneState extends State<BedroomScene>
       _doze();
     } else {
       // Проснулся: глаза открыл быстро, голову поднял, дальше — как днём.
-      _lid.animateTo(0,
-          duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+      _lid.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
       _nodDrive.reverse();
       _look(_Gaze.open, const Duration(milliseconds: 200));
       _rest();
@@ -387,8 +423,7 @@ class _BedroomSceneState extends State<BedroomScene>
     required Duration move,
     Duration hold = Duration.zero,
     bool? nod,
-  }) =>
-      (gaze: gaze, lid: lid, curve: curve, move: move, hold: hold, nod: nod);
+  }) => (gaze: gaze, lid: lid, curve: curve, move: move, hold: hold, nod: nod);
 
   /// Один круг бодрствования: моргнул, иногда дважды, иногда огляделся.
   ///
@@ -481,9 +516,15 @@ class _BedroomSceneState extends State<BedroomScene>
           return Stack(
             children: [
               _headLayer(w, h),
-              _place(BedroomScene.bear, w, h,
-                  Image.asset('assets/rooms/bedroom/bear_paws.png',
-                      fit: BoxFit.fill)),
+              _place(
+                BedroomScene.bear,
+                w,
+                h,
+                Image.asset(
+                  'assets/rooms/bedroom/bear_paws.png',
+                  fit: BoxFit.fill,
+                ),
+              ),
               _place(BedroomScene.blanket, w, h, _blanketLayer()),
               _place(BedroomScene.glow, w, h, _glowLayer()),
             ],
@@ -519,13 +560,7 @@ class _BedroomSceneState extends State<BedroomScene>
               scaleX: 1 + BedroomScene.shoulderSpread * wave,
               scaleY: 1 + BedroomScene.shoulderSwell * wave,
               alignment: Alignment.bottomCenter,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ears!,
-                  _face(),
-                ],
-              ),
+              child: Stack(fit: StackFit.expand, children: [ears!, _face()]),
             ),
           ),
         );
@@ -536,8 +571,18 @@ class _BedroomSceneState extends State<BedroomScene>
           // Под каждым ухом — его же неподвижная копия. В голове на месте
           // уха дыра, и когда ухо вздрагивает, с одной стороны она
           // открывалась бы до комнаты. Копия закрывает её ворсом.
-          _ear(width, height, BedroomScene.earLeft, 'assets/rooms/bedroom/ear_left.png'),
-          _ear(width, height, BedroomScene.earRight, 'assets/rooms/bedroom/ear_right.png'),
+          _ear(
+            width,
+            height,
+            BedroomScene.earLeft,
+            'assets/rooms/bedroom/ear_left.png',
+          ),
+          _ear(
+            width,
+            height,
+            BedroomScene.earRight,
+            'assets/rooms/bedroom/ear_right.png',
+          ),
           _ear(
             width,
             height,
@@ -627,8 +672,10 @@ class _BedroomSceneState extends State<BedroomScene>
   Widget _blanketLayer() {
     final image = _pictures['assets/rooms/bedroom/blanket_front.png'];
     if (image == null) {
-      return Image.asset('assets/rooms/bedroom/blanket_front.png',
-          fit: BoxFit.fill);
+      return Image.asset(
+        'assets/rooms/bedroom/blanket_front.png',
+        fit: BoxFit.fill,
+      );
     }
     return AnimatedBuilder(
       animation: _breath,
@@ -649,8 +696,10 @@ class _BedroomSceneState extends State<BedroomScene>
         final wave = Curves.easeInOutSine.transform(_lamp.value);
         return Opacity(opacity: 0.84 + 0.16 * wave, child: child);
       },
-      child: Image.asset('assets/rooms/bedroom/lamp_glow.png',
-          fit: BoxFit.fill),
+      child: Image.asset(
+        'assets/rooms/bedroom/lamp_glow.png',
+        fit: BoxFit.fill,
+      ),
     );
   }
 
@@ -742,25 +791,38 @@ class _FacePainter extends CustomPainter {
 
     canvas.drawImageRect(under, _whole(under), dst, paint);
     if (blend > 0 && face != under) {
-      canvas.drawImageRect(face, _whole(face), dst,
-          paint..color = Color.fromRGBO(0, 0, 0, blend.clamp(0, 1)));
+      canvas.drawImageRect(
+        face,
+        _whole(face),
+        dst,
+        paint..color = Color.fromRGBO(0, 0, 0, blend.clamp(0, 1)),
+      );
     }
     if (lid <= 0) return;
 
     for (final eye in BedroomScene.eyes) {
-      final zone = Rect.fromLTWH(eye.left * size.width, eye.top * size.height,
-          eye.width * size.width, eye.height * size.height);
+      final zone = Rect.fromLTWH(
+        eye.left * size.width,
+        eye.top * size.height,
+        eye.width * size.width,
+        eye.height * size.height,
+      );
       final source = Rect.fromLTWH(
-          eye.left * closed.width,
-          eye.top * closed.height,
-          eye.width * closed.width,
-          eye.height * closed.height);
+        eye.left * closed.width,
+        eye.top * closed.height,
+        eye.width * closed.width,
+        eye.height * closed.height,
+      );
       final edge = zone.top + zone.height * (lidFrom + (lidTo - lidFrom) * lid);
       final feather = zone.height * lidFeather;
 
       canvas.saveLayer(zone, Paint());
-      canvas.drawImageRect(closed, source, zone,
-          Paint()..filterQuality = FilterQuality.medium);
+      canvas.drawImageRect(
+        closed,
+        source,
+        zone,
+        Paint()..filterQuality = FilterQuality.medium,
+      );
       canvas.drawRect(
         zone,
         Paint()
@@ -821,7 +883,9 @@ class _BreathingBlanket extends CustomPainter {
         final dx = (u - chest.dx) / spread.width;
         final dy = (v - chest.dy) / spread.height;
         final bump = math.exp(-(dx * dx + dy * dy));
-        positions.add(Offset(u * size.width, v * size.height - rise * bump * size.height));
+        positions.add(
+          Offset(u * size.width, v * size.height - rise * bump * size.height),
+        );
         texture.add(Offset(u * image.width, v * image.height));
       }
     }

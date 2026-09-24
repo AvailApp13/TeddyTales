@@ -280,10 +280,7 @@ class _PreviewAction extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              inCart ? Icons.remove_rounded : Icons.add_rounded,
-              size: 20,
-            ),
+            Icon(inCart ? Icons.remove_rounded : Icons.add_rounded, size: 20),
             const SizedBox(width: 8),
             Text(
               inCart ? l10n.shopRemoveFromCart : l10n.shopAddToCart,

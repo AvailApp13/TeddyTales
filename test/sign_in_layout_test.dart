@@ -30,8 +30,11 @@ void main() {
         final rect = frameOf(scene).rect;
 
         expect(rect.left, lessThanOrEqualTo(0.01), reason: '$scene');
-        expect(rect.right, greaterThanOrEqualTo(scene.width - 0.01),
-            reason: '$scene');
+        expect(
+          rect.right,
+          greaterThanOrEqualTo(scene.width - 0.01),
+          reason: '$scene',
+        );
         expect(rect.top, lessThanOrEqualTo(0.01), reason: '$scene');
       }
     });
@@ -132,16 +135,13 @@ void main() {
       // подпись — первая строка панели — оказывалась вплотную к ним.
       for (final scene in [phone, tablet, Size(430, 821)]) {
         final frame = frameOf(scene);
-        final metrics = SignInMetrics.of(
-          scene.height - frame.bearsBottomY - 8,
-        );
+        final metrics = SignInMetrics.of(scene.height - frame.bearsBottomY - 8);
 
         expect(metrics.showPrompt, isTrue, reason: '$scene');
         expect(metrics.pawGap, greaterThanOrEqualTo(8), reason: '$scene');
 
         // Верх подписи — низ экрана минус панель плюс просвет.
-        final promptTop =
-            scene.height - 8 - metrics.height + metrics.pawGap;
+        final promptTop = scene.height - 8 - metrics.height + metrics.pawGap;
         expect(
           promptTop - frame.bearsBottomY,
           greaterThanOrEqualTo(8),
@@ -150,28 +150,29 @@ void main() {
       }
     });
 
-    test('на совсем коротком экране уходит подпись, а не размер кнопок', () {
-      // 360 × 640 — предел, дальше которого честного места нет: пять кнопок
-      // по пальцу и обе служебные строки под лапами уже не умещаются. Тогда
-      // жертвуют подписью «Выберите способ входа» — без неё пять кнопок с
-      // названиями способов понятны, — а кнопка остаётся кнопкой.
+    test('на совсем коротком экране панель умещается под лапами', () {
+      // 360 × 640 — самый тесный экран. При пяти кнопках здесь приходилось
+      // жертвовать подписью «Выберите способ входа». С 24.09 кнопок три
+      // (Apple, Google, почта) — места хватает и на подпись; главное, что
+      // панель не залезает на мишек, а кнопка остаётся кнопкой.
       final frame = frameOf(small);
       final free = small.height - frame.bearsBottomY - 8;
       final metrics = SignInMetrics.of(free);
 
-      expect(metrics.showPrompt, isFalse);
-      expect(metrics.room, 0);
       expect(metrics.height, lessThanOrEqualTo(free + 1));
+      expect(metrics.buttonHeight, greaterThanOrEqualTo(42));
     });
 
     test('кнопка нигде не мельче пальца', () {
       for (final scene in all) {
         final frame = frameOf(scene);
-        final metrics = SignInMetrics.of(
-          scene.height - frame.bearsBottomY - 8,
-        );
+        final metrics = SignInMetrics.of(scene.height - frame.bearsBottomY - 8);
 
-        expect(metrics.buttonHeight, greaterThanOrEqualTo(42), reason: '$scene');
+        expect(
+          metrics.buttonHeight,
+          greaterThanOrEqualTo(42),
+          reason: '$scene',
+        );
         expect(metrics.buttonHeight, lessThanOrEqualTo(54), reason: '$scene');
       }
     });

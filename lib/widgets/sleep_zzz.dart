@@ -117,8 +117,10 @@ class _SleepZzzState extends State<SleepZzz>
               if (time == 0) return const SizedBox.shrink();
               final gone = _fading > 0
                   ? 1 -
-                      ((time - _fading) * 1e3 / SleepZzz.fadeOut.inMilliseconds)
-                          .clamp(0.0, 1.0)
+                        ((time - _fading) *
+                                1e3 /
+                                SleepZzz.fadeOut.inMilliseconds)
+                            .clamp(0.0, 1.0)
                   : 1.0;
               return Stack(
                 children: [
@@ -134,8 +136,13 @@ class _SleepZzzState extends State<SleepZzz>
   }
 
   /// Одна буква на своём месте пути.
-  Widget _letter(int index, double time, double gone, double width,
-      double height) {
+  Widget _letter(
+    int index,
+    double time,
+    double gone,
+    double width,
+    double height,
+  ) {
     // Буквы идут вереницей: каждая стартует, когда предыдущая прошла треть
     // пути. Иначе они всплывают кучей и читаются как одна клякса. Пока
     // очередь буквы не подошла — её нет.

@@ -78,8 +78,10 @@ void main() {
     test('самостоятельный и замкнутый молчат, когда всё в порядке', () {
       const base = BearState(stage: BearStage.adult);
 
-      expect(policy.propose(base.copyWith(trait: BearTrait.independent)),
-          isNull);
+      expect(
+        policy.propose(base.copyWith(trait: BearTrait.independent)),
+        isNull,
+      );
       expect(policy.propose(base.copyWith(trait: BearTrait.reserved)), isNull);
     });
 

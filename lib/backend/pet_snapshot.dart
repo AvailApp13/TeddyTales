@@ -104,6 +104,8 @@ class PetSnapshot {
         providers: _ids(account['providers']),
         playerAge: _intOrNull(account['player_age']),
         locale: _text(account['locale']),
+        registeredAt: _time(account['registered_at']),
+        emailConfirmed: account['email_confirmed'] == true,
       ),
       // Имя, данное до появления отметки named_at, тоже считается: такой
       // человек уже называл малыша в профиле, спрашивать заново незачем.
@@ -215,6 +217,8 @@ class AccountInfo {
     this.providers = const {},
     this.playerAge,
     this.locale,
+    this.registeredAt,
+    this.emailConfirmed = false,
   });
 
   /// Без привязанного входа: удалишь приложение — потеряешь мишку.
@@ -229,6 +233,15 @@ class AccountInfo {
   final int? playerAge;
 
   final String? locale;
+
+  /// Когда заведена учётная запись. В этот же момент родился мишка
+  /// (миграция 0011).
+  final DateTime? registeredAt;
+
+  /// Подтвердил ли человек почту по ссылке из письма.
+  final bool emailConfirmed;
+
+  bool get hasEmail => providers.contains('email') || email != null;
 
   bool get hasApple => providers.contains('apple');
 }

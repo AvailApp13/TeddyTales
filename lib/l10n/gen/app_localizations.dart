@@ -3039,6 +3039,198 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Будильник поставить не удалось. Попробуйте ещё раз'**
   String get wakeAlarmFailed;
+
+  /// No description provided for @signInEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация по почте'**
+  String get signInEmail;
+
+  /// No description provided for @emailTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почта'**
+  String get emailTitle;
+
+  /// No description provided for @emailTabSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
+  String get emailTabSignUp;
+
+  /// No description provided for @emailTabSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход'**
+  String get emailTabSignIn;
+
+  /// No description provided for @emailField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Электронная почта'**
+  String get emailField;
+
+  /// No description provided for @emailPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль'**
+  String get emailPassword;
+
+  /// No description provided for @emailPasswordHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не короче {min} знаков'**
+  String emailPasswordHint(int min);
+
+  /// No description provided for @emailSubmitSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зарегистрироваться'**
+  String get emailSubmitSignUp;
+
+  /// No description provided for @emailSubmitSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти'**
+  String get emailSubmitSignIn;
+
+  /// No description provided for @emailLeadSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.'**
+  String get emailLeadSignUp;
+
+  /// No description provided for @emailLeadSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.'**
+  String get emailLeadSignIn;
+
+  /// No description provided for @emailSentTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте почту'**
+  String get emailSentTitle;
+
+  /// No description provided for @emailSentBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы отправили письмо на {email}. Откройте его и подтвердите адрес, затем войдите с паролем.'**
+  String emailSentBody(String email);
+
+  /// No description provided for @emailResend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить письмо ещё раз'**
+  String get emailResend;
+
+  /// No description provided for @emailResent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Письмо отправлено ещё раз'**
+  String get emailResent;
+
+  /// No description provided for @emailGoSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я подтвердил — войти'**
+  String get emailGoSignIn;
+
+  /// No description provided for @emailErrorInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте адрес почты'**
+  String get emailErrorInvalid;
+
+  /// No description provided for @emailErrorPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль не короче {min} знаков'**
+  String emailErrorPassword(int min);
+
+  /// No description provided for @emailErrorExists.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта почта уже зарегистрирована — войдите'**
+  String get emailErrorExists;
+
+  /// No description provided for @emailErrorCredentials.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверная почта или пароль'**
+  String get emailErrorCredentials;
+
+  /// No description provided for @emailErrorNotConfirmed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почта не подтверждена — откройте письмо со ссылкой'**
+  String get emailErrorNotConfirmed;
+
+  /// No description provided for @emailErrorDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация по почте пока выключена'**
+  String get emailErrorDisabled;
+
+  /// No description provided for @emailErrorRateLimit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком много писем подряд — попробуйте позже'**
+  String get emailErrorRateLimit;
+
+  /// No description provided for @emailErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет связи с сервером — попробуйте ещё раз'**
+  String get emailErrorNetwork;
+
+  /// No description provided for @emailErrorUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось — попробуйте ещё раз'**
+  String get emailErrorUnknown;
+
+  /// No description provided for @profileBirthdayLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'День рождения'**
+  String get profileBirthdayLabel;
+
+  /// No description provided for @profileSectionAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Личный кабинет'**
+  String get profileSectionAccount;
+
+  /// No description provided for @profileAccountLogin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход'**
+  String get profileAccountLogin;
+
+  /// No description provided for @profileAccountGuest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без регистрации'**
+  String get profileAccountGuest;
+
+  /// No description provided for @profileAccountUnconfirmed.
+  ///
+  /// In ru, this message translates to:
+  /// **'{email} · не подтверждена'**
+  String profileAccountUnconfirmed(String email);
+
+  /// No description provided for @profileAccountRegistered.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зарегистрирован'**
+  String get profileAccountRegistered;
+
+  /// No description provided for @profileAccountWallet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кошелёк'**
+  String get profileAccountWallet;
 }
 
 class _AppLocalizationsDelegate

@@ -112,10 +112,8 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                     widget.initial.hour,
                     widget.initial.minute - widget.initial.minute % 5,
                   ),
-                  onDateTimeChanged: (value) => _time = TimeOfDay(
-                    hour: value.hour,
-                    minute: value.minute,
-                  ),
+                  onDateTimeChanged: (value) =>
+                      _time = TimeOfDay(hour: value.hour, minute: value.minute),
                 ),
               ),
             ),
@@ -129,8 +127,9 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                       foregroundColor: AppColors.textSecondary,
                       side: const BorderSide(color: AppColors.outline),
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppDimens.radiusPill),
+                        borderRadius: BorderRadius.circular(
+                          AppDimens.radiusPill,
+                        ),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -146,8 +145,9 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                       backgroundColor: AppColors.sageDark,
                       foregroundColor: AppColors.surface,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppDimens.radiusPill),
+                        borderRadius: BorderRadius.circular(
+                          AppDimens.radiusPill,
+                        ),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),

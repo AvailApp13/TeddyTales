@@ -241,7 +241,11 @@ class _PawMenuState extends State<PawMenu> with SingleTickerProviderStateMixin {
                 shape: BoxShape.circle,
                 gradient: const RadialGradient(
                   center: Alignment(-0.35, -0.45),
-                  colors: [Color(0xFFAFD4AC), AppColors.sage, AppColors.sageDark],
+                  colors: [
+                    Color(0xFFAFD4AC),
+                    AppColors.sage,
+                    AppColors.sageDark,
+                  ],
                   stops: [0, 0.55, 1],
                 ),
                 border: Border.all(color: AppColors.surface, width: 3.5),

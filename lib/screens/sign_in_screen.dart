@@ -21,10 +21,14 @@ import 'sign_in_layout.dart';
 /// Уведомление намеренно похоже на системное: тестировщик должен не гадать,
 /// сработало ли нажатие, а видеть ответ приложения.
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, required this.onSignedIn});
+  const SignInScreen({super.key, required this.onSignedIn, this.onEmail});
 
-  /// Куда пускать после нажатия. Пока — просто в приложение.
+  /// Пустить без регистрации: «Пропустить» и способы, которые ещё не
+  /// подключены (Apple, Google — ждут App Store и Google Play).
   final VoidCallback onSignedIn;
+
+  /// Открыть регистрацию и вход по почте. `null` — кнопки почты нет.
+  final void Function(BuildContext context)? onEmail;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -36,7 +40,18 @@ enum _SignInMethod {
   google('Google', FontAwesomeIcons.google, Colors.white, Color(0xFF3C4043)),
   wechat('WeChat', FontAwesomeIcons.weixin, Color(0xFF07C160), Colors.white),
   alipay('Alipay', FontAwesomeIcons.alipay, Color(0xFF1677FF), Colors.white),
-  qq('QQ', FontAwesomeIcons.qq, Color(0xFF12B7F5), Colors.white);
+  qq('QQ', FontAwesomeIcons.qq, Color(0xFF12B7F5), Colors.white),
+  email(
+    'E-mail',
+    FontAwesomeIcons.solidEnvelope,
+    AppColors.sageDark,
+    Colors.white,
+  );
+
+  /// Что показываем сейчас. Заказчик 24.09: «спрячь Alipay, QQ и WeChat;
+  /// Apple, Google, ниже регистрация по почте». Китайские способы в
+  /// перечислении остаются — вернуть их значит дописать сюда.
+  static const List<_SignInMethod> shown = [apple, google, email];
 
   const _SignInMethod(this.title, this.icon, this.background, this.foreground);
 
@@ -52,6 +67,7 @@ enum _SignInMethod {
     _SignInMethod.wechat => l10n.signInWeChat,
     _SignInMethod.alipay => l10n.signInAlipay,
     _SignInMethod.qq => l10n.signInQq,
+    _SignInMethod.email => l10n.signInEmail,
   };
 }
 
@@ -67,13 +83,22 @@ class _SignInScreenState extends State<SignInScreen>
   /// столько нужно, чтобы прочитать две строки и не заскучать.
   static const Duration _readTime = Duration(milliseconds: 1600);
 
-  late final AnimationController _banner = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 260),
-  );
+  // Создаётся сразу, а не по первому обращению: уйти со страницы можно и
+  // не тронув баннер (через почту), и тогда ленивое поле рождалось бы в
+  // dispose — на уже снятом с дерева экране.
+  late final AnimationController _banner;
 
   _SignInMethod? _pending;
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _banner = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
+  }
 
   @override
   void dispose() {
@@ -83,6 +108,12 @@ class _SignInScreenState extends State<SignInScreen>
   }
 
   void _tap(_SignInMethod method) {
+    // Почта работает по-настоящему: свой экран, без баннера «в разработке».
+    final email = widget.onEmail;
+    if (method == _SignInMethod.email && email != null) {
+      email(context);
+      return;
+    }
     // Повторное нажатие, пока идёт переход, ничего не меняет: иначе
     // `onSignedIn` вызвался бы дважды и экран ушёл бы дважды.
     if (_pending != null) return;
@@ -183,6 +214,12 @@ class _SignInScreenState extends State<SignInScreen>
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: side),
                       child: _SignInPanel(
+                        methods: [
+                          for (final method in _SignInMethod.shown)
+                            if (method != _SignInMethod.email ||
+                                widget.onEmail != null)
+                              method,
+                        ],
                         metrics: metrics,
                         pending: _pending,
                         onTap: _tap,
@@ -206,11 +243,13 @@ class _SignInScreenState extends State<SignInScreen>
 /// сколько места осталось под мишками.
 class _SignInPanel extends StatelessWidget {
   const _SignInPanel({
+    required this.methods,
     required this.metrics,
     required this.pending,
     required this.onTap,
   });
 
+  final List<_SignInMethod> methods;
   final SignInMetrics metrics;
   final _SignInMethod? pending;
   final ValueChanged<_SignInMethod> onTap;
@@ -243,7 +282,7 @@ class _SignInPanel extends StatelessWidget {
           ),
           SizedBox(height: metrics.gap),
         ],
-        for (final method in _SignInMethod.values) ...[
+        for (final method in methods) ...[
           _MethodButton(
             method: method,
             label: method.label(l10n),
@@ -251,8 +290,7 @@ class _SignInPanel extends StatelessWidget {
             busy: pending == method,
             onTap: () => onTap(method),
           ),
-          if (method != _SignInMethod.values.last)
-            SizedBox(height: metrics.gap),
+          if (method != methods.last) SizedBox(height: metrics.gap),
         ],
         TextButton(
           onPressed: () => onTap(_SignInMethod.apple),

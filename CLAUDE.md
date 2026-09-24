@@ -75,8 +75,10 @@ flutter build web --release --base-href /TeddyTales/ --dart-define=RIVE_NATIVE_W
 - На сервере `game_config.test_wallet_floor` = 5000 — кошелёк кабинета
   поднимается до порога при каждом входе. Перед публикацией — `0`
   (`docs/account.md`).
-- `kShowSignIn` = false — экран входа не показывается, сразу мишка (экран
-  цел, выход из аккаунта ведёт на него). Перед публикацией — `true`.
+- `kShowSignIn` = true с 24.09 (стартовая страница с регистрацией по
+  почте вернулась по просьбе заказчика) — снимать уже нечего.
+- На стартовой странице спрятаны Alipay, QQ, WeChat (заказчик 24.09):
+  `_SignInMethod.shown` в `lib/screens/sign_in_screen.dart`.
 
 ## Правки только по команде
 

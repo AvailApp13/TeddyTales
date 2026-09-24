@@ -106,13 +106,7 @@ void main() {
     test('каждое действие поднимает свой показатель и свой триггер', () {
       final controller = BearController(
         initialState: const BearState(
-          stats: BearCareStats(
-            food: 0,
-            hygiene: 0,
-            sleep: 0,
-            play: 0,
-            love: 0,
-          ),
+          stats: BearCareStats(food: 0, hygiene: 0, sleep: 0, play: 0, love: 0),
         ),
       );
       final rig = FakeRig();
@@ -138,10 +132,7 @@ void main() {
 
     test('укладывание спать выключает ходьбу', () {
       final controller = BearController(
-        initialState: const BearState(
-          stage: BearStage.adult,
-          isWalking: true,
-        ),
+        initialState: const BearState(stage: BearStage.adult, isWalking: true),
       );
 
       controller.putToSleep();
@@ -247,10 +238,7 @@ void main() {
 
     test('смена стадии на новорождённого сбрасывает ходьбу', () {
       final controller = BearController(
-        initialState: const BearState(
-          stage: BearStage.adult,
-          isWalking: true,
-        ),
+        initialState: const BearState(stage: BearStage.adult, isWalking: true),
       );
 
       controller.setStage(BearStage.newborn);
@@ -263,9 +251,7 @@ void main() {
     test('слоты зажимаются по диапазонам раздела 8.1', () {
       final controller = BearController();
 
-      controller.setOutfit(
-        BearOutfit().copyWith(outfitId: 99, headwearId: 2),
-      );
+      controller.setOutfit(BearOutfit().copyWith(outfitId: 99, headwearId: 2));
 
       expect(controller.state.outfit.outfitId, BearOutfit.maxOutfitId);
       expect(controller.state.outfit.headwearId, 2);

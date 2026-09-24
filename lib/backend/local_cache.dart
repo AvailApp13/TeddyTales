@@ -98,6 +98,8 @@ class LocalCache {
       'providers': s.account.providers.toList(),
       'player_age': s.account.playerAge,
       'locale': s.account.locale,
+      'registered_at': s.account.registeredAt?.toIso8601String(),
+      'email_confirmed': s.account.emailConfirmed,
     },
     'stats': {
       'food': s.state.stats.food,
