@@ -1,0 +1,106 @@
+{
+ "source": "handoff/reference/bear_boy_v2_full.png",
+ "size": [
+  1333,
+  2000
+ ],
+ "ycut_hood_shirt": 1071,
+ "axisX": 677.0,
+ "order_back_to_front": [
+  "ears",
+  "face",
+  "foot_left",
+  "foot_right",
+  "shorts",
+  "paw_left",
+  "paw_right",
+  "shirt",
+  "hood"
+ ],
+ "layers": {
+  "ears": {
+   "bbox": [
+    337,
+    546,
+    1013,
+    776
+   ],
+   "px": 47006
+  },
+  "face": {
+   "bbox": [
+    417,
+    654,
+    938,
+    1100
+   ],
+   "px": 177132
+  },
+  "foot_left": {
+   "bbox": [
+    401,
+    1664,
+    686,
+    1798
+   ],
+   "px": 24676
+  },
+  "foot_right": {
+   "bbox": [
+    681,
+    1661,
+    976,
+    1805
+   ],
+   "px": 26489
+  },
+  "shorts": {
+   "bbox": [
+    368,
+    1436,
+    1013,
+    1704
+   ],
+   "px": 119145
+  },
+  "paw_left": {
+   "bbox": [
+    213,
+    1235,
+    376,
+    1405
+   ],
+   "px": 15157
+  },
+  "paw_right": {
+   "bbox": [
+    1001,
+    1223,
+    1146,
+    1399
+   ],
+   "px": 14291
+  },
+  "shirt": {
+   "bbox": [
+    234,
+    1068,
+    1127,
+    1520
+   ],
+   "px": 287253
+  },
+  "hood": {
+   "bbox": [
+    315,
+    298,
+    1036,
+    1128
+   ],
+   "px": 175129
+  }
+ },
+ "check": {
+  "alphaMaxError": 4.901960784313729
+ }
+}
