@@ -465,6 +465,13 @@ export const rigSpec = {
       "optional": false
     },
     {
+      "name": "root_ear_left",
+      "kind": "bone",
+      "parent": "ear_left",
+      "artistLayer": false,
+      "optional": false
+    },
+    {
       "name": "ear_in_left",
       "kind": "art",
       "parent": "ear_left",
@@ -483,6 +490,13 @@ export const rigSpec = {
       "kind": "art",
       "parent": "head",
       "artistLayer": true,
+      "optional": false
+    },
+    {
+      "name": "root_ear_right",
+      "kind": "bone",
+      "parent": "ear_right",
+      "artistLayer": false,
       "optional": false
     },
     {

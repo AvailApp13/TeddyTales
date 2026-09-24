@@ -3,15 +3,18 @@
  * Показ мимики: таймлайн face_demo — покой с морганием и взглядом, затем по очереди
  * все выражения (плавное появление 0.2 с, 1.5 с удержание), и каждое — со своим
  * движением тела: смех подпрыгивает и качает головой, при зевке тянет лапы,
- * при грусти голова опускается набок и т. д. Дыхание идёт всё время.
+ * при грусти голова опускается набок и т. д. Уши отвечают настроению (D20):
+ * удивление — вверх, грусть и обида — вниз, смех — подрагивают. Дыхание идёт всё время.
  * State Machine 1 переключается на этот таймлайн (demo_moves остаётся в файле).
  *
- *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/face_demo.mjs
+ *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/face_demo.mjs [--no-play]
+ *   (--no-play — только перезаписать ключи, машина состояний играет прежний таймлайн)
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
+import { Tracks, writeTimeline, playInStateMachine } from '../lib/timeline.mjs';
 
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
@@ -29,24 +32,25 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 const env = (u) => sm(0, FADE, u) * (1 - sm(SEG - 4, SEG + FADE - 4, u));   // вход и выход выражения
 const S = Math.sin, PI2 = Math.PI * 2;
 // движения тела по выражению: u — кадр от начала выражения; head — наклон головы на глаз
+// ear — изгиб ушей, ° (+ вверх, − вниз; D20)
 const MOVE = {
-  smile: (u, e) => ({ head: 4 * e }),
-  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e }),
-  love: (u, e) => ({ head: 8 * e, arm: 6 * e }),
-  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e }),
-  sad: (u, e) => ({ head: -6 * e, y: 3 * e }),
-  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e }),
-  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e }),
+  smile: (u, e) => ({ head: 4 * e, ear: 3 * e }),
+  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e, ear: (2 + 4 * S(PI2 * u / 12)) * e }),
+  love: (u, e) => ({ head: 8 * e, arm: 6 * e, ear: 4 * e }),
+  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e, ear: 11 * sm(0, 8, u) * e }),
+  sad: (u, e) => ({ head: -6 * e, y: 3 * e, ear: -10 * e }),
+  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e, ear: -7 * e }),
+  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e, ear: 1.5 * S(PI2 * u / 14) * e }),
   lick: (u, e) => ({ head: 5 * e }),
-  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e }),
-  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e }),
-  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e }),
+  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e, ear: -5 * e }),
+  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e, ear: -4 * e }),
+  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e, ear: 2 * e }),
 };
 function pose(f) {
-  let head = 0, y = 1.2 * S(PI2 * f / 150), arm = 0;           // дыхание
+  let head = 0, y = 1.2 * S(PI2 * f / 150), arm = 0, ear = 0;  // дыхание
   for (const n of ORDER) { const u = f - start[n]; if (u < 0 || u > SEG + FADE) continue;
-    const m = MOVE[n](u, env(u)); head += m.head ?? 0; y += m.y ?? 0; arm += m.arm ?? 0; }
-  return { head, y, arm };
+    const m = MOVE[n](u, env(u)); head += m.head ?? 0; y += m.y ?? 0; arm += m.arm ?? 0; ear += m.ear ?? 0; }
+  return { head, y, arm, ear };
 }
 // взгляд (бусины основы; работает, пока на глазах нет накладки выражения): смещение в px артборда
 function gaze(f) {
@@ -60,10 +64,10 @@ const BLINKS = [20, 70, start.smile + 55, start.chew + 75, END - 70];
 
 // ---- дорожки
 const LEAN = 0.4, HEADK = 0.65, LAG = 5;
-const tracks = new Map();   // objectId:key -> Map(frame -> {value, interp})
-const key = (id, k, f, v, interp = 'cubic') => { const t = `${id}:${k}`; if (!tracks.has(t)) tracks.set(t, new Map()); tracks.get(t).set(Math.round(f), { v, interp }); };
+const tracks = new Tracks(); const key = tracks.key.bind(tracks);
 const base = (await call('query_property_values', { propertyKeys: {
   [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
+  [B.root_ear_left]: [15], [B.root_ear_right]: [15],
   [IM.gaze_bead_l.instance]: [13, 14], [IM.gaze_bead_r.instance]: [13, 14] } })).values;
 const b = (id, k) => base[id][String(k)];
 for (let f = 0; f <= END; f += 6) {
@@ -76,6 +80,8 @@ for (let f = 0; f <= END; f += 6) {
   key(B.root_leg_right, 15, f, b(B.root_leg_right, 15) - lean);
   key(B.root_arm_left, 15, f, b(B.root_arm_left, 15) + p.arm);
   key(B.root_arm_right, 15, f, b(B.root_arm_right, 15) - p.arm);
+  key(B.root_ear_left, 15, f, b(B.root_ear_left, 15) + p.ear);     // левое ухо: + по часовой = вверх
+  key(B.root_ear_right, 15, f, b(B.root_ear_right, 15) - p.ear);
   const [gx, gy] = gaze(f);
   for (const s of ['l', 'r']) { const id = IM[`gaze_bead_${s}`].instance; key(id, 13, f, b(id, 13) + gx); key(id, 14, f, b(id, 14) + gy); }
 }
@@ -89,31 +95,10 @@ for (const f0 of BLINKS) {
 }
 
 // ---- таймлайн
-const list = (await call('animation_editor', { command: 'listLinearAnimations', data: {} })).linearAnimations ?? [];
-let anim = list.find((a) => a.name === NAME);
-if (!anim) {
-  await call('animation_editor', { command: 'createLinearAnimations', data: { createLinearAnimations: { linearAnimations: [{ name: NAME, duration: END / FPS }] } } });
-  anim = ((await call('animation_editor', { command: 'listLinearAnimations', data: {} })).linearAnimations ?? []).find((a) => a.name === NAME);
-}
-await call('set_property_values', { propertyValues: { [anim.id]: { 56: FPS, 57: END, 59: 1 } } });
-const old = await call('animation_editor', { command: 'queryKeyFrames', data: { queryKeyFrames: { animationIds: [anim.id] } } }).catch(() => null);
-const oldIds = (old?.keyframes?.[anim.id] ?? []).map((k) => k.keyframeId);
-for (let i = 0; i < oldIds.length; i += 200) await call('animation_editor', { command: 'modifyKeyFrames', data: { modifyKeyFrames: { animationId: anim.id, delete: oldIds.slice(i, i + 200) } } });
-const ease = { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };
-const add = [];
-for (const [t, frames] of tracks) {
-  const [id, k] = t.split(':');
-  for (const [f, { v, interp }] of [...frames].sort((x, y) => x[0] - y[0]))
-    add.push({ objectId: id, propertyKey: +k, frame: f, value: v, interpolationType: interp, ...(interp === 'cubic' ? { cubicParams: ease } : {}) });
-}
-for (let i = 0; i < add.length; i += 80)
-  await call('animation_editor', { command: 'modifyKeyFrames', data: { modifyKeyFrames: { animationId: anim.id, add: add.slice(i, i + 80) } } });
-console.log(`таймлайн ${NAME} (${anim.id}): ${(END / FPS).toFixed(1)} с, ${add.length} ключей на ${tracks.size} дорожках`);
-
-// State Machine 1: состояние Entry -> face_demo
-const q = await call('animation_editor', { command: 'queryStateMachine', data: {} });
-const st = q.layers[0].states.find((s) => s.type === 'animation');
-await call('animation_editor', { command: 'updateStates', data: { updateStates: { states: [{ id: st.id, animationId: anim.id }] } } });
-file.faceDemo = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: add.length, order: ORDER, start };
+const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, tracks });
+console.log(`таймлайн ${NAME} (${anim.id}): ${(END / FPS).toFixed(1)} с, ${anim.keys} ключей на ${tracks.size} дорожках`);
+const PLAY = !process.argv.includes('--no-play');
+if (PLAY) await playInStateMachine(call, anim.id);   // State Machine 1 -> face_demo
+file.faceDemo = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: anim.keys, order: ORDER, start };
 writeFileSync(sp, JSON.stringify(state, null, 2) + '\n');
-console.log('машина состояний играет', NAME);
+if (PLAY) console.log('машина состояний играет', NAME);

@@ -127,6 +127,10 @@ export function boneLayout() {
   const neck = { x: G.body.x, y: G.head.y + G.head.h / 2 + 0.03 * SCALE };
   const headC = { x: G.head.x, y: G.head.y };
   const seg = (from, to) => ({ x: from.x, y: from.y, length: Math.hypot(to.x - from.x, to.y - from.y), angle: Math.atan2(to.y - from.y, to.x - from.x) });
+  const earSeg = (e) => {
+    const d = Math.hypot(e.x - headC.x, e.y - headC.y), ux = (e.x - headC.x) / d, uy = (e.y - headC.y) / d, r = e.h / 2;
+    return seg({ x: e.x - ux * r, y: e.y - uy * r }, { x: e.x + ux * r, y: e.y + uy * r });
+  };
   return {
     root: seg(hips, neck),                          // таз -> шея, вверх
     root_body: seg(neck, headC),                    // шея -> центр головы
@@ -134,6 +138,8 @@ export function boneLayout() {
     root_arm_right: seg(G.shoulder_right, G.hand_right),
     root_leg_left: seg(G.hip_left, G.foot_left),
     root_leg_right: seg(G.hip_right, G.foot_right),
+    // уши (D20): от основания (сторона к центру головы) к краю уха
+    root_ear_left: earSeg(G.ear_left), root_ear_right: earSeg(G.ear_right),
   };
 }
 

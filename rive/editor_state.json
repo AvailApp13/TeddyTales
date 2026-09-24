@@ -641,12 +641,6 @@
         "group": "hood_lining",
         "groupId": "0-21711"
       },
-      "ears": {
-        "asset": "0-21730",
-        "instance": "0-21731",
-        "group": "head",
-        "groupId": "0-99"
-      },
       "face": {
         "asset": "0-21732",
         "instance": "0-21733",
@@ -658,6 +652,18 @@
         "instance": "0-57152",
         "group": "outfit_head",
         "groupId": "0-226"
+      },
+      "ear_left": {
+        "group": "ear_left",
+        "groupId": "0-104",
+        "asset": "0-117536",
+        "instance": "0-117537"
+      },
+      "ear_right": {
+        "group": "ear_right",
+        "groupId": "0-119",
+        "asset": "0-117538",
+        "instance": "0-117539"
       }
     },
     "layersV2Transform": {
@@ -675,7 +681,9 @@
       "root_arm_left": "0-393",
       "root_arm_right": "0-392",
       "root_leg_left": "0-394",
-      "root_leg_right": "0-395"
+      "root_leg_right": "0-395",
+      "root_ear_left": "0-117528",
+      "root_ear_right": "0-117532"
     },
     "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind.",
     "bonesPlan": [
@@ -806,6 +814,24 @@
           "root_arm_right"
         ],
         "vertices": 1213
+      },
+      "ear_left": {
+        "meshId": "0-117540",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_left"
+        ],
+        "vertices": 1464
+      },
+      "ear_right": {
+        "meshId": "0-120477",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_right"
+        ],
+        "vertices": 1425
       }
     },
     "faceParts": {
@@ -999,7 +1025,7 @@
       "name": "face_demo",
       "fps": 60,
       "frames": 1332,
-      "keys": 2561,
+      "keys": 3007,
       "order": [
         "smile",
         "laugh",
@@ -1025,6 +1051,43 @@
         "yawn": 906,
         "eyes_closed": 1008,
         "squint": 1110
+      }
+    },
+    "idleLife": {
+      "animationId": "0-129289",
+      "name": "idle_life",
+      "fps": 60,
+      "frames": 864,
+      "keys": 1180,
+      "blinks": [
+        70,
+        262,
+        282,
+        540,
+        780
+      ],
+      "twitch": [
+        [
+          196,
+          "left",
+          -7
+        ],
+        [
+          455,
+          "right",
+          -8
+        ],
+        [
+          520,
+          "left",
+          5
+        ]
+      ],
+      "listen": {
+        "from": 600,
+        "to": 760,
+        "ear": 9,
+        "head": 2.5
       }
     }
   }

@@ -14,6 +14,10 @@
  *              пропорционально. Из-под капюшона при наклоне ничего не открывается.
  *  shorts    : пояс — root, штанины — кости ног (левая/правая по оси).
  *  paw_*, face: целиком на кости (рука / голова) — без растяжения (D15).
+ *  ear_*     : изгиб уха (D20): основание под капюшоном и у его кромки — как
+ *              капюшон в этой точке (root / root_body), дальше от капюшона ухо всё больше идёт с костью уха
+ *              root_ear_* (ось — середина линии стыка под капюшоном). Стык с
+ *              капюшоном не двигается: ни вырезов фона, ни шва запаса меха.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -65,6 +69,14 @@ export function loadWeights() {
     const h = Math.max(walls, rim);
     return { root: 1 - h, root_body: h };
   };
+  const EAR_BAND = (process.env.EAR_BAND ?? '6,120').split(',').map(Number);   // от капюшона: голова -> кость уха
+  // основание уха берёт веса капюшона в этой точке: нижний конец стыка лежит у
+  // плеча, где капюшон частично на root, — иначе при наклоне головы ухо и
+  // капюшон расходились бы у стыка
+  const earW = (bone) => (x, y) => {
+    const w = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y)); const h = hoodW(x, y);
+    return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
+  };
   const PLAN = {
     sleeve_left: { bones: ['root', 'root_arm_left'], w: sleeveW(SEAM_UP.left, 'root_arm_left') },
     sleeve_right: { bones: ['root', 'root_arm_right'], w: sleeveW(SEAM_UP.right, 'root_arm_right') },
@@ -73,6 +85,8 @@ export function loadWeights() {
     paw_right: { bones: ['root', 'root_arm_right'], w: () => ({ root_arm_right: 1 }) },
     face: { bones: ['root', 'root_body'], w: () => ({ root_body: 1 }) },
     hood: { bones: ['root', 'root_body'], w: hoodW },
+    ear_left: { bones: ['root', 'root_body', 'root_ear_left'], w: earW('root_ear_left') },
+    ear_right: { bones: ['root', 'root_body', 'root_ear_right'], w: earW('root_ear_right') },
     shorts: { bones: ['root', 'root_leg_left', 'root_leg_right'], w: (x, y) => {
       const leg = smooth(1520, 1640, y); const side = smooth(AXIS - 40, AXIS + 40, x);
       return { root: 1 - leg, root_leg_left: leg * (1 - side), root_leg_right: leg * side }; } },

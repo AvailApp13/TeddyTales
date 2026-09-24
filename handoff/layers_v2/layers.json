@@ -16,7 +16,8 @@
   "sleeve_left",
   "sleeve_right",
   "hood_lining",
-  "ears",
+  "ear_left",
+  "ear_right",
   "face",
   "hood"
  ],
@@ -93,14 +94,23 @@
    ],
    "px": 40754
   },
-  "ears": {
+  "ear_left": {
    "bbox": [
     337,
-    546,
-    1013,
+    550,
+    526,
     776
    ],
-   "px": 47006
+   "px": 22592
+  },
+  "ear_right": {
+   "bbox": [
+    805,
+    546,
+    1013,
+    775
+   ],
+   "px": 24405
   },
   "face": {
    "bbox": [
@@ -118,7 +128,7 @@
     1036,
     1128
    ],
-   "px": 175129
+   "px": 175138
   },
   "hood_lining": {
    "bbox": [
@@ -138,7 +148,51 @@
   "paw_left": 7626,
   "paw_right": 7696,
   "sleeve_left": 1001,
-  "sleeve_right": 848
+  "sleeve_right": 882,
+  "ear_left": 10127,
+  "ear_right": 11051
+ },
+ "ear_pivots": {
+  "ear_left": {
+   "pivot": [
+    469.1,
+    679.7
+   ],
+   "tip": [
+    358.2,
+    615.6
+   ],
+   "contact": [
+    [
+     517.6,
+     569.7
+    ],
+    [
+     381.4,
+     781.7
+    ]
+   ]
+  },
+  "ear_right": {
+   "pivot": [
+    873.3,
+    678.4
+   ],
+   "tip": [
+    992.5,
+    604.3
+   ],
+   "contact": [
+    [
+     820.4,
+     569.8
+    ],
+    [
+     965.3,
+     778.7
+    ]
+   ]
+  }
  },
  "check": {
   "alphaMaxError": 63.74901960784314

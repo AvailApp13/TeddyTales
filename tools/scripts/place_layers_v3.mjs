@@ -29,7 +29,7 @@ const photo = JSON.parse(readFileSync(resolve(repoRoot, 'rig', 'bear_proportions
 const S = AB.figureHeight / photo.bodyHeightPx;
 const [W, H] = meta.size;
 const WORLD = { x: AB.w / 2 + (W / 2 - photo.axisX) * S, y: AB.groundY - (photo.groundY - H / 2) * S };
-const GROUP = { ears: 'head', face: 'head', hood: 'outfit_head', shirt: 'outfit_body', shorts: 'outfit_feet',
+const GROUP = { ear_left: 'ear_left', ear_right: 'ear_right', face: 'head', hood: 'outfit_head', shirt: 'outfit_body', shorts: 'outfit_feet',
   paw_left: 'hand_left', paw_right: 'hand_right', sleeve_left: 'sleeve_left', sleeve_right: 'sleeve_right',
   foot_left: 'foot_left', foot_right: 'foot_right', hood_lining: 'hood_lining' };
 const deg = (r) => (r * 180) / Math.PI;

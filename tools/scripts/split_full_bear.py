@@ -9,7 +9,8 @@
 
 Слои (сзади вперёд, как в редакторе): foot_left, foot_right, shorts, shirt
 (корпус толстовки), paw_left, paw_right, sleeve_left, sleeve_right (рука целиком
-поверх корпуса — D16), hood_lining, ears, face, hood. Рукава
+поверх корпуса — D16), hood_lining, ear_left, ear_right (каждое ухо — свой слой,
+изгибается сеткой, основание под капюшоном — D20), face, hood. Рукава
 отделены по шву реглана и висят на костях рук вместе с лапами. Каждый пиксель принадлежит ровно одному слою; задний
 слой дополнительно заходит на 3 px под передних соседей, чтобы при сглаживании
 на стыке не просвечивал фон.
@@ -131,10 +132,11 @@ regions = {
     'shirt': shirt,
     'paw_left': biggest(paws & (X < axis)), 'paw_right': biggest(paws & (X >= axis)),
     'sleeve_left': sleeve_l, 'sleeve_right': sleeve_r,
-    'ears': ears, 'face': face,
+    'ear_left': biggest(ears & (X < axis)), 'ear_right': biggest(ears & (X >= axis)), 'face': face,
     'hood': hood,
 }
 order = list(regions)  # сзади вперёд
+ORD0 = list(regions)   # копия: в order позже вставляется hood_lining
 
 # --- полное разбиение: каждый пиксель с A>0 — ближайшему слою
 lab = np.zeros((H, W), np.int32)
@@ -186,7 +188,7 @@ for paw, (pts, sgn) in SIDE.items():
 # Лапа отдаёт кромку только своему рукаву: у корпуса толстовки лапа лишь
 # касается бока, и мех, отданный корпусу, остаётся на нём крошками, когда рука
 # поднята.
-FUR = {'ears': None, 'face': None, 'foot_left': None, 'foot_right': None,
+FUR = {'ear_left': None, 'ear_right': None, 'face': None, 'foot_left': None, 'foot_right': None,
        'paw_left': ['sleeve_left'], 'paw_right': ['sleeve_right']}
 for i, n in enumerate(order, 1):
     if n not in FUR: continue
@@ -224,6 +226,8 @@ EXTEND = {  # слой: [(кто закрывает, глубина px, огра
     'sleeve_left': [('hood', 70, 'arm_left')], 'sleeve_right': [('hood', 70, 'arm_right')],
     'paw_left': [('sleeve_left', 45, None)], 'paw_right': [('sleeve_right', 45, None)],
     'foot_left': [('shorts', 60, 'cols')], 'foot_right': [('shorts', 60, 'cols')],
+    # ухо продолжается под капюшоном по своему кругу: при изгибе уха у основания мех, не пустота
+    'ear_left': [('hood', 50, 'disc')], 'ear_right': [('hood', 50, 'disc')],
 }
 # оси плеч (кости рук) в кадре; подъём левой руки — поворот по часовой (+), правой — против (−)
 ARM_PIVOT = {'arm_left': (468.5, 1153.0, 1), 'arm_right': (907.7, 1153.0, -1)}
@@ -269,7 +273,7 @@ def extension(own_op, cover, depth, rule):
         ext &= above(own_op, depth) & hull(own_op | neck, 1)
         px, py, sign = ARM_PIVOT[rule]
         wa = arm_weight('sleeve_' + rule[4:])
-        cover_front = ndimage.binary_erosion(np.isin(full, [order.index(n) + 1 for n in ('hood', 'face', 'ears')]) & (A >= 250), iterations=2)
+        cover_front = ndimage.binary_erosion(np.isin(full, [order.index(n) + 1 for n in ('hood', 'face', 'ear_left', 'ear_right')]) & (A >= 250), iterations=2)
         ys_, xs_ = np.where(ext); keep = np.ones(len(ys_), bool); w_ = wa[ys_, xs_]
         for deg in range(5, 46, 5):
             t = np.radians(deg * sign); ct, st = np.cos(t), np.sin(t)
@@ -278,6 +282,9 @@ def extension(own_op, cover, depth, rule):
             ok = (qx >= 0) & (qx < W) & (qy >= 0) & (qy < H)
             keep &= ok & cover_front[np.clip(qy, 0, H - 1), np.clip(qx, 0, W - 1)]
         ext = np.zeros_like(ext); ext[ys_[keep], xs_[keep]] = True
+    elif rule == 'disc':
+        (ccx, ccy), rr = cv2.minEnclosingCircle(np.argwhere(own_op)[:, ::-1].astype(np.float32))
+        ext &= (X - ccx) ** 2 + (Y - ccy) ** 2 <= (rr + 2) ** 2
     elif rule == 'cols': ext &= cols_of(own_op, 12)
     return ext
 def texture_detail(own_op, shape, size=72):
@@ -382,7 +389,7 @@ for i, n in enumerate(order, 1):
         e = extension(own_op, cover, depth, rule)
         if n.startswith('paw_'): e &= alphas['shirt'] <= 0      # лапа поверх корпуса: запас не туда, где корпус
         ext_all |= e
-        if cover_name in ('hood', 'face'): ext_hood |= e
+        if cover_name in ('hood', 'face') and not n.startswith('ear_'): ext_hood |= e   # у ушей — обычная заливка
         if rule == 'crease': ext_crease |= e
     if ext_crease.any():
         # бок корпуса под складкой — зеркальное продолжение соседней ткани корпуса
@@ -399,7 +406,12 @@ for i, n in enumerate(order, 1):
     if ext_all.any():
         # под капюшоном — без замощения фактуры: в узкой полосе, что открывается
         # у ворота, замощение читается сеткой; там гладкая заливка с тенью
-        col = inpaint_into(col, own_op, ext_all & ~ext_hood & ~ext_crease)
+        known = own_op
+        if n.startswith('ear_'):
+            # у линии капюшона мех уха в тени — запас под капюшоном заливается мехом из глубины
+            # уха, иначе при изгибе уха у края капюшона выглядывает тёмный «зубец»
+            known = own_op & ~ndimage.binary_dilation(full == ORD0.index('hood') + 1, iterations=14)
+        col = inpaint_into(col, known, ext_all & ~ext_hood & ~ext_crease)
         if ext_hood.any():
             col = inpaint_into(col, own_op, ext_hood, detail=False)
             # ткань под капюшоном — зеркальное продолжение своей ткани вверх от края
@@ -466,8 +478,28 @@ layer = np.dstack([lin_col, lin_a]).clip(0, 255).astype(np.uint8); layer[~lining
 Image.fromarray(layer, 'RGBA').save(f'{out}/hood_lining.png', optimize=True)
 ys, xs = np.where(lining)
 meta['layers']['hood_lining'] = {'bbox': [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1], 'px': int(lining.sum()), 'hidden': True}
-fi = meta['order_back_to_front'].index('ears')
+fi = meta['order_back_to_front'].index('ear_left')
 meta['order_back_to_front'].insert(fi, 'hood_lining')
+
+# ось изгиба уха (D20): середина линии, по которой ухо уходит под капюшон,
+# на 20 px под капюшоном. Сетка уха у стыка держится за голову, кончик идёт с
+# костью уха (tools/lib/bear_weights.mjs) — стык не двигается.
+hood_m = (full == ORD0.index('hood') + 1)     # номера в full — по порядку разбиения (без hood_lining)
+cy_h, cx_h = np.argwhere(hood_m).mean(0)
+meta['ear_pivots'] = {}
+for en in ('ear_left', 'ear_right'):
+    em = full == ORD0.index(en) + 1
+    pts = np.argwhere(em & ndimage.binary_dilation(hood_m, iterations=3))[:, ::-1].astype(np.float64)
+    c0 = pts.mean(0); u = np.linalg.svd(pts - c0)[2][0]
+    tproj = (pts - c0) @ u; e1, e2 = c0 + u * tproj.min(), c0 + u * tproj.max()
+    top, bot = (e1, e2) if e1[1] < e2[1] else (e2, e1)
+    mid = (top + bot) / 2; to_h = np.array([cx_h, cy_h]) - mid
+    pivot = mid + 20 * to_h / np.hypot(*to_h)
+    vis = np.argwhere(em & ~hood_m)[:, ::-1].astype(np.float64)      # видимая часть уха
+    u_out = vis.mean(0) - pivot; u_out /= np.hypot(*u_out)             # кость уха: от оси через центр видимой части
+    tip = pivot + u_out * ((vis - pivot) @ u_out).max()                  # до края уха
+    meta['ear_pivots'][en] = {'pivot': [round(float(v), 1) for v in pivot], 'tip': [round(float(v), 1) for v in tip],
+                              'contact': [[round(float(v), 1) for v in top], [round(float(v), 1) for v in bot]]}
 
 alpha_err = np.abs(recon[..., 3] - A).max()
 meta['check'] = {'alphaMaxError': float(alpha_err)}

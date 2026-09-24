@@ -27,11 +27,11 @@ PIVOT = {  # поза: ось в артборде
     'leg_left': (453, 812), 'leg_right': (582, 812),
     'body': (517.5, 810.8),   # начало кости root (таз)
 }
-BONE = {'root_body': 'head', 'root_arm_left': 'arm_left', 'root_arm_right': 'arm_right',
+BONE = {'root_ear_left': 'ear_left', 'root_ear_right': 'ear_right', 'root_body': 'head', 'root_arm_left': 'arm_left', 'root_arm_right': 'arm_right',
         'root_leg_left': 'leg_left', 'root_leg_right': 'leg_right'}           # кость рига -> поза
-RIGID = {'ears': 'head', 'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
+RIGID = {'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
          'foot_left': 'leg_left', 'foot_right': 'leg_right'}
-SKINNED = ('sleeve_left', 'sleeve_right', 'hood', 'shorts')
+SKINNED = ('sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right')
 MESH_STEP = 6
 
 
@@ -40,11 +40,22 @@ def _rot(pivot, deg):
     return np.array([[c, -s, px - c * px + s * py], [s, c, py - s * px - c * py], [0, 0, 1]])
 
 
+# оси ушей — середина линии стыка с капюшоном (layers.json, split_full_bear.py, кадр) -> артборд
+to_art = lambda xf, yf: (CX + (xf - 666.5) * S, CY + (yf - 1000) * S)
+for _e, _p in json.load(open(f'{D}/layers.json')).get('ear_pivots', {}).items():
+    PIVOT[_e] = to_art(*_p['pivot'])
+# кость уха — дочерняя головы: сначала изгиб уха, затем голова
+PARENT = {'ear_left': ['head', 'ear_left'], 'ear_right': ['head', 'ear_right']}
+
+
 def bone_affine(pose, ang):
     """2×3: поворот вокруг оси позы на угол (Rive: + по часовой при y вниз).
     body=… — наклон кости root от таза: все кости — её дети, поворот внешний."""
     M = np.eye(3)
-    if pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])
+    if pose in PARENT:
+        for q in PARENT[pose]:
+            if ang.get(q): M = M @ _rot(PIVOT[q], ang[q])
+    elif pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])
     if ang.get('body'): M = _rot(PIVOT['body'], ang['body']) @ M
     return M[:2]
 
@@ -82,7 +93,9 @@ def warp_mesh(L, weights, ang, step):
     tri = tri[keep]
     tid = np.full((H, W), -1, np.int32)
     for k, t in enumerate(tri):
-        cv2.fillConvexPoly(tid, np.rint(np.stack([fx[t], fy[t]], 1) * 16).astype(np.int32), k, lineType=cv2.LINE_8, shift=4)
+        pts = np.rint(np.stack([fx[t], fy[t]], 1) * 16).astype(np.int32)
+        cv2.fillConvexPoly(tid, pts, k, lineType=cv2.LINE_8, shift=4)
+        cv2.polylines(tid, [pts], True, k, 1, cv2.LINE_8, shift=4)   # без волосяных щелей между треугольниками (в Rive их нет)
     yy, xx = np.where(tid >= 0)
     t = tri[tid[yy, xx]]
     # барицентрические координаты в деформированном треугольнике -> точка в исходном
@@ -110,14 +123,15 @@ def main():
     skip = set(filter(None, os.environ.get('SIM_SKIP', '').split(',')))   # отладка: без этих слоёв
     for n in order:
         if n in skip: continue
-        L = np.asarray(Image.open(f'{D}/{n}.png').convert('RGBA'))
+        L = np.asarray(Image.open(f'{D}/{n}.png').convert('RGBA')).astype(np.float32)
+        L[..., :3] *= L[..., 3:4] / 255   # премультиплицированная альфа (как в Rive): иначе интерполяция у краёв тянет чёрный из прозрачных пикселей
         if n in SKINNED:
             L = warp_mesh(L, {'step': dump['step'], 'bones': dump['layers'][n]}, ang, MESH_STEP)
-        elif (RIGID.get(n) and ang.get(RIGID[n])) or (ang.get('body') and n not in SKINNED):
+        elif (RIGID.get(n) and (ang.get(RIGID[n]) or any(ang.get(q) for q in PARENT.get(RIGID[n], [])))) or (ang.get('body') and n not in SKINNED):
             M = bone_affine(RIGID.get(n), ang)
             L = cv2.warpAffine(L, M, (L.shape[1], L.shape[0]), flags=cv2.INTER_LINEAR, borderValue=0)
         la = L[..., 3:4].astype(np.float64) / 255
-        canvas[..., :3] = L[..., :3] * la + canvas[..., :3] * (1 - la)
+        canvas[..., :3] = L[..., :3] + canvas[..., :3] * (1 - la)
     Image.fromarray(canvas[..., :3].clip(0, 255).astype(np.uint8)).save(out)
 
 
