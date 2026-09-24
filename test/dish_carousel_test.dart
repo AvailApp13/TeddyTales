@@ -1,12 +1,18 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/game/food.dart';
 import 'package:teddy_tales/widgets/dish_carousel.dart';
+import 'package:teddy_tales/widgets/kitchen_scene.dart';
 
 /// Готовые блюда на столе кухни (заказчик 24.09): дуга, прокрутка пальцем
-/// по кругу, покупка — нажатием на блюдо перед мишкой.
+/// по кругу, покупка — нажатием на блюдо перед мишкой. Ни одно блюдо не
+/// закрывает лапки.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   const dishes = FoodCatalog.dishes;
   final pasta = dishes.indexWhere((d) => d.id == 'pasta');
 
@@ -15,20 +21,110 @@ void main() {
 
   group('место на дуге', () {
     test('по кругу: за последним снова первое', () {
-      expect(DishCarousel.slot(0, 0, 10), 0);
-      expect(DishCarousel.slot(1, 0, 10), 1);
-      expect(DishCarousel.slot(9, 0, 10), -1);
-      expect(DishCarousel.slot(0, 9, 10), 1);
-      expect(DishCarousel.slot(9, 9.5, 10), -0.5);
-      expect(DishCarousel.slot(0, 9.5, 10), 0.5);
+      expect(DishArcGeometry.slot(0, 0, 10), 0);
+      expect(DishArcGeometry.slot(1, 0, 10), 1);
+      expect(DishArcGeometry.slot(9, 0, 10), -1);
+      expect(DishArcGeometry.slot(0, 9, 10), 1);
+      expect(DishArcGeometry.slot(9, 9.5, 10), -0.5);
+      expect(DishArcGeometry.slot(0, 9.5, 10), 0.5);
     });
 
     test('сдвиг на целый круг ничего не меняет', () {
       for (var i = 0; i < 10; i++) {
         expect(
-          DishCarousel.slot(i, 3.25 + 10, 10),
-          closeTo(DishCarousel.slot(i, 3.25, 10), 1e-9),
+          DishArcGeometry.slot(i, 3.25 + 10, 10),
+          closeTo(DishArcGeometry.slot(i, 3.25, 10), 1e-9),
         );
+      }
+    });
+
+    test('блюдо на 6 % меньше прежнего, миски — ещё меньше', () {
+      const size = Size(941, 1672);
+      final mid = DishArcGeometry.plate('pasta', 0, size);
+      expect(mid.width / size.width, closeTo(0.261 * 0.94, 0.001));
+      for (final bowl in ['soup', 'yogurt', 'porridge']) {
+        expect(DishArcGeometry.plate(bowl, 0, size).width, lessThan(mid.width));
+      }
+    });
+
+    test('едет к мишке по столу и только у края поднимается', () {
+      const size = Size(941, 1672);
+      final rest = DishArcGeometry.plate('pasta', 0, size).bottom;
+      // Полпути — ещё на столе, на одной высоте с центральным.
+      expect(DishArcGeometry.plate('pasta', 0.5, size).bottom, rest);
+      // К краю — поднялось.
+      expect(DishArcGeometry.plate('pasta', 1, size).bottom, lessThan(rest));
+      // Подъём плавный: без скачков между соседними положениями.
+      var prev = rest;
+      for (var i = 1; i <= 100; i++) {
+        final b = DishArcGeometry.plate('pasta', i / 100, size).bottom;
+        expect((b - prev).abs(), lessThan(size.height * 0.004));
+        prev = b;
+      }
+    });
+  });
+
+  group('лапки не закрыты', () {
+    Future<(ByteData, int, int)> rgba(String asset) async {
+      final data = await rootBundle.load(asset);
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final image = (await codec.getNextFrame()).image;
+      final bytes = await image.toByteData();
+      return (bytes!, image.width, image.height);
+    }
+
+    int alpha((ByteData, int, int) img, int x, int y) {
+      final (bytes, w, h) = img;
+      if (x < 0 || y < 0 || x >= w || y >= h) return 0;
+      return bytes.getUint8((y * w + x) * 4 + 3);
+    }
+
+    test('ни одно блюдо в покое не заходит на лапки', () async {
+      const size = Size(941, 1672);
+      final paws = [
+        (KitchenScene.pawLeft, await rgba('assets/rooms/kitchen/paw_left.png')),
+        (
+          KitchenScene.pawRight,
+          await rgba('assets/rooms/kitchen/paw_right.png'),
+        ),
+      ];
+
+      for (final dish in dishes) {
+        final img = await rgba(dish.image);
+        final (_, iw, ih) = img;
+        for (final s in [0.0, 1.0, -1.0]) {
+          final rect = DishArcGeometry.plate(dish.id, s, size);
+          // Картинка вписана по ширине и прижата к низу квадрата.
+          final scale = rect.width / iw;
+          final top = rect.bottom - ih * scale;
+          var overlap = 0;
+          for (final (box, paw) in paws) {
+            final (_, pw, ph) = paw;
+            final r = Rect.fromLTWH(
+              box.left * size.width,
+              box.top * size.height,
+              box.width * size.width,
+              box.height * size.height,
+            );
+            for (var y = r.top.floor(); y < r.bottom.ceil(); y++) {
+              for (var x = r.left.floor(); x < r.right.ceil(); x++) {
+                final pa = alpha(
+                  paw,
+                  ((x - r.left) / r.width * pw).floor(),
+                  ((y - r.top) / r.height * ph).floor(),
+                );
+                if (pa <= 60) continue;
+                final da = alpha(
+                  img,
+                  ((x - rect.left) / scale).floor(),
+                  ((y - top) / scale).floor(),
+                );
+                if (da > 60) overlap++;
+              }
+            }
+          }
+          expect(overlap, 0, reason: '${dish.id} при s=$s');
+        }
       }
     });
   });
@@ -36,13 +132,17 @@ void main() {
   group('на столе', () {
     late List<Dish> bought;
     late int elsewhere;
+    late DishArc arc;
 
     setUp(() {
       bought = [];
       elsewhere = 0;
     });
 
+    tearDown(() => arc.dispose());
+
     Future<void> pump(WidgetTester tester, {int? initial}) async {
+      arc = DishArc(count: dishes.length, initial: initial ?? pasta);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -50,11 +150,20 @@ void main() {
               alignment: Alignment.topLeft,
               child: SizedBox.fromSize(
                 size: frame,
-                child: DishCarousel(
-                  dishes: dishes,
-                  initial: initial ?? pasta,
-                  onBuy: bought.add,
-                  onTapElsewhere: () => elsewhere++,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: DishPlates(arc: arc, dishes: dishes),
+                    ),
+                    Positioned.fill(
+                      child: DishCarousel(
+                        arc: arc,
+                        dishes: dishes,
+                        onBuy: bought.add,
+                        onTapElsewhere: () => elsewhere++,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -74,13 +183,13 @@ void main() {
     }
 
     Offset centerDish() => Offset(
-      frame.width * DishCarousel.centerX,
-      frame.height * DishCarousel.centerBottom - 25,
+      frame.width * DishArcGeometry.centerX,
+      frame.height * DishArcGeometry.centerBottom - 25,
     );
 
     Offset sideDish(int side) => Offset(
-      frame.width * (DishCarousel.centerX + DishCarousel.step * side),
-      frame.height * DishCarousel.sideBottom - 18,
+      frame.width * (DishArcGeometry.centerX + DishArcGeometry.step * side),
+      frame.height * DishArcGeometry.sideBottom - 18,
     );
 
     testWidgets('паста перед мишкой, соседи по бокам, у каждого цена', (
@@ -132,7 +241,7 @@ void main() {
     ) async {
       await pump(tester);
       final band = find.byKey(const ValueKey('dish-carousel-band'));
-      final stepPx = frame.width * DishCarousel.step;
+      final stepPx = frame.width * DishArcGeometry.step;
 
       await tester.timedDrag(
         band,
@@ -163,6 +272,18 @@ void main() {
       expect(current(tester), dishes[pasta + 1].id);
     });
 
+    testWidgets('доводка мягкая: блюдо доезжает, а не щёлкает', (tester) async {
+      await pump(tester);
+      await tester.tapAt(sideDish(1));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      // Через 200 мс блюдо ещё в пути.
+      expect(arc.offset, greaterThan(pasta));
+      expect(arc.offset, lessThan(pasta + 1));
+      await tester.pumpAndSettle();
+      expect(arc.offset, pasta + 1);
+    });
+
     testWidgets('по кругу: с последнего блюда на первое', (tester) async {
       await pump(tester, initial: dishes.length - 1);
       expect(current(tester), dishes.last.id);
@@ -171,7 +292,7 @@ void main() {
 
       await tester.timedDrag(
         find.byKey(const ValueKey('dish-carousel-band')),
-        Offset(-frame.width * DishCarousel.step, 0),
+        Offset(-frame.width * DishArcGeometry.step, 0),
         const Duration(seconds: 1),
       );
       await tester.pumpAndSettle();
@@ -181,15 +302,16 @@ void main() {
     testWidgets('нажатие мимо блюд уходит мишке', (tester) async {
       await pump(tester);
       await tester.tapAt(
-        Offset(frame.width * 0.5, frame.height * DishCarousel.bandBottom - 4),
+        Offset(
+          frame.width * 0.5,
+          frame.height * DishArcGeometry.bandBottom - 2,
+        ),
       );
       await tester.pump();
       expect(bought, isEmpty);
       expect(elsewhere, 1);
     });
   });
-
-  TestWidgetsFlutterBinding.ensureInitialized();
 
   test('картинки всех блюд лежат в ассетах', () async {
     for (final dish in dishes) {

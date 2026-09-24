@@ -121,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _asleep = false;
       // Ушли с кухни — блюда со стола убираются.
       _dishesShown = false;
+      _dishArc.offset = _firstDish.toDouble();
     });
   }
 
@@ -420,6 +421,21 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Стоят ли готовые блюда на столе (дуга, заказчик 24.09).
   bool _dishesShown = false;
 
+  /// Какое блюдо перед мишкой. При входе на кухню — паста.
+  static final int _firstDish = FoodCatalog.dishes.indexWhere(
+    (d) => d.id == 'pasta',
+  );
+  final DishArc _dishArc = DishArc(
+    count: FoodCatalog.dishes.length,
+    initial: _firstDish,
+  );
+
+  @override
+  void dispose() {
+    _dishArc.dispose();
+    super.dispose();
+  }
+
   void _toggleDishes() => setState(() => _dishesShown = !_dishesShown);
 
   /// Блюдо перед мишкой: окно «Подтвердите покупку» → кормим. Блюда
@@ -532,6 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPickAlarm: _pickAlarm,
                   onOpenFeed: _openFeed,
                   dishesShown: _dishesShown,
+                  dishArc: _dishArc,
                   onToggleDishes: _toggleDishes,
                   onBuyDish: _buyDish,
                   onWash: _wash,
@@ -689,6 +706,7 @@ class _RoomScene extends StatelessWidget {
     required this.onPickAlarm,
     required this.onOpenFeed,
     required this.dishesShown,
+    required this.dishArc,
     required this.onToggleDishes,
     required this.onBuyDish,
     required this.onWash,
@@ -739,6 +757,7 @@ class _RoomScene extends StatelessWidget {
   /// Готовые блюда на столе: показаны ли, как открыть и убрать, что делать
   /// при покупке блюда перед мишкой.
   final bool dishesShown;
+  final DishArc dishArc;
   final VoidCallback onToggleDishes;
   final ValueChanged<Dish> onBuyDish;
 
@@ -798,6 +817,12 @@ class _RoomScene extends StatelessWidget {
               idle: _kitchenIdle(controller.state.mood),
               pet: pets,
               trait: _kitchenTrait(controller.state.trait),
+              // Блюда стоят в самой сцене: над столом, под лапками.
+              onTable: AnimatedOpacity(
+                opacity: dishesShown ? 1 : 0,
+                duration: const Duration(milliseconds: 260),
+                child: DishPlates(arc: dishArc, dishes: FoodCatalog.dishes),
+              ),
             ),
           ),
         if (room == RoomKind.bedroom) ...[
@@ -907,25 +932,17 @@ class _RoomScene extends StatelessWidget {
         // «Приготовить» подходила к ней вплотную — заказчик 20.09 прочитал
         // это как наложение.
         // Готовые блюда дугой на столе (заказчик 24.09): появляются и
-        // уходят по кнопке «Готовые блюда». Касания ловятся только в полосе
+        // уходят по кнопке «Готовые блюда». Сами блюда нарисованы в сцене
+        // кухни под лапками, здесь — только касания. Ловятся они в полосе
         // стола — мимо неё мишку по-прежнему можно погладить.
-        if (room == RoomKind.kitchen)
+        if (room == RoomKind.kitchen && dishesShown)
           Positioned.fromRect(
             rect: frame.rect,
-            child: IgnorePointer(
-              ignoring: !dishesShown,
-              child: AnimatedOpacity(
-                opacity: dishesShown ? 1 : 0,
-                duration: const Duration(milliseconds: 260),
-                child: DishCarousel(
-                  dishes: FoodCatalog.dishes,
-                  initial: FoodCatalog.dishes.indexWhere(
-                    (d) => d.id == 'pasta',
-                  ),
-                  onBuy: onBuyDish,
-                  onTapElsewhere: onPet,
-                ),
-              ),
+            child: DishCarousel(
+              arc: dishArc,
+              dishes: FoodCatalog.dishes,
+              onBuy: onBuyDish,
+              onTapElsewhere: onPet,
             ),
           ),
         if (room == RoomKind.kitchen)

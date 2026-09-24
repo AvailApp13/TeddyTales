@@ -16,47 +16,52 @@ import 'scene_label.dart';
 /// блюдо уменьшается и поднимается, приходящее увеличивается и садится на
 /// стол». Макет и ролик согласованы тем же днём.
 ///
-/// Блюдо на дуге описывает одно число `s` — где оно относительно центра:
+/// И ещё (24.09): «тарелка перед мишкой закрывает лапки — так не должно
+/// быть ни с одним блюдом; каждое блюдо садится плавно и не задевает
+/// лапки». Поэтому:
+/// - блюда на 6 % меньше прежнего, а высокие миски — ещё меньше
+///   ([tableFit]); центральное стоит ближе к краю стола. В покое ни одно
+///   не касается лапок — проверено по маскам картинок
+///   (`tool/check_dish_paws.py`);
+/// - по пути с края на середину блюдо сначала садится на стол у края и
+///   только потом едет к мишке низом, под лапками;
+/// - сами блюда рисуются в сцене кухни под лапками ([DishPlates] кладётся
+///   в `KitchenScene.onTable`): если высокая миска на лету всё же
+///   заденет лапку, лапка останется сверху. Касания ловит [DishCarousel]
+///   поверх всего.
+///
+/// Положение блюда описывает одно число `s` — где оно относительно центра:
 /// 0 — перед мишкой на столе, ±1 — приподнято по бокам, дальше — уходит за
-/// край и гаснет. Прокрутка просто сдвигает все `s` разом, поэтому
-/// промежуточные положения получаются сами: размер, высота, наклон, тень и
-/// цена плавно перетекают между «стоит» и «парит».
+/// край и гаснет. Прокрутка сдвигает все `s` разом ([DishArc.offset]).
 ///
 /// Геометрия — в долях кадра кухни, как у остальных её слоёв
-/// (`KitchenScene`): кадр 941 × 1672, задний край стола на 0.6065.
-class DishCarousel extends StatefulWidget {
-  const DishCarousel({
-    super.key,
-    required this.dishes,
-    required this.onBuy,
-    this.onTapElsewhere,
-    this.initial = 0,
-  });
-
-  final List<Dish> dishes;
-
-  /// Нажали на блюдо перед мишкой — купить (окно подтверждения снаружи).
-  final ValueChanged<Dish> onBuy;
-
-  /// Нажали мимо блюд — отдать касание дальше (погладить мишку).
-  final VoidCallback? onTapElsewhere;
-
-  /// Какое блюдо стоит перед мишкой при открытии.
-  final int initial;
-
-  // --- Дуга, доли кадра ------------------------------------------------------
-
+/// (`KitchenScene`): кадр 941 × 1672, задний край стола на 0.6065,
+/// передний — на 0.698.
+abstract final class DishArcGeometry {
   /// Центр стола по горизонтали и шаг до соседнего места.
   static const double centerX = 0.5;
   static const double step = 0.276;
 
-  /// Донышко: перед мишкой — на столешнице, по бокам — приподнято.
-  static const double centerBottom = 0.6754;
+  /// Донышко: перед мишкой — у переднего края стола, по бокам — приподнято.
+  static const double centerBottom = 0.695;
   static const double sideBottom = 0.6043;
 
-  /// Ширина тарелки перед мишкой и по бокам.
-  static const double centerWidth = 0.261;
-  static const double sideWidth = 0.168;
+  /// Ширина тарелки перед мишкой и по бокам (на 6 % меньше первых 0.261
+  /// и 0.168 — заказчик 24.09).
+  static const double centerWidth = 0.245;
+  static const double sideWidth = 0.158;
+
+  /// Высокие миски уже тарелок: при общей ширине их край заходил бы на
+  /// лапки. Доли подобраны по маскам с запасом 4 px кадра.
+  static const Map<String, double> tableFit = {
+    'porridge': 0.92,
+    'soup': 0.85,
+    'yogurt': 0.86,
+  };
+
+  /// С какой доли пути к краю блюдо начинает подниматься. До неё оно едет
+  /// по столу — ниже лапок.
+  static const double liftFrom = 0.55;
 
   /// Плоскость стола, на которую падает тень парящего блюда.
   static const double tableShadowY = 0.673;
@@ -69,6 +74,11 @@ class DishCarousel extends StatefulWidget {
   static const double bandTop = 0.50;
   static const double bandBottom = 0.78;
 
+  /// Где стоит блюдо [dishId] при положении [s] в кадре размера [size]:
+  /// квадрат, картинка в нём прижата к низу.
+  static Rect plate(String dishId, double s, Size size) =>
+      _Placed.at(0, s, size, tableFit[dishId] ?? 1).rect;
+
   /// Положение блюда [index] на дуге при сдвиге [offset] — по кругу, без
   /// краёв: после последнего снова первое.
   static double slot(int index, double offset, int count) {
@@ -76,6 +86,133 @@ class DishCarousel extends StatefulWidget {
     final half = count / 2;
     return ((raw + half) % count + count) % count - half;
   }
+}
+
+/// Сдвиг дуги: общий для блюд в сцене и для слоя касаний.
+class DishArc extends ChangeNotifier {
+  DishArc({required this.count, int initial = 0})
+    : _offset = initial.toDouble();
+
+  final int count;
+  double _offset;
+
+  double get offset => _offset;
+  set offset(double value) {
+    if (value == _offset) return;
+    _offset = value;
+    notifyListeners();
+  }
+
+  /// Блюдо перед мишкой.
+  int get current => (_offset.round() % count + count) % count;
+
+  /// Все блюда на своих местах: ближние к центру — первыми.
+  List<_Placed> _placed(List<Dish> dishes, Size size) {
+    final placed = [
+      for (var i = 0; i < count; i++)
+        _Placed.at(
+          i,
+          DishArcGeometry.slot(i, _offset, count),
+          size,
+          DishArcGeometry.tableFit[dishes[i].id] ?? 1,
+        ),
+    ]..removeWhere((p) => p.alpha <= 0.01);
+    placed.sort((a, b) => a.s.abs().compareTo(b.s.abs()));
+    return placed;
+  }
+}
+
+/// Блюда, тени и цены — картинка без касаний. Кладётся в сцену кухни
+/// между столом и лапками.
+class DishPlates extends StatelessWidget {
+  const DishPlates({super.key, required this.arc, required this.dishes});
+
+  final DishArc arc;
+  final List<Dish> dishes;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, constraints) => ListenableBuilder(
+          listenable: arc,
+          builder: (context, _) {
+            final size = constraints.biggest;
+            // Рисуем от дальних к ближним: центральное — поверх соседей.
+            final drawn = arc._placed(dishes, size).reversed.toList();
+            final scale = size.height / 844;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Ключи обязательны: блюда появляются и гаснут по краям.
+                Positioned.fill(
+                  key: const ValueKey('dish-shadows'),
+                  child: CustomPaint(painter: _ShadowPainter(drawn)),
+                ),
+                for (final p in drawn) ...[
+                  Positioned.fromRect(
+                    key: ValueKey('dish-slot-${p.index}'),
+                    rect: p.rect,
+                    child: Opacity(
+                      opacity: p.alpha,
+                      child: Transform.rotate(
+                        angle: p.tilt,
+                        alignment: Alignment.bottomCenter,
+                        child: Image.asset(
+                          dishes[p.index].image,
+                          key: ValueKey('dish-${dishes[p.index].id}'),
+                          fit: BoxFit.contain,
+                          alignment: Alignment.bottomCenter,
+                          filterQuality: FilterQuality.medium,
+                          gaplessPlayback: true,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    key: ValueKey('dish-price-${p.index}'),
+                    left: p.rect.center.dx - 60 * scale,
+                    width: 120 * scale,
+                    top: p.priceTop,
+                    child: Opacity(
+                      opacity: p.alpha,
+                      child: Center(
+                        child: _PriceChip(
+                          price: dishes[p.index].price,
+                          scale: scale,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Слой касаний поверх кухни: свайп крутит дугу, нажатие на блюдо перед
+/// мишкой — покупка, на боковое — подкатить его в центр.
+class DishCarousel extends StatefulWidget {
+  const DishCarousel({
+    super.key,
+    required this.arc,
+    required this.dishes,
+    required this.onBuy,
+    this.onTapElsewhere,
+  });
+
+  final DishArc arc;
+  final List<Dish> dishes;
+
+  /// Нажали на блюдо перед мишкой — купить (окно подтверждения снаружи).
+  final ValueChanged<Dish> onBuy;
+
+  /// Нажали мимо блюд — отдать касание дальше (погладить мишку).
+  final VoidCallback? onTapElsewhere;
 
   @override
   State<DishCarousel> createState() => _DishCarouselState();
@@ -83,82 +220,80 @@ class DishCarousel extends StatefulWidget {
 
 class _DishCarouselState extends State<DishCarousel>
     with SingleTickerProviderStateMixin {
-  late double _offset = widget.initial.toDouble();
-
   // Доводка после свайпа. Создаётся сразу, а не лениво: иначе при уходе
   // с кухни без касаний её создавал бы dispose().
   late final AnimationController _snap;
-  late final CurvedAnimation _curve;
-
+  CurvedAnimation? _curve;
   Tween<double> _snapTween = Tween(begin: 0, end: 0);
+
+  DishArc get _arc => widget.arc;
 
   @override
   void initState() {
     super.initState();
-    _snap = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    )..addListener(() => setState(() => _offset = _snapTween.evaluate(_curve)));
-    _curve = CurvedAnimation(parent: _snap, curve: Curves.easeOutCubic);
+    _snap = AnimationController(vsync: this)
+      ..addListener(() {
+        final curve = _curve;
+        if (curve != null) _arc.offset = _snapTween.evaluate(curve);
+      });
   }
-
-  int get _count => widget.dishes.length;
-
-  /// Блюдо перед мишкой.
-  int get _current => (_offset.round() % _count + _count) % _count;
 
   @override
   void dispose() {
-    _curve.dispose();
+    _curve?.dispose();
     _snap.dispose();
     super.dispose();
   }
 
-  void _animateTo(double target) {
-    _snapTween = Tween(begin: _offset, end: target);
+  /// Мягкая доводка: блюдо не щёлкает на место, а плавно доезжает и
+  /// садится (заказчик 24.09: «анимация очень мягкая»).
+  void _animateTo(
+    double target, {
+    Duration duration = const Duration(milliseconds: 650),
+    Curve curve = Curves.easeOutCubic,
+  }) {
+    _curve?.dispose();
+    _curve = CurvedAnimation(parent: _snap, curve: curve);
+    _snapTween = Tween(begin: _arc.offset, end: target);
     _snap
+      ..duration = duration
       ..reset()
       ..forward();
   }
 
   void _onDragUpdate(DragUpdateDetails details, double width) {
     _snap.stop();
-    setState(() => _offset -= details.delta.dx / (width * DishCarousel.step));
+    _arc.offset -= details.delta.dx / (width * DishArcGeometry.step);
   }
 
   void _onDragEnd(DragEndDetails details, double width) {
     // Бросок пальцем докручивает на одно блюдо, даже если сдвинули мало.
     final velocity = details.velocity.pixelsPerSecond.dx / width;
-    var target = _offset.roundToDouble();
-    if (velocity.abs() > 0.8 && (target - _offset).abs() < 0.5) {
-      target = velocity < 0 ? _offset.ceilToDouble() : _offset.floorToDouble();
+    final offset = _arc.offset;
+    var target = offset.roundToDouble();
+    if (velocity.abs() > 0.8 && (target - offset).abs() < 0.5) {
+      target = velocity < 0 ? offset.ceilToDouble() : offset.floorToDouble();
     }
     _animateTo(target);
   }
 
   void _onTap(Offset local, Size size) {
     if (_snap.isAnimating) return;
-    for (final hit in _hitOrder(size)) {
+    for (final hit in _arc._placed(widget.dishes, size)) {
       if (!hit.rect.contains(local)) continue;
       if (hit.s.abs() < 0.5) {
         widget.onBuy(widget.dishes[hit.index]);
       } else {
         // Боковое — подкатываем в центр, покупают уже его.
-        _animateTo(_offset + hit.s.roundToDouble());
+        _animateTo(
+          _arc.offset + hit.s.roundToDouble(),
+          duration: const Duration(milliseconds: 750),
+          curve: Curves.easeInOutCubic,
+        );
       }
       return;
     }
     widget.onTapElsewhere?.call();
-  }
-
-  /// Где что стоит: ближние к центру — первыми (они сверху).
-  List<_Placed> _hitOrder(Size size) {
-    final placed = [
-      for (var i = 0; i < _count; i++)
-        _Placed.at(i, DishCarousel.slot(i, _offset, _count), size),
-    ]..removeWhere((p) => p.alpha <= 0.01);
-    placed.sort((a, b) => a.s.abs().compareTo(b.s.abs()));
-    return placed;
   }
 
   @override
@@ -166,70 +301,17 @@ class _DishCarouselState extends State<DishCarousel>
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
-        // Рисуем от дальних к ближним: центральное — поверх соседей.
-        final drawn = _hitOrder(size).reversed.toList();
-        final scale = size.height / 844;
-
         return Stack(
-          clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              key: const ValueKey('dish-shadows'),
-              child: IgnorePointer(
-                child: CustomPaint(painter: _ShadowPainter(drawn)),
-              ),
-            ),
-            // Ключи обязательны: блюда появляются и гаснут по краям, и без
-            // них полоса касаний пересоздавалась бы посреди свайпа.
-            for (final p in drawn) ...[
-              Positioned.fromRect(
-                key: ValueKey('dish-slot-${p.index}'),
-                rect: p.rect,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: p.alpha,
-                    child: Transform.rotate(
-                      angle: p.tilt,
-                      alignment: Alignment.bottomCenter,
-                      child: Image.asset(
-                        widget.dishes[p.index].image,
-                        key: ValueKey('dish-${widget.dishes[p.index].id}'),
-                        fit: BoxFit.contain,
-                        alignment: Alignment.bottomCenter,
-                        filterQuality: FilterQuality.medium,
-                        gaplessPlayback: true,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                key: ValueKey('dish-price-${p.index}'),
-                left: p.rect.center.dx - 60 * scale,
-                width: 120 * scale,
-                top: p.priceTop,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: p.alpha,
-                    child: Center(
-                      child: _PriceChip(
-                        price: widget.dishes[p.index].price,
-                        scale: scale,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
             // Касания — только в полосе стола.
             Positioned(
               key: const ValueKey('dish-carousel-band'),
               left: 0,
               right: 0,
-              top: size.height * DishCarousel.bandTop,
+              top: size.height * DishArcGeometry.bandTop,
               height:
                   size.height *
-                  (DishCarousel.bandBottom - DishCarousel.bandTop),
+                  (DishArcGeometry.bandBottom - DishArcGeometry.bandTop),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onHorizontalDragUpdate: (d) => _onDragUpdate(d, size.width),
@@ -237,7 +319,7 @@ class _DishCarouselState extends State<DishCarousel>
                 onTapUp: (d) => _onTap(
                   d.localPosition.translate(
                     0,
-                    size.height * DishCarousel.bandTop,
+                    size.height * DishArcGeometry.bandTop,
                   ),
                   size,
                 ),
@@ -248,9 +330,12 @@ class _DishCarouselState extends State<DishCarousel>
               key: const ValueKey('dish-carousel-current'),
               left: 0,
               top: 0,
-              child: Semantics(
-                label: widget.dishes[_current].id,
-                child: const SizedBox.shrink(),
+              child: ListenableBuilder(
+                listenable: _arc,
+                builder: (context, _) => Semantics(
+                  label: widget.dishes[_arc.current].id,
+                  child: const SizedBox.shrink(),
+                ),
               ),
             ),
           ],
@@ -273,16 +358,36 @@ class _Placed {
     required this.tableY,
   });
 
-  factory _Placed.at(int index, double s, Size size) {
+  factory _Placed.at(int index, double s, Size size, double fit) {
     final k = math.min(s.abs(), 1.0);
-    final land = 1 - k;
+    final side = s < 0 ? -1.0 : 1.0;
+    // По горизонтали блюдо быстро уходит от центра и плавно подходит к
+    // краю; вверх поднимается только на последнем участке — когда уже
+    // миновало лапки. Садится обратно в том же порядке: сначала на стол
+    // у края, потом низом к мишке.
+    final across = s.abs() <= 1 ? math.sin(math.pi / 2 * k) : s.abs();
+    final t = ((k - DishArcGeometry.liftFrom) / (1 - DishArcGeometry.liftFrom))
+        .clamp(0.0, 1.0);
+    final lift = t * t * (3 - 2 * t);
+    final land = 1 - lift;
     final width =
         size.width *
-        lerpDouble(DishCarousel.centerWidth, DishCarousel.sideWidth, k)!;
+        fit *
+        lerpDouble(
+          DishArcGeometry.centerWidth,
+          DishArcGeometry.sideWidth,
+          math.min(across, 1.0),
+        )!;
     final bottom =
         size.height *
-        lerpDouble(DishCarousel.centerBottom, DishCarousel.sideBottom, k)!;
-    final cx = size.width * (DishCarousel.centerX + DishCarousel.step * s);
+        lerpDouble(
+          DishArcGeometry.centerBottom,
+          DishArcGeometry.sideBottom,
+          lift,
+        )!;
+    final cx =
+        size.width *
+        (DishArcGeometry.centerX + DishArcGeometry.step * side * across);
     // Высота с запасом: тарелки ниже квадрата, картинка прижата к низу.
     final height = width;
     var alpha = lerpDouble(1, 0.92, k)!;
@@ -291,11 +396,11 @@ class _Placed {
       index: index,
       s: s,
       rect: Rect.fromLTWH(cx - width / 2, bottom - height, width, height),
-      tilt: -DishCarousel.sideTilt * s.clamp(-1.0, 1.0),
+      tilt: -DishArcGeometry.sideTilt * side * lift,
       alpha: alpha,
       land: land,
       priceTop: bottom + size.height * lerpDouble(6, 18, land)! / 844,
-      tableY: size.height * DishCarousel.tableShadowY,
+      tableY: size.height * DishArcGeometry.tableShadowY,
     );
   }
 
@@ -305,7 +410,7 @@ class _Placed {
   final double tilt;
   final double alpha;
 
-  /// 1 — стоит на столе перед мишкой, 0 — парит сбоку.
+  /// 1 — стоит на столе, 0 — парит сбоку.
   final double land;
   final double priceTop;
   final double tableY;
