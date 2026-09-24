@@ -362,6 +362,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'All eaten! The dishes will be back when your bear gets hungry.';
 
   @override
+  String cookSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count steps',
+      one: '$count step',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cookClose => 'Stop cooking';
+
+  @override
+  String cookIngredient(String ingredient) {
+    return 'Add: $ingredient';
+  }
+
+  @override
   String get dishDescPorridge => 'with berries and honey';
 
   @override

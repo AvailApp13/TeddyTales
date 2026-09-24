@@ -328,6 +328,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dishesAllEaten => '全都吃完啦！小熊饿了，菜就会回来。';
 
   @override
+  String cookSteps(int count) {
+    return '$count 步';
+  }
+
+  @override
+  String get cookClose => '不做了';
+
+  @override
+  String cookIngredient(String ingredient) {
+    return '放入：$ingredient';
+  }
+
+  @override
   String get dishDescPorridge => '配莓果和蜂蜜';
 
   @override

@@ -54,6 +54,7 @@ class KitchenScene extends StatefulWidget {
     this.meal,
     this.idle = KitchenIdle.normal,
     this.pet = 0,
+    this.refuse = 0,
     this.trait = BearTrait.calm,
   });
 
@@ -65,6 +66,10 @@ class KitchenScene extends StatefulWidget {
 
   /// Счётчик поглаживаний: вырос — мишка отзывается на руку.
   final int pet;
+
+  /// Счётчик «не то»: вырос — мишка мотает головой. Готовка на кухне
+  /// (вариант A, заказчик 24.09): положили в блюдо не тот продукт.
+  final int refuse;
 
   /// Характер: реакция на угощение после еды у каждого своя
   /// (ТЗ аниматора 5.5, `reaction_trait_*_treat`).
@@ -430,6 +435,10 @@ class _KitchenSceneState extends State<KitchenScene>
     }
     if (widget.pet != old.pet && !_still && !_eating) {
       _petted(++_run);
+      return;
+    }
+    if (widget.refuse != old.refuse && !_still && !_eating) {
+      _refused(++_run);
       return;
     }
     if (widget.idle != old.idle && !_still) _applyIdle();
@@ -885,6 +894,32 @@ class _KitchenSceneState extends State<KitchenScene>
     } on _Stopped {
       // Сценарий сменили.
     }
+  }
+
+  /// «Не то»: мишка мотает головой — два с половиной покачивания из
+  /// стороны в сторону, быстро затухая; уши чуть опускаются, взгляд
+  /// ходит вместе с головой. Одной кривой, от покоя до покоя.
+  Future<void> _refused(int run) async {
+    try {
+      _to(_lookX, 0.5, 200);
+      _to(_lookY, 0.5, 200);
+      await _play(run, 1.1, _refuseMotion);
+      _settle();
+      await _wait(run, 300);
+      await _idle(run);
+    } on _Stopped {
+      // Сценарий сменили.
+    }
+  }
+
+  static _Motion _refuseMotion(double t) {
+    final env = _ramp(t, 0, 0.12) * (1 - _ramp(t, 0.55, 1.1));
+    final shake = math.sin(2 * math.pi * 2.4 * t) * env;
+    return _Motion(
+      side: 0.42 * shake,
+      lookX: 0.45 * shake,
+      ears: -0.35 * (_ramp(t, 0, 0.2) - _ramp(t, 0.7, 1.1)),
+    );
   }
 
   static _Motion _petMotion(double t) {

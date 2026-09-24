@@ -181,6 +181,28 @@
   "@dishesAllEaten": {
     "description": "Все готовые блюда съедены — вернутся при следующем голоде (заказчик 24.09)."
   },
+  "cookSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
+  "@cookSteps": {
+    "description": "Сколько шагов в рецепте — на табло под тарелкой рецепта.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cookClose": "Не готовить",
+  "@cookClose": {
+    "description": "Подпись крестика под табло рецептов и готовки (для озвучки)."
+  },
+  "cookIngredient": "Положить: {ingredient}",
+  "@cookIngredient": {
+    "description": "Озвучка продукта под столом во время готовки.",
+    "placeholders": {
+      "ingredient": {
+        "type": "String"
+      }
+    }
+  },
   "dishDescPorridge": "с ягодами и мёдом",
   "@dishDescPorridge": {
     "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."

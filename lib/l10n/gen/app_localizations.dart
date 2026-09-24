@@ -694,6 +694,24 @@ abstract class AppLocalizations {
   /// **'Всё съедено! Блюда вернутся, когда мишка проголодается.'**
   String get dishesAllEaten;
 
+  /// Сколько шагов в рецепте — на табло под тарелкой рецепта.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
+  String cookSteps(int count);
+
+  /// Подпись крестика под табло рецептов и готовки (для озвучки).
+  ///
+  /// In ru, this message translates to:
+  /// **'Не готовить'**
+  String get cookClose;
+
+  /// Озвучка продукта под столом во время готовки.
+  ///
+  /// In ru, this message translates to:
+  /// **'Положить: {ingredient}'**
+  String cookIngredient(String ingredient);
+
   /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
   ///
   /// In ru, this message translates to:

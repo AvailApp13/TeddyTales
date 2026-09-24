@@ -366,6 +366,26 @@ class AppLocalizationsRu extends AppLocalizations {
       'Всё съедено! Блюда вернутся, когда мишка проголодается.';
 
   @override
+  String cookSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count шагов',
+      few: '$count шага',
+      one: '$count шаг',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cookClose => 'Не готовить';
+
+  @override
+  String cookIngredient(String ingredient) {
+    return 'Положить: $ingredient';
+  }
+
+  @override
   String get dishDescPorridge => 'с ягодами и мёдом';
 
   @override

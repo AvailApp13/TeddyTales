@@ -39,7 +39,16 @@ LIFT_FROM, SIDE_TILT = 0.55, 0.105
 TABLE_FIT = {'porridge': 0.92, 'soup': 0.85, 'yogurt': 0.87}
 
 DISHES = ['porridge', 'soup', 'sandwich', 'fruit', 'yogurt', 'cookie',
-          'salad', 'pasta', 'omelette', 'pie']
+          'salad', 'pasta', 'omelette', 'pie', 'meat', 'veggie']
+
+# Мясное и овощное блюда готовятся на кухне (вариант A, 24.09) и встают
+# на то же место, что готовые блюда, поэтому проверяются вместе с ними.
+RECIPES = {'meat', 'veggie'}
+
+
+def dish_path(dish):
+    folder = 'recipes' if dish in RECIPES else 'dishes'
+    return KITCHEN / folder / f'{dish}.webp'
 
 
 def place(path, rect):
@@ -71,7 +80,7 @@ def geometry(s, fit):
 
 def mask(dish, s, fit):
     width, bottom, cx, tilt = geometry(s, fit)
-    im = Image.open(KITCHEN / 'dishes' / f'{dish}.webp').convert('RGBA')
+    im = Image.open(dish_path(dish)).convert('RGBA')
     scale = width * W / im.width
     iw, ih = max(1, round(im.width * scale)), max(1, round(im.height * scale))
     im = im.resize((iw, ih), Image.BILINEAR)

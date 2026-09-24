@@ -59,7 +59,9 @@ abstract final class DishArcGeometry {
   static const double sideWidth = 0.158;
 
   /// Высокие миски уже тарелок: при общей ширине их край заходил бы на
-  /// лапки. Доли подобраны по маскам с запасом 4 px кадра.
+  /// лапки. Доли подобраны по маскам с запасом 4 px кадра. Мясное и
+  /// овощное блюда готовки (24.09) проверены тем же скриптом — им доля не
+  /// нужна.
   static const Map<String, double> tableFit = {
     'porridge': 0.92,
     'soup': 0.85,
@@ -136,7 +138,7 @@ class DishArc extends ChangeNotifier {
   int get current => count == 0 ? 0 : (_offset.round() % count + count) % count;
 
   /// Все блюда на своих местах: ближние к центру — первыми.
-  List<_Placed> _placed(List<Dish> dishes, Size size, {double? at}) {
+  List<_Placed> _placed(List<TablePlate> dishes, Size size, {double? at}) {
     final offset = at ?? _offset;
     final count = dishes.length;
     // Пока пустое место не закрылось, блюда от центра и правее стоят на
@@ -160,13 +162,70 @@ class DishArc extends ChangeNotifier {
   }
 }
 
+/// Что написано на табло под тарелкой: название, описание потише, число
+/// с монеткой (цена блюда или награда за рецепт) и, если это готовка,
+/// кружки шагов.
+class BoardText {
+  const BoardText({
+    required this.name,
+    this.description = '',
+    required this.value,
+    this.steps = 0,
+    this.done = 0,
+  });
+
+  final String name;
+  final String description;
+  final String value;
+
+  /// Сколько кружков шагов; 0 — кружков нет.
+  final int steps;
+
+  /// Сколько закрашено. Дробное — кружок как раз закрашивается.
+  final double done;
+}
+
+/// Табло для блюда или рецепта [plate].
+typedef BoardOf<T> = BoardText Function(AppLocalizations l10n, T plate);
+
+/// Табло готового блюда: «Паста  с томатным соусом  ● 12».
+BoardText dishBoard(AppLocalizations l10n, Dish dish) => BoardText(
+  name: dishName(l10n, dish.id),
+  description: dishDescription(l10n, dish.id),
+  value: '${dish.price}',
+);
+
+/// Табло рецепта на дуге: «Сэндвич  3 шага  ● +9» (макет готовки,
+/// утверждён заказчиком 24.09).
+BoardText recipeBoard(AppLocalizations l10n, Recipe recipe) => BoardText(
+  name: recipeName(l10n, recipe.id),
+  description: l10n.cookSteps(recipe.steps.length),
+  value: '+${recipe.reward}',
+);
+
 /// Блюда, тени и табло с ценой — картинка без касаний. Лежит поверх сцены
-/// кухни.
-class DishPlates extends StatelessWidget {
-  const DishPlates({super.key, required this.arc, required this.dishes});
+/// кухни. На той же дуге стоят и рецепты «Приготовить» — тогда на табло
+/// вместо цены награда ([board]).
+class DishPlates<T extends TablePlate> extends StatelessWidget {
+  const DishPlates({
+    super.key,
+    required this.arc,
+    required this.dishes,
+    this.board,
+    this.tag = 'dish',
+  });
 
   final DishArc arc;
-  final List<Dish> dishes;
+  final List<T> dishes;
+
+  /// Что писать на табло. По умолчанию — [dishBoard].
+  final BoardOf<T>? board;
+
+  /// Начало ключей виджетов: у блюд — `dish`, у рецептов — `recipe`.
+  final String tag;
+
+  BoardText _boardOf(AppLocalizations l10n, T plate) =>
+      board?.call(l10n, plate) ?? dishBoard(l10n, plate as Dish);
 
   @override
   Widget build(BuildContext context) {
@@ -183,12 +242,12 @@ class DishPlates extends StatelessWidget {
               children: [
                 // Ключи обязательны: блюда появляются и гаснут по краям.
                 Positioned.fill(
-                  key: const ValueKey('dish-shadows'),
+                  key: ValueKey('$tag-shadows'),
                   child: CustomPaint(painter: _ShadowPainter(drawn)),
                 ),
                 for (final p in drawn) ...[
                   Positioned.fromRect(
-                    key: ValueKey('dish-slot-${p.index}'),
+                    key: ValueKey('$tag-slot-${p.index}'),
                     rect: p.rect,
                     child: Opacity(
                       opacity: p.alpha,
@@ -197,7 +256,7 @@ class DishPlates extends StatelessWidget {
                         alignment: Alignment.bottomCenter,
                         child: Image.asset(
                           dishes[p.index].image,
-                          key: ValueKey('dish-${dishes[p.index].id}'),
+                          key: ValueKey('$tag-${dishes[p.index].id}'),
                           fit: BoxFit.contain,
                           alignment: Alignment.bottomCenter,
                           filterQuality: FilterQuality.medium,
@@ -210,9 +269,11 @@ class DishPlates extends StatelessWidget {
                 // Табло на скатерти: название, описание и цена блюда перед
                 // мишкой (заказчик 24.09, вариант B — «как подписи комнат»).
                 _PriceBoard(
-                  key: const ValueKey('dish-price-board'),
+                  key: ValueKey('$tag-price-board'),
                   arc: arc,
-                  dishes: dishes,
+                  count: dishes.length,
+                  lineOf: (l10n, i) => _boardOf(l10n, dishes[i]),
+                  idOf: (i) => '$tag-board-${dishes[i].id}',
                   size: size,
                 ),
               ],
@@ -226,7 +287,7 @@ class DishPlates extends StatelessWidget {
 
 /// Слой касаний поверх кухни: свайп крутит дугу, нажатие на блюдо перед
 /// мишкой — покупка, на боковое — подкатить его в центр.
-class DishCarousel extends StatefulWidget {
+class DishCarousel<T extends TablePlate> extends StatefulWidget {
   const DishCarousel({
     super.key,
     required this.arc,
@@ -234,26 +295,34 @@ class DishCarousel extends StatefulWidget {
     required this.onBuy,
     this.onTapElsewhere,
     this.onClose,
+    this.closeLabel,
+    this.tag = 'dish',
   });
 
   final DishArc arc;
-  final List<Dish> dishes;
+  final List<T> dishes;
 
   /// Нажали на блюдо перед мишкой — мишка ест (на кухне без окна
-  /// подтверждения, заказчик 24.09).
-  final ValueChanged<Dish> onBuy;
+  /// подтверждения, заказчик 24.09). У рецептов — начать готовку.
+  final ValueChanged<T> onBuy;
 
   /// Крестик под табло — убрать блюда со стола (заказчик 24.09).
   final VoidCallback? onClose;
 
+  /// Подпись крестика для озвучки. По умолчанию «Убрать блюда со стола».
+  final String? closeLabel;
+
   /// Нажали мимо блюд — отдать касание дальше (погладить мишку).
   final VoidCallback? onTapElsewhere;
 
+  /// Начало ключей виджетов: у блюд — `dish`, у рецептов — `recipe`.
+  final String tag;
+
   @override
-  State<DishCarousel> createState() => _DishCarouselState();
+  State<DishCarousel<T>> createState() => _DishCarouselState<T>();
 }
 
-class _DishCarouselState extends State<DishCarousel>
+class _DishCarouselState<T extends TablePlate> extends State<DishCarousel<T>>
     with SingleTickerProviderStateMixin {
   // Доводка после свайпа — пружиной. Создаётся сразу, а не лениво:
   // иначе при уходе с кухни без касаний её создавал бы dispose().
@@ -326,53 +395,6 @@ class _DishCarouselState extends State<DishCarousel>
     _springTo(target, velocity: velocity.clamp(-6.0, 6.0));
   }
 
-  /// Круглая кнопка в стиле табло: тёмный кружок, белый крестик. Стоит
-  /// под табло на свисающей скатерти.
-  Widget _closeButton(BuildContext context, Size size, VoidCallback onClose) {
-    final scale = size.height / 844;
-    final diameter = 24 * scale;
-    final boardBottom =
-        size.height * _PriceBoard.center.dy + _PriceBoard.height(scale) / 2;
-    return Positioned(
-      key: const ValueKey('dish-close'),
-      left: size.width * _PriceBoard.center.dx - diameter / 2 - 8 * scale,
-      top: boardBottom + 6 * scale - 8 * scale,
-      // Поле для пальца шире самого кружка.
-      width: diameter + 16 * scale,
-      height: diameter + 16 * scale,
-      child: Semantics(
-        button: true,
-        label: context.l10n.dishesClose,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onClose,
-          child: Center(
-            child: Container(
-              width: diameter,
-              height: diameter,
-              decoration: BoxDecoration(
-                color: AppColors.textPrimary.withValues(alpha: 0.88),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.25),
-                    blurRadius: 10 * scale,
-                    offset: Offset(0, 3 * scale),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                size: 15 * scale,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _onTap(Offset local, Size size) {
     if (widget.dishes.isEmpty) {
       widget.onTapElsewhere?.call();
@@ -406,7 +428,7 @@ class _DishCarouselState extends State<DishCarousel>
           children: [
             // Касания — только в полосе стола.
             Positioned(
-              key: const ValueKey('dish-carousel-band'),
+              key: ValueKey('${widget.tag}-carousel-band'),
               left: 0,
               right: 0,
               top: size.height * DishArcGeometry.bandTop,
@@ -428,11 +450,16 @@ class _DishCarouselState extends State<DishCarousel>
             ),
             // Крестик под табло: убрать блюда со стола (заказчик 24.09).
             if (widget.onClose case final onClose?)
-              _closeButton(context, size, onClose),
+              TableBoard.closeButton(
+                key: ValueKey('${widget.tag}-close'),
+                size: size,
+                label: widget.closeLabel ?? context.l10n.dishesClose,
+                onClose: onClose,
+              ),
             // Для тестов и озвучки: какое блюдо сейчас перед мишкой.
             if (widget.dishes.isNotEmpty)
               Positioned(
-                key: const ValueKey('dish-carousel-current'),
+                key: ValueKey('${widget.tag}-carousel-current'),
                 left: 0,
                 top: 0,
                 child: ListenableBuilder(
@@ -555,6 +582,74 @@ class _ShadowPainter extends CustomPainter {
   bool shouldRepaint(_ShadowPainter old) => true;
 }
 
+/// Табло на свисающей скатерти и крестик под ним — общие для готовых
+/// блюд, рецептов и самой готовки.
+abstract final class TableBoard {
+  /// Центр табло в долях кадра: на свисающей части скатерти, под блюдом.
+  static const Offset center = Offset(0.5, 0.716);
+
+  /// Высота капсулы на экране высотой 844 × [scale].
+  static double height(double scale) => 22 * scale;
+
+  /// Тёмная капсула «как подписи комнат» (заказчик 24.09, вариант B).
+  static BoxDecoration decoration(double scale, {bool circle = false}) =>
+      BoxDecoration(
+        color: AppColors.textPrimary.withValues(alpha: 0.88),
+        shape: circle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: circle ? null : BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.25),
+            blurRadius: 10 * scale,
+            offset: Offset(0, 3 * scale),
+          ),
+        ],
+      );
+
+  /// Круглая кнопка в стиле табло: тёмный кружок, белый крестик. Стоит
+  /// под табло на свисающей скатерти. [size] — кадр кухни, [origin] —
+  /// где он начинается в родителе.
+  static Widget closeButton({
+    Key? key,
+    required Size size,
+    required String label,
+    required VoidCallback onClose,
+    Offset origin = Offset.zero,
+  }) {
+    final scale = size.height / 844;
+    final diameter = 24 * scale;
+    final boardBottom = size.height * center.dy + height(scale) / 2;
+    return Positioned(
+      key: key,
+      left: origin.dx + size.width * center.dx - diameter / 2 - 8 * scale,
+      top: origin.dy + boardBottom + 6 * scale - 8 * scale,
+      // Поле для пальца шире самого кружка.
+      width: diameter + 16 * scale,
+      height: diameter + 16 * scale,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onClose,
+          child: Center(
+            child: Container(
+              width: diameter,
+              height: diameter,
+              decoration: decoration(scale, circle: true),
+              child: Icon(
+                Icons.close_rounded,
+                size: 15 * scale,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Табло с ценой на свисающей скатерти — одно на всю дугу.
 ///
 /// Заказчик 24.09: вместо капсулы под каждым блюдом — одно табло, «в стиле
@@ -566,45 +661,36 @@ class _PriceBoard extends StatelessWidget {
   const _PriceBoard({
     super.key,
     required this.arc,
-    required this.dishes,
+    required this.count,
+    required this.lineOf,
+    required this.idOf,
     required this.size,
   });
 
   final DishArc arc;
-  final List<Dish> dishes;
+  final int count;
+  final BoardText Function(AppLocalizations l10n, int index) lineOf;
+  final String Function(int index) idOf;
   final Size size;
-
-  /// Центр табло в долях кадра: на свисающей части скатерти, под блюдом.
-  static const Offset center = Offset(0.5, 0.716);
-
-  /// Высота капсулы на экране высотой 844 × [scale].
-  static double height(double scale) => 22 * scale;
 
   @override
   Widget build(BuildContext context) {
-    if (dishes.isEmpty) return const SizedBox.shrink();
+    if (count == 0) return const SizedBox.shrink();
     final l10n = context.l10n;
     final scale = size.height / 844;
-    final count = dishes.length;
     final base = arc.offset.floorToDouble();
     final t = arc.offset - base;
     final from = (base.toInt() % count + count) % count;
     final to = (from + 1) % count;
 
-    _BoardLine line(int i) => _BoardLine(
-      name: dishName(l10n, dishes[i].id),
-      description: dishDescription(l10n, dishes[i].id),
-      price: dishes[i].price,
-      scale: scale,
-    );
-    final a = line(from);
-    final b = line(to);
+    final a = TableBoardLine(text: lineOf(l10n, from), scale: scale);
+    final b = TableBoardLine(text: lineOf(l10n, to), scale: scale);
 
-    final height = _PriceBoard.height(scale);
+    final height = TableBoard.height(scale);
     final pad = 10 * scale;
     final width = lerpDouble(a.width, b.width, t)! + pad * 2;
-    final cx = size.width * center.dx;
-    final cy = size.height * center.dy;
+    final cx = size.width * TableBoard.center.dx;
+    final cy = size.height * TableBoard.center.dy;
 
     return Positioned(
       left: cx - width / 2,
@@ -612,24 +698,14 @@ class _PriceBoard extends StatelessWidget {
       width: width,
       height: height,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.textPrimary.withValues(alpha: 0.88),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.textPrimary.withValues(alpha: 0.25),
-              blurRadius: 10 * scale,
-              offset: Offset(0, 3 * scale),
-            ),
-          ],
-        ),
+        decoration: TableBoard.decoration(scale),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(999),
           child: Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              _rolled(a, -height * t, 1 - t, dishes[from].id),
-              if (t > 0) _rolled(b, height * (1 - t), t, dishes[to].id),
+              _rolled(a, -height * t, 1 - t, idOf(from)),
+              if (t > 0) _rolled(b, height * (1 - t), t, idOf(to)),
             ],
           ),
         ),
@@ -637,9 +713,9 @@ class _PriceBoard extends StatelessWidget {
     );
   }
 
-  Widget _rolled(_BoardLine line, double dy, double opacity, String id) {
+  Widget _rolled(TableBoardLine line, double dy, double opacity, String id) {
     return Positioned.fill(
-      key: ValueKey('dish-board-$id'),
+      key: ValueKey(id),
       child: Transform.translate(
         offset: Offset(0, dy),
         child: Opacity(
@@ -654,18 +730,12 @@ class _PriceBoard extends StatelessWidget {
   }
 }
 
-/// Строка табло: «Паста  с томатным соусом  ● 12».
-class _BoardLine extends StatelessWidget {
-  const _BoardLine({
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.scale,
-  });
+/// Строка табло: «Паста  с томатным соусом  ● 12», у готовки —
+/// «Фруктовый салат  ●●○○  ● +14».
+class TableBoardLine extends StatelessWidget {
+  const TableBoardLine({super.key, required this.text, required this.scale});
 
-  final String name;
-  final String description;
-  final int price;
+  final BoardText text;
   final double scale;
 
   TextStyle get _name =>
@@ -675,16 +745,23 @@ class _BoardLine extends StatelessWidget {
     weight: 600,
     color: Colors.white.withValues(alpha: 0.72),
   );
-  TextStyle get _price => sceneText(
-    size: 11.5 * scale,
-    weight: 900,
-    color: const Color(0xFFFFECBE),
-  );
+  TextStyle get _price =>
+      sceneText(size: 11.5 * scale, weight: 900, color: TableBoardLine.gold);
 
-  String get _text => description.isEmpty ? name : '$name  $description';
+  /// Цвет цены и закрашенного кружка.
+  static const Color gold = Color(0xFFFFECBE);
+
+  String get _plain => text.description.isEmpty
+      ? text.name
+      : '${text.name}  ${text.description}';
 
   double get _gap => 8 * scale;
   double get _coin => 10 * scale;
+  double get _dot => 9 * scale;
+  double get _dotGap => 4 * scale;
+
+  double get _dots =>
+      text.steps == 0 ? 0 : text.steps * _dot + (text.steps - 1) * _dotGap;
 
   /// Ширина строки без полей капсулы — по ней табло меняет ширину.
   double get width {
@@ -700,18 +777,19 @@ class _BoardLine extends StatelessWidget {
     }
 
     return measure(_span) +
+        (text.steps == 0 ? 0 : _gap + _dots) +
         _gap +
         _coin +
         4 * scale +
-        measure(TextSpan(text: '$price', style: _price));
+        measure(TextSpan(text: text.value, style: _price));
   }
 
   InlineSpan get _span => TextSpan(
-    text: name,
+    text: text.name,
     style: _name,
     children: [
-      if (description.isNotEmpty)
-        TextSpan(text: '  $description', style: _description),
+      if (text.description.isNotEmpty)
+        TextSpan(text: '  ${text.description}', style: _description),
     ],
   );
 
@@ -720,7 +798,19 @@ class _BoardLine extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text.rich(_span, maxLines: 1, semanticsLabel: _text),
+        Text.rich(_span, maxLines: 1, semanticsLabel: _plain),
+        if (text.steps > 0) ...[
+          SizedBox(width: _gap),
+          for (var i = 0; i < text.steps; i++) ...[
+            if (i > 0) SizedBox(width: _dotGap),
+            _StepDot(
+              key: ValueKey('board-step-$i'),
+              fill: (text.done - i).clamp(0.0, 1.0),
+              size: _dot,
+              scale: scale,
+            ),
+          ],
+        ],
         SizedBox(width: _gap),
         Container(
           width: _coin,
@@ -735,8 +825,58 @@ class _BoardLine extends StatelessWidget {
           ),
         ),
         SizedBox(width: 4 * scale),
-        Text('$price', style: _price),
+        Text(text.value, style: _price),
       ],
+    );
+  }
+}
+
+/// Кружок шага на табло готовки: пустой — белое кольцо, собранный —
+/// золотой. Закрашивается, разрастаясь из середины.
+class _StepDot extends StatelessWidget {
+  const _StepDot({
+    super.key,
+    required this.fill,
+    required this.size,
+    required this.scale,
+  });
+
+  final double fill;
+  final double size;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: fill >= 1 ? '●' : '○',
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.6 * (1 - fill)),
+                  width: 1.5 * scale,
+                ),
+              ),
+            ),
+            if (fill > 0)
+              Transform.scale(
+                scale: fill,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: TableBoardLine.gold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

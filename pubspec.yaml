@@ -52,6 +52,10 @@ flutter:
     - assets/rooms/kitchen/
     # Блюда на столе кухни (дуга «Готовые блюда»): тарелки без фона.
     - assets/rooms/kitchen/dishes/
+    # Готовка на кухне (вариант A, 24.09): продукты под столом и два
+    # блюда, которых нет среди готовых, — мясное и овощное.
+    - assets/rooms/kitchen/ingredients/
+    - assets/rooms/kitchen/recipes/
     - assets/ui/
     # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.

@@ -1,8 +1,15 @@
 /// Еда: 10 готовых блюд и 5 рецептов с мини-играми (КП 8).
 library;
 
+/// То, что ставится на стол кухни дугой: готовое блюдо или рецепт. У
+/// каждого — картинка тарелки без фона в ракурсе кухни.
+abstract interface class TablePlate {
+  String get id;
+  String get image;
+}
+
 /// Готовое блюдо из вкладки «Готовые блюда» (КП 8.2).
-class Dish {
+class Dish implements TablePlate {
   const Dish({
     required this.id,
     required this.emoji,
@@ -11,6 +18,7 @@ class Dish {
     required this.foodGain,
   });
 
+  @override
   final String id;
   final String emoji;
   final String title;
@@ -26,19 +34,25 @@ class Dish {
 
   /// Картинка блюда для стола на кухне: тарелка без фона, в стиле и
   /// ракурсе кухни (Higgsfield, 24.09).
+  @override
   String get image => 'assets/rooms/kitchen/dishes/$id.webp';
 }
 
 /// Ингредиент мини-игры готовки.
 class Ingredient {
-  const Ingredient(this.emoji, this.title);
+  const Ingredient(this.id, this.emoji, this.title);
 
+  final String id;
   final String emoji;
   final String title;
+
+  /// Картинка продукта под столом кухни (Higgsfield, 24.09; заказчик
+  /// утвердил все 23).
+  String get image => 'assets/rooms/kitchen/ingredients/$id.webp';
 }
 
 /// Рецепт из вкладки «Приготовить» (КП 8.3, 8.5).
-class Recipe {
+class Recipe implements TablePlate {
   const Recipe({
     required this.id,
     required this.emoji,
@@ -50,6 +64,7 @@ class Recipe {
     required this.distractors,
   });
 
+  @override
   final String id;
   final String emoji;
   final String title;
@@ -71,6 +86,17 @@ class Recipe {
 
   /// Всё, что показывается на экране мини-игры.
   List<Ingredient> get allChoices => [...steps, ...distractors];
+
+  /// Готовое блюдо на столе — того же размера и ракурса, что готовые блюда.
+  /// Печенье, сэндвич и фруктовый салат берут картинки готовых блюд;
+  /// мясного и овощного среди готовых нет, их нарисовали отдельно (24.09).
+  /// Потом их заменят картинки Ирины.
+  @override
+  String get image => switch (id) {
+    'meat' || 'veggie' => 'assets/rooms/kitchen/recipes/$id.webp',
+    'fruit_salad' => 'assets/rooms/kitchen/dishes/fruit.webp',
+    _ => 'assets/rooms/kitchen/dishes/$id.webp',
+  };
 }
 
 /// Каталог еды.
@@ -100,14 +126,14 @@ abstract final class FoodCatalog {
       reward: 8,
       foodGain: 14,
       steps: [
-        Ingredient('🌾', 'Мука'),
-        Ingredient('🍯', 'Сахар'),
-        Ingredient('🧈', 'Масло'),
+        Ingredient('flour', '🌾', 'Мука'),
+        Ingredient('sugar', '🍯', 'Сахар'),
+        Ingredient('butter', '🧈', 'Масло'),
       ],
       distractors: [
-        Ingredient('🧂', 'Соль'),
-        Ingredient('🐟', 'Рыба'),
-        Ingredient('🌶', 'Перец'),
+        Ingredient('salt', '🧂', 'Соль'),
+        Ingredient('fish', '🐟', 'Рыба'),
+        Ingredient('pepper', '🌶', 'Перец'),
       ],
     ),
     Recipe(
@@ -118,14 +144,14 @@ abstract final class FoodCatalog {
       reward: 9,
       foodGain: 26,
       steps: [
-        Ingredient('🍞', 'Хлеб'),
-        Ingredient('🧀', 'Сыр'),
-        Ingredient('🍅', 'Помидор'),
+        Ingredient('bread', '🍞', 'Хлеб'),
+        Ingredient('cheese', '🧀', 'Сыр'),
+        Ingredient('tomato', '🍅', 'Помидор'),
       ],
       distractors: [
-        Ingredient('🍫', 'Шоколад'),
-        Ingredient('🧅', 'Лук'),
-        Ingredient('🍬', 'Конфета'),
+        Ingredient('chocolate', '🍫', 'Шоколад'),
+        Ingredient('onion', '🧅', 'Лук'),
+        Ingredient('candy', '🍬', 'Конфета'),
       ],
     ),
     Recipe(
@@ -136,15 +162,15 @@ abstract final class FoodCatalog {
       reward: 14,
       foodGain: 24,
       steps: [
-        Ingredient('🍎', 'Яблоко'),
-        Ingredient('🍌', 'Банан'),
-        Ingredient('🍊', 'Апельсин'),
-        Ingredient('🥛', 'Йогурт'),
+        Ingredient('apple', '🍎', 'Яблоко'),
+        Ingredient('banana', '🍌', 'Банан'),
+        Ingredient('orange', '🍊', 'Апельсин'),
+        Ingredient('yogurt', '🥛', 'Йогурт'),
       ],
       distractors: [
-        Ingredient('🧂', 'Соль'),
-        Ingredient('🌶', 'Перец'),
-        Ingredient('🧅', 'Лук'),
+        Ingredient('salt', '🧂', 'Соль'),
+        Ingredient('pepper', '🌶', 'Перец'),
+        Ingredient('onion', '🧅', 'Лук'),
       ],
     ),
     Recipe(
@@ -155,16 +181,16 @@ abstract final class FoodCatalog {
       reward: 20,
       foodGain: 38,
       steps: [
-        Ingredient('🍖', 'Мясо'),
-        Ingredient('🧅', 'Лук'),
-        Ingredient('🥕', 'Морковь'),
-        Ingredient('🌿', 'Специи'),
-        Ingredient('🧈', 'Масло'),
+        Ingredient('meat', '🍖', 'Мясо'),
+        Ingredient('onion', '🧅', 'Лук'),
+        Ingredient('carrot', '🥕', 'Морковь'),
+        Ingredient('spices', '🌿', 'Специи'),
+        Ingredient('butter', '🧈', 'Масло'),
       ],
       distractors: [
-        Ingredient('🍯', 'Сахар'),
-        Ingredient('🍌', 'Банан'),
-        Ingredient('🍫', 'Шоколад'),
+        Ingredient('sugar', '🍯', 'Сахар'),
+        Ingredient('banana', '🍌', 'Банан'),
+        Ingredient('chocolate', '🍫', 'Шоколад'),
       ],
     ),
     Recipe(
@@ -175,17 +201,17 @@ abstract final class FoodCatalog {
       reward: 18,
       foodGain: 32,
       steps: [
-        Ingredient('🥔', 'Картофель'),
-        Ingredient('🥕', 'Морковь'),
-        Ingredient('🥬', 'Капуста'),
-        Ingredient('🌿', 'Зелень'),
-        Ingredient('🧈', 'Масло'),
-        Ingredient('🧂', 'Соль'),
+        Ingredient('potato', '🥔', 'Картофель'),
+        Ingredient('carrot', '🥕', 'Морковь'),
+        Ingredient('cabbage', '🥬', 'Капуста'),
+        Ingredient('greens', '🌿', 'Зелень'),
+        Ingredient('butter', '🧈', 'Масло'),
+        Ingredient('salt', '🧂', 'Соль'),
       ],
       distractors: [
-        Ingredient('🍫', 'Шоколад'),
-        Ingredient('🍯', 'Мёд'),
-        Ingredient('🍬', 'Конфета'),
+        Ingredient('chocolate', '🍫', 'Шоколад'),
+        Ingredient('honey', '🍯', 'Мёд'),
+        Ingredient('candy', '🍬', 'Конфета'),
       ],
     ),
   ];

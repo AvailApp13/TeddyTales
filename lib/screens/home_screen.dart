@@ -21,6 +21,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_sheet.dart';
 import '../widgets/bedroom_scene.dart';
+import '../widgets/kitchen_cooking.dart';
 import '../widgets/kitchen_scene.dart';
 import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
@@ -122,8 +123,10 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _room = room;
       _asleep = false;
-      // Ушли с кухни — блюда со стола убираются.
+      // Ушли с кухни — блюда и готовка со стола убираются.
       _dishesShown = false;
+      _recipesShown = false;
+      _cooking = null;
       _resetArc();
     });
   }
@@ -441,6 +444,23 @@ class _HomeScreenState extends State<HomeScreen>
     initial: FoodCatalog.dishes.indexWhere((d) => d.id == 'pasta'),
   );
 
+  /// Рецепты на столе — та же дуга, что у готовых блюд (готовка на кухне,
+  /// вариант A, заказчик 24.09). Перед мишкой сначала сэндвич, как в
+  /// утверждённом макете.
+  bool _recipesShown = false;
+  final DishArc _recipeArc = DishArc(
+    count: FoodCatalog.recipes.length,
+    initial: FoodCatalog.recipes.indexWhere((r) => r.id == 'sandwich'),
+  );
+
+  /// Что сейчас готовится. Пока готовится — стол пустой, продукты под
+  /// столом. Номер — чтобы новая готовка начиналась с чистого листа.
+  Recipe? _cooking;
+  int _cookRun = 0;
+
+  /// Сколько раз положили не тот продукт: мишка мотает головой.
+  int _refusals = 0;
+
   @override
   void initState() {
     super.initState();
@@ -479,6 +499,7 @@ class _HomeScreenState extends State<HomeScreen>
       ..removeListener(_onEatenChanged)
       ..dispose();
     _dishArc.dispose();
+    _recipeArc.dispose();
     super.dispose();
   }
 
@@ -538,8 +559,77 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
     }
-    setState(() => _dishesShown = !_dishesShown);
+    setState(() {
+      _dishesShown = !_dishesShown;
+      // На столе что-то одно: готовые блюда или готовка.
+      if (_dishesShown) {
+        _recipesShown = false;
+        _cooking = null;
+      }
+    });
   }
+
+  /// «Приготовить»: рецепты выезжают на стол; ещё раз — убираются. Если
+  /// уже готовится — готовка бросается.
+  void _toggleRecipes() {
+    setState(() {
+      if (_cooking != null) {
+        _cooking = null;
+        _recipesShown = false;
+        return;
+      }
+      _recipesShown = !_recipesShown;
+      if (_recipesShown) _dishesShown = false;
+    });
+  }
+
+  /// Крестик под табло рецептов.
+  void _hideRecipes() => setState(() => _recipesShown = false);
+
+  /// Нажали на рецепт перед мишкой — стол пустеет, под столом продукты.
+  void _startCooking(Recipe recipe) {
+    setState(() {
+      _recipesShown = false;
+      _cooking = recipe;
+      _cookRun++;
+    });
+  }
+
+  /// Крестик во время готовки — бросить её.
+  void _stopCooking() => setState(() => _cooking = null);
+
+  /// Положили не тот продукт — мишка мотает головой.
+  void _wrongIngredient() => setState(() => _refusals++);
+
+  /// Всё собрано, блюдо появилось на столе: награда и еда — те же, что
+  /// у готовки в листе кормления (КП 8.5).
+  void _cooked(Recipe recipe) {
+    final l10n = context.l10n;
+    widget.game.completeRecipe(recipe);
+    _soon(
+      l10n.feedCookResult(
+        recipeName(l10n, recipe.id),
+        recipe.reward,
+        recipe.foodGain.round(),
+      ),
+    );
+  }
+
+  /// Блюдо стоит перед мишкой — он ест. Любимое блюдо характера нежит.
+  void _serveCooked(Recipe recipe) {
+    final dish = recipe.id == 'fruit_salad' ? 'fruit' : recipe.id;
+    final favourite =
+        favouriteDishByTrait[widget.controller.state.trait] == dish;
+    setState(
+      () => _meal = KitchenMeal(
+        id: ++_meals,
+        mood: favourite ? KitchenMood.love : KitchenMood.happy,
+      ),
+    );
+  }
+
+  /// Мишка доел, тарелка ушла.
+  void _finishCooking() => setState(() => _cooking = null);
 
   /// Крестик под табло — блюда уходят со стола.
   void _hideDishes() => setState(() => _dishesShown = false);
@@ -659,6 +749,21 @@ class _HomeScreenState extends State<HomeScreen>
                   onToggleDishes: _toggleDishes,
                   onHideDishes: _hideDishes,
                   onBuyDish: _buyDish,
+                  recipesShown: _recipesShown,
+                  recipeArc: _recipeArc,
+                  cooking: _cooking,
+                  cookRun: _cookRun,
+                  refusals: _refusals,
+                  onToggleRecipes: _toggleRecipes,
+                  onHideRecipes: _hideRecipes,
+                  onStartCooking: _startCooking,
+                  cookCallbacks: (
+                    onClose: _stopCooking,
+                    onWrong: _wrongIngredient,
+                    onCooked: _cooked,
+                    onServe: _serveCooked,
+                    onFinished: _finishCooking,
+                  ),
                   onWash: _wash,
                   onToilet: _toilet,
                   onOpenCare: () => _open(
@@ -819,6 +924,15 @@ class _RoomScene extends StatelessWidget {
     required this.onToggleDishes,
     required this.onHideDishes,
     required this.onBuyDish,
+    required this.recipesShown,
+    required this.recipeArc,
+    required this.cooking,
+    required this.cookRun,
+    required this.refusals,
+    required this.onToggleRecipes,
+    required this.onHideRecipes,
+    required this.onStartCooking,
+    required this.cookCallbacks,
     required this.onWash,
     required this.onToilet,
   });
@@ -877,6 +991,20 @@ class _RoomScene extends StatelessWidget {
   final VoidCallback onHideDishes;
   final ValueChanged<Dish> onBuyDish;
 
+  /// «Приготовить» (вариант A, заказчик 24.09): рецепты на той же дуге
+  /// стола, что и готовые блюда; выбрали — стол пустеет, продукты под
+  /// столом ([KitchenCooking]). [cookRun] — номер готовки, [refusals] —
+  /// сколько раз мишка мотал головой.
+  final bool recipesShown;
+  final DishArc recipeArc;
+  final Recipe? cooking;
+  final int cookRun;
+  final int refusals;
+  final VoidCallback onToggleRecipes;
+  final VoidCallback onHideRecipes;
+  final ValueChanged<Recipe> onStartCooking;
+  final CookCallbacks cookCallbacks;
+
   /// Купание и горшок. Механики пока нет — кнопки честно об этом говорят.
   final VoidCallback onWash;
   final VoidCallback onToilet;
@@ -932,6 +1060,7 @@ class _RoomScene extends StatelessWidget {
               meal: meal,
               idle: _kitchenIdle(controller.state.mood),
               pet: pets,
+              refuse: refusals,
               trait: _kitchenTrait(controller.state.trait),
             ),
           ),
@@ -1066,15 +1195,56 @@ class _RoomScene extends StatelessWidget {
               onClose: onHideDishes,
             ),
           ),
+        // Рецепты — на той же дуге стола, что готовые блюда; нажали на
+        // рецепт перед мишкой — начинается готовка.
+        if (room == RoomKind.kitchen && recipesShown) ...[
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: DishPlates<Recipe>(
+              arc: recipeArc,
+              dishes: FoodCatalog.recipes,
+              board: recipeBoard,
+              tag: 'recipe',
+            ),
+          ),
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: DishCarousel<Recipe>(
+              arc: recipeArc,
+              dishes: FoodCatalog.recipes,
+              onBuy: onStartCooking,
+              onTapElsewhere: onPet,
+              onClose: onHideRecipes,
+              closeLabel: context.l10n.cookClose,
+              tag: 'recipe',
+            ),
+          ),
+        ],
+        // Готовка: стол пустой, продукты под столом, блюдо появится на
+        // столе, когда всё собрано.
+        if (room == RoomKind.kitchen && cooking != null)
+          Positioned.fill(
+            child: KitchenCooking(
+              key: ValueKey('cook-$cookRun'),
+              frame: frame.rect,
+              recipe: cooking!,
+              onClose: cookCallbacks.onClose,
+              onWrong: cookCallbacks.onWrong,
+              onCooked: cookCallbacks.onCooked,
+              onServe: cookCallbacks.onServe,
+              onFinished: cookCallbacks.onFinished,
+            ),
+          ),
         if (room == RoomKind.kitchen)
           Positioned(
             left: 16,
             right: _pawSpace,
             bottom: 34,
             child: _KitchenMenu(
-              onOpenFeed: onOpenFeed,
               dishesShown: dishesShown,
               onToggleDishes: onToggleDishes,
+              cookShown: recipesShown || cooking != null,
+              onToggleCook: onToggleRecipes,
             ),
           ),
         // В спальне — «Уложить спать» на ковре, там, где заказчик 22.09
@@ -1288,14 +1458,18 @@ class _WakeMenu extends StatelessWidget {
 /// Две кнопки выбора еды, стоящие прямо на кухне.
 class _KitchenMenu extends StatelessWidget {
   const _KitchenMenu({
-    required this.onOpenFeed,
     required this.dishesShown,
     required this.onToggleDishes,
+    required this.cookShown,
+    required this.onToggleCook,
   });
 
-  final ValueChanged<FeedTab> onOpenFeed;
   final bool dishesShown;
   final VoidCallback onToggleDishes;
+
+  /// Рецепты на столе или идёт готовка — кнопка залита зелёным.
+  final bool cookShown;
+  final VoidCallback onToggleCook;
 
   @override
   Widget build(BuildContext context) {
@@ -1312,10 +1486,13 @@ class _KitchenMenu extends StatelessWidget {
           onTap: onToggleDishes,
         ),
         const SizedBox(width: 8),
+        // «Приготовить» — тоже прямо на стол (вариант A, заказчик 24.09):
+        // рецепты выезжают дугой, готовка идёт в самой кухне, без шторки.
         _Pill(
           label: l10n.feedTabCook,
           icon: Icons.soup_kitchen_outlined,
-          onTap: () => onOpenFeed(FeedTab.cook),
+          selected: cookShown,
+          onTap: onToggleCook,
         ),
       ],
     );
@@ -1372,3 +1549,12 @@ class _Pill extends StatelessWidget {
     );
   }
 }
+
+/// Что делать по ходу готовки на кухне: см. [KitchenCooking].
+typedef CookCallbacks = ({
+  VoidCallback onClose,
+  VoidCallback onWrong,
+  ValueChanged<Recipe> onCooked,
+  ValueChanged<Recipe> onServe,
+  VoidCallback onFinished,
+});
