@@ -55,7 +55,6 @@ class KitchenScene extends StatefulWidget {
     this.idle = KitchenIdle.normal,
     this.pet = 0,
     this.trait = BearTrait.calm,
-    this.onTable,
   });
 
   /// Последнее кормление. Новое — мишка ест и показывает эмоцию.
@@ -70,11 +69,6 @@ class KitchenScene extends StatefulWidget {
   /// Характер: реакция на угощение после еды у каждого своя
   /// (ТЗ аниматора 5.5, `reaction_trait_*_treat`).
   final BearTrait trait;
-
-  /// Что стоит на столе (готовые блюда). Слой во весь кадр, рисуется над
-  /// столом, но под лапками, руками и туловищем: лапки ничем не
-  /// закрываются (заказчик 24.09).
-  final Widget? onTable;
 
   // --- Где лежит каждая часть — в долях кадра комнаты 941 × 1672. -------
   // Числа печатает tool/cut_kitchen_parts.py: он же режет файлы.
@@ -1051,8 +1045,6 @@ class _KitchenSceneState extends State<KitchenScene>
                   -1,
                 ),
                 _tableFront(w, h),
-                if (widget.onTable case final onTable?)
-                  Positioned.fill(child: onTable),
                 // Плечевые доборы: внутренняя половина рукава, неподвижная,
                 // под туловищем. Когда рука взмахивает, у плеча иначе
                 // просвечивал бы стул. Заказчик 22.09: «каждое движение

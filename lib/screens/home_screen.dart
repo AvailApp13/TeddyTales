@@ -817,12 +817,6 @@ class _RoomScene extends StatelessWidget {
               idle: _kitchenIdle(controller.state.mood),
               pet: pets,
               trait: _kitchenTrait(controller.state.trait),
-              // Блюда стоят в самой сцене: над столом, под лапками.
-              onTable: AnimatedOpacity(
-                opacity: dishesShown ? 1 : 0,
-                duration: const Duration(milliseconds: 260),
-                child: DishPlates(arc: dishArc, dishes: FoodCatalog.dishes),
-              ),
             ),
           ),
         if (room == RoomKind.bedroom) ...[
@@ -932,9 +926,19 @@ class _RoomScene extends StatelessWidget {
         // «Приготовить» подходила к ней вплотную — заказчик 20.09 прочитал
         // это как наложение.
         // Готовые блюда дугой на столе (заказчик 24.09): появляются и
-        // уходят по кнопке «Готовые блюда». Сами блюда нарисованы в сцене
-        // кухни под лапками, здесь — только касания. Ловятся они в полосе
+        // уходят по кнопке «Готовые блюда». Лежат поверх мишки целиком:
+        // на лету блюдо может пройти по нему, но ничем не срезается
+        // (заказчик 24.09: «никаких масок»). Касания ловятся в полосе
         // стола — мимо неё мишку по-прежнему можно погладить.
+        if (room == RoomKind.kitchen)
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: AnimatedOpacity(
+              opacity: dishesShown ? 1 : 0,
+              duration: const Duration(milliseconds: 260),
+              child: DishPlates(arc: dishArc, dishes: FoodCatalog.dishes),
+            ),
+          ),
         if (room == RoomKind.kitchen && dishesShown)
           Positioned.fromRect(
             rect: frame.rect,
