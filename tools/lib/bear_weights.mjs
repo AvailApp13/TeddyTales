@@ -13,6 +13,10 @@
  *              остриё — с головой (root_body); обод между ними тянется
  *              пропорционально. Из-под капюшона при наклоне ничего не открывается.
  *  shorts    : пояс — root, штанины — кости ног (левая/правая по оси).
+ *  shirt     : дыхание животом (D21): живот — кость root_belly (её масштаб от центра
+ *              живота), вес спадает к груди и плечам. На вдохе живот только
+ *              расширяется (масштаб ≥ 1): бока и низ толстовки уходят наружу — на
+ *              фон и на шорты, которые лежат за толстовкой, дыр не бывает.
  *  paw_*, face: целиком на кости (рука / голова) — без растяжения (D15).
  *  ear_*     : изгиб уха (D20): основание под капюшоном и у его кромки — как
  *              капюшон в этой точке (root / root_body), уже в 60 px от капюшона ухо целиком идёт с костью уха
@@ -79,7 +83,15 @@ export function loadWeights() {
     const w = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y)); const h = hoodW(x, y);
     return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
   };
+  // живот: вес — близость к центру живота; силуэт (бока, низ) дышит вместе с ним
+  const [BX, BY] = F.belly;
+  const BELLY_R = (process.env.BELLY_R ?? '160,380').split(',').map(Number);   // ядро и край зоны живота, px кадра
+  const bellyW = (x, y) => {
+    const w = 1 - smooth(BELLY_R[0], BELLY_R[1], Math.hypot(x - BX, (y - BY) * 1.25));   // по высоте зона чуть ниже
+    return { root: 1 - w, root_belly: w };
+  };
   const PLAN = {
+    shirt: { bones: ['root', 'root_belly'], w: bellyW },
     sleeve_left: { bones: ['root', 'root_arm_left'], w: sleeveW(SEAM_UP.left, 'root_arm_left') },
     sleeve_right: { bones: ['root', 'root_arm_right'], w: sleeveW(SEAM_UP.right, 'root_arm_right') },
     // лапы и лицо двигаются целиком — без растяжения (обратная связь: лапы раздувались, морда кривилась)

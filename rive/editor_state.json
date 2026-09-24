@@ -656,14 +656,14 @@
       "ear_left": {
         "group": "ear_left",
         "groupId": "0-104",
-        "asset": "0-117536",
-        "instance": "0-117537"
+        "asset": "0-155375",
+        "instance": "0-155376"
       },
       "ear_right": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-117538",
-        "instance": "0-117539"
+        "asset": "0-155377",
+        "instance": "0-155378"
       }
     },
     "layersV2Transform": {
@@ -683,7 +683,8 @@
       "root_leg_left": "0-394",
       "root_leg_right": "0-395",
       "root_ear_left": "0-117528",
-      "root_ear_right": "0-117532"
+      "root_ear_right": "0-117532",
+      "root_belly": "0-155371"
     },
     "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind.",
     "bonesPlan": [
@@ -815,8 +816,16 @@
         ],
         "vertices": 1213
       },
+      "shirt": {
+        "meshId": "0-155379",
+        "bones": [
+          "root",
+          "root_belly"
+        ],
+        "vertices": 2574
+      },
       "ear_left": {
-        "meshId": "0-117540",
+        "meshId": "0-160535",
         "bones": [
           "root",
           "root_body",
@@ -825,7 +834,7 @@
         "vertices": 1464
       },
       "ear_right": {
-        "meshId": "0-120477",
+        "meshId": "0-163472",
         "bones": [
           "root",
           "root_body",
@@ -1025,7 +1034,7 @@
       "name": "face_demo",
       "fps": 60,
       "frames": 1332,
-      "keys": 3007,
+      "keys": 5118,
       "order": [
         "smile",
         "laugh",
@@ -1058,7 +1067,7 @@
       "name": "idle_life",
       "fps": 60,
       "frames": 864,
-      "keys": 1441,
+      "keys": 2523,
       "blinks": [
         70,
         262,
@@ -1071,14 +1080,16 @@
           "right",
           420,
           500,
-          7
+          12
         ]
       ],
-      "earBreath": 2.5,
+      "earBreath": 4,
+      "belly": 4.5,
+      "arms": 1.3,
       "listen": {
         "from": 600,
         "to": 760,
-        "ear": 11.5,
+        "ear": 14,
         "head": 2.5
       }
     }

@@ -325,6 +325,13 @@ export const rigSpec = {
       "optional": false
     },
     {
+      "name": "root_belly",
+      "kind": "bone",
+      "parent": "body",
+      "artistLayer": false,
+      "optional": false
+    },
+    {
       "name": "body_base",
       "kind": "art",
       "parent": "root",

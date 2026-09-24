@@ -27,11 +27,11 @@ PIVOT = {  # поза: ось в артборде
     'leg_left': (453, 812), 'leg_right': (582, 812),
     'body': (517.5, 810.8),   # начало кости root (таз)
 }
-BONE = {'root_ear_left': 'ear_left', 'root_ear_right': 'ear_right', 'root_body': 'head', 'root_arm_left': 'arm_left', 'root_arm_right': 'arm_right',
+BONE = {'root_belly': 'belly', 'root_ear_left': 'ear_left', 'root_ear_right': 'ear_right', 'root_body': 'head', 'root_arm_left': 'arm_left', 'root_arm_right': 'arm_right',
         'root_leg_left': 'leg_left', 'root_leg_right': 'leg_right'}           # кость рига -> поза
 RIGID = {'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
          'foot_left': 'leg_left', 'foot_right': 'leg_right'}
-SKINNED = ('sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right')
+SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right')
 MESH_STEP = 6
 
 
@@ -44,15 +44,22 @@ def _rot(pivot, deg):
 to_art = lambda xf, yf: (CX + (xf - 666.5) * S, CY + (yf - 1000) * S)
 for _e, _p in json.load(open(f'{D}/layers.json')).get('ear_pivots', {}).items():
     PIVOT[_e] = to_art(*_p['pivot'])
+# центр живота (weight_fields.py): belly=… — масштаб кости root_belly, % (дыхание, D21)
+PIVOT['belly'] = to_art(*json.load(open(f'{D}/weight_fields.json'))['belly'])
 # кость уха — дочерняя головы: сначала изгиб уха, затем голова
 PARENT = {'ear_left': ['head', 'ear_left'], 'ear_right': ['head', 'ear_right']}
 
 
 def bone_affine(pose, ang):
-    """2×3: поворот вокруг оси позы на угол (Rive: + по часовой при y вниз).
+    """2×3: поворот вокруг оси позы на угол (Rive: + по часовой при y вниз);
+    belly — масштаб живота (по высоте 0.6 от ширины).
     body=… — наклон кости root от таза: все кости — её дети, поворот внешний."""
     M = np.eye(3)
-    if pose in PARENT:
+    if pose == 'belly':
+        if ang.get('belly'):
+            px, py = to_full(*PIVOT['belly']); k = 1 + ang['belly'] / 100; ky = 1 + 0.6 * ang['belly'] / 100
+            M = np.array([[k, 0, px * (1 - k)], [0, ky, py * (1 - ky)], [0, 0, 1]])
+    elif pose in PARENT:
         for q in PARENT[pose]:
             if ang.get(q): M = M @ _rot(PIVOT[q], ang[q])
     elif pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])

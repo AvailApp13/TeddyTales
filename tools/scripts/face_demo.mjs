@@ -3,8 +3,8 @@
  * Показ мимики: таймлайн face_demo — покой с морганием и взглядом, затем по очереди
  * все выражения (плавное появление 0.2 с, 1.5 с удержание), и каждое — со своим
  * движением тела: смех подпрыгивает и качает головой, при зевке тянет лапы,
- * при грусти голова опускается набок и т. д. Уши отвечают настроению (D20):
- * удивление — вверх, грусть и обида — вниз, смех — подрагивают. Дыхание идёт всё время.
+ * при грусти голова опускается набок и т. д. Дыхание — животом (D21). Уши отвечают настроению (D20):
+ * удивление — вверх, грусть и обида — вниз, смех — подрагивают.
  * State Machine 1 переключается на этот таймлайн (demo_moves остаётся в файле).
  *
  *   RIVE_MCP_URL=https://<tunnel>/mcp node scripts/face_demo.mjs [--no-play]
@@ -32,25 +32,26 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 const env = (u) => sm(0, FADE, u) * (1 - sm(SEG - 4, SEG + FADE - 4, u));   // вход и выход выражения
 const S = Math.sin, PI2 = Math.PI * 2;
 // движения тела по выражению: u — кадр от начала выражения; head — наклон головы на глаз
-// ear — изгиб ушей, ° (+ вверх, − вниз; D20), не больше 14°
+// ear — изгиб ушей, ° (+ вверх, − вниз; D20), не больше 18°
 const MOVE = {
-  smile: (u, e) => ({ head: 4 * e, ear: 5 * e }),
-  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e, ear: (4 + 7 * S(PI2 * u / 12)) * e }),
-  love: (u, e) => ({ head: 8 * e, arm: 6 * e, ear: 7 * e }),
-  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e, ear: 14 * sm(0, 8, u) * e }),
-  sad: (u, e) => ({ head: -6 * e, y: 3 * e, ear: -14 * e }),
-  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e, ear: -11 * e }),
-  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e, ear: 3 * S(PI2 * u / 14) * e }),
+  smile: (u, e) => ({ head: 4 * e, ear: 6 * e }),
+  laugh: (u, e) => ({ head: 5 * S(PI2 * u / 22) * e, y: -6 * Math.abs(S(Math.PI * u / 12)) * e, arm: (20 + 5 * S(PI2 * u / 12)) * e, ear: (5 + 9 * S(PI2 * u / 12)) * e }),
+  love: (u, e) => ({ head: 8 * e, arm: 6 * e, ear: 9 * e }),
+  surprised: (u, e) => ({ head: -2 * e, y: -7 * sm(0, 8, u) * e, arm: 16 * sm(0, 8, u) * e, ear: 18 * sm(0, 8, u) * e }),
+  sad: (u, e) => ({ head: -6 * e, y: 3 * e, ear: -18 * e }),
+  upset: (u, e) => ({ head: (-5 + 1.5 * S(PI2 * u / 10)) * e, y: 2.5 * e, ear: -14 * e }),
+  chew: (u, e) => ({ head: 2 * S(PI2 * u / 30) * e, y: 2 * S(PI2 * u / 14) * e, ear: 4 * S(PI2 * u / 14) * e }),
   lick: (u, e) => ({ head: 5 * e }),
-  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e, ear: -9 * e }),
-  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e, ear: -8 * e }),
-  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e, ear: 4 * e }),
+  yawn: (u, e) => ({ head: -3 * e, y: -4 * e, arm: 36 * e, ear: -12 * e }),
+  eyes_closed: (u, e) => ({ head: 8 * e, y: 2 * e, ear: -10 * e }),
+  squint: (u, e) => ({ head: 3 * S(PI2 * u / 16) * e, ear: 5 * e }),
 };
 function pose(f) {
-  let head = 0, y = 1.2 * S(PI2 * f / 150), arm = 0, ear = 0;  // дыхание
+  let head = 0, y = 0, arm = 0, ear = 0;
+  const inhale = (1 - Math.cos(PI2 * f * 9 / END)) / 2;            // дыхание животом (D21): 9 вдохов, 0 в покое и в конце петли
   for (const n of ORDER) { const u = f - start[n]; if (u < 0 || u > SEG + FADE) continue;
     const m = MOVE[n](u, env(u)); head += m.head ?? 0; y += m.y ?? 0; arm += m.arm ?? 0; ear += m.ear ?? 0; }
-  return { head, y, arm, ear };
+  return { head, y, arm, ear, inhale };
 }
 // взгляд (бусины основы; работает, пока на глазах нет накладки выражения): смещение в px артборда
 function gaze(f) {
@@ -67,23 +68,26 @@ const LEAN = 0.4, HEADK = 0.65, LAG = 5;
 const tracks = new Tracks(); const key = tracks.key.bind(tracks);
 const base = (await call('query_property_values', { propertyKeys: {
   [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
-  [B.root_ear_left]: [15], [B.root_ear_right]: [15],
+  [B.root_ear_left]: [15], [B.root_ear_right]: [15], ...(B.root_belly ? { [B.root_belly]: [16, 17] } : {}),
   [IM.gaze_bead_l.instance]: [13, 14], [IM.gaze_bead_r.instance]: [13, 14] } })).values;
 const b = (id, k) => base[id][String(k)];
-for (let f = 0; f <= END; f += 6) {
+// плавные дорожки: ключи каждые 4 кадра, линейно (кубическая кривая на каждом отрезке давала подёргивание)
+const lin = (id, k, f, v) => key(id, k, f, v, 'linear');
+for (let f = 0; f <= END; f += 4) {
   const p = pose(f), pl = pose(Math.max(0, f - LAG));
   const lean = LEAN * pl.head;
-  key(B.root, 15, f, b(B.root, 15) + lean);
-  key(B.root, 91, f, b(B.root, 91) + p.y);
-  key(B.root_body, 15, f, b(B.root_body, 15) + HEADK * p.head);
-  key(B.root_leg_left, 15, f, b(B.root_leg_left, 15) - lean);
-  key(B.root_leg_right, 15, f, b(B.root_leg_right, 15) - lean);
-  key(B.root_arm_left, 15, f, b(B.root_arm_left, 15) + p.arm);
-  key(B.root_arm_right, 15, f, b(B.root_arm_right, 15) - p.arm);
-  key(B.root_ear_left, 15, f, b(B.root_ear_left, 15) + p.ear);     // левое ухо: + по часовой = вверх
-  key(B.root_ear_right, 15, f, b(B.root_ear_right, 15) - p.ear);
+  lin(B.root, 15, f, b(B.root, 15) + lean);
+  lin(B.root, 91, f, b(B.root, 91) + p.y);
+  lin(B.root_body, 15, f, b(B.root_body, 15) + HEADK * p.head);
+  lin(B.root_leg_left, 15, f, b(B.root_leg_left, 15) - lean);
+  lin(B.root_leg_right, 15, f, b(B.root_leg_right, 15) - lean);
+  lin(B.root_arm_right, 15, f, b(B.root_arm_right, 15) - p.arm + 1.3 * p.inhale);
+  lin(B.root_ear_left, 15, f, b(B.root_ear_left, 15) + p.ear);     // левое ухо: + по часовой = вверх
+  lin(B.root_ear_right, 15, f, b(B.root_ear_right, 15) - p.ear);
+  lin(B.root_arm_left, 15, f, b(B.root_arm_left, 15) + p.arm - 1.3 * p.inhale);
+  if (B.root_belly) { lin(B.root_belly, 16, f, b(B.root_belly, 16) * (1 + 0.045 * p.inhale)); lin(B.root_belly, 17, f, b(B.root_belly, 17) * (1 + 0.027 * p.inhale)); }
   const [gx, gy] = gaze(f);
-  for (const s of ['l', 'r']) { const id = IM[`gaze_bead_${s}`].instance; key(id, 13, f, b(id, 13) + gx); key(id, 14, f, b(id, 14) + gy); }
+  for (const s of ['l', 'r']) { const id = IM[`gaze_bead_${s}`].instance; lin(id, 13, f, b(id, 13) + gx); lin(id, 14, f, b(id, 14) + gy); }
 }
 // прозрачность выражений
 const op = (name, f, v) => key(G[`fx_${name}`], 18, f, v, 'linear');

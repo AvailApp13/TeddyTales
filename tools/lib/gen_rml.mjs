@@ -140,6 +140,8 @@ export function boneLayout() {
     root_leg_right: seg(G.hip_right, G.foot_right),
     // уши (D20): от основания (сторона к центру головы) к краю уха
     root_ear_left: earSeg(G.ear_left), root_ear_right: earSeg(G.ear_right),
+    // живот (D21): от центра живота вправо — масштаб кости = дыхание
+    root_belly: seg({ x: G.body.x, y: G.body.y + G.body.h * 0.15 }, { x: G.body.x + G.body.w * 0.25, y: G.body.y + G.body.h * 0.15 }),
   };
 }
 
