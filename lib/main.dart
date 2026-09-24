@@ -191,6 +191,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     bear: _bear,
     game: _game,
     onSnapshot: (snapshot) => widget.boot.cache?.save(snapshot),
+    localOnly: !widget.boot.hasSession && !widget.boot.isOnline,
   );
 
   BearLanguage _language = BearLanguage.ru;

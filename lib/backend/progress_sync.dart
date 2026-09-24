@@ -43,11 +43,19 @@ class ProgressSync {
     required this.bear,
     required this.game,
     this.onSnapshot,
+    this.localOnly = false,
   }) {
     bear.onAction = _onAction;
-    game.onBuy = buy;
-    game.onDish = dish;
-    game.onRecipe = (recipeId) => unawaited(recipe(recipeId));
+    // Гость без аккаунта и без сети (так открывается и приложение в панели
+    // заказчика — там нет выхода в интернет): покупки и еда проводятся на
+    // телефоне, как до сервера. Сверять их не с кем, а отказ «нет сети»
+    // откатывал бы каждую покупку у него на глазах. У кого есть аккаунт —
+    // деньги только через сервер (КП 11.1).
+    if (!localOnly) {
+      game.onBuy = buy;
+      game.onDish = dish;
+      game.onRecipe = (recipeId) => unawaited(recipe(recipeId));
+    }
     game.onLevelDone = (categoryId, level) =>
         unawaited(levelDone(categoryId, level));
     game.onPlace = (itemId, {required placed}) =>
@@ -57,6 +65,9 @@ class ProgressSync {
   final ProgressStore store;
   final BearController bear;
   final GameState game;
+
+  /// Играть без сервера: гость без аккаунта и без сети.
+  final bool localOnly;
 
   /// Вызывается после каждого успешного ответа сервера — например, чтобы
   /// положить свежий снимок в кеш на устройстве.

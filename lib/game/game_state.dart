@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../bear/bear_action.dart';
@@ -270,13 +272,37 @@ class GameState extends ChangeNotifier {
   }
 
   /// Покупает всё, что в корзине. `false`, если денег не хватает.
+  ///
+  /// Как и разовая покупка: на экране сразу, а сервер проводит каждую вещь
+  /// по своей цене и списывает с кошелька кабинета (КП 11.1). До 24.09
+  /// корзина до сервера не доходила вовсе — монеты уходили только на экране,
+  /// и при следующем входе покупки пропадали.
   bool checkout() {
     final total = cartTotal;
     if (total == 0 || !spend(total)) return false;
-    _owned.addAll(_cart);
+    final bought = List<String>.of(_cart);
+    _owned.addAll(bought);
     _cart.clear();
     notifyListeners();
+
+    final ask = onBuy;
+    if (ask != null) unawaited(_confirmPurchases(ask, bought));
     return true;
+  }
+
+  /// Проводит покупки на сервере по одной, по порядку: ответы тогда
+  /// приходят в том же порядке, и на экране остаётся баланс после последней,
+  /// а не после той, что ответила позже. Отказанную возвращаем вместе с
+  /// монетами.
+  Future<void> _confirmPurchases(
+    Future<bool> Function(String itemId) ask,
+    List<String> ids,
+  ) async {
+    for (final id in ids) {
+      if (await ask(id)) continue;
+      _owned.remove(id);
+      earn(ItemCatalog.byId(id).price);
+    }
   }
 
   /// Разовая покупка предмета мимо корзины.
