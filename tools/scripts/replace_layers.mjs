@@ -94,6 +94,11 @@ for (const name of names) {
     if (t >= 8) throw new Error(`${name}: не переносится в ${L.group}`);
     await new Promise((r) => setTimeout(r, 1500 * (1 + (t >> 1))));   // редактор иногда отвечает отказом несколько секунд подряд
   }
+  if (name.endsWith('_shade')) {
+    // тень сгиба уха (D22): над своим ухом, в покое прозрачная — проявляется ключами
+    await call('reorder_objects', { operations: [{ objectId: inst.imageId, order: 'sendToFront' }] });
+    await call('set_property_values', { propertyValues: { [inst.imageId]: { 18: 0 } } });
+  }
   Object.assign(L, { asset: asset.id, instance: inst.imageId });
   if (file.skins?.[name]) delete file.skins[name];
   writeFileSync(sp, JSON.stringify(state, null, 2) + '\n');     // после каждого слоя — не терять при сбое

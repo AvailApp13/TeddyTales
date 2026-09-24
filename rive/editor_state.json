@@ -656,14 +656,26 @@
       "ear_left": {
         "group": "ear_left",
         "groupId": "0-104",
-        "asset": "0-155375",
-        "instance": "0-155376"
+        "asset": "0-191580",
+        "instance": "0-191581"
       },
       "ear_right": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-155377",
-        "instance": "0-155378"
+        "asset": "0-191582",
+        "instance": "0-191583"
+      },
+      "ear_left_shade": {
+        "group": "ear_left",
+        "groupId": "0-104",
+        "asset": "0-234041",
+        "instance": "0-234042"
+      },
+      "ear_right_shade": {
+        "group": "ear_right",
+        "groupId": "0-119",
+        "asset": "0-234043",
+        "instance": "0-234044"
       }
     },
     "layersV2Transform": {
@@ -825,7 +837,7 @@
         "vertices": 2574
       },
       "ear_left": {
-        "meshId": "0-160535",
+        "meshId": "0-191588",
         "bones": [
           "root",
           "root_body",
@@ -834,13 +846,22 @@
         "vertices": 1464
       },
       "ear_right": {
-        "meshId": "0-163472",
+        "meshId": "0-194525",
         "bones": [
           "root",
           "root_body",
           "root_ear_right"
         ],
         "vertices": 1425
+      },
+      "ear_left_shade": {
+        "meshId": "0-234045",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_left"
+        ],
+        "vertices": 1464
       }
     },
     "faceParts": {
@@ -1034,7 +1055,7 @@
       "name": "face_demo",
       "fps": 60,
       "frames": 1332,
-      "keys": 5118,
+      "keys": 5786,
       "order": [
         "smile",
         "laugh",
@@ -1067,11 +1088,11 @@
       "name": "idle_life",
       "fps": 60,
       "frames": 864,
-      "keys": 4183,
+      "keys": 4617,
       "blinks": [
         70,
         262,
-        290,
+        300,
         540,
         700
       ],
@@ -1080,29 +1101,29 @@
           "right",
           150,
           270,
-          16
+          52
         ],
         [
           "left",
           370,
           490,
-          16
+          52
         ],
         [
           "right",
           770,
           862,
-          -10
+          38
         ]
       ],
-      "earBreath": 6,
-      "belly": 6.5,
-      "arms": 1.5,
+      "earBreath": 12,
+      "belly": 10,
+      "arms": 3,
       "listen": {
         "from": 540,
         "to": 760,
-        "ear": 16,
-        "head": 2,
+        "ear": 42,
+        "head": 4,
         "t": 60
       }
     }

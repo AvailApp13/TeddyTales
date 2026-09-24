@@ -17,7 +17,9 @@
   "sleeve_right",
   "hood_lining",
   "ear_left",
+  "ear_left_shade",
   "ear_right",
+  "ear_right_shade",
   "face",
   "hood"
  ],
@@ -139,6 +141,26 @@
    ],
    "px": 187658,
    "hidden": true
+  },
+  "ear_left_shade": {
+   "bbox": [
+    337,
+    550,
+    558,
+    790
+   ],
+   "px": 33390,
+   "hidden": true
+  },
+  "ear_right_shade": {
+   "bbox": [
+    772,
+    546,
+    1013,
+    791
+   ],
+   "px": 36147,
+   "hidden": true
   }
  },
  "extensions": {
@@ -162,6 +184,10 @@
     358.2,
     615.6
    ],
+   "fold": [
+    422.5,
+    652.8
+   ],
    "contact": [
     [
      517.6,
@@ -181,6 +207,10 @@
    "tip": [
     992.5,
     604.3
+   ],
+   "fold": [
+    923.4,
+    647.3
    ],
    "contact": [
     [

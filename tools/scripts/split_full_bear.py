@@ -481,6 +481,9 @@ meta['layers']['hood_lining'] = {'bbox': [int(xs.min()), int(ys.min()), int(xs.m
 fi = meta['order_back_to_front'].index('ear_left')
 meta['order_back_to_front'].insert(fi, 'hood_lining')
 
+# ухо загибается на зрителя по линии поперёк кости уха, на этой доле пути от оси к краю
+# (D22, линия — по отметке Заказчика: от верхнего стыка с капюшоном к низу уха)
+EAR_FOLD_AT = 0.42
 # ось изгиба уха (D20): середина линии, по которой ухо уходит под капюшон,
 # на 20 px под капюшоном. Сетка уха у стыка держится за голову, кончик идёт с
 # костью уха (tools/lib/bear_weights.mjs) — стык не двигается.
@@ -498,12 +501,17 @@ for en in ('ear_left', 'ear_right'):
     vis = np.argwhere(em & ~hood_m)[:, ::-1].astype(np.float64)      # видимая часть уха
     u_out = vis.mean(0) - pivot; u_out /= np.hypot(*u_out)             # кость уха: от оси через центр видимой части
     tip = pivot + u_out * ((vis - pivot) @ u_out).max()                  # до края уха
+    fold = pivot + (tip - pivot) * EAR_FOLD_AT                         # линия сгиба уха (D22) — поперёк кости
     meta['ear_pivots'][en] = {'pivot': [round(float(v), 1) for v in pivot], 'tip': [round(float(v), 1) for v in tip],
+                              'fold': [round(float(v), 1) for v in fold],
                               'contact': [[round(float(v), 1) for v in top], [round(float(v), 1) for v in bot]]}
 
 alpha_err = np.abs(recon[..., 3] - A).max()
 meta['check'] = {'alphaMaxError': float(alpha_err)}
 json.dump(meta, open(f'{out}/layers.json', 'w'), indent=1, ensure_ascii=False)
+# тень сгиба ушей (D22) — отдельный скрипт, дописывает слои в layers.json
+import subprocess
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ear_shade.py'), out], check=True)
 if os.environ.get('SPLIT_DUMP'): np.save(os.environ['SPLIT_DUMP'], full)   # отладка: разбиение по слоям
 print(json.dumps({k: v for k, v in meta.items() if k != 'layers'}, ensure_ascii=False))
 for n, v in meta['layers'].items(): print(f'{n:11s} bbox {v["bbox"]}  px {v["px"]}')

@@ -31,7 +31,8 @@ BONE = {'root_belly': 'belly', 'root_ear_left': 'ear_left', 'root_ear_right': 'e
         'root_leg_left': 'leg_left', 'root_leg_right': 'leg_right'}           # кость рига -> поза
 RIGID = {'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
          'foot_left': 'leg_left', 'foot_right': 'leg_right'}
-SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right')
+SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right', 'ear_left_shade', 'ear_right_shade')
+SHADE_FULL, SHADE_MAX = 60, 1.0    # затемнённое ухо проявляется полностью при сгибе 60 % (как в idle_life / face_demo)
 MESH_STEP = 6
 
 
@@ -42,8 +43,10 @@ def _rot(pivot, deg):
 
 # оси ушей — середина линии стыка с капюшоном (layers.json, split_full_bear.py, кадр) -> артборд
 to_art = lambda xf, yf: (CX + (xf - 666.5) * S, CY + (yf - 1000) * S)
+FOLD = {}   # ухо: точка на линии сгиба и ось кости (кадр) — ear_left_fold=% (D22)
 for _e, _p in json.load(open(f'{D}/layers.json')).get('ear_pivots', {}).items():
     PIVOT[_e] = to_art(*_p['pivot'])
+    _u = np.subtract(_p['tip'], _p['pivot']); FOLD[_e] = (np.array(_p['fold'], float), _u / np.linalg.norm(_u))
 # центр живота (weight_fields.py): belly=… — масштаб кости root_belly, % (дыхание, D21)
 PIVOT['belly'] = to_art(*json.load(open(f'{D}/weight_fields.json'))['belly'])
 # кость уха — дочерняя головы: сначала изгиб уха, затем голова
@@ -62,6 +65,10 @@ def bone_affine(pose, ang):
     elif pose in PARENT:
         for q in PARENT[pose]:
             if ang.get(q): M = M @ _rot(PIVOT[q], ang[q])
+        if ang.get(f'{pose}_fold'):          # сгиб уха на зрителя: сжатие вдоль оси кости от линии сгиба
+            (p, u), k = FOLD[pose], 1 - ang[f'{pose}_fold'] / 100
+            A = np.eye(2) + (k - 1) * np.outer(u, u)
+            M = M @ np.vstack([np.hstack([A, (p - A @ p)[:, None]]), [0, 0, 1]])
     elif pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])
     if ang.get('body'): M = _rot(PIVOT['body'], ang['body']) @ M
     return M[:2]
@@ -134,9 +141,11 @@ def main():
         L[..., :3] *= L[..., 3:4] / 255   # премультиплицированная альфа (как в Rive): иначе интерполяция у краёв тянет чёрный из прозрачных пикселей
         if n in SKINNED:
             L = warp_mesh(L, {'step': dump['step'], 'bones': dump['layers'][n]}, ang, MESH_STEP)
-        elif (RIGID.get(n) and (ang.get(RIGID[n]) or any(ang.get(q) for q in PARENT.get(RIGID[n], [])))) or (ang.get('body') and n not in SKINNED):
+        elif (RIGID.get(n) and ang.get(RIGID[n])) or (ang.get('body') and n not in SKINNED):
             M = bone_affine(RIGID.get(n), ang)
             L = cv2.warpAffine(L, M, (L.shape[1], L.shape[0]), flags=cv2.INTER_LINEAR, borderValue=0)
+        if n.endswith('_shade'):              # тень сгиба уха — прозрачность растёт со сгибом
+            L = L * SHADE_MAX * min(1.0, ang.get(n[:-6] + '_fold', 0) / SHADE_FULL)
         la = L[..., 3:4].astype(np.float64) / 255
         canvas[..., :3] = L[..., :3] + canvas[..., :3] * (1 - la)
     Image.fromarray(canvas[..., :3].clip(0, 255).astype(np.uint8)).save(out)

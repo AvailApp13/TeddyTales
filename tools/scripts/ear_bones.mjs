@@ -5,6 +5,7 @@
  *   RIVE_MCP_URL=... node scripts/with_rest_pose.mjs -- node scripts/ear_bones.mjs
  * затем картинки ушей (replace_layers.mjs ear_left ear_right) и сетки (skin_layers.mjs ear_left ear_right).
  *
+ * Начало кости — линия сгиба уха (D22, layers.json → ear_pivots.fold).
  * Кость — lib/bones.mjs (копия root_leg_left: MCP костей не создаёт). Ось и кончик —
  * handoff/layers_v2/layers.json → ear_pivots (ось — середина стыка уха с капюшоном,
  * под капюшоном; кончик — край уха); кость лежит в группе ear_<сторона> под
@@ -33,6 +34,8 @@ const objs = (await call('find_objects', { artboardId: file.artboards.Bear_Boy.i
 for (const side of ['left', 'right']) {
   const P = meta.ear_pivots[`ear_${side}`];
   const groupId = objs.find((o) => o.name === `ear_${side}` && o.type === 'Node')?.id;
-  await ensureBone(call, file, save, { name: `root_ear_${side}`, groupId, from: art(P.pivot), to: art(P.tip) });
+  // начало кости — на линии сгиба (D22): масштаб кости вдоль оси загибает ухо на
+  // зрителя; направление то же, что от оси к краю уха (D20), — ключи поворота прежние
+  await ensureBone(call, file, save, { name: `root_ear_${side}`, groupId, from: art(P.fold ?? P.pivot), to: art(P.tip) });
 }
 save();

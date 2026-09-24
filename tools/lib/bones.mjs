@@ -33,10 +33,11 @@ export async function ensureBone(call, file, save, { name, groupId, from, to }) 
   const rot = (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI, len = Math.hypot(x1 - x0, y1 - y0);
   for (let t = 0; ; t++) {
     await call('set_property_values', { propertyValues: { [bone]: { 90: x0, 91: y0, 15: rot, 89: len, 16: 100, 17: 100 } } });
+    await new Promise((r) => setTimeout(r, 400 * (t + 1)));            // редактор применяет запись не сразу
     const v = (await call('query_property_values', { propertyKeys: { [bone]: [90, 91, 89, 16, 17] } })).values?.[bone] ?? {};
     if (Math.abs(v['90'] - x0) < 1e-2 && Math.abs(v['91'] - y0) < 1e-2 && Math.abs(v['89'] - len) < 1e-2
-      && Math.abs(v['16'] - 100) < 1e-3 && Math.abs(v['17'] - 100) < 1e-3) break;
-    if (t >= 5) throw new Error(`${name}: положение не записывается`);
+      && Math.abs(v['16'] - 100) < 1e-2 && Math.abs(v['17'] - 100) < 1e-2) break;
+    if (t >= 5) throw new Error(`${name}: положение не записывается (прочитано ${JSON.stringify(v)}, нужно ${x0}, ${y0}, ${len})`);
   }
   for (let t = 0; ; t++) {
     const rr = await call('reparent_objects', { operations: [{ objectId: bone, newParentId: groupId, position: 'end' }] });
