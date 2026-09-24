@@ -1078,18 +1078,30 @@
       "earMoves": [
         [
           "right",
+          190,
+          260,
+          16
+        ],
+        [
+          "left",
           420,
-          500,
-          12
+          490,
+          16
+        ],
+        [
+          "right",
+          790,
+          850,
+          -10
         ]
       ],
-      "earBreath": 4,
+      "earBreath": 6,
       "belly": 4.5,
       "arms": 1.3,
       "listen": {
         "from": 600,
         "to": 760,
-        "ear": 14,
+        "ear": 16,
         "head": 2.5
       }
     }
