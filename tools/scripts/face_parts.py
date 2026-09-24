@@ -95,10 +95,14 @@ def patch(src, alpha, name):
     if not len(ys): return None
     x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
     img = np.dstack([src[y0:y1, x0:x1, :3], (alpha[y0:y1, x0:x1] * 255).round().astype(np.uint8)])
-    Image.fromarray(img, 'RGBA').save(f'{OUT}/{name}.png', optimize=True)
+    # в разрешении кадра рига (как остальные слои): мельче не видно на экране,
+    # а .riv с накладками в разрешении головы выходил за 9 МБ
+    im = Image.fromarray(img, 'RGBA')
+    im = im.resize((max(1, round(im.width * FS)), max(1, round(im.height * FS))), Image.LANCZOS)
+    im.save(f'{OUT}/{name}.png', optimize=True)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-    return {'file': f'{name}.png', 'size': [int(x1 - x0), int(y1 - y0)],
-            'center_frame': [round((cx + FX) * FS, 2), round((cy + FY) * FS, 2)], 'px_scale': FS}
+    return {'file': f'{name}.png', 'size': [im.width, im.height],
+            'center_frame': [round((cx + FX) * FS, 2), round((cy + FY) * FS, 2)], 'px_scale': round(im.width and (x1 - x0) * FS / im.width, 6)}
 
 fur_soft = feather(fur, 16)
 nose_mask = feather(ellipse(NOSE[0], NOSE[1] - 4, 100, 70), 8)   # с запасом: край носа выражения не лезет из-под носа основы

@@ -807,6 +807,225 @@
         ],
         "vertices": 1213
       }
+    },
+    "faceParts": {
+      "groups": {
+        "face_fx": "0-107260",
+        "gaze_l": "0-107261",
+        "gaze_r": "0-107266",
+        "fx_blink_half": "0-107271",
+        "fx_chew": "0-107276",
+        "fx_eyes_closed": "0-107279",
+        "fx_laugh": "0-107284",
+        "fx_lick": "0-107291",
+        "fx_love": "0-107294",
+        "fx_sad": "0-107303",
+        "fx_smile": "0-107310",
+        "fx_squint": "0-107313",
+        "fx_surprised": "0-107320",
+        "fx_upset": "0-107327",
+        "fx_yawn": "0-107334"
+      },
+      "images": {
+        "gaze_socket_l": {
+          "asset": "0-112401",
+          "instance": "0-112402",
+          "group": "0-107261"
+        },
+        "gaze_bead_l": {
+          "asset": "0-112403",
+          "instance": "0-112404",
+          "group": "0-107261"
+        },
+        "gaze_socket_r": {
+          "asset": "0-112405",
+          "instance": "0-112406",
+          "group": "0-107266"
+        },
+        "gaze_bead_r": {
+          "asset": "0-112407",
+          "instance": "0-112408",
+          "group": "0-107266"
+        },
+        "blink_half_eye_l": {
+          "asset": "0-112409",
+          "instance": "0-112410",
+          "group": "0-107271"
+        },
+        "blink_half_eye_r": {
+          "asset": "0-112411",
+          "instance": "0-112412",
+          "group": "0-107271"
+        },
+        "chew_mouth": {
+          "asset": "0-112413",
+          "instance": "0-112414",
+          "group": "0-107276"
+        },
+        "eyes_closed_eye_l": {
+          "asset": "0-112415",
+          "instance": "0-112416",
+          "group": "0-107279"
+        },
+        "eyes_closed_eye_r": {
+          "asset": "0-112417",
+          "instance": "0-112418",
+          "group": "0-107279"
+        },
+        "laugh_mouth": {
+          "asset": "0-112419",
+          "instance": "0-112420",
+          "group": "0-107284"
+        },
+        "laugh_eye_l": {
+          "asset": "0-112421",
+          "instance": "0-112422",
+          "group": "0-107284"
+        },
+        "laugh_eye_r": {
+          "asset": "0-112423",
+          "instance": "0-112424",
+          "group": "0-107284"
+        },
+        "lick_mouth": {
+          "asset": "0-112425",
+          "instance": "0-112426",
+          "group": "0-107291"
+        },
+        "love_mouth": {
+          "asset": "0-112427",
+          "instance": "0-112428",
+          "group": "0-107294"
+        },
+        "love_eye_l": {
+          "asset": "0-112429",
+          "instance": "0-112430",
+          "group": "0-107294"
+        },
+        "love_eye_r": {
+          "asset": "0-112431",
+          "instance": "0-112432",
+          "group": "0-107294"
+        },
+        "love_blush": {
+          "asset": "0-112433",
+          "instance": "0-112434",
+          "group": "0-107294"
+        },
+        "sad_mouth": {
+          "asset": "0-112435",
+          "instance": "0-112436",
+          "group": "0-107303"
+        },
+        "sad_eye_l": {
+          "asset": "0-112437",
+          "instance": "0-112438",
+          "group": "0-107303"
+        },
+        "sad_eye_r": {
+          "asset": "0-112439",
+          "instance": "0-112440",
+          "group": "0-107303"
+        },
+        "smile_mouth": {
+          "asset": "0-112441",
+          "instance": "0-112442",
+          "group": "0-107310"
+        },
+        "squint_mouth": {
+          "asset": "0-112443",
+          "instance": "0-112444",
+          "group": "0-107313"
+        },
+        "squint_eye_l": {
+          "asset": "0-112445",
+          "instance": "0-112446",
+          "group": "0-107313"
+        },
+        "squint_eye_r": {
+          "asset": "0-112447",
+          "instance": "0-112448",
+          "group": "0-107313"
+        },
+        "surprised_mouth": {
+          "asset": "0-112449",
+          "instance": "0-112450",
+          "group": "0-107320"
+        },
+        "surprised_eye_l": {
+          "asset": "0-112451",
+          "instance": "0-112452",
+          "group": "0-107320"
+        },
+        "surprised_eye_r": {
+          "asset": "0-112453",
+          "instance": "0-112454",
+          "group": "0-107320"
+        },
+        "upset_mouth": {
+          "asset": "0-112455",
+          "instance": "0-112456",
+          "group": "0-107327"
+        },
+        "upset_eye_l": {
+          "asset": "0-112457",
+          "instance": "0-112458",
+          "group": "0-107327"
+        },
+        "upset_eye_r": {
+          "asset": "0-112459",
+          "instance": "0-112460",
+          "group": "0-107327"
+        },
+        "yawn_mouth": {
+          "asset": "0-112461",
+          "instance": "0-112462",
+          "group": "0-107334"
+        },
+        "yawn_eye_l": {
+          "asset": "0-112463",
+          "instance": "0-112464",
+          "group": "0-107334"
+        },
+        "yawn_eye_r": {
+          "asset": "0-112465",
+          "instance": "0-112466",
+          "group": "0-107334"
+        }
+      }
+    },
+    "faceDemo": {
+      "animationId": "0-107341",
+      "name": "face_demo",
+      "fps": 60,
+      "frames": 1332,
+      "keys": 2561,
+      "order": [
+        "smile",
+        "laugh",
+        "love",
+        "surprised",
+        "sad",
+        "upset",
+        "chew",
+        "lick",
+        "yawn",
+        "eyes_closed",
+        "squint"
+      ],
+      "start": {
+        "smile": 90,
+        "laugh": 192,
+        "love": 294,
+        "surprised": 396,
+        "sad": 498,
+        "upset": 600,
+        "chew": 702,
+        "lick": 804,
+        "yawn": 906,
+        "eyes_closed": 1008,
+        "squint": 1110
+      }
     }
   }
 }
