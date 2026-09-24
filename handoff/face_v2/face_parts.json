@@ -1,0 +1,650 @@
+{
+ "frame": [
+  1333,
+  2000
+ ],
+ "face_crop_offset": [
+  520,
+  480
+ ],
+ "expressions": {
+  "blink_half": {
+   "found": {
+    "nose": [
+     668,
+     1239
+    ],
+    "eyes": {
+     "l": [
+      504,
+      1118,
+      "arc"
+     ],
+     "r": [
+      819,
+      1122,
+      "arc"
+     ]
+    }
+   },
+   "eye_l": {
+    "file": "blink_half_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "blink_half_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "chew": {
+   "found": {
+    "nose": [
+     660,
+     1203
+    ],
+    "eyes": {
+     "l": [
+      513,
+      1088,
+      "bead"
+     ],
+     "r": [
+      820,
+      1087,
+      "bead"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "chew_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "eyes_closed": {
+   "found": {
+    "nose": [
+     667,
+     1239
+    ],
+    "eyes": {
+     "l": [
+      502,
+      1111,
+      "arc"
+     ],
+     "r": [
+      821,
+      1115,
+      "arc"
+     ]
+    }
+   },
+   "eye_l": {
+    "file": "eyes_closed_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "eyes_closed_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "laugh": {
+   "found": {
+    "nose": [
+     661,
+     1186
+    ],
+    "eyes": {
+     "l": [
+      493,
+      1073,
+      "arc"
+     ],
+     "r": [
+      845,
+      1077,
+      "arc"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "laugh_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "laugh_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "laugh_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "lick": {
+   "found": {
+    "nose": [
+     667,
+     1171
+    ],
+    "eyes": {
+     "l": [
+      508,
+      1045,
+      "bead"
+     ],
+     "r": [
+      823,
+      1034,
+      "bead"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "lick_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "love": {
+   "found": {
+    "nose": [
+     656,
+     1216
+    ],
+    "eyes": {
+     "l": [
+      501,
+      1076,
+      "arc"
+     ],
+     "r": [
+      844,
+      1077,
+      "arc"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "love_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "love_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "love_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "blush": {
+    "file": "love_blush.png",
+    "size": [
+     964,
+     190
+    ],
+    "center_frame": [
+     674.49,
+     984.34
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "sad": {
+   "found": {
+    "nose": [
+     664,
+     1242
+    ],
+    "eyes": {
+     "l": [
+      501,
+      1109,
+      "bead"
+     ],
+     "r": [
+      820,
+      1109,
+      "bead"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "sad_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "sad_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "sad_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "smile": {
+   "found": {
+    "nose": [
+     658,
+     1231
+    ],
+    "eyes": {
+     "l": [
+      507,
+      1088,
+      "bead"
+     ],
+     "r": [
+      821,
+      1090,
+      "bead"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "smile_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "squint": {
+   "found": {
+    "nose": [
+     661,
+     1235
+    ],
+    "eyes": {
+     "l": [
+      503,
+      1120,
+      "arc"
+     ],
+     "r": [
+      832,
+      1121,
+      "arc"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "squint_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "squint_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "squint_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "surprised": {
+   "found": {
+    "nose": [
+     654,
+     1215
+    ],
+    "eyes": {
+     "l": [
+      497,
+      1081,
+      "arc"
+     ],
+     "r": [
+      825,
+      1083,
+      "arc"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "surprised_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "surprised_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "surprised_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "upset": {
+   "found": {
+    "nose": [
+     668,
+     1228
+    ],
+    "eyes": {
+     "l": [
+      505,
+      1104,
+      "bead"
+     ],
+     "r": [
+      832,
+      1112,
+      "bead"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "upset_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "upset_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "upset_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  },
+  "yawn": {
+   "found": {
+    "nose": [
+     660,
+     1106
+    ],
+    "eyes": {
+     "l": [
+      479,
+      1037,
+      "arc"
+     ],
+     "r": [
+      853,
+      1042,
+      "arc"
+     ]
+    }
+   },
+   "mouth": {
+    "file": "yawn_mouth.png",
+    "size": [
+     451,
+     316
+    ],
+    "center_frame": [
+     677.63,
+     1024.86
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_l": {
+    "file": "yawn_eye_l.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     588.04,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   },
+   "eye_r": {
+    "file": "yawn_eye_r.png",
+    "size": [
+     351,
+     361
+    ],
+    "center_frame": [
+     764.93,
+     881.91
+    ],
+    "px_scale": 0.5706335616438356
+   }
+  }
+ },
+ "gaze": {
+  "bead_l": {
+   "file": "gaze_bead_l.png",
+   "size": [
+    107,
+    106
+   ],
+   "center_frame": [
+    589.18,
+    896.47
+   ],
+   "px_scale": 0.5706335616438356
+  },
+  "socket_l": {
+   "file": "gaze_socket_l.png",
+   "size": [
+    127,
+    124
+   ],
+   "center_frame": [
+    589.18,
+    896.47
+   ],
+   "px_scale": 0.5706335616438356
+  },
+  "bead_r": {
+   "file": "gaze_bead_r.png",
+   "size": [
+    104,
+    104
+   ],
+   "center_frame": [
+    764.08,
+    895.89
+   ],
+   "px_scale": 0.5706335616438356
+  },
+  "socket_r": {
+   "file": "gaze_socket_r.png",
+   "size": [
+    123,
+    123
+   ],
+   "center_frame": [
+    764.36,
+    896.18
+   ],
+   "px_scale": 0.5706335616438356
+  }
+ }
+}
