@@ -114,12 +114,13 @@ class DishArc extends ChangeNotifier {
   int get current => (_offset.round() % count + count) % count;
 
   /// Все блюда на своих местах: ближние к центру — первыми.
-  List<_Placed> _placed(List<Dish> dishes, Size size) {
+  List<_Placed> _placed(List<Dish> dishes, Size size, {double? at}) {
+    final offset = at ?? _offset;
     final placed = [
       for (var i = 0; i < count; i++)
         _Placed.at(
           i,
-          DishArcGeometry.slot(i, _offset, count),
+          DishArcGeometry.slot(i, offset, count),
           size,
           DishArcGeometry.tableFit[dishes[i].id] ?? 1,
         ),
@@ -257,7 +258,17 @@ class _DishCarouselState extends State<DishCarousel>
   void _springTo(double target, {double velocity = 0}) {
     _target = target;
     _snap.value = _arc.offset;
-    _snap.animateWith(SpringSimulation(_spring, _arc.offset, target, velocity));
+    _snap.animateWith(
+      SpringSimulation(
+        _spring,
+        _arc.offset,
+        target,
+        velocity,
+        // Остановиться, когда сдвиг уже не виден глазу, а не ждать
+        // тысячных долей: хвост пружины иначе тянется лишние полсекунды.
+        tolerance: const Tolerance(distance: 0.002, velocity: 0.02),
+      ),
+    );
   }
 
   void _onDragUpdate(DragUpdateDetails details, double width) {
@@ -281,14 +292,19 @@ class _DishCarouselState extends State<DishCarousel>
   }
 
   void _onTap(Offset local, Size size) {
-    if (_snap.isAnimating) return;
-    for (final hit in _arc._placed(widget.dishes, size)) {
+    // Блюдо ещё доезжает после свайпа — касание засчитываем по тому, где
+    // оно встанет: человек видит, какое блюдо садится перед мишкой, и
+    // жмёт на него. Раньше такое касание терялось, и окна «Купить» не
+    // было (заказчик 24.09).
+    final settling = _snap.isAnimating;
+    final at = settling ? _target : _arc.offset;
+    for (final hit in _arc._placed(widget.dishes, size, at: at)) {
       if (!hit.rect.contains(local)) continue;
       if (hit.s.abs() < 0.5) {
         widget.onBuy(widget.dishes[hit.index]);
       } else {
         // Боковое — подкатываем в центр, покупают уже его.
-        _springTo(_arc.offset + hit.s.roundToDouble());
+        _springTo(at + hit.s.roundToDouble());
       }
       return;
     }

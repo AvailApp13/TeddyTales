@@ -346,6 +346,26 @@ void main() {
       expect(arc.offset, pasta + 1);
     });
 
+    testWidgets('нажатие сразу после свайпа — окно покупки нового блюда', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.timedDrag(
+        find.byKey(const ValueKey('dish-carousel-band')),
+        // Шаг плюс порог, с которого жест считается свайпом.
+        Offset(-frame.width * DishArcGeometry.step * 0.8 - 18, 0),
+        const Duration(milliseconds: 300),
+      );
+      // Блюдо ещё доезжает — а человек уже жмёт на него.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(arc.offset, isNot(pasta + 1.0));
+      await tester.tapAt(centerDish());
+      await tester.pump();
+      expect(bought.map((d) => d.id), [dishes[pasta + 1].id]);
+      expect(elsewhere, 0);
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('по кругу: с последнего блюда на первое', (tester) async {
       await pump(tester, initial: dishes.length - 1);
       expect(current(tester), dishes.last.id);
