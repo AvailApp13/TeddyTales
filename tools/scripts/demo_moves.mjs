@@ -12,6 +12,7 @@
  *   2–5 с   поднимает левую лапу и машет, потом правую
  *   5–8 с   шагает на месте: ножки по очереди, тело подпрыгивает, лапки качаются
  *   8–10 с  «ура»: обе лапы вверх, подпрыгивает, крутит головой, возвращается в покой
+ * Амплитуды после обратной связи: голова до 8°, лапы до 40°, в шаге лапки только наружу.
  * Углы — поворот костей относительно позы покоя, в градусах; + по часовой.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -35,11 +36,12 @@ const file = state[String(info.activeFileId)];
 const B = file.bones;
 
 // ---- дельты (кадр: градусы) ----
-const head = { 0: 0, 20: 8, 45: -8, 70: 8, 95: -8, 120: 0, 170: -4, 230: 4, 300: 0,
-  330: 3, 360: -3, 390: 3, 420: -3, 450: 3, 480: 0, 505: 12, 525: 12, 550: -12, 570: -12, 590: 0, 600: 0 };
+const head = { 0: 0, 20: 7, 45: -7, 70: 7, 95: -7, 120: 0, 170: -4, 230: 4, 300: 0,
+  330: 3, 360: -3, 390: 3, 420: -3, 450: 3, 480: 0, 505: 8, 525: 8, 550: -8, 570: -8, 590: 0, 600: 0 };
 const march = (a, b) => { const k = {}; for (let f = 320, i = 0; f <= 460; f += 20, i++) k[f] = i % 2 ? b : a; return k; };
-const armL = { 0: 0, 120: 0, 155: 35, 175: 22, 195: 40, 215: 22, 235: 35, 265: 0, 300: 0, ...march(12, -12), 480: 0, 510: 50, 560: 50, 595: 0, 600: 0 };
-const armR = { 0: 0, 150: 0, 185: -35, 205: -22, 225: -40, 245: -22, 265: -35, 295: 0, 300: 0, ...march(12, -12), 480: 0, 510: -50, 560: -50, 595: 0, 600: 0 };
+// лапки качаются только наружу (0…12°): внутрь рукав уходил под капюшон с клином
+const armL = { 0: 0, 120: 0, 155: 32, 175: 20, 195: 36, 215: 20, 235: 32, 265: 0, 300: 0, ...march(12, 0), 480: 0, 510: 40, 560: 40, 595: 0, 600: 0 };
+const armR = { 0: 0, 150: 0, 185: -32, 205: -20, 225: -36, 245: -20, 265: -32, 295: 0, 300: 0, ...march(0, -12), 480: 0, 510: -40, 560: -40, 595: 0, 600: 0 };
 const legL = { 0: 0, 300: 0, ...march(10, -3), 480: 0, 600: 0 };
 const legR = { 0: 0, 300: 0, ...march(3, -10), 480: 0, 600: 0 };
 const bounce = { 0: 0, 300: 0 };                         // смещение root вверх, px
@@ -66,8 +68,8 @@ if (!anim) {
 await call('set_property_values', { propertyValues: { [anim.id]: { 56: FPS, 57: END, 59: 1 } } });   // fps, длительность, loop
 
 // старые ключи этого таймлайна — удалить (скрипт можно запускать повторно)
-const old = await call('animation_editor', { command: 'queryKeyFrames', data: { queryKeyFrames: { animationId: anim.id } } }).catch(() => null);
-const oldIds = JSON.stringify(old ?? {}).match(/"(?:keyframeId|id)":"(\d+-\d+)"/g)?.map((s) => s.split('"')[3]).filter((id) => id !== anim.id) ?? [];
+const old = await call('animation_editor', { command: 'queryKeyFrames', data: { queryKeyFrames: { animationIds: [anim.id] } } }).catch(() => null);
+const oldIds = (old?.keyframes?.[anim.id] ?? []).map((k) => k.keyframeId);
 if (oldIds.length) await call('animation_editor', { command: 'modifyKeyFrames', data: { modifyKeyFrames: { animationId: anim.id, delete: oldIds } } }).catch((e) => console.log('удаление ключей:', e.message));
 
 const ease = { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };

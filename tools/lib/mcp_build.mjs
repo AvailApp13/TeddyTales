@@ -284,11 +284,14 @@ export async function reconcileTree({ call, log, rig, catalog, board, layout }) 
 export async function bindToBones({ call, log, rig, catalog, board }) {
   const hier = await call('get_artboard_hierarchy', { artboardId: board.id, depth: 14 });
   const objects = hier.objects ?? [];
+  // у сеток есть Tendon с именами костей — сначала кости и группы, служебные объекты не в счёт
+  const SKIP = /^(Tendon|Skin|Weight|MeshVertex|ContourMeshVertex|Mesh)$/;
+  const isBone = (o) => o && (o.types ?? []).some((t) => /Bone$/.test(t));
   const byName = new Map();
-  for (const o of objects) if (!byName.has(o.name)) byName.set(o.name, o);
+  for (const o of objects) if (isBone(o)) byName.set(o.name, o);
+  for (const o of objects) if (!byName.has(o.name) && !SKIP.test(o.types?.[0] ?? '')) byName.set(o.name, o);
   const parentOf = new Map();
   for (const o of objects) for (const c of o.children ?? []) parentOf.set(c, o.id);
-  const isBone = (o) => o && (o.types ?? []).some((t) => /Bone$/.test(t));
 
   const bones = rig.nodes.filter((n) => n.kind === 'bone');
   const missing = bones.filter((b) => !isBone(byName.get(b.name))).map((b) => b.name);
@@ -315,8 +318,8 @@ export async function bindToBones({ call, log, rig, catalog, board }) {
   const front = async (names) => {
     for (const n of names) if (id(n)) await call('reorder_objects', { operations: [{ objectId: id(n), order: 'sendToFront' }] });
   };
-  // корпус толстовки — под руками: рукава (на костях рук) рисуются поверх него (D13)
-  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'outfit_body', 'outfit_accessory', 'hood_lining', 'root_arm_right', 'root_arm_left', 'root_body']);
+  // руки (лапа под рукавом) — под корпусом толстовки: корпус перекрывает рукав по шву реглана (D15)
+  await front(['body', 'body_base', 'root_leg_right', 'root_leg_left', 'outfit_feet', 'root_arm_right', 'root_arm_left', 'outfit_body', 'outfit_accessory', 'hood_lining', 'root_body']);
   await front(['forearm_left', 'sleeve_left']);
   await front(['forearm_right', 'sleeve_right']);
   await front(['head_shadow', 'scarf_1', 'head']);
