@@ -222,7 +222,8 @@ class DishCarousel extends StatefulWidget {
   final DishArc arc;
   final List<Dish> dishes;
 
-  /// Нажали на блюдо перед мишкой — купить (окно подтверждения снаружи).
+  /// Нажали на блюдо перед мишкой — мишка ест (на кухне без окна
+  /// подтверждения, заказчик 24.09).
   final ValueChanged<Dish> onBuy;
 
   /// Крестик под табло — убрать блюда со стола (заказчик 24.09).

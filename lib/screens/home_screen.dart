@@ -26,7 +26,6 @@ import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
-import '../widgets/purchase_confirm.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
@@ -521,19 +520,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Крестик под табло — блюда уходят со стола.
   void _hideDishes() => setState(() => _dishesShown = false);
 
-  /// Блюдо перед мишкой: окно «Подтвердите покупку» → кормим. Блюда
-  /// уходят со стола, мишка ест и показывает эмоцию — любимое блюдо его
-  /// характера нежит, остальное радует (как было в листе кормления).
-  Future<void> _buyDish(Dish dish) async {
+  /// Блюдо перед мишкой: нажали — мишка сразу ест. Окна подтверждения на
+  /// кухне нет (заказчик 24.09: «в комнате еда убираем подтверждение —
+  /// сразу он кушает»; само нажатие на блюдо и есть выбор). Монеты
+  /// списываются, блюда уходят со стола, мишка ест и показывает эмоцию —
+  /// любимое блюдо его характера нежит, остальное радует.
+  void _buyDish(Dish dish) {
     final l10n = context.l10n;
-    final confirmed = await confirmPurchase(
-      context: context,
-      picture: Image.asset(dish.image, fit: BoxFit.contain),
-      name: dishName(l10n, dish.id),
-      price: dish.price,
-      coins: widget.game.coins,
-    );
-    if (!confirmed || !mounted) return;
     if (!widget.game.feedWithDish(dish)) {
       _soon(l10n.feedNotEnoughCoins);
       return;
