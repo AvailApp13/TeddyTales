@@ -84,7 +84,7 @@ Authentication → **Sign In / Providers** → **Email**:
    свою почту (Authentication → **Emails → SMTP Settings**, например Resend
    или Mailgun).
 3. Authentication → **URL Configuration** → **Site URL**: куда ведёт ссылка
-   из письма. Сейчас, судя по журналу, `http://localhost:3000` — ссылка
+   из письма. У нового проекта там `http://localhost:3000` — ссылка
    подтвердит почту, но откроет пустую страницу. Поставить адрес сайта
    TeddyTales, когда он будет.
 
