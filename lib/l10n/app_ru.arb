@@ -839,5 +839,65 @@
   "shopGroupSeats": "Стулья",
   "shopGroupWardrobes": "Шкафы",
   "shopGroupClocks": "Часы",
-  "shopGroupGarlands": "Гирлянды"
+  "shopGroupGarlands": "Гирлянды",
+  "@wakeAlarmLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmLabel": "Проснёмся вместе с {name}",
+  "@wakeAlarmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmBody": "{name} уже не спит и ждёт тебя",
+  "wakeAlarmStop": "Проснулись",
+  "@wakeAlarmClock": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmClock": "Будильник на {time} стоит в «Часах» телефона",
+  "@wakeAlarmClockOld": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmClockOld": "Прежний, на {time}, остался в «Часах» — выключите его там",
+  "wakeAlarmOpenClock": "Открыть часы",
+  "@wakeAlarmSystem": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmSystem": "Будильник на {time} поставлен. Зазвонит и в беззвучном режиме",
+  "@wakeAlarmNotification": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmNotification": "Разбудим в {time} уведомлением со звуком. В беззвучном режиме будет только вибрация",
+  "@wakeAlarmPreview": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmPreview": "На телефоне будильник на {time} встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит",
+  "wakeAlarmDenied": "Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона",
+  "wakeAlarmFailed": "Будильник поставить не удалось. Попробуйте ещё раз"
 }

@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Чтобы разбудить вас вместе с мишкой в выбранное время.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Teddy Tales</string>
 	<key>CFBundleExecutable</key>

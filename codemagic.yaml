@@ -22,6 +22,50 @@ definitions:
   flutter_version: &flutter_version 3.44.9
 
 workflows:
+  # Android: APK для тестировщиков. Ставится на телефон напрямую из письма
+  # или из раздела Artifacts сборки (в настройках телефона разрешить
+  # установку из этого источника). Подпись пока отладочная — для Google
+  # Play понадобится свой ключ, это отдельный шаг.
+  android-apk:
+    name: Android → APK
+    instance_type: linux_x2
+    max_build_duration: 45
+
+    environment:
+      flutter: *flutter_version
+      java: 21
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+
+    scripts:
+      - name: Зависимости
+        script: flutter pub get
+
+      - name: Анализ и тесты
+        script: |
+          flutter analyze
+          flutter test
+
+      - name: Сборка APK
+        # BUILD_NUMBER Codemagic растёт сам от сборки к сборке — Android
+        # требует, чтобы номер версии только увеличивался.
+        script: |
+          flutter build apk --release --build-number=$BUILD_NUMBER
+
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+
+    publishing:
+      email:
+        recipients:
+          - ru.life3@gmail.com
+        notify:
+          success: true
+          failure: true
+
   ios-testflight:
     name: iOS → TestFlight
     instance_type: mac_mini_m2

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
+import '../alarm/wake_alarm.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
@@ -59,6 +60,7 @@ class HomeScreen extends StatefulWidget {
     this.onSignOut,
     this.onRename,
     this.riveAssetPath = BearRigSpec.assetPath,
+    this.wakeAlarm,
   });
 
   final BearController controller;
@@ -87,6 +89,10 @@ class HomeScreen extends StatefulWidget {
   /// Какой `.riv` показывать. Пока настоящий риг не собран, сюда можно
   /// подставить [BearRigSpec.demoAssetPath] и убедиться, что пайплайн живой.
   final String riveAssetPath;
+
+  /// Будильник «проснёмся вместе»: ставит время в будильник телефона.
+  /// `null` — только запомнить время (тесты, старые вызовы).
+  final WakeAlarm? wakeAlarm;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -120,9 +126,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// На какое время поставлен будильник «проснёмся вместе».
   ///
-  /// Пока живёт в памяти экрана — заглушка. Заказчик 22.09: привяжем к
-  /// региону при регистрации и к пуш-уведомлению каждого пользователя,
-  /// когда на Supabase у каждого будет свой ID.
+  /// Само время живёт в памяти экрана, а звонит будильник телефона:
+  /// «Часы» на Android, системный будильник на iPhone с iOS 26, на старых
+  /// iPhone — уведомление со звуком (заказчик 24.09). Привязка к аккаунту
+  /// на Supabase — отдельным шагом.
   TimeOfDay? _alarm;
 
   Future<void> _pickAlarm() async {
@@ -131,7 +138,66 @@ class _HomeScreenState extends State<HomeScreen> {
       initial: _alarm ?? const TimeOfDay(hour: 7, minute: 30),
     );
     if (picked == null || !mounted) return;
+    final previous = _alarm;
     setState(() => _alarm = picked);
+
+    final alarm = widget.wakeAlarm;
+    if (alarm == null) return;
+    final l10n = context.l10n;
+    final name = widget.game.profile.name;
+    final outcome = await alarm.set(
+      picked,
+      label: l10n.wakeAlarmLabel(name),
+      stop: l10n.wakeAlarmStop,
+      body: l10n.wakeAlarmBody(name),
+    );
+    if (!mounted) return;
+    _toastWake(outcome, picked, previous, alarm);
+  }
+
+  /// Что стало с будильником — одной строкой внизу экрана.
+  void _toastWake(
+    WakeAlarmOutcome outcome,
+    TimeOfDay time,
+    TimeOfDay? previous,
+    WakeAlarm alarm,
+  ) {
+    final l10n = context.l10n;
+    final format = MaterialLocalizations.of(context);
+    String show(TimeOfDay t) =>
+        format.formatTimeOfDay(t, alwaysUse24HourFormat: true);
+    final at = show(time);
+    final text = switch (outcome) {
+      WakeAlarmOutcome.clock =>
+        previous != null && previous != time
+            // Из чужих «Часов» старый будильник не убрать — честно
+            // говорим, где он остался.
+            ? '${l10n.wakeAlarmClock(at)}. ${l10n.wakeAlarmClockOld(show(previous))}'
+            : l10n.wakeAlarmClock(at),
+      WakeAlarmOutcome.alarmKit => l10n.wakeAlarmSystem(at),
+      WakeAlarmOutcome.notification => l10n.wakeAlarmNotification(at),
+      WakeAlarmOutcome.preview => l10n.wakeAlarmPreview(at),
+      WakeAlarmOutcome.denied => l10n.wakeAlarmDenied,
+      WakeAlarmOutcome.failed => l10n.wakeAlarmFailed,
+    };
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(text),
+          behavior: SnackBarBehavior.floating,
+          // Над кнопками на ковре: «Разбудить» и будильник остаются под
+          // рукой, пока строка висит.
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 150),
+          duration: const Duration(seconds: 6),
+          action: outcome == WakeAlarmOutcome.clock
+              ? SnackBarAction(
+                  label: l10n.wakeAlarmOpenClock,
+                  onPressed: alarm.openClock,
+                )
+              : null,
+        ),
+      );
   }
 
   @override

@@ -513,5 +513,16 @@
   "shopGroupSeats": "椅子",
   "shopGroupWardrobes": "衣柜",
   "shopGroupClocks": "挂钟",
-  "shopGroupGarlands": "彩灯"
+  "shopGroupGarlands": "彩灯",
+  "wakeAlarmLabel": "和{name}一起醒来",
+  "wakeAlarmBody": "{name}已经醒了，在等你",
+  "wakeAlarmStop": "起床了",
+  "wakeAlarmClock": "已在手机「时钟」中设置{time}的闹钟",
+  "wakeAlarmClockOld": "之前{time}的闹钟仍在「时钟」里，请在那里关闭",
+  "wakeAlarmOpenClock": "打开时钟",
+  "wakeAlarmSystem": "已设置{time}的闹钟，静音模式下也会响",
+  "wakeAlarmNotification": "将在{time}用有声通知叫醒你。静音模式下只会振动",
+  "wakeAlarmPreview": "在手机上，{time}的闹钟会加入安卓「时钟」，或在iPhone上作为系统闹钟响起。此预览版不会响铃",
+  "wakeAlarmDenied": "需要权限才能设置闹钟。请在手机设置中为Teddy Tales开启通知",
+  "wakeAlarmFailed": "无法设置闹钟，请重试"
 }

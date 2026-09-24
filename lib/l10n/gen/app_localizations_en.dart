@@ -1649,4 +1649,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopGroupGarlands => 'Garlands';
+
+  @override
+  String wakeAlarmLabel(String name) {
+    return 'Wake up together with $name';
+  }
+
+  @override
+  String wakeAlarmBody(String name) {
+    return '$name is awake and waiting for you';
+  }
+
+  @override
+  String get wakeAlarmStop => 'I\'m up';
+
+  @override
+  String wakeAlarmClock(String time) {
+    return 'Alarm set for $time in your phone\'s Clock';
+  }
+
+  @override
+  String wakeAlarmClockOld(String time) {
+    return 'The previous one, at $time, is still in Clock — turn it off there';
+  }
+
+  @override
+  String get wakeAlarmOpenClock => 'Open Clock';
+
+  @override
+  String wakeAlarmSystem(String time) {
+    return 'Alarm set for $time. It will ring even in silent mode';
+  }
+
+  @override
+  String wakeAlarmNotification(String time) {
+    return 'We\'ll wake you at $time with a sound notification. In silent mode it will only vibrate';
+  }
+
+  @override
+  String wakeAlarmPreview(String time) {
+    return 'On a phone, the $time alarm goes into the Android Clock or rings as a system alarm on iPhone. This preview version doesn\'t ring';
+  }
+
+  @override
+  String get wakeAlarmDenied =>
+      'The alarm needs permission. Turn on notifications for Teddy Tales in your phone settings';
+
+  @override
+  String get wakeAlarmFailed => 'Couldn\'t set the alarm. Please try again';
 }

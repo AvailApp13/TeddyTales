@@ -113,7 +113,9 @@ class NotificationService {
   }) async {
     if (!_ready) return;
 
-    await cancelAll();
+    // Только напоминания об уходе: запасной будильник «проснёмся вместе»
+    // перепланирование трогать не должно.
+    await _cancelCare();
     if (enabled.isEmpty) return;
 
     final plan = schedule.planFrom(stats, decay, now ?? DateTime.now());
@@ -151,6 +153,69 @@ class NotificationService {
       );
     } on Object catch (error) {
       debugPrint('[TeddyTales] $kind не запланирован: $error');
+    }
+  }
+
+  /// Запасной будильник «проснёмся вместе» — там, где системного нет
+  /// (iPhone до iOS 26, Android без «Часов»). Спрашивает разрешение на
+  /// уведомления: человек сам только что попросил его разбудить.
+  /// `true` — поставлено.
+  Future<bool> scheduleWake(DateTime at, String title, String body) async {
+    if (!_ready) return false;
+    if (!await requestPermission()) return false;
+    try {
+      await _plugin.cancel(id: wakeId);
+      await _plugin.zonedSchedule(
+        id: wakeId,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'wake',
+            'Будильник',
+            channelDescription: 'Проснёмся вместе с мишкой',
+            importance: Importance.max,
+            priority: Priority.high,
+            category: AndroidNotificationCategory.alarm,
+            // Звук как у будильника, а не как у уведомления: громкость
+            // будильника и игнор «не беспокоить» там, где это разрешено.
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBanner: true,
+            presentSound: true,
+            interruptionLevel: InterruptionLevel.active,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+      return true;
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] запасной будильник не поставлен: $error');
+      return false;
+    }
+  }
+
+  Future<void> cancelWake() async {
+    try {
+      await _plugin.cancel(id: wakeId);
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] запасной будильник не снят: $error');
+    }
+  }
+
+  /// Номер запасного будильника — вне номеров напоминаний об уходе.
+  static const int wakeId = 50;
+
+  Future<void> _cancelCare() async {
+    for (final id in const [1, 2, 3, 4, 5, 6, 7, 8, 99]) {
+      try {
+        await _plugin.cancel(id: id);
+      } on Object catch (error) {
+        debugPrint('[TeddyTales] не удалось снять уведомление $id: $error');
+      }
     }
   }
 

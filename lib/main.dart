@@ -14,6 +14,7 @@ import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
+import 'alarm/wake_alarm.dart';
 import 'game/test_stubs.dart';
 import 'screens/dev_screen.dart';
 import 'screens/home_screen.dart';
@@ -226,8 +227,18 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// аккаунта вышел, выглядит как чужое уведомление на своём телефоне.
   void _signOut() {
     widget.notifications?.cancelAll();
+    // Будильник «проснёмся вместе» тоже от лица питомца — снимаем. Из
+    // «Часов» Android он не снимается, это ограничение самой системы.
+    _wakeAlarm.cancel();
     setState(() => _signedIn = false);
   }
+
+  /// Будильник «проснёмся вместе»: в будильник телефона, а где его нет —
+  /// уведомлением со звуком.
+  late final WakeAlarm _wakeAlarm = WakeAlarm(
+    fallback: widget.notifications?.scheduleWake,
+    cancelFallback: widget.notifications?.cancelWake,
+  );
 
   /// Переименовать питомца. `null` — сервер имя принял.
   ///
@@ -256,6 +267,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       // bear_main.riv.
       riveAssetPath: BearRigSpec.assetPath,
       onSignOut: _signOut,
+      wakeAlarm: _wakeAlarm,
       // Переименование идёт через мост: имя проверяет сервер (КП 2.3), он
       // же возвращает снимок с новым именем, и оно доезжает до всех
       // экранов разом.

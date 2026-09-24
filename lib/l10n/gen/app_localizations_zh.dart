@@ -1566,4 +1566,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shopGroupGarlands => '彩灯';
+
+  @override
+  String wakeAlarmLabel(String name) {
+    return '和$name一起醒来';
+  }
+
+  @override
+  String wakeAlarmBody(String name) {
+    return '$name已经醒了，在等你';
+  }
+
+  @override
+  String get wakeAlarmStop => '起床了';
+
+  @override
+  String wakeAlarmClock(String time) {
+    return '已在手机「时钟」中设置$time的闹钟';
+  }
+
+  @override
+  String wakeAlarmClockOld(String time) {
+    return '之前$time的闹钟仍在「时钟」里，请在那里关闭';
+  }
+
+  @override
+  String get wakeAlarmOpenClock => '打开时钟';
+
+  @override
+  String wakeAlarmSystem(String time) {
+    return '已设置$time的闹钟，静音模式下也会响';
+  }
+
+  @override
+  String wakeAlarmNotification(String time) {
+    return '将在$time用有声通知叫醒你。静音模式下只会振动';
+  }
+
+  @override
+  String wakeAlarmPreview(String time) {
+    return '在手机上，$time的闹钟会加入安卓「时钟」，或在iPhone上作为系统闹钟响起。此预览版不会响铃';
+  }
+
+  @override
+  String get wakeAlarmDenied => '需要权限才能设置闹钟。请在手机设置中为Teddy Tales开启通知';
+
+  @override
+  String get wakeAlarmFailed => '无法设置闹钟，请重试';
 }

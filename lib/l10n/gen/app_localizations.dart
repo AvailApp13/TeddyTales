@@ -2955,6 +2955,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Гирлянды'**
   String get shopGroupGarlands;
+
+  /// No description provided for @wakeAlarmLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проснёмся вместе с {name}'**
+  String wakeAlarmLabel(String name);
+
+  /// No description provided for @wakeAlarmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} уже не спит и ждёт тебя'**
+  String wakeAlarmBody(String name);
+
+  /// No description provided for @wakeAlarmStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проснулись'**
+  String get wakeAlarmStop;
+
+  /// No description provided for @wakeAlarmClock.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time} стоит в «Часах» телефона'**
+  String wakeAlarmClock(String time);
+
+  /// No description provided for @wakeAlarmClockOld.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прежний, на {time}, остался в «Часах» — выключите его там'**
+  String wakeAlarmClockOld(String time);
+
+  /// No description provided for @wakeAlarmOpenClock.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть часы'**
+  String get wakeAlarmOpenClock;
+
+  /// No description provided for @wakeAlarmSystem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time} поставлен. Зазвонит и в беззвучном режиме'**
+  String wakeAlarmSystem(String time);
+
+  /// No description provided for @wakeAlarmNotification.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудим в {time} уведомлением со звуком. В беззвучном режиме будет только вибрация'**
+  String wakeAlarmNotification(String time);
+
+  /// No description provided for @wakeAlarmPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'На телефоне будильник на {time} встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит'**
+  String wakeAlarmPreview(String time);
+
+  /// No description provided for @wakeAlarmDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона'**
+  String get wakeAlarmDenied;
+
+  /// No description provided for @wakeAlarmFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник поставить не удалось. Попробуйте ещё раз'**
+  String get wakeAlarmFailed;
 }
 
 class _AppLocalizationsDelegate

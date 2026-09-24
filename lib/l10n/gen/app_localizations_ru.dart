@@ -1658,4 +1658,53 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shopGroupGarlands => 'Гирлянды';
+
+  @override
+  String wakeAlarmLabel(String name) {
+    return 'Проснёмся вместе с $name';
+  }
+
+  @override
+  String wakeAlarmBody(String name) {
+    return '$name уже не спит и ждёт тебя';
+  }
+
+  @override
+  String get wakeAlarmStop => 'Проснулись';
+
+  @override
+  String wakeAlarmClock(String time) {
+    return 'Будильник на $time стоит в «Часах» телефона';
+  }
+
+  @override
+  String wakeAlarmClockOld(String time) {
+    return 'Прежний, на $time, остался в «Часах» — выключите его там';
+  }
+
+  @override
+  String get wakeAlarmOpenClock => 'Открыть часы';
+
+  @override
+  String wakeAlarmSystem(String time) {
+    return 'Будильник на $time поставлен. Зазвонит и в беззвучном режиме';
+  }
+
+  @override
+  String wakeAlarmNotification(String time) {
+    return 'Разбудим в $time уведомлением со звуком. В беззвучном режиме будет только вибрация';
+  }
+
+  @override
+  String wakeAlarmPreview(String time) {
+    return 'На телефоне будильник на $time встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит';
+  }
+
+  @override
+  String get wakeAlarmDenied =>
+      'Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона';
+
+  @override
+  String get wakeAlarmFailed =>
+      'Будильник поставить не удалось. Попробуйте ещё раз';
 }
