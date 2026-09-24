@@ -42,11 +42,15 @@ export function loadWeights() {
   const dist = (name, x, y) => { const r = F[name][Math.min(F[name].length - 1, Math.max(0, Math.round(y / F.step)))]; return r[Math.min(r.length - 1, Math.max(0, Math.round(x / F.step)))]; };
 
   const SLEEVE_BAND = 90;   // ширина полосы растяжения у шва, px кадра
+  const NECK_BAND = (process.env.NECK_BAND ?? '40,140').split(',').map(Number);   // от верха шва: туловище -> рука
   const sleeveW = (seam, arm) => (x, y) => {
     // ниже подмышки край рукава (он лежит вдоль бока) сразу идёт с рукой:
     // иначе он почти стоит и при подъёме тянется вдоль бока тонкой «лентой»
     const armpitY = seam.at(-1)[1];
-    const w = Math.max(smooth(6, SLEEVE_BAND, polyDist(seam, x, y)), smooth(armpitY - 10, armpitY + 70, y));
+    // у шеи (верх шва реглана) рукав держится за туловище: иначе верх рукава при
+    // подъёме руки поворачивался и заступал треугольником на воротник
+    const neck = smooth(NECK_BAND[0], NECK_BAND[1], Math.hypot(x - seam[0][0], y - seam[0][1]));
+    const w = Math.max(smooth(6, SLEEVE_BAND, polyDist(seam, x, y)) * neck, smooth(armpitY - 10, armpitY + 70, y));
     return { root: 1 - w, [arm]: w };
   };
   const HOOD_BAND = [12, 110];  // от основания капюшона: root -> голова (стенки, остриё)
