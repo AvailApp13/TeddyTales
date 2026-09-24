@@ -38,11 +38,17 @@ void main() {
       }
     });
 
-    test('блюдо на 6 % меньше прежнего, миски — ещё меньше', () {
+    test('блюдо перед мишкой на 15–20 % меньше первого, миски — ещё', () {
       const size = Size(941, 1672);
       final mid = DishArcGeometry.plate('pasta', 0, size);
-      expect(mid.width / size.width, closeTo(0.261 * 0.94, 0.001));
-      for (final bowl in ['soup', 'yogurt', 'porridge']) {
+      final ratio = mid.width / size.width / 0.261;
+      expect(ratio, inInclusiveRange(0.80, 0.85));
+      // Боковые — на 6 % меньше первых 0.168.
+      expect(
+        DishArcGeometry.plate('pasta', 1, size).width / size.width,
+        closeTo(0.168 * 0.94, 0.001),
+      );
+      for (final bowl in ['soup', 'yogurt']) {
         expect(DishArcGeometry.plate(bowl, 0, size).width, lessThan(mid.width));
       }
     });
