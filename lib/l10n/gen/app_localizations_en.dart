@@ -1969,4 +1969,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String stageUpCelebrate(String name, String stage) {
     return '$name has grown! Now: “$stage”. A gift of coins';
   }
+
+  @override
+  String get giftEnvelopeTap => 'Tap the envelope to open it';
+
+  @override
+  String get giftBoxTap => 'Tap the box — there is a surprise inside!';
+
+  @override
+  String get giftBoxDay7 => 'DAY 7 · BIG GIFT';
+
+  @override
+  String get giftCollect => 'Collect';
+
+  @override
+  String giftCoinsCaption(int coins) {
+    return '+$coins coins!';
+  }
+
+  @override
+  String giftItemCaption(String item) {
+    return '“$item” is yours! Find it in the Room';
+  }
+
+  @override
+  String get dailyGiftOpenBox => 'Open the big gift';
 }

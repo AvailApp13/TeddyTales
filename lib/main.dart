@@ -293,12 +293,17 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   /// Съёмка экранов без сервера ([kDemoDay]): примерный день игрока.
   void _demoDay() {
+    const next = kDemoGiftDay;
     DailyInfo day({required bool gift}) => DailyInfo.fromJson({
       'gift': {
         'available': gift,
-        'next_day': gift ? 3 : 4,
-        'claimed_day': gift ? 2 : 3,
+        'next_day': gift ? next : next % 7 + 1,
+        'claimed_day': gift ? next - 1 : next,
         'rewards': [10, 15, 20, 25, 30, 35, 50],
+        if (!gift)
+          'last': next == 7
+              ? {'day': 7, 'item': 'teddy_cream'}
+              : {'day': next, 'coins': 20},
       },
       'tasks': [
         {'id': 'cook', 'target': 1, 'progress': 1, 'done': true, 'reward': 15},

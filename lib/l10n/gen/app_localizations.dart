@@ -3501,6 +3501,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{name} подрос! Теперь — «{stage}». Подарок: монетки'**
   String stageUpCelebrate(String name, String stage);
+
+  /// No description provided for @giftEnvelopeTap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажми на конверт, чтобы открыть'**
+  String get giftEnvelopeTap;
+
+  /// No description provided for @giftBoxTap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажми на коробку — там сюрприз!'**
+  String get giftBoxTap;
+
+  /// No description provided for @giftBoxDay7.
+  ///
+  /// In ru, this message translates to:
+  /// **'ДЕНЬ 7 · БОЛЬШОЙ ПОДАРОК'**
+  String get giftBoxDay7;
+
+  /// No description provided for @giftCollect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забрать'**
+  String get giftCollect;
+
+  /// No description provided for @giftCoinsCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'+{coins} монет!'**
+  String giftCoinsCaption(int coins);
+
+  /// No description provided for @giftItemCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'«{item}» теперь твой! Найди в «Комнате»'**
+  String giftItemCaption(String item);
+
+  /// No description provided for @dailyGiftOpenBox.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть большой подарок'**
+  String get dailyGiftOpenBox;
 }
 
 class _AppLocalizationsDelegate

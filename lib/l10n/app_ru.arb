@@ -1149,5 +1149,26 @@
         "type": "String"
       }
     }
-  }
+  },
+  "giftEnvelopeTap": "Нажми на конверт, чтобы открыть",
+  "giftBoxTap": "Нажми на коробку — там сюрприз!",
+  "giftBoxDay7": "ДЕНЬ 7 · БОЛЬШОЙ ПОДАРОК",
+  "giftCollect": "Забрать",
+  "giftCoinsCaption": "+{coins} монет!",
+  "@giftCoinsCaption": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "giftItemCaption": "«{item}» теперь твой! Найди в «Комнате»",
+  "@giftItemCaption": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyGiftOpenBox": "Открыть большой подарок"
 }

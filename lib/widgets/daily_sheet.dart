@@ -5,6 +5,7 @@ import '../game/game_state.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import 'gift_reveal.dart';
 
 /// «Сегодня»: подарок дня, задания дня и задание недели (заказчик 25.09,
 /// миграция 0017; КП 11.1 — монеты за вход и достижения, КП 13.1 —
@@ -38,10 +39,24 @@ class _DailySheetState extends State<DailySheet> {
 
   Future<void> _claim() async {
     setState(() => _claiming = true);
-    final ok = await widget.game.claimGift();
+    var failed = false;
+    // Конверт (дни 1–6) или коробка (день 7) — открытие само забирает
+    // подарок на сервере и показывает, что внутри (миграция 0020).
+    await showGiftReveal(
+      context,
+      box: widget.game.daily.giftNextDay == 7,
+      claim: () async {
+        if (!await widget.game.claimGift()) {
+          failed = true;
+          return null;
+        }
+        final daily = widget.game.daily;
+        return GiftOutcome(coins: daily.lastCoins, item: daily.lastItem);
+      },
+    );
     if (!mounted) return;
     setState(() => _claiming = false);
-    if (!ok) {
+    if (failed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.l10n.dailyGiftFailed),
@@ -193,7 +208,10 @@ class _GiftCalendar extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      day <= daily.giftRewards.length
+                      // Седьмой день — сюрприз: большая коробка с вещью.
+                      day == 7
+                          ? '?'
+                          : day <= daily.giftRewards.length
                           ? '${daily.giftRewards[day - 1]}'
                           : '',
                       style: const TextStyle(

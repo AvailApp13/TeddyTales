@@ -1981,4 +1981,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String stageUpCelebrate(String name, String stage) {
     return '$name подрос! Теперь — «$stage». Подарок: монетки';
   }
+
+  @override
+  String get giftEnvelopeTap => 'Нажми на конверт, чтобы открыть';
+
+  @override
+  String get giftBoxTap => 'Нажми на коробку — там сюрприз!';
+
+  @override
+  String get giftBoxDay7 => 'ДЕНЬ 7 · БОЛЬШОЙ ПОДАРОК';
+
+  @override
+  String get giftCollect => 'Забрать';
+
+  @override
+  String giftCoinsCaption(int coins) {
+    return '+$coins монет!';
+  }
+
+  @override
+  String giftItemCaption(String item) {
+    return '«$item» теперь твой! Найди в «Комнате»';
+  }
+
+  @override
+  String get dailyGiftOpenBox => 'Открыть большой подарок';
 }

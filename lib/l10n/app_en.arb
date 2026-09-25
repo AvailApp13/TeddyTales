@@ -678,5 +678,26 @@
         "type": "String"
       }
     }
-  }
+  },
+  "giftEnvelopeTap": "Tap the envelope to open it",
+  "giftBoxTap": "Tap the box — there is a surprise inside!",
+  "giftBoxDay7": "DAY 7 · BIG GIFT",
+  "giftCollect": "Collect",
+  "giftCoinsCaption": "+{coins} coins!",
+  "@giftCoinsCaption": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "giftItemCaption": "“{item}” is yours! Find it in the Room",
+  "@giftItemCaption": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyGiftOpenBox": "Open the big gift"
 }

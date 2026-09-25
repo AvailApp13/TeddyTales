@@ -678,5 +678,26 @@
         "type": "String"
       }
     }
-  }
+  },
+  "giftEnvelopeTap": "点击红包打开",
+  "giftBoxTap": "点击礼盒——里面有惊喜！",
+  "giftBoxDay7": "第7天 · 大礼包",
+  "giftCollect": "收下",
+  "giftCoinsCaption": "+{coins} 金币！",
+  "@giftCoinsCaption": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "giftItemCaption": "「{item}」归你啦！去「房间」看看吧",
+  "@giftItemCaption": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyGiftOpenBox": "打开大礼包"
 }

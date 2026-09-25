@@ -64,3 +64,7 @@ const String kTestKitchenTrait = String.fromEnvironment('KITCHEN_TRAIT');
 /// Подарок дня, задания, рост и вес, «мишка у бабушки» и праздник новой
 /// стадии показываются на примерных данных. В обычной сборке выключено.
 const bool kDemoDay = bool.fromEnvironment('DEMO_DAY');
+
+/// Какой день календаря подарков в демо-дне: `--dart-define=DEMO_GIFT_DAY=7`
+/// — коробка с вещью, иначе конверт третьего дня.
+const int kDemoGiftDay = int.fromEnvironment('DEMO_GIFT_DAY', defaultValue: 3);

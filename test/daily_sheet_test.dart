@@ -84,9 +84,20 @@ void main() {
     expect(find.text('1/3'), findsOneWidget);
     expect(find.textContaining('2 из 5'), findsOneWidget);
 
+    // «Забрать» открывает конверт; подарок забирается касанием по нему.
     await tester.tap(find.byKey(const ValueKey('daily-claim')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Нажми на конверт, чтобы открыть'), findsOneWidget);
+    expect(claims, 0);
+    await tester.tapAt(const Offset(400, 300));
+    await tester.pump();
     await tester.pump();
     expect(claims, 1);
+    for (var i = 0; i < 180; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.tap(find.byKey(const ValueKey('gift-collect')));
+    await tester.pumpAndSettle();
 
     // Сервер ответил: подарок забран — кнопка гаснет.
     game.setDaily(

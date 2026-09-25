@@ -1870,4 +1870,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String stageUpCelebrate(String name, String stage) {
     return '$name长大了！现在是「$stage」。奖励金币';
   }
+
+  @override
+  String get giftEnvelopeTap => '点击红包打开';
+
+  @override
+  String get giftBoxTap => '点击礼盒——里面有惊喜！';
+
+  @override
+  String get giftBoxDay7 => '第7天 · 大礼包';
+
+  @override
+  String get giftCollect => '收下';
+
+  @override
+  String giftCoinsCaption(int coins) {
+    return '+$coins 金币！';
+  }
+
+  @override
+  String giftItemCaption(String item) {
+    return '「$item」归你啦！去「房间」看看吧';
+  }
+
+  @override
+  String get dailyGiftOpenBox => '打开大礼包';
 }
