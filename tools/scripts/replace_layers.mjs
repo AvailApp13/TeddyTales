@@ -28,6 +28,13 @@ const file = state[String((await call('session_info', {})).activeFileId)];
 const hier = await call('get_artboard_hierarchy', { artboardId: file.artboards.Bear_Boy.id, depth: 14 });
 const byName = new Map(); for (const o of hier.objects ?? []) if (!byName.has(o.name)) byName.set(o.name, o);
 const rigId = byName.get('rig').id;
+// удаление старой картинки и ассета — по одному: если ассета уже нет (устаревший id в
+// состоянии), общий вызов отклоняется целиком и старая картинка оставалась дублем
+async function removeImage(instance, assetId) {
+  for (const id of [instance, assetId].filter(Boolean)) await call('delete_objects', { objectIds: [id] }).catch(() => {});
+  const left = ((await call('query_objects', { objectIds: [instance] }).catch(() => ({ objects: [] }))).objects ?? []).some((o) => o.id === instance);
+  if (left) throw new Error(`картинка ${instance} не удаляется`);
+}
 for (const name of names) {
   const L = file.layersV2[name]; const g = byName.get(L.group);
   let asset;
@@ -36,7 +43,7 @@ for (const name of names) {
   if (!L.instance && assets.some((a) => a.id === L.asset && a.type === 'image')) {
     asset = { id: L.asset };                                   // картинки нет, ассет уже загружен — берём его
   } else {
-    if (L.instance) await call('delete_objects', { objectIds: [L.instance, L.asset].filter(Boolean) }).catch(() => {});
+    if (L.instance) await removeImage(L.instance, L.asset);
     const b64 = readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', `${name}.png`)).toString('base64');
     for (let t = 0; ; t++) {
       asset = (await call('upload_asset', { file: `data:image/png;name=bear_${name}.png;base64,${b64}`, name: `bear_${name}` })).asset;

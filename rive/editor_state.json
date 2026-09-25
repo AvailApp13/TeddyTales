@@ -668,14 +668,14 @@
       "ear_left_shade": {
         "group": "ear_left",
         "groupId": "0-104",
-        "asset": "0-234041",
-        "instance": "0-234042"
+        "asset": "0-277346",
+        "instance": "0-277347"
       },
       "ear_right_shade": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-250432",
-        "instance": "0-250433"
+        "asset": "0-277348",
+        "instance": "0-277349"
       }
     },
     "layersV2Transform": {
@@ -855,7 +855,7 @@
         "vertices": 1425
       },
       "ear_left_shade": {
-        "meshId": "0-234045",
+        "meshId": "0-277350",
         "bones": [
           "root",
           "root_body",
@@ -864,7 +864,7 @@
         "vertices": 1464
       },
       "ear_right_shade": {
-        "meshId": "0-263884",
+        "meshId": "0-280287",
         "bones": [
           "root",
           "root_body",
@@ -893,8 +893,8 @@
       },
       "images": {
         "gaze_socket_l": {
-          "asset": "0-112401",
-          "instance": "0-112402",
+          "asset": "0-277339",
+          "instance": "0-277340",
           "group": "0-107261"
         },
         "gaze_bead_l": {
@@ -903,13 +903,13 @@
           "group": "0-107261"
         },
         "gaze_socket_r": {
-          "asset": "0-112405",
-          "instance": "0-112406",
+          "asset": "0-277341",
+          "instance": "0-277342",
           "group": "0-107266"
         },
         "gaze_bead_r": {
-          "asset": "0-112407",
-          "instance": "0-112408",
+          "asset": "0-277343",
+          "instance": "0-277344",
           "group": "0-107266"
         },
         "blink_half_eye_l": {
@@ -1064,7 +1064,7 @@
       "name": "face_demo",
       "fps": 60,
       "frames": 1332,
-      "keys": 5786,
+      "keys": 7766,
       "order": [
         "smile",
         "laugh",
@@ -1097,7 +1097,7 @@
       "name": "idle_life",
       "fps": 60,
       "frames": 864,
-      "keys": 4617,
+      "keys": 5031,
       "blinks": [
         70,
         262,
@@ -1110,28 +1110,29 @@
           "right",
           150,
           270,
-          46
+          30
         ],
         [
           "left",
           370,
           490,
-          46
+          30
         ],
         [
           "right",
           770,
           862,
-          34
+          22
         ]
       ],
-      "earBreath": 12,
+      "earWiden": 0.3,
+      "earBreath": 6,
       "belly": 10,
       "arms": 3,
       "listen": {
         "from": 540,
         "to": 760,
-        "ear": 38,
+        "ear": 24,
         "head": 4,
         "t": 60
       }

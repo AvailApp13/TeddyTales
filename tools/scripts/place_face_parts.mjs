@@ -64,7 +64,11 @@ async function place(part, groupId) {
   const old = fp.images[key];
   if (old && H.all.has(old.instance)) {
     if (!REPLACE && !ONLY.includes(key)) return old.instance;
-    await call('delete_objects', { objectIds: [old.instance, old.asset] }).catch(() => {});   // --replace: новая картинка
+    // --replace: новая картинка. Удаляем по одному: при устаревшем id ассета общий вызов
+    // отклоняется целиком и старая картинка оставалась дублем
+    for (const id of [old.instance, old.asset]) await call('delete_objects', { objectIds: [id] }).catch(() => {});
+    if (((await call('query_objects', { objectIds: [old.instance] }).catch(() => ({ objects: [] }))).objects ?? []).some((o) => o.id === old.instance))
+      throw new Error(`${key}: старая картинка ${old.instance} не удаляется`);
   }
   const b64 = readFileSync(resolve(D, part.file)).toString('base64');
   let asset;
@@ -85,14 +89,19 @@ async function place(part, groupId) {
   for (let t = 0; ; t++) {
     try { inst = await call('assets_tool', { command: 'addImageInstance', data: { addImageInstance: { assetId: asset.id, parentId: rigId, name: `${key}_img`, x: 0, y: 0 } } }); }
     catch (e) { if (!/not an ImageAsset/.test(e.message) || t >= 12) throw e; await new Promise((r) => setTimeout(r, 2500)); continue; }
-    const q = await call('query_objects', { objectIds: [inst.imageId] }).catch(() => ({ objects: [] }));
-    if ((q.objects ?? []).some((o) => o.id === inst.imageId && o.types[0] === 'Image')) break;
-    if (t >= 3) throw new Error(`${key}: картинка не создаётся`);
+    // картинка, созданная сразу после загрузки ассета, иногда через мгновение пропадает —
+    // проверяем её ещё раз через паузу и при необходимости создаём заново
+    const alive = async () => ((await call('query_objects', { objectIds: [inst.imageId] }).catch(() => ({ objects: [] }))).objects ?? [])
+      .some((o) => o.id === inst.imageId && o.types[0] === 'Image');
+    if (await alive()) { await new Promise((r) => setTimeout(r, 2500)); if (await alive()) break; }
+    if (t >= 5) throw new Error(`${key}: картинка не создаётся`);
+    console.log(`  ${key}: картинка пропала, создаю заново`);
   }
   const [cx, cy] = part.center_frame; const sc = S * part.px_scale * 100;
   const x = WORLD.x + (cx - FW / 2) * S, y = WORLD.y + (cy - FH / 2) * S;
   for (let t = 0; ; t++) {
     await call('set_property_values', { propertyValues: { [inst.imageId]: { 13: x, 14: y, 15: 0, 16: sc, 17: sc, 18: 100 } } });
+    await new Promise((r) => setTimeout(r, 400 * (t + 1)));            // редактор применяет запись не сразу
     const v = (await call('query_property_values', { propertyKeys: { [inst.imageId]: [13, 14, 16] } })).values?.[inst.imageId] ?? {};
     if (Math.abs(v['16'] - sc) < 1e-3 && Math.abs(v['13'] - x) < 1e-2 && Math.abs(v['14'] - y) < 1e-2) break;
     if (t >= 5) throw new Error(`${key}: трансформ не записывается`);

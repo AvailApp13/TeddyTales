@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
-import { Tracks, writeTimeline, playInStateMachine, addBlink } from '../lib/timeline.mjs';
+import { Tracks, writeTimeline, playInStateMachine, blinkBead, addBlinkLids, keyBeads } from '../lib/timeline.mjs';
 
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
@@ -63,7 +63,7 @@ const tracks = new Tracks(); const key = tracks.key.bind(tracks);
 const base = (await call('query_property_values', { propertyKeys: {
   [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
   [B.root_ear_left]: [16, 17], [B.root_ear_right]: [16, 17], ...(B.root_belly ? { [B.root_belly]: [16, 17] } : {}),
-  [IM.gaze_bead_l.instance]: [17], [IM.gaze_bead_r.instance]: [17] } })).values;
+  } })).values;
 const b = (id, k) => base[id][String(k)];
 // плавные дорожки: ключи каждые 4 кадра, линейно (кубическая кривая на каждом отрезке давала подёргивание)
 const lin = (id, k, f, v) => key(id, k, f, v, 'linear');
@@ -88,17 +88,17 @@ for (let f = 0; f <= END; f += 4) {
 const op = (name, f, v, interp = 'linear') => key(G[`fx_${name}`], 18, f, v, interp);
 for (const n of Object.keys(G).filter((g) => g.startsWith('fx_')).map((g) => g.slice(3))) { op(n, 0, 0); op(n, END, 0); }
 for (const n of ORDER) { const s = start[n]; op(n, s, 0); op(n, s + FADE, 100); op(n, s + SEG - 4, 100); op(n, s + SEG + FADE - 4, 0); }
-const beads = ['l', 'r'].map((k) => ({ id: IM[`gaze_bead_${k}`].instance, sy: b(IM[`gaze_bead_${k}`].instance, 17) }));
-for (const { id, sy } of beads) { key(id, 17, 0, sy, 'cubic'); key(id, 17, END, sy, 'cubic'); }
-for (const f0 of BLINKS) addBlink(tracks, f0, { beads, closedId: G.fx_eyes_closed });   // D23
-// выражения со своими глазами (накладка закрывает бусины): пока накладка проявляется,
-// бусины сплющиваются под ней, иначе просвечивает «силуэт» бусины (D23)
+// масштаб бусины в покое — из данных постановки (общий масштаб слоёв × масштаб накладки), а
+// не из редактора: если там стоит кадр моргания, прочиталось бы сплющенное значение
+const FP = JSON.parse(readFileSync(resolve(repoRoot, 'handoff', 'face_v2', 'face_parts.json'), 'utf8'));
+const beads = ['l', 'r'].map((k) => ({ id: IM[`gaze_bead_${k}`].instance, sy: file.layersV2Transform.scalePercent * FP.gaze[`bead_${k}`].px_scale }));
+// бусины: моргание и выражения со своими глазами (накладка закрывает бусины) — одна функция
+// по времени, чтобы ключи соседних выражений не перекрывались; бусины сплющиваются до того,
+// как накладка станет заметной, и раскрываются, когда она почти ушла (D23)
 const OWN_EYES = ORDER.filter((n) => !['chew', 'lick', 'smile'].includes(n));
-for (const n of OWN_EYES) {
-  const s0 = start[n];
-  for (const { id, sy } of beads)
-    for (const [f, k] of [[s0, 1], [s0 + FADE, 0.1], [s0 + SEG - 4, 0.1], [s0 + SEG + FADE - 4, 1]]) key(id, 17, f, sy * k, 'cubic');
-}
+const shut = (f) => Math.max(0, ...OWN_EYES.map((n) => { const s0 = start[n]; return sm(s0 - 4, s0 + 3, f) * (1 - sm(s0 + SEG + FADE - 9, s0 + SEG + FADE, f)); }));
+keyBeads(tracks, beads, END, (f) => Math.min(blinkBead(f, BLINKS), 1 - 0.97 * shut(f)));
+for (const f0 of BLINKS) addBlinkLids(tracks, f0, G.fx_eyes_closed);   // D23
 
 // ---- таймлайн
 const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, tracks });

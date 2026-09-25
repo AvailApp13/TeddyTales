@@ -54,14 +54,34 @@ export async function playInStateMachine(call, animId) {
 
 /**
  * Моргание (D23): бусина глаза сплющивается по вертикали, как будто смыкаются веки (под
- * ней — глазница с мехом закрытого глаза), и когда от неё остаётся тонкая линия,
- * проявляются закрытые глаза с ресницами (fx_eyes_closed). Перетекание картинок
+ * ней — глазница с мехом закрытого глаза), и когда от неё остаётся тонкая линия, она
+ * гаснет и проявляются закрытые глаза с ресницами (fx_eyes_closed). Перетекание картинок
  * полупрозрачной бусины и века давало «силуэт» бусины — здесь просвечивать нечему.
  * ~0.37 с: смыкание 6 кадров, закрыто 8, открытие 8.
- *   beads: [{ id, sy }] — картинки бусин и их масштаб по Y в покое; closedId — группа fx_eyes_closed.
  */
-export function addBlink(tracks, f0, { beads, closedId }) {
-  for (const { id, sy } of beads)
-    for (const [df, k] of [[0, 1], [6, 0.1], [14, 0.1], [22, 1]]) tracks.key(id, 17, f0 + df, sy * k, 'cubic');
+const BLINK_BEAD = [[0, 1], [6, 0.03], [14, 0.03], [22, 1]];   // [кадр от начала, масштаб бусины по Y]
+const smoothstep = (t) => t * t * (3 - 2 * t);
+const piecewise = (pts, x) => {
+  if (x <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) if (x <= pts[i][0]) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; return y0 + (y1 - y0) * smoothstep((x - x0) / (x1 - x0));
+  }
+  return pts.at(-1)[1];
+};
+/** Масштаб бусины (1 — открыта) от морганий: blinks — кадры начала. */
+export const blinkBead = (f, blinks) => Math.min(1, ...blinks.map((f0) => piecewise(BLINK_BEAD, f - f0)));
+/** Ресницы (fx_eyes_closed) на моргание, начинающееся в кадре f0. */
+export function addBlinkLids(tracks, f0, closedId) {
   for (const [df, v] of [[4, 0], [7, 100], [12, 100], [15, 0]]) tracks.key(closedId, 18, f0 + df, v, 'cubic');
+}
+/**
+ * Дорожки бусин по функции k(f) (1 — открыта, ~0 — сплющена): масштаб по Y = sy × k, каждые
+ * 2 кадра; почти сплющенная бусина гаснет, иначе её линия видна сквозь ресницы.
+ * beads: [{ id, sy }] — картинки бусин и их масштаб по Y в покое.
+ */
+export function keyBeads(tracks, beads, end, k) {
+  for (const { id, sy } of beads)
+    for (let f = 0; f <= end; f += 2) {
+      const v = k(f); tracks.key(id, 17, f, sy * v, 'linear'); tracks.key(id, 18, f, v < 0.06 ? 0 : 100, 'linear');
+    }
 }

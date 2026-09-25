@@ -31,7 +31,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
-import { Tracks, writeTimeline, playInStateMachine, addBlink } from '../lib/timeline.mjs';
+import { Tracks, writeTimeline, playInStateMachine, blinkBead, addBlinkLids, keyBeads } from '../lib/timeline.mjs';
 
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
@@ -70,7 +70,7 @@ const tracks = new Tracks(); const key = tracks.key.bind(tracks);
 const base = (await call('query_property_values', { propertyKeys: {
   [B.root]: [15, 91], [B.root_body]: [15], ...(B.root_belly ? { [B.root_belly]: [16, 17] } : {}), [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
   [B.root_ear_left]: [16, 17], [B.root_ear_right]: [16, 17],
-  [IM.gaze_bead_l.instance]: [17], [IM.gaze_bead_r.instance]: [17] } })).values;
+  } })).values;
 const b = (id, k) => base[id][String(k)];
 const LEAN = 0.4, HEADK = 0.65, LAG = 5;
 const STEP = 4, lin = (id, k, f, v) => key(id, k, f, v, 'linear');
@@ -106,10 +106,15 @@ const earAt = (side, f) => {
 for (let f = 0; f <= END; f += STEP) for (const side of ['left', 'right']) earKey(side, f, earAt(side, f));
 // взгляд
 // взгляд не двигается: смещение бусин читалось неестественно (обратная связь)
+// все выражения в покое скрыты (0 на первом и последнем кадре)
+for (const g of Object.keys(G).filter((n) => n.startsWith('fx_'))) { key(G[g], 18, 0, 0, 'linear'); key(G[g], 18, END, 0, 'linear'); }
 // моргание (D23, lib/timeline.mjs): бусины сплющиваются, затем проявляются ресницы
-const beads = ['l', 'r'].map((k) => ({ id: IM[`gaze_bead_${k}`].instance, sy: b(IM[`gaze_bead_${k}`].instance, 17) }));
-for (const { id, sy } of beads) { key(id, 17, 0, sy, 'cubic'); key(id, 17, END, sy, 'cubic'); }
-for (const f0 of BLINKS) addBlink(tracks, f0, { beads, closedId: G.fx_eyes_closed });
+// масштаб бусины в покое — из данных постановки (общий масштаб слоёв × масштаб накладки), а
+// не из редактора: если там стоит кадр моргания, прочиталось бы сплющенное значение
+const FP = JSON.parse(readFileSync(resolve(repoRoot, 'handoff', 'face_v2', 'face_parts.json'), 'utf8'));
+const beads = ['l', 'r'].map((k) => ({ id: IM[`gaze_bead_${k}`].instance, sy: file.layersV2Transform.scalePercent * FP.gaze[`bead_${k}`].px_scale }));
+keyBeads(tracks, beads, END, (f) => blinkBead(f, BLINKS));
+for (const f0 of BLINKS) addBlinkLids(tracks, f0, G.fx_eyes_closed);
 
 const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, tracks });
 console.log(`таймлайн ${NAME} (${anim.id}): ${(END / FPS).toFixed(1)} с, ${anim.keys} ключей на ${tracks.size} дорожках`);
