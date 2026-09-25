@@ -2017,9 +2017,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareFailed => 'Could not share. Please try again.';
 
   @override
-  String get profileSectionInvite => 'Invite a friend';
-
-  @override
   String inviteLead(int coins) {
     return 'A friend installs TeddyTales and enters your code — you both get $coins coins.';
   }
@@ -2029,9 +2026,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteCopied => 'Code copied';
-
-  @override
-  String get inviteShare => 'Invite a friend';
 
   @override
   String inviteShareText(String code, int coins, String link) {
@@ -2045,9 +2039,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteHaveCode => 'Have a friend’s code?';
-
-  @override
-  String get inviteCodeHint => '6-character code';
 
   @override
   String get inviteRedeem => 'Apply';

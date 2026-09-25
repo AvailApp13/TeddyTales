@@ -963,6 +963,11 @@ class _HomeScreenState extends State<HomeScreen>
                           age: age,
                           fx: _fx,
                           onOpenProfile: () => _open(_profileScreen()),
+                          onShare: () => showShareCard(
+                            context,
+                            game: widget.game,
+                            stage: state.stage,
+                          ),
                         ),
                         const SizedBox(height: 14),
                         CareStatsPanel(

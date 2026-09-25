@@ -3574,12 +3574,6 @@ abstract class AppLocalizations {
   /// **'Не получилось поделиться. Попробуй ещё раз.'**
   String get shareFailed;
 
-  /// No description provided for @profileSectionInvite.
-  ///
-  /// In ru, this message translates to:
-  /// **'Пригласи друга'**
-  String get profileSectionInvite;
-
   /// No description provided for @inviteLead.
   ///
   /// In ru, this message translates to:
@@ -3598,12 +3592,6 @@ abstract class AppLocalizations {
   /// **'Код скопирован'**
   String get inviteCopied;
 
-  /// No description provided for @inviteShare.
-  ///
-  /// In ru, this message translates to:
-  /// **'Пригласить друга'**
-  String get inviteShare;
-
   /// No description provided for @inviteShareText.
   ///
   /// In ru, this message translates to:
@@ -3621,12 +3609,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Есть код друга?'**
   String get inviteHaveCode;
-
-  /// No description provided for @inviteCodeHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Код из 6 знаков'**
-  String get inviteCodeHint;
 
   /// No description provided for @inviteRedeem.
   ///

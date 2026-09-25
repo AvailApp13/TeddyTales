@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/game_state.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
+import 'package:teddy_tales/game/referral_info.dart';
 import 'package:teddy_tales/l10n/l10n.dart';
-import 'package:teddy_tales/screens/profile_screen.dart';
+import 'package:teddy_tales/widgets/share_button.dart';
 import 'package:teddy_tales/widgets/share_card.dart';
 
-/// «Поделиться» (сверх ТЗ, заказчик 25.09): карточка мишки картинкой.
+/// «Поделиться» (заказчик 25.09): кнопка в шапке, одно окно — карточка
+/// мишки и код приглашения.
 void main() {
   final born = PetProfile(
     name: 'Тедди',
@@ -27,61 +29,115 @@ void main() {
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: AppLocalizations.supportedLocales,
-    home: child,
+    home: Scaffold(body: child),
   );
 
-  testWidgets('в профиле «Поделиться» открывает карточку мишки', (
-    tester,
-  ) async {
+  GameState game0() {
     final bear = BearController();
     final game = GameState(bear: bear, profile: born);
     addTearDown(game.dispose);
     addTearDown(bear.dispose);
-    await tester.pumpWidget(
-      wrap(
-        ProfileScreen(
-          controller: bear,
-          game: game,
-          onOpenGrowth: () {},
-          onOpenDiary: () {},
-          onOpenSettings: () {},
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('profile-share')));
-    await tester.pumpAndSettle();
+    return game;
+  }
 
-    expect(find.byType(PetShareCard), findsOneWidget);
-    expect(find.text('Знакомьтесь: Тедди'), findsOneWidget);
-    expect(find.text('15,3 см'), findsWidgets);
-    expect(find.text('TeddyTales'), findsOneWidget);
-    expect(find.byKey(const ValueKey('share-send')), findsOneWidget);
-  });
-
-  testWidgets('новая стадия — «подрос!»', (tester) async {
-    final bear = BearController();
-    final game = GameState(bear: bear, profile: born);
-    addTearDown(game.dispose);
-    addTearDown(bear.dispose);
+  Future<void> open(
+    WidgetTester tester,
+    GameState game, {
+    bool grown = false,
+  }) async {
     await tester.pumpWidget(
       wrap(
         Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showShareCard(
-              context,
-              game: game,
-              stage: BearStage.firstSteps,
-              grown: true,
+          builder: (context) => Center(
+            child: ShareButton(
+              onTap: () => showShareCard(
+                context,
+                game: game,
+                stage: BearStage.firstSteps,
+                grown: grown,
+              ),
             ),
-            child: const Text('go'),
           ),
         ),
       ),
     );
-    await tester.tap(find.text('go'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('header-share')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  testWidgets('кнопка в шапке открывает карточку с фото мишки', (tester) async {
+    final game = game0();
+    await open(tester, game);
+    expect(find.byType(PetShareCard), findsOneWidget);
+    expect(find.text('Знакомьтесь: Тедди'), findsOneWidget);
+    expect(find.text('15,3 см'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Image &&
+            w.image is AssetImage &&
+            (w.image as AssetImage).assetName == 'assets/images/share_bear.jpg',
+      ),
+      findsOneWidget,
+    );
+    // Без сервера — только карточка, без кода.
+    expect(find.byKey(const ValueKey('invite-code')), findsNothing);
+    expect(find.byKey(const ValueKey('share-send')), findsOneWidget);
+  });
+
+  testWidgets('новая стадия — «подрос!»', (tester) async {
+    final game = game0();
+    await open(tester, game, grown: true);
     expect(find.text('Тедди подрос!'), findsOneWidget);
     expect(find.textContaining('Первые шаги'), findsOneWidget);
+  });
+
+  testWidgets('в том же окне — код приглашения и код друга', (tester) async {
+    final game = game0();
+    var redeemed = '';
+    var canRedeem = true;
+    game.onReferral = () async => ReferralInfo(
+      code: 'ZP65BM',
+      invited: 2,
+      coins: 100,
+      link: '',
+      canRedeem: canRedeem,
+    );
+    game.onRedeemReferral = (code) async {
+      redeemed = code;
+      canRedeem = false;
+      return RedeemResult.ok;
+    };
+    await open(tester, game);
+    expect(find.text('ZP65BM'), findsOneWidget);
+    expect(find.textContaining('Друзей пришло: 2'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('invite-field')),
+      'e576dr',
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey('invite-redeem')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('invite-redeem')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(redeemed, 'E576DR');
+    expect(find.text('+100 монет — тебе и другу!'), findsOneWidget);
+    expect(find.byKey(const ValueKey('invite-field')), findsNothing);
+  });
+
+  test('ссылка приглашения несёт код', () {
+    const info = ReferralInfo(
+      code: 'ZP65BM',
+      invited: 0,
+      coins: 100,
+      link: 'https://availapp13.github.io/TeddyTales/',
+      canRedeem: true,
+    );
+    expect(
+      info.inviteLink,
+      'https://availapp13.github.io/TeddyTales/?ref=ZP65BM',
+    );
   });
 }

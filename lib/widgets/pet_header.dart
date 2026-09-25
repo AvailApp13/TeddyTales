@@ -10,6 +10,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'feed_burst.dart';
 import 'scene_label.dart';
+import 'share_button.dart';
 
 /// Шапка главного экрана: монеты, имя питомца с возрастом, вход в профиль
 /// (КП 3.3).
@@ -27,6 +28,7 @@ class PetHeader extends StatelessWidget {
     required this.profile,
     required this.age,
     this.onOpenProfile,
+    this.onShare,
     this.fx,
   });
 
@@ -39,6 +41,10 @@ class PetHeader extends StatelessWidget {
 
   /// Открыть профиль. `null` — кружок справа не нажимается.
   final VoidCallback? onOpenProfile;
+
+  /// «Поделиться» (заказчик 25.09): карточка мишки и код друга в одном
+  /// окне. `null` — кнопки нет.
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +82,10 @@ class PetHeader extends StatelessWidget {
             ),
           ),
         ),
+        if (onShare case final onShare?) ...[
+          ShareButton(onTap: onShare),
+          const SizedBox(width: 8),
+        ],
         _ProfileButton(profile: profile, onTap: onOpenProfile),
       ],
     );

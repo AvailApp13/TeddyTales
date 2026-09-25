@@ -1918,9 +1918,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareFailed => '分享失败，请再试一次。';
 
   @override
-  String get profileSectionInvite => '邀请好友';
-
-  @override
   String inviteLead(int coins) {
     return '好友安装 TeddyTales 并输入你的邀请码——你们各得 $coins 金币。';
   }
@@ -1930,9 +1927,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inviteCopied => '邀请码已复制';
-
-  @override
-  String get inviteShare => '邀请好友';
 
   @override
   String inviteShareText(String code, int coins, String link) {
@@ -1946,9 +1940,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inviteHaveCode => '有好友的邀请码？';
-
-  @override
-  String get inviteCodeHint => '6 位邀请码';
 
   @override
   String get inviteRedeem => '使用';

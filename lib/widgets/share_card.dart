@@ -2,21 +2,25 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../bear/bear.dart';
 import '../game/game_calendar.dart';
 import '../game/game_state.dart';
+import '../game/referral_info.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 
-/// «Поделиться» (сверх ТЗ, заказчик 25.09): карточка мишки картинкой —
-/// имя, стадия, возраст, знак, рост и вес при рождении. Сначала человек
-/// видит карточку, потом отправляет её в любое приложение телефона.
+/// «Поделиться» (сверх ТЗ, заказчик 25.09): одно окно на карточку мишки и
+/// приглашение друга. Карточка — фото мишки, имя, стадия, возраст, знак,
+/// рост и вес; ниже свой код приглашения и поле для кода друга. «Поделиться»
+/// отправляет картинку вместе с приглашением в любое приложение телефона.
+/// Открывается кнопкой в шапке главного экрана.
 ///
 /// [grown] — повод «подрос!» (новая стадия); иначе «Знакомьтесь».
 Future<void> showShareCard(
@@ -56,11 +60,41 @@ class _ShareDialog extends StatefulWidget {
 
 class _ShareDialogState extends State<_ShareDialog> {
   final _card = GlobalKey();
+  final _friend = TextEditingController();
   bool _busy = false;
+  bool _redeeming = false;
+
+  /// Код приглашения с сервера; `null` — нет аккаунта или связи, тогда
+  /// делимся только карточкой.
+  ReferralInfo? _info;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _friend.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final info = await widget.game.referral();
+    if (mounted) setState(() => _info = info);
+  }
+
+  void _say(String text) {
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
+      );
+  }
 
   Future<void> _share() async {
     final l10n = context.l10n;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final box = context.findRenderObject() as RenderBox?;
     final origin = box == null
         ? null
@@ -73,9 +107,16 @@ class _ShareDialogState extends State<_ShareDialog> {
       final png = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       final name = petDisplayName(l10n, widget.game.profile.name);
+      final info = _info;
+      // Картинка и приглашение уходят одним сообщением: куда — выбирает
+      // сам телефон (WhatsApp, WeChat, Telegram, почта…).
       await SharePlus.instance.share(
         ShareParams(
-          text: l10n.shareText(name),
+          text: info == null || info.code.isEmpty
+              ? l10n.shareText(name)
+              : l10n
+                    .inviteShareText(info.code, info.coins, info.inviteLink)
+                    .trim(),
           files: [
             XFile.fromData(
               png!.buffer.asUint8List(),
@@ -88,27 +129,55 @@ class _ShareDialogState extends State<_ShareDialog> {
         ),
       );
     } catch (_) {
-      messenger?.showSnackBar(SnackBar(content: Text(l10n.shareFailed)));
+      _say(l10n.shareFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _redeem(ReferralInfo info) async {
+    final l10n = context.l10n;
+    final code = _friend.text.trim();
+    if (code.isEmpty) return;
+    setState(() => _redeeming = true);
+    final result = await widget.game.redeemReferral(code);
+    if (!mounted) return;
+    setState(() => _redeeming = false);
+    _say(switch (result) {
+      RedeemResult.ok => l10n.inviteDone(info.coins),
+      RedeemResult.notFound => l10n.inviteNotFound,
+      RedeemResult.ownCode => l10n.inviteOwn,
+      RedeemResult.alreadyUsed => l10n.inviteUsed,
+      RedeemResult.tooLate => l10n.inviteLate,
+      RedeemResult.inviterFull => l10n.inviteFull,
+      RedeemResult.offline => l10n.inviteOffline,
+    });
+    if (result != RedeemResult.offline && result != RedeemResult.notFound) {
+      _friend.clear();
+      await _load();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final info = _info;
     return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: FittedBox(
-              // Углы скругляет окно, а не карточка: в картинке углы прямые,
-              // иначе мессенджеры закрашивают прозрачные уголки чёрным.
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
+      backgroundColor: AppColors.background,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      clipBehavior: Clip.antiAlias,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Углы скругляет окно, а не карточка: в картинке углы прямые,
+            // иначе мессенджеры закрашивают прозрачные уголки чёрным.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: FittedBox(
                 child: RepaintBoundary(
                   key: _card,
                   child: PetShareCard(
@@ -120,28 +189,152 @@ class _ShareDialogState extends State<_ShareDialog> {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FilledButton.tonal(
-                onPressed: () => Navigator.of(context).pop(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  foregroundColor: AppColors.textPrimary,
-                ),
-                child: Text(l10n.shareClose),
+            if (info != null && info.code.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _InviteBlock(
+                info: info,
+                friend: _friend,
+                busy: _redeeming,
+                onCopied: () => _say(l10n.inviteCopied),
+                onRedeem: () => _redeem(info),
               ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                key: const ValueKey('share-send'),
-                onPressed: _busy ? null : _share,
-                icon: const Icon(Icons.ios_share, size: 18),
-                label: Text(l10n.shareAction),
+            ],
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              key: const ValueKey('share-send'),
+              onPressed: _busy ? null : _share,
+              icon: const Icon(Icons.ios_share, size: 18),
+              label: Text(l10n.shareAction),
+            ),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.shareClose),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Код приглашения и поле для кода друга (миграция 0021): обоим монеты.
+class _InviteBlock extends StatelessWidget {
+  const _InviteBlock({
+    required this.info,
+    required this.friend,
+    required this.busy,
+    required this.onCopied,
+    required this.onRedeem,
+  });
+
+  final ReferralInfo info;
+  final TextEditingController friend;
+  final bool busy;
+  final VoidCallback onCopied;
+  final VoidCallback onRedeem;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 6, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.outline),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.inviteYourCode,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      info.code,
+                      key: const ValueKey('invite-code'),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.inviteCopied,
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: info.code));
+                  onCopied();
+                },
+                icon: const Icon(
+                  Icons.copy_rounded,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              '${l10n.inviteLead(info.coins)} '
+              '${l10n.inviteCount(info.invited)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          if (info.canRedeem) ...[
+            const Divider(height: 20, color: AppColors.outline),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('invite-field'),
+                      controller: friend,
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 6,
+                      inputFormatters: [
+                        TextInputFormatter.withFunction(
+                          (_, value) =>
+                              value.copyWith(text: value.text.toUpperCase()),
+                        ),
+                      ],
+                      decoration: InputDecoration(
+                        hintText: l10n.inviteHaveCode,
+                        counterText: '',
+                        isDense: true,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => onRedeem(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonal(
+                    key: const ValueKey('invite-redeem'),
+                    onPressed: busy ? null : onRedeem,
+                    child: Text(l10n.inviteRedeem),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -190,35 +383,13 @@ class PetShareCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Спальня мишки и он сам — те же картинки, что в игре.
+            // Фото настоящего мишки TeddyTales (прислал заказчик 25.09).
             SizedBox(
-              height: 290,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    'assets/rooms/bedroom.jpg',
-                    fit: BoxFit.cover,
-                    alignment: const Alignment(0, 0.1),
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x00FFFBF2), Color(0xCCFFFBF2)],
-                        stops: [0.55, 1],
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: const Alignment(0, 0.95),
-                    child: Image.asset(
-                      'assets/rooms/bedroom/bear_open.png',
-                      height: 230,
-                    ),
-                  ),
-                ],
+              height: 330,
+              child: Image.asset(
+                'assets/images/share_bear.jpg',
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, 0.33),
               ),
             ),
             Padding(

@@ -2029,9 +2029,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shareFailed => 'Не получилось поделиться. Попробуй ещё раз.';
 
   @override
-  String get profileSectionInvite => 'Пригласи друга';
-
-  @override
   String inviteLead(int coins) {
     return 'Друг ставит TeddyTales и вводит твой код — вам обоим по $coins монет.';
   }
@@ -2041,9 +2038,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get inviteCopied => 'Код скопирован';
-
-  @override
-  String get inviteShare => 'Пригласить друга';
 
   @override
   String inviteShareText(String code, int coins, String link) {
@@ -2057,9 +2051,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get inviteHaveCode => 'Есть код друга?';
-
-  @override
-  String get inviteCodeHint => 'Код из 6 знаков';
 
   @override
   String get inviteRedeem => 'Ввести';

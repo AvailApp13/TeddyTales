@@ -1197,7 +1197,6 @@
     }
   },
   "shareFailed": "Не получилось поделиться. Попробуй ещё раз.",
-  "profileSectionInvite": "Пригласи друга",
   "inviteLead": "Друг ставит TeddyTales и вводит твой код — вам обоим по {coins} монет.",
   "@inviteLead": {
     "placeholders": {
@@ -1208,7 +1207,6 @@
   },
   "inviteYourCode": "Твой код",
   "inviteCopied": "Код скопирован",
-  "inviteShare": "Пригласить друга",
   "inviteShareText": "Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}",
   "@inviteShareText": {
     "placeholders": {
@@ -1232,7 +1230,6 @@
     }
   },
   "inviteHaveCode": "Есть код друга?",
-  "inviteCodeHint": "Код из 6 знаков",
   "inviteRedeem": "Ввести",
   "inviteDone": "+{coins} монет — тебе и другу!",
   "@inviteDone": {
