@@ -715,5 +715,6 @@
   "dailyStreakBroken": "昨天没来，连续签到中断了。",
   "dailyStreakRestore": "花 {price} 恢复",
   "dailyStreakRestored": "连续签到已恢复！",
-  "dailyStreakNoCoins": "金币不足"
+  "dailyStreakNoCoins": "金币不足",
+  "sleepCountdownLabel": "快睡着了"
 }

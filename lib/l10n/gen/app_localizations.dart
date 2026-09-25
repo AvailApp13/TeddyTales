@@ -3681,6 +3681,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не хватает монет'**
   String get dailyStreakNoCoins;
+
+  /// No description provided for @sleepCountdownLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Засыпает'**
+  String get sleepCountdownLabel;
 }
 
 class _AppLocalizationsDelegate

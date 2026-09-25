@@ -715,5 +715,6 @@
   "dailyStreakBroken": "You missed yesterday — your streak was broken.",
   "dailyStreakRestore": "Restore for {price}",
   "dailyStreakRestored": "Streak restored!",
-  "dailyStreakNoCoins": "Not enough coins"
+  "dailyStreakNoCoins": "Not enough coins",
+  "sleepCountdownLabel": "Falling asleep"
 }

@@ -31,6 +31,7 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/share_card.dart';
+import '../widgets/sleep_countdown.dart';
 import '../game/referral_info.dart';
 import '../widgets/feed_burst.dart';
 import '../widgets/furnish_bar.dart';
@@ -1258,6 +1259,11 @@ class _RoomScene extends StatelessWidget {
           Positioned.fromRect(
             rect: frame.rect,
             child: SleepThought(shown: asleep),
+          ),
+          // Секунды до сна — на одеяле, пока мишка засыпает (заказчик 25.09).
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: SleepCountdown(shown: asleep),
           ),
         ],
         // Погладить (КП 7.6) ловится самым нижним слоем, а не самим

@@ -1980,4 +1980,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dailyStreakNoCoins => '金币不足';
+
+  @override
+  String get sleepCountdownLabel => '快睡着了';
 }

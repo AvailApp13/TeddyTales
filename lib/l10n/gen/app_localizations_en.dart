@@ -2080,4 +2080,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyStreakNoCoins => 'Not enough coins';
+
+  @override
+  String get sleepCountdownLabel => 'Falling asleep';
 }

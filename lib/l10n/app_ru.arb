@@ -1255,5 +1255,6 @@
     }
   },
   "dailyStreakRestored": "Серия вернулась!",
-  "dailyStreakNoCoins": "Не хватает монет"
+  "dailyStreakNoCoins": "Не хватает монет",
+  "sleepCountdownLabel": "Засыпает"
 }

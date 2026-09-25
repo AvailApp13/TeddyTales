@@ -2091,4 +2091,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dailyStreakNoCoins => 'Не хватает монет';
+
+  @override
+  String get sleepCountdownLabel => 'Засыпает';
 }
