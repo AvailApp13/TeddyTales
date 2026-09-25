@@ -112,4 +112,51 @@ void main() {
       expect(plan.keys, ['sleep']);
     });
   });
+
+  group('Стадия и задание (КП 13.1)', () {
+    const decay = BearDecayConfig.disabled();
+    const stats = BearCareStats();
+
+    test('прогноз стадии встаёт в расписание, ночью — на утро', () {
+      final night = DateTime(noon.year, noon.month, noon.day + 1, 2);
+      final plan = schedule.planFrom(
+        stats,
+        decay,
+        noon,
+        extra: {'stage': night},
+      );
+      expect(plan['stage'], DateTime(noon.year, noon.month, noon.day + 1, 8));
+    });
+
+    test('прошедшее не ставится', () {
+      final plan = schedule.planFrom(
+        stats,
+        decay,
+        noon,
+        extra: {'stage': noon.subtract(const Duration(hours: 1))},
+      );
+      expect(plan, isEmpty);
+    });
+
+    test('задание — завтра вечером', () {
+      expect(
+        schedule.nextTaskAt(noon),
+        DateTime(noon.year, noon.month, noon.day + 1, 18),
+      );
+    });
+  });
+
+  group('Ограничение частоты (КП 13.2)', () {
+    test('за сутки — не больше дневного предела', () {
+      const tight = CareSchedule(minGap: Duration(minutes: 30), maxPerDay: 2);
+      const stats = BearCareStats(food: 40, play: 40, sleep: 40, love: 100);
+      final plan = tight.planFrom(
+        stats,
+        const BearDecayConfig(),
+        noon,
+        extra: {'task': noon.add(const Duration(hours: 5))},
+      );
+      expect(plan, hasLength(2));
+    });
+  });
 }

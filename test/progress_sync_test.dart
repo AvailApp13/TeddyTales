@@ -5,11 +5,14 @@ import 'package:teddy_tales/backend/progress_store.dart';
 import 'package:teddy_tales/backend/progress_sync.dart';
 import 'package:teddy_tales/bear/bear_action.dart';
 import 'package:teddy_tales/bear/bear_controller.dart';
+import 'package:teddy_tales/bear/bear_rig_spec.dart';
 import 'package:teddy_tales/bear/bear_state.dart';
 import 'package:teddy_tales/bear/bear_stats.dart';
 import 'package:teddy_tales/game/food.dart';
 import 'package:teddy_tales/game/game_state.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
+
+import 'bear_controller_test.dart' show FakeRig;
 
 /// Хранилище-протокол: запоминает, что у него просили, и отвечает так, как
 /// велено в тесте. Настоящий сервер для этих проверок не нужен — важно не
@@ -165,6 +168,47 @@ void main() {
 
       expect(it.game.coins, 999, reason: 'баланс берётся у сервера');
       expect(it.bear.stats.food, 77, reason: 'показатели тоже');
+    });
+  });
+
+  group('Мишка взрослеет на сервере (КП 5.6, 5.7)', () {
+    test('новая стадия с сервера идёт через переход взросления', () async {
+      final it = _setUp();
+      final rig = FakeRig();
+      it.bear.attachRig(rig);
+      // Сервер за время отсутствия дорастил новорождённого до «первых
+      // шагов» — две ступени, два перехода.
+      it.store.answer = PetSnapshot(
+        petId: 'pet',
+        profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+        state: const BearState(stage: BearStage.firstSteps),
+        inventory: const {},
+        placed: const {},
+        eduProgress: const {},
+        serverTime: DateTime.utc(2026, 9, 16),
+        growth: GrowthOutlook(
+          progress: 0.25,
+          nextStageAt: DateTime.utc(2026, 9, 17, 12),
+        ),
+      );
+      it.bear.washBear();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.bear.state.stage, BearStage.firstSteps);
+      expect(
+        rig.firedNames.where((n) => n == BearRigSpec.trgStageUp),
+        hasLength(2),
+      );
+      expect(it.game.growth.nextStageAt, DateTime.utc(2026, 9, 17, 12));
+    });
+
+    test('та же стадия — без перехода', () async {
+      final it = _setUp();
+      final rig = FakeRig();
+      it.bear.attachRig(rig);
+      it.bear.washBear();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(rig.firedNames, isNot(contains(BearRigSpec.trgStageUp)));
     });
   });
 
