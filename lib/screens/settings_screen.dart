@@ -5,6 +5,7 @@ import '../bear/bear.dart';
 import '../game/game_state.dart';
 import '../l10n/l10n.dart';
 import '../l10n/notifications_l10n.dart';
+import 'legal_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sign_out_dialog.dart';
@@ -121,6 +122,32 @@ class SettingsScreen extends StatelessWidget {
                                 value: on,
                                 onChanged: Sounds.setOn,
                               ),
+                            ],
+                          ),
+                        ),
+
+                        // Условия и политика (КП 14.2): видны и гостю, поэтому
+                        // не в карточке аккаунта.
+                        const SizedBox(height: 18),
+                        _SectionTitle(l10n.settingsSectionLegal),
+                        const SizedBox(height: 6),
+                        Card(
+                          margin: EdgeInsets.zero,
+                          child: Column(
+                            children: [
+                              for (final doc in LegalDoc.values) ...[
+                                if (doc != LegalDoc.values.first)
+                                  const Divider(height: 1),
+                                ListTile(
+                                  key: ValueKey('legal-${doc.file}'),
+                                  title: Text(doc.title(l10n)),
+                                  trailing: const Icon(
+                                    Icons.chevron_right,
+                                    size: 20,
+                                  ),
+                                  onTap: () => LegalScreen.open(context, doc),
+                                ),
+                              ],
                             ],
                           ),
                         ),

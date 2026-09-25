@@ -1341,6 +1341,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsQuietHours => 'Quiet hours 22:00 — 8:00';
 
   @override
+  String get legalPrivacy => 'Privacy Policy';
+
+  @override
+  String get legalTerms => 'Terms of Use';
+
+  @override
   String get settingsSectionAccount => 'Account';
 
   @override
@@ -1351,6 +1357,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSounds => 'Game sounds';
+
+  @override
+  String get settingsSectionLegal => 'Legal';
 
   @override
   String get settingsSectionNotifications => 'Notifications · КП 13.1, 13.2';
@@ -1439,8 +1448,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInGoogle => 'Sign in with Google';
 
   @override
-  String get signInLegal =>
-      'By continuing you accept the terms of use and the privacy policy';
+  String get signInLegalPrefix => 'By continuing you accept the ';
+
+  @override
+  String get signInLegalTermsLink => 'terms of use';
+
+  @override
+  String get signInLegalAnd => ' and the ';
+
+  @override
+  String get signInLegalPrivacyLink => 'privacy policy';
 
   @override
   String get signInPrompt => 'Choose how to sign in';

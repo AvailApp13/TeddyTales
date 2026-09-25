@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'legal_screen.dart';
 import 'sign_in_layout.dart';
 
 /// Экран входа — первое, что видит пользователь (КП 1.2, 1.3).
@@ -264,7 +266,7 @@ class _SignInScreenState extends State<SignInScreen>
 /// Нижняя половина экрана: подпись, пять кнопок входа и две служебные
 /// строки. Размеры приходят готовыми — их считает [SignInMetrics] по тому,
 /// сколько места осталось под мишками.
-class _SignInPanel extends StatelessWidget {
+class _SignInPanel extends StatefulWidget {
   const _SignInPanel({
     required this.methods,
     required this.metrics,
@@ -280,8 +282,31 @@ class _SignInPanel extends StatelessWidget {
   final VoidCallback onSkip;
 
   @override
+  State<_SignInPanel> createState() => _SignInPanelState();
+}
+
+class _SignInPanelState extends State<_SignInPanel> {
+  // Ссылки в строке «Продолжая, вы принимаете…» — распознаватели живут
+  // с панелью и гасятся вместе с ней.
+  late final _terms = TapGestureRecognizer()
+    ..onTap = () => LegalScreen.open(context, LegalDoc.terms);
+  late final _privacy = TapGestureRecognizer()
+    ..onTap = () => LegalScreen.open(context, LegalDoc.privacy);
+
+  @override
+  void dispose() {
+    _terms.dispose();
+    _privacy.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final methods = widget.methods;
+    final metrics = widget.metrics;
+    final onTap = widget.onTap;
+    final onSkip = widget.onSkip;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -333,20 +358,37 @@ class _SignInPanel extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          l10n.signInLegal,
+        // Оба документа открываются касанием по своему названию (КП 14.2).
+        Text.rich(
+          TextSpan(
+            style: TextStyle(
+              fontSize: metrics.legalSize,
+              height: 1.4,
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
+            ),
+            children: [
+              TextSpan(text: l10n.signInLegalPrefix),
+              _legalLink(l10n.signInLegalTermsLink, _terms),
+              TextSpan(text: l10n.signInLegalAnd),
+              _legalLink(l10n.signInLegalPrivacyLink, _privacy),
+            ],
+          ),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: metrics.legalSize,
-            height: 1.4,
-            color: AppColors.textSecondary.withValues(alpha: 0.8),
-          ),
         ),
       ],
     );
   }
+
+  TextSpan _legalLink(String text, TapGestureRecognizer tap) => TextSpan(
+    text: text,
+    recognizer: tap,
+    style: const TextStyle(
+      decoration: TextDecoration.underline,
+      fontWeight: FontWeight.w600,
+    ),
+  );
 }
 
 /// Кнопка одного способа входа: фирменный цвет, знак, подпись.

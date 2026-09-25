@@ -1265,6 +1265,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsQuietHours => '免打扰时段 22:00 — 8:00';
 
   @override
+  String get legalPrivacy => '隐私政策';
+
+  @override
+  String get legalTerms => '使用条款';
+
+  @override
   String get settingsSectionAccount => '账号';
 
   @override
@@ -1275,6 +1281,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsSounds => '游戏音效';
+
+  @override
+  String get settingsSectionLegal => '法律文件';
 
   @override
   String get settingsSectionNotifications => '通知 · КП 13.1、13.2';
@@ -1362,7 +1371,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signInGoogle => '通过 Google 登录';
 
   @override
-  String get signInLegal => '继续即表示您接受使用条款和隐私政策';
+  String get signInLegalPrefix => '继续即表示您接受';
+
+  @override
+  String get signInLegalTermsLink => '使用条款';
+
+  @override
+  String get signInLegalAnd => '和';
+
+  @override
+  String get signInLegalPrivacyLink => '隐私政策';
 
   @override
   String get signInPrompt => '请选择登录方式';

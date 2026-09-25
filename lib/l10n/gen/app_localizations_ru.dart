@@ -1350,6 +1350,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsQuietHours => 'Тихие часы 22:00 — 8:00';
 
   @override
+  String get legalPrivacy => 'Политика конфиденциальности';
+
+  @override
+  String get legalTerms => 'Условия использования';
+
+  @override
   String get settingsSectionAccount => 'Аккаунт';
 
   @override
@@ -1360,6 +1366,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsSounds => 'Звуки в игре';
+
+  @override
+  String get settingsSectionLegal => 'Правовые документы';
 
   @override
   String get settingsSectionNotifications => 'Уведомления · КП 13.1, 13.2';
@@ -1448,8 +1457,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signInGoogle => 'Войти через Google';
 
   @override
-  String get signInLegal =>
-      'Продолжая, вы принимаете условия использования и политику конфиденциальности';
+  String get signInLegalPrefix => 'Продолжая, вы принимаете ';
+
+  @override
+  String get signInLegalTermsLink => 'условия использования';
+
+  @override
+  String get signInLegalAnd => ' и ';
+
+  @override
+  String get signInLegalPrivacyLink => 'политику конфиденциальности';
 
   @override
   String get signInPrompt => 'Выберите способ входа';

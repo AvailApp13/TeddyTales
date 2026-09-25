@@ -2374,6 +2374,18 @@ abstract class AppLocalizations {
   /// **'Тихие часы 22:00 — 8:00'**
   String get settingsQuietHours;
 
+  /// No description provided for @legalPrivacy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Политика конфиденциальности'**
+  String get legalPrivacy;
+
+  /// No description provided for @legalTerms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условия использования'**
+  String get legalTerms;
+
   /// No description provided for @settingsSectionAccount.
   ///
   /// In ru, this message translates to:
@@ -2397,6 +2409,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Звуки в игре'**
   String get settingsSounds;
+
+  /// No description provided for @settingsSectionLegal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Правовые документы'**
+  String get settingsSectionLegal;
 
   /// No description provided for @settingsSectionNotifications.
   ///
@@ -2560,11 +2578,29 @@ abstract class AppLocalizations {
   /// **'Войти через Google'**
   String get signInGoogle;
 
-  /// No description provided for @signInLegal.
+  /// No description provided for @signInLegalPrefix.
   ///
   /// In ru, this message translates to:
-  /// **'Продолжая, вы принимаете условия использования и политику конфиденциальности'**
-  String get signInLegal;
+  /// **'Продолжая, вы принимаете '**
+  String get signInLegalPrefix;
+
+  /// No description provided for @signInLegalTermsLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'условия использования'**
+  String get signInLegalTermsLink;
+
+  /// No description provided for @signInLegalAnd.
+  ///
+  /// In ru, this message translates to:
+  /// **' и '**
+  String get signInLegalAnd;
+
+  /// No description provided for @signInLegalPrivacyLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'политику конфиденциальности'**
+  String get signInLegalPrivacyLink;
 
   /// No description provided for @signInPrompt.
   ///
