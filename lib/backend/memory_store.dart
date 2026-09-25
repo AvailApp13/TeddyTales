@@ -80,6 +80,11 @@ class MemoryStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> claimDailyGift() async {
+    throw const ProgressStoreException('Подарок дня — только при связи');
+  }
+
+  @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
     pending.add(BearAction.learn);
     return _snapshot;

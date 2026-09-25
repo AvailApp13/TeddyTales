@@ -274,6 +274,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       _game
         ..setGrowth(widget.boot.snapshot.growth)
         ..setAsleep(widget.boot.snapshot.asleep)
+        ..setDaily(widget.boot.snapshot.daily)
         ..welcomeBack = widget.boot.snapshot.welcomeBack;
     }
     WidgetsBinding.instance.addObserver(_lifecycle);

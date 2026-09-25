@@ -13,6 +13,7 @@ import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/daily_sheet.dart';
 import '../widgets/rename_pet_dialog.dart';
 import '../widgets/sign_out_dialog.dart';
 
@@ -269,6 +270,14 @@ class ProfileScreen extends StatelessWidget {
                           title: l10n.profileLinkDiary,
                           subtitle: l10n.profileLinkDiarySubtitle,
                           onTap: onOpenDiary,
+                        ),
+                        const SizedBox(height: 9),
+                        // Подарок и задания дня (миграция 0017).
+                        _LinkTile(
+                          icon: Icons.card_giftcard_outlined,
+                          title: l10n.profileLinkDaily,
+                          subtitle: l10n.profileLinkDailySubtitle,
+                          onTap: () => showDailySheet(context, game),
                         ),
                         const SizedBox(height: 9),
                         _LinkTile(

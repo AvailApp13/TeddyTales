@@ -1943,4 +1943,74 @@ class AppLocalizationsRu extends AppLocalizations {
   String welcomeBackGrandma(String name) {
     return '$name гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!';
   }
+
+  @override
+  String get dailyTitle => 'Сегодня';
+
+  @override
+  String get dailyGiftClaimed => 'Подарок забран — завтра будет следующий';
+
+  @override
+  String get dailyGiftFailed =>
+      'Не получилось забрать подарок. Проверьте связь';
+
+  @override
+  String get dailyTasksTitle => 'Задания дня';
+
+  @override
+  String get dailyWeeklyDone => 'Задание недели выполнено!';
+
+  @override
+  String get dailyOffline =>
+      'Подарки и задания появятся, когда будет связь с сервером';
+
+  @override
+  String get dailyTaskPet => 'Погладь мишку';
+
+  @override
+  String get dailyTaskPlay => 'Поиграй с мишкой';
+
+  @override
+  String get dailyTaskWash => 'Искупай мишку';
+
+  @override
+  String get dailyTaskFeed => 'Накорми готовым блюдом';
+
+  @override
+  String get dailyTaskCook => 'Приготовь блюдо';
+
+  @override
+  String get dailyTaskLearn => 'Пройди урок';
+
+  @override
+  String get dailyTaskMealOnTime => 'Покорми вовремя: завтрак, обед или ужин';
+
+  @override
+  String get dailyTaskBedtime => 'Уложи спать вовремя (20:00–23:00)';
+
+  @override
+  String get profileLinkDaily => 'Подарок и задания дня';
+
+  @override
+  String get profileLinkDailySubtitle => 'календарь на 7 дней и задания';
+
+  @override
+  String dailyGiftDay(int n) {
+    return 'День $n';
+  }
+
+  @override
+  String dailyGiftClaim(int coins) {
+    return 'Забрать +$coins';
+  }
+
+  @override
+  String dailyWeekly(int target, int done, int coins) {
+    return 'Задание недели: все задания дня в $target днях — $done из $target, +$coins';
+  }
+
+  @override
+  String stageUpCelebrate(String name, String stage) {
+    return '$name подрос! Теперь — «$stage». Подарок: монетки';
+  }
 }

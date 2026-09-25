@@ -223,6 +223,12 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   }
 
   @override
+  Future<PetSnapshot> claimDailyGift() async {
+    final id = await _pet();
+    return _snapshot('claim_daily_gift', {'p_pet_id': id});
+  }
+
+  @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
     final id = await _pet();
     return _snapshot('complete_level', {

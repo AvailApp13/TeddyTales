@@ -32,6 +32,7 @@ class PetSnapshot {
     this.asleep = false,
     this.rates = const {},
     this.welcomeBack = false,
+    this.daily = const DailyInfo(),
   });
 
   /// Идентификатор питомца — с ним ходят все действия ухода и покупки.
@@ -80,6 +81,9 @@ class PetSnapshot {
   /// Долго не заходил — мишка гостил у бабушки: сыт, доволен, подарок
   /// (миграция 0016). Приходит только в ответе на вход.
   final bool welcomeBack;
+
+  /// Подарок дня, задания дня и недели (миграция 0017). Пусто — офлайн.
+  final DailyInfo daily;
 
   /// Скорости для плавного хода шкал между ответами; `null` — нет данных.
   BearDecayConfig? get decay =>
@@ -151,6 +155,7 @@ class PetSnapshot {
       // человек уже называл малыша в профиле, спрашивать заново незачем.
       named: pet['named_at'] != null || name != PetProfile.defaultName,
       asleep: json['asleep'] == true,
+      daily: DailyInfo.fromJson(_map(json['daily'])),
       welcomeBack: json['welcome_back'] == true,
       rates: {
         for (final entry in _map(json['rates']).entries)
@@ -191,6 +196,7 @@ class PetSnapshot {
         growth: growth,
         asleep: asleep,
         rates: rates,
+        daily: daily,
       );
 
   // --- Разбор отдельных значений ------------------------------------------
@@ -322,4 +328,117 @@ class GrowthOutlook {
 
   final double? progress;
   final DateTime? nextStageAt;
+}
+
+/// Сегодняшний день игрока (миграция 0017): подарок из календаря на 7 дней,
+/// три задания дня и задание недели.
+class DailyInfo {
+  const DailyInfo({
+    this.giftAvailable = false,
+    this.giftNextDay = 1,
+    this.giftClaimedDay = 0,
+    this.giftRewards = const [],
+    this.tasks = const [],
+    this.weeklyDone = 0,
+    this.weeklyTarget = 5,
+    this.weeklyReward = 0,
+    this.weeklyClaimed = false,
+  });
+
+  factory DailyInfo.fromJson(Map<String, dynamic> json) {
+    if (json.isEmpty) return const DailyInfo();
+    final gift = PetSnapshot._map(json['gift']);
+    final weekly = PetSnapshot._map(json['weekly']);
+    int number(Object? v, int fallback) =>
+        v is num ? v.round() : int.tryParse('$v') ?? fallback;
+    return DailyInfo(
+      giftAvailable: gift['available'] == true,
+      giftNextDay: number(gift['next_day'], 1),
+      giftClaimedDay: number(gift['claimed_day'], 0),
+      giftRewards: [
+        for (final r
+            in (gift['rewards'] is List ? gift['rewards'] as List : const []))
+          number(r, 0),
+      ],
+      tasks: [
+        for (final t
+            in (json['tasks'] is List ? json['tasks'] as List : const []))
+          if (t is Map)
+            DailyTask(
+              id: '${t['id']}',
+              target: number(t['target'], 1),
+              progress: number(t['progress'], 0),
+              done: t['done'] == true,
+              reward: number(t['reward'], 0),
+            ),
+      ],
+      weeklyDone: number(weekly['days_done'], 0),
+      weeklyTarget: number(weekly['target'], 5),
+      weeklyReward: number(weekly['reward'], 0),
+      weeklyClaimed: weekly['claimed'] == true,
+    );
+  }
+
+  /// Можно забрать подарок сегодня.
+  final bool giftAvailable;
+
+  /// Какой день календаря (1–7) будет следующим.
+  final int giftNextDay;
+
+  /// Какой день забран последним; 0 — ещё ни разу.
+  final int giftClaimedDay;
+
+  /// Награды дней 1–7.
+  final List<int> giftRewards;
+
+  final List<DailyTask> tasks;
+  final int weeklyDone;
+  final int weeklyTarget;
+  final int weeklyReward;
+  final bool weeklyClaimed;
+
+  bool get isEmpty => giftRewards.isEmpty && tasks.isEmpty;
+
+  Map<String, dynamic> toJson() => {
+    'gift': {
+      'available': giftAvailable,
+      'next_day': giftNextDay,
+      'claimed_day': giftClaimedDay,
+      'rewards': giftRewards,
+    },
+    'tasks': [
+      for (final t in tasks)
+        {
+          'id': t.id,
+          'target': t.target,
+          'progress': t.progress,
+          'done': t.done,
+          'reward': t.reward,
+        },
+    ],
+    'weekly': {
+      'days_done': weeklyDone,
+      'target': weeklyTarget,
+      'reward': weeklyReward,
+      'claimed': weeklyClaimed,
+    },
+  };
+}
+
+/// Одно задание дня: сколько нужно, сколько сделано, награда.
+class DailyTask {
+  const DailyTask({
+    required this.id,
+    required this.target,
+    required this.progress,
+    required this.done,
+    required this.reward,
+  });
+
+  /// pet, play, wash, feed, cook, learn, meal_on_time, bedtime.
+  final String id;
+  final int target;
+  final int progress;
+  final bool done;
+  final int reward;
 }

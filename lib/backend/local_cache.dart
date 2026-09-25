@@ -122,6 +122,7 @@ class LocalCache {
     'placed': s.placed.toList(),
     'edu': s.eduProgress,
     'asleep': s.asleep,
+    'daily': s.daily.toJson(),
     'rates': s.rates,
     'growth': {
       'progress': s.growth.progress,

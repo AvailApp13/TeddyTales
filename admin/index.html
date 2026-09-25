@@ -363,6 +363,19 @@ const CONFIG_TITLES = {
   stage_durations: 'Длительности стадий, часов',
   starting_items: 'Бесплатные предметы на старте',
   item_prices: 'Цены каталога',
+  growth_speed: 'Скорость роста: запущенный / ухоженный',
+  needs_by_stage: 'Потребности по возрасту (множитель)',
+  night: 'Сон: во сколько раз медленнее, восстановление, часов сна',
+  rhythm: 'Распорядок дня: окна (часы) и бонусы',
+  away: '«Мишка у бабушки»: через сколько часов, до скольки, подарок',
+  food_rules: 'Еда: отказ сытого (0 — выключено)',
+  hygiene_events: 'Сколько гигиены теряется: еда / игра',
+  daily_gift: 'Подарок дня: награды по дням, прощённых пропусков',
+  daily_tasks_target: 'Задания дня: сколько раз',
+  daily_tasks_reward: 'Задания дня: награда',
+  daily_tasks_meta: 'Задания: в день / дней для недели / награда недели',
+  stage_rewards: 'Награда за новую стадию',
+  test_wallet_floor: 'Испытания: кошелёк не ниже',
 };
 
 async function loadConfig() {
@@ -385,7 +398,12 @@ async function renderEconomy() {
         <h2 style="margin-top:0">${esc(CONFIG_TITLES[row.key] || row.key)}</h2>
         <p class="note"><code>${esc(row.key)}</code></p>
         <table><tbody>
-          ${Object.entries(row.value).map(([field, value]) => `
+          ${Object.entries(row.value)
+            // Правится только число. Вложенные таблицы (блюда, рецепты)
+            // здесь не показываются — раньше они выходили «[object Object]»
+            // и сохранение затирало их.
+            .filter(([, value]) => typeof value === 'number')
+            .map(([field, value]) => `
             <tr>
               <td>${esc(field)}</td>
               <td class="num">
@@ -407,7 +425,9 @@ async function renderEconomy() {
 }
 
 async function saveConfig(key, button) {
-  const value = {};
+  // Правки накладываются на то, что уже лежит, — нечисловые поля остаются.
+  const current = (await loadConfig()).find((r) => r.key === key)?.value || {};
+  const value = { ...current };
   $('view').querySelectorAll(`input[data-key="${CSS.escape(key)}"]`).forEach((input) => {
     value[input.dataset.field] = Number(input.value);
   });

@@ -58,6 +58,7 @@ class ProgressSync {
     }
     game.onLevelDone = (categoryId, level) =>
         unawaited(levelDone(categoryId, level));
+    game.onClaimGift = claimGift;
     game.onPlace = (itemId, {required placed}) =>
         unawaited(place(itemId, placed: placed));
   }
@@ -132,6 +133,17 @@ class ProgressSync {
       _apply(await store.completeLevel(categoryId, level));
     } on Object catch (error) {
       _offline(error);
+    }
+  }
+
+  /// Подарок дня (миграция 0017). `false` — уже забран или нет связи.
+  Future<bool> claimGift() async {
+    try {
+      _apply(await store.claimDailyGift());
+      return true;
+    } on Object catch (error) {
+      _offline(error);
+      return false;
     }
   }
 
@@ -223,6 +235,7 @@ class ProgressSync {
       while (bear.state.stage.riveValue < after.riveValue) {
         if (!bear.growUp()) break;
       }
+      game.celebrateStage(after);
     } else {
       bear.restoreState(snapshot.state);
     }
@@ -230,6 +243,7 @@ class ProgressSync {
     game.setAccount(snapshot.account);
     game.setGrowth(snapshot.growth);
     game.setAsleep(snapshot.asleep);
+    if (!snapshot.daily.isEmpty) game.setDaily(snapshot.daily);
     // Шкалы между ответами идут с теми скоростями, что прислал сервер:
     // во сне медленнее, у малыша быстрее (миграция 0016).
     if (snapshot.decay case final decay?) bear.setDecayConfig(decay);
@@ -248,6 +262,7 @@ class ProgressSync {
     game.onRecipe = null;
     game.onLevelDone = null;
     game.onPlace = null;
+    game.onClaimGift = null;
     _queue.clear();
   }
 }

@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../bear/bear_action.dart';
 import '../bear/bear_controller.dart';
-import '../backend/pet_snapshot.dart' show AccountInfo, GrowthOutlook;
+import '../bear/bear_rig_spec.dart' show BearStage;
+import '../backend/pet_snapshot.dart'
+    show AccountInfo, DailyInfo, GrowthOutlook;
 import 'learning_content.dart' show eduContent, eduLevelsPerCategory;
 import '../bear/bear_state.dart';
 import 'food.dart';
@@ -138,6 +140,29 @@ class GameState extends ChangeNotifier {
 
   void setGrowth(GrowthOutlook growth) {
     _growth = growth;
+    notifyListeners();
+  }
+
+  /// Подарок дня, задания дня и недели (миграция 0017).
+  DailyInfo get daily => _daily;
+  DailyInfo _daily = const DailyInfo();
+
+  void setDaily(DailyInfo daily) {
+    _daily = daily;
+    notifyListeners();
+  }
+
+  /// Забрать подарок дня на сервере. `null` — связи с сервером нет.
+  Future<bool> Function()? onClaimGift;
+
+  Future<bool> claimGift() async => await onClaimGift?.call() ?? false;
+
+  /// Мишка подрос на сервере: на какую стадию. Главный экран показывает
+  /// праздник и сбрасывает.
+  BearStage? stageUp;
+
+  void celebrateStage(BearStage stage) {
+    stageUp = stage;
     notifyListeners();
   }
 

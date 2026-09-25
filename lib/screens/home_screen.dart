@@ -16,7 +16,7 @@ import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
-import '../l10n/sections_l10n.dart' show petDisplayName;
+import '../l10n/sections_l10n.dart' show petDisplayName, stageTitle;
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_sheet.dart';
@@ -27,6 +27,7 @@ import '../widgets/night_window.dart';
 import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
+import '../widgets/daily_sheet.dart';
 import '../widgets/feed_burst.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
@@ -542,6 +543,9 @@ class _HomeScreenState extends State<HomeScreen>
     widget.game.addListener(_onGame);
     // Долго не заходил — мишка гостил у бабушки (миграция 0016): одна
     // тёплая строка при входе вместо молчаливо подросших шкал.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _maybeShowDaily();
+    });
     if (widget.game.welcomeBack) {
       widget.game.welcomeBack = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -556,9 +560,32 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Сон пришёл с сервера (уложили на другом устройстве, выспался сам,
-  /// разбудила еда) — спальня перерисовывается.
+  /// разбудила еда) — спальня перерисовывается. Мишка подрос на сервере —
+  /// праздник одной строкой (КП 5.6).
   void _onGame() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    final stage = widget.game.stageUp;
+    if (stage != null) {
+      widget.game.stageUp = null;
+      final l10n = context.l10n;
+      _soon(
+        l10n.stageUpCelebrate(
+          petDisplayName(l10n, widget.game.profile.name),
+          stageTitle(l10n, stage),
+        ),
+      );
+    }
+  }
+
+  /// Подарок дня не забран — окно «Сегодня» открывается само, один раз за
+  /// запуск (миграция 0017).
+  static bool _dailyShown = false;
+
+  void _maybeShowDaily() {
+    if (_dailyShown || !widget.game.daily.giftAvailable) return;
+    _dailyShown = true;
+    showDailySheet(context, widget.game);
   }
 
   @override

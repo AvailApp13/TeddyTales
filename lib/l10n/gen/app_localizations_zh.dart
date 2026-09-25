@@ -1832,4 +1832,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String welcomeBackGrandma(String name) {
     return '你不在的时候，$name去奶奶家住了：吃饱了、洗干净了，很想你。奶奶还送来了金币！';
   }
+
+  @override
+  String get dailyTitle => '今天';
+
+  @override
+  String get dailyGiftClaimed => '已领取——明天还有新礼物';
+
+  @override
+  String get dailyGiftFailed => '礼物领取失败，请检查网络';
+
+  @override
+  String get dailyTasksTitle => '今日任务';
+
+  @override
+  String get dailyWeeklyDone => '本周任务已完成！';
+
+  @override
+  String get dailyOffline => '连接服务器后将显示礼物和任务';
+
+  @override
+  String get dailyTaskPet => '抚摸小熊';
+
+  @override
+  String get dailyTaskPlay => '陪小熊玩';
+
+  @override
+  String get dailyTaskWash => '给小熊洗澡';
+
+  @override
+  String get dailyTaskFeed => '喂一份现成的菜';
+
+  @override
+  String get dailyTaskCook => '做一道菜';
+
+  @override
+  String get dailyTaskLearn => '完成一节课';
+
+  @override
+  String get dailyTaskMealOnTime => '按时喂饭：早餐、午餐或晚餐';
+
+  @override
+  String get dailyTaskBedtime => '按时哄睡（20:00–23:00）';
+
+  @override
+  String get profileLinkDaily => '每日礼物和任务';
+
+  @override
+  String get profileLinkDailySubtitle => '7天日历和任务';
+
+  @override
+  String dailyGiftDay(int n) {
+    return '第$n天';
+  }
+
+  @override
+  String dailyGiftClaim(int coins) {
+    return '领取 +$coins';
+  }
+
+  @override
+  String dailyWeekly(int target, int done, int coins) {
+    return '本周任务：$target天完成全部每日任务——已完成$done/$target，+$coins';
+  }
+
+  @override
+  String stageUpCelebrate(String name, String stage) {
+    return '$name长大了！现在是「$stage」。奖励金币';
+  }
 }

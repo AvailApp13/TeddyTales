@@ -1932,4 +1932,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String welcomeBackGrandma(String name) {
     return '$name stayed with grandma while you were away: fed, washed and missing you a lot. Grandma sent some coins as a gift!';
   }
+
+  @override
+  String get dailyTitle => 'Today';
+
+  @override
+  String get dailyGiftClaimed => 'Claimed — the next gift comes tomorrow';
+
+  @override
+  String get dailyGiftFailed =>
+      'Couldn\'t claim the gift. Check your connection';
+
+  @override
+  String get dailyTasksTitle => 'Today\'s tasks';
+
+  @override
+  String get dailyWeeklyDone => 'Weekly task done!';
+
+  @override
+  String get dailyOffline =>
+      'Gifts and tasks will appear once the server is reachable';
+
+  @override
+  String get dailyTaskPet => 'Pet your bear';
+
+  @override
+  String get dailyTaskPlay => 'Play with your bear';
+
+  @override
+  String get dailyTaskWash => 'Give your bear a bath';
+
+  @override
+  String get dailyTaskFeed => 'Serve a ready dish';
+
+  @override
+  String get dailyTaskCook => 'Cook a dish';
+
+  @override
+  String get dailyTaskLearn => 'Complete a lesson';
+
+  @override
+  String get dailyTaskMealOnTime => 'Feed on time: breakfast, lunch or dinner';
+
+  @override
+  String get dailyTaskBedtime => 'Put to bed on time (8–11 pm)';
+
+  @override
+  String get profileLinkDaily => 'Daily gift and tasks';
+
+  @override
+  String get profileLinkDailySubtitle => '7-day calendar and tasks';
+
+  @override
+  String dailyGiftDay(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String dailyGiftClaim(int coins) {
+    return 'Claim +$coins';
+  }
+
+  @override
+  String dailyWeekly(int target, int done, int coins) {
+    return 'Weekly task: all daily tasks on $target days — $done of $target, +$coins';
+  }
+
+  @override
+  String stageUpCelebrate(String name, String stage) {
+    return '$name has grown! Now: “$stage”. A gift of coins';
+  }
 }

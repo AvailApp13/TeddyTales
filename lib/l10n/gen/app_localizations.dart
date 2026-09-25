@@ -3429,6 +3429,126 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!'**
   String welcomeBackGrandma(String name);
+
+  /// No description provided for @dailyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get dailyTitle;
+
+  /// No description provided for @dailyGiftClaimed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок забран — завтра будет следующий'**
+  String get dailyGiftClaimed;
+
+  /// No description provided for @dailyGiftFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось забрать подарок. Проверьте связь'**
+  String get dailyGiftFailed;
+
+  /// No description provided for @dailyTasksTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задания дня'**
+  String get dailyTasksTitle;
+
+  /// No description provided for @dailyWeeklyDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание недели выполнено!'**
+  String get dailyWeeklyDone;
+
+  /// No description provided for @dailyOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарки и задания появятся, когда будет связь с сервером'**
+  String get dailyOffline;
+
+  /// No description provided for @dailyTaskPet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Погладь мишку'**
+  String get dailyTaskPet;
+
+  /// No description provided for @dailyTaskPlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиграй с мишкой'**
+  String get dailyTaskPlay;
+
+  /// No description provided for @dailyTaskWash.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искупай мишку'**
+  String get dailyTaskWash;
+
+  /// No description provided for @dailyTaskFeed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Накорми готовым блюдом'**
+  String get dailyTaskFeed;
+
+  /// No description provided for @dailyTaskCook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приготовь блюдо'**
+  String get dailyTaskCook;
+
+  /// No description provided for @dailyTaskLearn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пройди урок'**
+  String get dailyTaskLearn;
+
+  /// No description provided for @dailyTaskMealOnTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покорми вовремя: завтрак, обед или ужин'**
+  String get dailyTaskMealOnTime;
+
+  /// No description provided for @dailyTaskBedtime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уложи спать вовремя (20:00–23:00)'**
+  String get dailyTaskBedtime;
+
+  /// No description provided for @profileLinkDaily.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок и задания дня'**
+  String get profileLinkDaily;
+
+  /// No description provided for @profileLinkDailySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'календарь на 7 дней и задания'**
+  String get profileLinkDailySubtitle;
+
+  /// No description provided for @dailyGiftDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'День {n}'**
+  String dailyGiftDay(int n);
+
+  /// No description provided for @dailyGiftClaim.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забрать +{coins}'**
+  String dailyGiftClaim(int coins);
+
+  /// No description provided for @dailyWeekly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание недели: все задания дня в {target} днях — {done} из {target}, +{coins}'**
+  String dailyWeekly(int target, int done, int coins);
+
+  /// No description provided for @stageUpCelebrate.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} подрос! Теперь — «{stage}». Подарок: монетки'**
+  String stageUpCelebrate(String name, String stage);
 }
 
 class _AppLocalizationsDelegate

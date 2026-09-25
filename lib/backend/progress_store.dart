@@ -55,6 +55,10 @@ abstract interface class ProgressStore {
   /// Бросает [ProgressStoreException], если имя отклонено.
   Future<PetSnapshot> renamePet(String name, {String locale = 'ru'});
 
+  /// Забрать подарок дня (миграция 0017). Второй раз за день сервер
+  /// отказывает (TT409).
+  Future<PetSnapshot> claimDailyGift();
+
   /// Поставить предмет в комнату или убрать (КП 10.7).
   Future<void> setPlaced(String itemId, {required bool placed});
 

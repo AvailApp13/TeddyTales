@@ -94,6 +94,15 @@ class _FakeStore implements ProgressStore {
 
   @override
   Future<Map<String, dynamic>> config() async => const {};
+
+  int gifts = 0;
+
+  @override
+  Future<PetSnapshot> claimDailyGift() async {
+    if (failing) throw const ProgressStoreException('нет сети');
+    gifts++;
+    return answer;
+  }
 }
 
 PetSnapshot _snapshotWith({required int coins}) => PetSnapshot(
@@ -200,6 +209,8 @@ void main() {
         hasLength(2),
       );
       expect(it.game.growth.nextStageAt, DateTime.utc(2026, 9, 17, 12));
+      // Главный экран покажет праздник новой стадии.
+      expect(it.game.stageUp, BearStage.firstSteps);
     });
 
     test('сон и скорости с сервера доходят до игры и шкал', () async {
@@ -221,6 +232,12 @@ void main() {
       expect(it.store.care, [BearAction.sleep]);
       expect(it.game.asleep, isTrue);
       expect(it.bear.decay.sleepPerSecond, closeTo(-12 / 3600, 1e-12));
+    });
+
+    test('подарок дня уходит на сервер', () async {
+      final it = _setUp();
+      expect(await it.game.claimGift(), isTrue);
+      expect(it.store.gifts, 1);
     });
 
     test('та же стадия — без перехода', () async {
