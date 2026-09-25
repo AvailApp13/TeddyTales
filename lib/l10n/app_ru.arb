@@ -1205,5 +1205,56 @@
       }
     }
   },
-  "shareFailed": "Не получилось поделиться. Попробуй ещё раз."
+  "shareFailed": "Не получилось поделиться. Попробуй ещё раз.",
+  "profileSectionInvite": "Пригласи друга",
+  "inviteLead": "Друг ставит TeddyTales и вводит твой код — вам обоим по {coins} монет.",
+  "@inviteLead": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteYourCode": "Твой код",
+  "inviteCopied": "Код скопирован",
+  "inviteShare": "Пригласить друга",
+  "inviteShareText": "Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}",
+  "@inviteShareText": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "coins": {
+        "type": "int"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCount": "Друзей пришло: {count}",
+  "@inviteCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteHaveCode": "Есть код друга?",
+  "inviteCodeHint": "Код из 6 знаков",
+  "inviteRedeem": "Ввести",
+  "inviteDone": "+{coins} монет — тебе и другу!",
+  "@inviteDone": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteNotFound": "Такого кода нет. Проверь буквы.",
+  "inviteOwn": "Это твой собственный код.",
+  "inviteUsed": "Код друга уже введён.",
+  "inviteLate": "Код друга вводят в первую неделю.",
+  "inviteFull": "У друга закончились приглашения.",
+  "inviteOffline": "Нет связи с сервером. Попробуй позже."
 }

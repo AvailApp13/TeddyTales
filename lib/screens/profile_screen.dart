@@ -15,6 +15,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/rename_pet_dialog.dart';
+import '../widgets/referral_card.dart';
 import '../widgets/share_card.dart';
 import '../widgets/sign_out_dialog.dart';
 
@@ -243,6 +244,14 @@ class ProfileScreen extends StatelessWidget {
                           _SectionTitle(l10n.profileSectionAccount),
                           _InfoRows(rows: _accountRows(context, account)),
                         ],
+
+                        // Сверх ТЗ (заказчик 25.09): приглашение друга,
+                        // обоим монеты. Без сервера блока нет.
+                        if (game.onReferral != null)
+                          ReferralCard(
+                            game: game,
+                            title: _SectionTitle(l10n.profileSectionInvite),
+                          ),
 
                         _SectionTitle(l10n.profileSectionTrait),
                         _InfoRows(

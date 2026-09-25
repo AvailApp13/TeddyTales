@@ -10,6 +10,7 @@ import 'package:teddy_tales/bear/bear_state.dart';
 import 'package:teddy_tales/bear/bear_stats.dart';
 import 'package:teddy_tales/game/food.dart';
 import 'package:teddy_tales/game/game_state.dart';
+import 'package:teddy_tales/game/referral_info.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 
 import 'bear_controller_test.dart' show FakeRig;
@@ -96,6 +97,18 @@ class _FakeStore implements ProgressStore {
   Future<Map<String, dynamic>> config() async => const {};
 
   int gifts = 0;
+
+  @override
+  Future<ReferralInfo> referral() async => const ReferralInfo(
+    code: 'ABC234',
+    invited: 0,
+    coins: 100,
+    link: '',
+    canRedeem: true,
+  );
+
+  @override
+  Future<PetSnapshot> redeemReferral(String code) async => answer;
 
   @override
   Future<PetSnapshot> claimDailyGift() async {

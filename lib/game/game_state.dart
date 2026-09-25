@@ -9,6 +9,7 @@ import 'learning_content.dart' show eduContent, eduLevelsPerCategory;
 import '../bear/bear_state.dart';
 import 'food.dart';
 import 'pet_profile.dart';
+import 'referral_info.dart';
 import 'shop_items.dart';
 import 'test_stubs.dart';
 
@@ -156,6 +157,15 @@ class GameState extends ChangeNotifier {
   Future<bool> Function()? onClaimGift;
 
   Future<bool> claimGift() async => await onClaimGift?.call() ?? false;
+
+  /// «Пригласи друга» (миграция 0021). `null` — нет аккаунта или связи.
+  Future<ReferralInfo?> Function()? onReferral;
+  Future<RedeemResult> Function(String code)? onRedeemReferral;
+
+  Future<ReferralInfo?> referral() async => await onReferral?.call();
+
+  Future<RedeemResult> redeemReferral(String code) async =>
+      await onRedeemReferral?.call(code) ?? RedeemResult.offline;
 
   /// Мишка подрос на сервере: на какую стадию. Главный экран показывает
   /// праздник и сбрасывает.

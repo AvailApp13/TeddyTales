@@ -2035,4 +2035,63 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get shareFailed => 'Не получилось поделиться. Попробуй ещё раз.';
+
+  @override
+  String get profileSectionInvite => 'Пригласи друга';
+
+  @override
+  String inviteLead(int coins) {
+    return 'Друг ставит TeddyTales и вводит твой код — вам обоим по $coins монет.';
+  }
+
+  @override
+  String get inviteYourCode => 'Твой код';
+
+  @override
+  String get inviteCopied => 'Код скопирован';
+
+  @override
+  String get inviteShare => 'Пригласить друга';
+
+  @override
+  String inviteShareText(String code, int coins, String link) {
+    return 'Заведи мишку в TeddyTales! Введи мой код $code в профиле — нам обоим по $coins монет. $link';
+  }
+
+  @override
+  String inviteCount(int count) {
+    return 'Друзей пришло: $count';
+  }
+
+  @override
+  String get inviteHaveCode => 'Есть код друга?';
+
+  @override
+  String get inviteCodeHint => 'Код из 6 знаков';
+
+  @override
+  String get inviteRedeem => 'Ввести';
+
+  @override
+  String inviteDone(int coins) {
+    return '+$coins монет — тебе и другу!';
+  }
+
+  @override
+  String get inviteNotFound => 'Такого кода нет. Проверь буквы.';
+
+  @override
+  String get inviteOwn => 'Это твой собственный код.';
+
+  @override
+  String get inviteUsed => 'Код друга уже введён.';
+
+  @override
+  String get inviteLate => 'Код друга вводят в первую неделю.';
+
+  @override
+  String get inviteFull => 'У друга закончились приглашения.';
+
+  @override
+  String get inviteOffline => 'Нет связи с сервером. Попробуй позже.';
 }

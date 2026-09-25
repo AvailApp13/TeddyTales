@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
@@ -29,6 +31,7 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/share_card.dart';
+import '../game/referral_info.dart';
 import '../widgets/feed_burst.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
@@ -550,6 +553,7 @@ class _HomeScreenState extends State<HomeScreen>
     // тёплая строка при входе вместо молчаливо подросших шкал.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _maybeShowDaily();
+      if (mounted) unawaited(_maybeRedeemLink());
     });
     if (widget.game.welcomeBack) {
       widget.game.welcomeBack = false;
@@ -590,6 +594,26 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
       );
+    }
+  }
+
+  /// Пришли по ссылке приглашения (`?ref=КОД`, веб-версия): код друга
+  /// вводится сам, один раз за запуск. Отказы молча — код можно ввести и
+  /// в профиле.
+  static bool _linkTried = false;
+
+  Future<void> _maybeRedeemLink() async {
+    if (_linkTried || !kIsWeb) return;
+    _linkTried = true;
+    final code = Uri.base.queryParameters['ref']?.trim() ?? '';
+    if (code.isEmpty) return;
+    final info = await widget.game.referral();
+    if (info == null || !info.canRedeem || info.code == code.toUpperCase()) {
+      return;
+    }
+    final result = await widget.game.redeemReferral(code);
+    if (mounted && result == RedeemResult.ok) {
+      _soon(context.l10n.inviteDone(info.coins));
     }
   }
 

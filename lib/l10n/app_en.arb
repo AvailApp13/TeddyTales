@@ -706,5 +706,22 @@
   "shareGrown": "{name} has grown!",
   "shareBirthday": "Birthday {date}",
   "shareText": "My teddy {name} in TeddyTales",
-  "shareFailed": "Could not share. Please try again."
+  "shareFailed": "Could not share. Please try again.",
+  "profileSectionInvite": "Invite a friend",
+  "inviteLead": "A friend installs TeddyTales and enters your code — you both get {coins} coins.",
+  "inviteYourCode": "Your code",
+  "inviteCopied": "Code copied",
+  "inviteShare": "Invite a friend",
+  "inviteShareText": "Adopt a teddy in TeddyTales! Enter my code {code} in your profile and we both get {coins} coins. {link}",
+  "inviteCount": "Friends joined: {count}",
+  "inviteHaveCode": "Have a friend’s code?",
+  "inviteCodeHint": "6-character code",
+  "inviteRedeem": "Apply",
+  "inviteDone": "+{coins} coins for you and your friend!",
+  "inviteNotFound": "No such code. Check the letters.",
+  "inviteOwn": "That’s your own code.",
+  "inviteUsed": "A friend’s code was already applied.",
+  "inviteLate": "A friend’s code works only in the first week.",
+  "inviteFull": "Your friend has no invites left.",
+  "inviteOffline": "No connection. Try again later."
 }

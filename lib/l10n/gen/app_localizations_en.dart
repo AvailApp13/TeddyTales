@@ -2023,4 +2023,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareFailed => 'Could not share. Please try again.';
+
+  @override
+  String get profileSectionInvite => 'Invite a friend';
+
+  @override
+  String inviteLead(int coins) {
+    return 'A friend installs TeddyTales and enters your code — you both get $coins coins.';
+  }
+
+  @override
+  String get inviteYourCode => 'Your code';
+
+  @override
+  String get inviteCopied => 'Code copied';
+
+  @override
+  String get inviteShare => 'Invite a friend';
+
+  @override
+  String inviteShareText(String code, int coins, String link) {
+    return 'Adopt a teddy in TeddyTales! Enter my code $code in your profile and we both get $coins coins. $link';
+  }
+
+  @override
+  String inviteCount(int count) {
+    return 'Friends joined: $count';
+  }
+
+  @override
+  String get inviteHaveCode => 'Have a friend’s code?';
+
+  @override
+  String get inviteCodeHint => '6-character code';
+
+  @override
+  String get inviteRedeem => 'Apply';
+
+  @override
+  String inviteDone(int coins) {
+    return '+$coins coins for you and your friend!';
+  }
+
+  @override
+  String get inviteNotFound => 'No such code. Check the letters.';
+
+  @override
+  String get inviteOwn => 'That’s your own code.';
+
+  @override
+  String get inviteUsed => 'A friend’s code was already applied.';
+
+  @override
+  String get inviteLate => 'A friend’s code works only in the first week.';
+
+  @override
+  String get inviteFull => 'Your friend has no invites left.';
+
+  @override
+  String get inviteOffline => 'No connection. Try again later.';
 }

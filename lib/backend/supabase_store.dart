@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../bear/bear_action.dart';
 import 'email_auth.dart';
+import '../game/referral_info.dart';
 import 'pet_snapshot.dart';
 import 'progress_store.dart';
 
@@ -227,6 +228,31 @@ class SupabaseStore implements ProgressStore, AccountAuth {
     final id = await _pet();
     return _snapshot('claim_daily_gift', {'p_pet_id': id});
   }
+
+  @override
+  Future<ReferralInfo> referral() async {
+    try {
+      final result = await _client.rpc<dynamic>('my_referral');
+      if (result is! Map) {
+        throw ProgressStoreException('my_referral вернула не объект: $result');
+      }
+      return ReferralInfo.fromJson(Map<String, dynamic>.from(result));
+    } on ProgressStoreException {
+      rethrow;
+    } on PostgrestException catch (error) {
+      throw ProgressStoreException(
+        'Ошибка вызова my_referral',
+        cause: error,
+        code: error.code,
+      );
+    } on Object catch (error) {
+      throw ProgressStoreException('Ошибка вызова my_referral', cause: error);
+    }
+  }
+
+  @override
+  Future<PetSnapshot> redeemReferral(String code) =>
+      _snapshot('redeem_referral', {'p_code': code});
 
   @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {

@@ -1,4 +1,5 @@
 import '../bear/bear_action.dart';
+import '../game/referral_info.dart';
 import 'pet_snapshot.dart';
 
 /// Откуда приложение берёт прогресс и куда его отдаёт.
@@ -59,6 +60,13 @@ abstract interface class ProgressStore {
   /// отказывает (TT409).
   Future<PetSnapshot> claimDailyGift();
 
+  /// «Пригласи друга» (миграция 0021): мой код и счёт приглашённых.
+  Future<ReferralInfo> referral();
+
+  /// Ввести код друга: обоим монеты. Отказы — [ProgressStoreException]
+  /// с кодом (TT404, TT403, TT409, TT410, TT429).
+  Future<PetSnapshot> redeemReferral(String code);
+
   /// Поставить предмет в комнату или убрать (КП 10.7).
   Future<void> setPlaced(String itemId, {required bool placed});
 
@@ -91,6 +99,8 @@ class ProgressStoreException implements Exception {
   static const String notYourPet = 'TT403';
   static const String notFound = 'TT404';
   static const String alreadyOwned = 'TT409';
+  static const String tooLate = 'TT410';
+  static const String limitReached = 'TT429';
 
   /// Сервер ответил и отказал. Такое действие повторять бессмысленно: оно
   /// не пройдёт и со второго раза, в отличие от обрыва связи.

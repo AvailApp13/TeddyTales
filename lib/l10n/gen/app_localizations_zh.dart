@@ -1924,4 +1924,63 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shareFailed => '分享失败，请再试一次。';
+
+  @override
+  String get profileSectionInvite => '邀请好友';
+
+  @override
+  String inviteLead(int coins) {
+    return '好友安装 TeddyTales 并输入你的邀请码——你们各得 $coins 金币。';
+  }
+
+  @override
+  String get inviteYourCode => '你的邀请码';
+
+  @override
+  String get inviteCopied => '邀请码已复制';
+
+  @override
+  String get inviteShare => '邀请好友';
+
+  @override
+  String inviteShareText(String code, int coins, String link) {
+    return '来 TeddyTales 养一只小熊吧！在个人资料里输入我的邀请码 $code，我们各得 $coins 金币。$link';
+  }
+
+  @override
+  String inviteCount(int count) {
+    return '已加入的好友：$count';
+  }
+
+  @override
+  String get inviteHaveCode => '有好友的邀请码？';
+
+  @override
+  String get inviteCodeHint => '6 位邀请码';
+
+  @override
+  String get inviteRedeem => '使用';
+
+  @override
+  String inviteDone(int coins) {
+    return '你和好友各得 +$coins 金币！';
+  }
+
+  @override
+  String get inviteNotFound => '没有这个邀请码，请检查。';
+
+  @override
+  String get inviteOwn => '这是你自己的邀请码。';
+
+  @override
+  String get inviteUsed => '已使用过好友的邀请码。';
+
+  @override
+  String get inviteLate => '好友邀请码只能在第一周内使用。';
+
+  @override
+  String get inviteFull => '好友的邀请次数已用完。';
+
+  @override
+  String get inviteOffline => '无法连接服务器，请稍后再试。';
 }

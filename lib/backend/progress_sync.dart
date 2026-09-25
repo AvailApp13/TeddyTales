@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../bear/bear_action.dart';
 import '../bear/bear_controller.dart';
 import '../game/game_state.dart';
+import '../game/referral_info.dart';
 import 'memory_store.dart';
 import 'pet_snapshot.dart';
 import 'progress_store.dart';
@@ -60,6 +61,10 @@ class ProgressSync {
     game.onLevelDone = (categoryId, level) =>
         unawaited(levelDone(categoryId, level));
     game.onClaimGift = claimGift;
+    if (!localOnly) {
+      game.onReferral = referral;
+      game.onRedeemReferral = redeemReferral;
+    }
     game.onPlace = (itemId, {required placed}) =>
         unawaited(place(itemId, placed: placed));
   }
@@ -145,6 +150,41 @@ class ProgressSync {
     } on Object catch (error) {
       _offline(error);
       return false;
+    }
+  }
+
+  /// Мой код приглашения (миграция 0021). `null` — нет связи.
+  Future<ReferralInfo?> referral() async {
+    try {
+      final info = await store.referral();
+      _online = true;
+      return info;
+    } on Object catch (error) {
+      _offline(error);
+      return null;
+    }
+  }
+
+  /// Ввести код друга: монеты обоим начисляет сервер.
+  Future<RedeemResult> redeemReferral(String code) async {
+    try {
+      _apply(await store.redeemReferral(code));
+      return RedeemResult.ok;
+    } on Object catch (error) {
+      // Отказ по коду — связь есть, просто код не подошёл.
+      if (error is ProgressStoreException && error.isRejected) {
+        _online = true;
+      } else {
+        _offline(error);
+      }
+      return switch (error is ProgressStoreException ? error.code : null) {
+        ProgressStoreException.notFound => RedeemResult.notFound,
+        ProgressStoreException.notYourPet => RedeemResult.ownCode,
+        ProgressStoreException.alreadyOwned => RedeemResult.alreadyUsed,
+        ProgressStoreException.tooLate => RedeemResult.tooLate,
+        ProgressStoreException.limitReached => RedeemResult.inviterFull,
+        _ => RedeemResult.offline,
+      };
     }
   }
 
@@ -270,6 +310,8 @@ class ProgressSync {
     game.onLevelDone = null;
     game.onPlace = null;
     game.onClaimGift = null;
+    game.onReferral = null;
+    game.onRedeemReferral = null;
     _queue.clear();
   }
 }

@@ -1,6 +1,7 @@
 import '../bear/bear_action.dart';
 import '../bear/bear_state.dart';
 import '../game/pet_profile.dart';
+import '../game/referral_info.dart';
 import 'pet_snapshot.dart';
 import 'progress_store.dart';
 
@@ -82,6 +83,16 @@ class MemoryStore implements ProgressStore {
   @override
   Future<PetSnapshot> claimDailyGift() async {
     throw const ProgressStoreException('Подарок дня — только при связи');
+  }
+
+  @override
+  Future<ReferralInfo> referral() async {
+    throw const ProgressStoreException('Приглашения — только при связи');
+  }
+
+  @override
+  Future<PetSnapshot> redeemReferral(String code) async {
+    throw const ProgressStoreException('Код друга — только при связи');
   }
 
   @override

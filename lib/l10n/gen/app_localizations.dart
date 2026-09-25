@@ -3585,6 +3585,108 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не получилось поделиться. Попробуй ещё раз.'**
   String get shareFailed;
+
+  /// No description provided for @profileSectionInvite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пригласи друга'**
+  String get profileSectionInvite;
+
+  /// No description provided for @inviteLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друг ставит TeddyTales и вводит твой код — вам обоим по {coins} монет.'**
+  String inviteLead(int coins);
+
+  /// No description provided for @inviteYourCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Твой код'**
+  String get inviteYourCode;
+
+  /// No description provided for @inviteCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код скопирован'**
+  String get inviteCopied;
+
+  /// No description provided for @inviteShare.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пригласить друга'**
+  String get inviteShare;
+
+  /// No description provided for @inviteShareText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}'**
+  String inviteShareText(String code, int coins, String link);
+
+  /// No description provided for @inviteCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друзей пришло: {count}'**
+  String inviteCount(int count);
+
+  /// No description provided for @inviteHaveCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть код друга?'**
+  String get inviteHaveCode;
+
+  /// No description provided for @inviteCodeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код из 6 знаков'**
+  String get inviteCodeHint;
+
+  /// No description provided for @inviteRedeem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести'**
+  String get inviteRedeem;
+
+  /// No description provided for @inviteDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'+{coins} монет — тебе и другу!'**
+  String inviteDone(int coins);
+
+  /// No description provided for @inviteNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Такого кода нет. Проверь буквы.'**
+  String get inviteNotFound;
+
+  /// No description provided for @inviteOwn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это твой собственный код.'**
+  String get inviteOwn;
+
+  /// No description provided for @inviteUsed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код друга уже введён.'**
+  String get inviteUsed;
+
+  /// No description provided for @inviteLate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код друга вводят в первую неделю.'**
+  String get inviteLate;
+
+  /// No description provided for @inviteFull.
+  ///
+  /// In ru, this message translates to:
+  /// **'У друга закончились приглашения.'**
+  String get inviteFull;
+
+  /// No description provided for @inviteOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет связи с сервером. Попробуй позже.'**
+  String get inviteOffline;
 }
 
 class _AppLocalizationsDelegate

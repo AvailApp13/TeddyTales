@@ -10,6 +10,7 @@ import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
+import 'game/referral_info.dart';
 import 'game/game_state.dart';
 import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
@@ -291,6 +292,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     WidgetsBinding.instance.addObserver(_lifecycle);
   }
 
+  bool _demoRedeemed = false;
+
   /// Съёмка экранов без сервера ([kDemoDay]): примерный день игрока.
   void _demoDay() {
     const next = kDemoGiftDay;
@@ -333,6 +336,20 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       ..onClaimGift = () async {
         _game.setDaily(day(gift: false));
         return true;
+      }
+      ..onReferral = () async {
+        return ReferralInfo(
+          code: 'ZP65BM',
+          invited: 2,
+          coins: 100,
+          link: 'https://availapp13.github.io/TeddyTales/',
+          canRedeem: !_demoRedeemed,
+        );
+      }
+      ..onRedeemReferral = (code) async {
+        if (code.toUpperCase() != 'E576DR') return RedeemResult.notFound;
+        _demoRedeemed = true;
+        return RedeemResult.ok;
       };
     // Праздник новой стадии — через полминуты после входа.
     Future<void>.delayed(const Duration(seconds: 30), () {
