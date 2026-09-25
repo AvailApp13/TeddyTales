@@ -86,6 +86,8 @@ class LocalCache {
       'birth_at': s.profile.birthAt.toIso8601String(),
       'skin': s.profile.skin.name,
       'zodiac': s.profile.zodiac?.name,
+      'birth_height_cm': s.profile.birthHeightCm,
+      'birth_weight_g': s.profile.birthWeightG,
       'stage': s.state.stage.name,
       'trait': s.state.trait.name,
       // Точного момента кеш не знает — важно лишь, что имя уже давали.

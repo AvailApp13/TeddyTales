@@ -537,6 +537,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String growthSizeNow(String cm, String g, String cm0, String g0) {
+    return '现在身高 $cm 厘米，体重 $g 克。出生时 $cm0 厘米、$g0 克。';
+  }
+
+  @override
   String get growthTitle => '成长与发育';
 
   @override
@@ -1082,11 +1087,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get profileFootnote =>
-      '身高、体重和星座目前是占位数据：出生时由服务器生成（КП 2.2、2.5），星座性格对照表由客户方提供。';
+  String get profileFootnote => '星座按注册日期确定；星座性格对照表由客户方提供。';
 
   @override
   String get profileHeightLabel => '身高';
+
+  @override
+  String profileHeightValue(String cm) {
+    return '$cm 厘米';
+  }
 
   @override
   String get profileHeightStub => '15 厘米';
@@ -1156,6 +1165,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileWeightLabel => '体重';
+
+  @override
+  String profileWeightValue(String g) {
+    return '$g 克';
+  }
 
   @override
   String get profileWeightStub => '180 克';

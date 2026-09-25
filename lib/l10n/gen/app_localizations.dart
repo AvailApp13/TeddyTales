@@ -1024,6 +1024,12 @@ abstract class AppLocalizations {
   /// **'Новая стадия: {stage}'**
   String growthNewStage(String stage);
 
+  /// No description provided for @growthSizeNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас рост {cm} см, вес {g} г. При рождении — {cm0} см и {g0} г.'**
+  String growthSizeNow(String cm, String g, String cm0, String g0);
+
   /// No description provided for @growthTitle.
   ///
   /// In ru, this message translates to:
@@ -2029,7 +2035,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileFootnote.
   ///
   /// In ru, this message translates to:
-  /// **'Рост, вес и знак зодиака — заглушки: их определяет сервер при рождении (КП 2.2, 2.5), а таблицу склонностей по знакам даёт Заказчик.'**
+  /// **'Знак зодиака ставится по дате регистрации; таблицу склонностей по знакам даёт Заказчик.'**
   String get profileFootnote;
 
   /// No description provided for @profileHeightLabel.
@@ -2037,6 +2043,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Рост'**
   String get profileHeightLabel;
+
+  /// No description provided for @profileHeightValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{cm} см'**
+  String profileHeightValue(String cm);
 
   /// No description provided for @profileHeightStub.
   ///
@@ -2175,6 +2187,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Вес'**
   String get profileWeightLabel;
+
+  /// No description provided for @profileWeightValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{g} г'**
+  String profileWeightValue(String g);
 
   /// No description provided for @profileWeightStub.
   ///

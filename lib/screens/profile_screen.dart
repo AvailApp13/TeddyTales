@@ -9,6 +9,7 @@ import '../game/game_state.dart';
 import '../game/pet_name.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
+import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -204,19 +205,26 @@ class ProfileScreen extends StatelessWidget {
                               // в список недоделок.
                               isStub: profile.zodiac == null,
                             ),
-                            // ЗАГЛУШКА: рост и вес — часть карточки рождения
-                            // (КП 2.2), но их определяет сервер при рождении
-                            // вместе с полом и знаком (КП 2.4, 2.5). Значения —
-                            // из каталога TeddyTales®: «Карманный мишка
-                            // Фортуна, 15 см». Когда карточка начнёт приходить
-                            // с бэкенда, обе строки уедут в `PetProfile`.
+                            // Рост и вес при рождении назначает сервер
+                            // (миграция 0013). Пока не прислал — заглушка
+                            // «Карманного мишки» из каталога, с пометкой.
                             _InfoRow(
                               l10n.profileHeightLabel,
-                              l10n.profileHeightStub,
+                              switch (profile.birthHeightCm) {
+                                final cm? => l10n.profileHeightValue(
+                                  formatCm(context, cm),
+                                ),
+                                null => l10n.profileHeightStub,
+                              },
+                              isStub: profile.birthHeightCm == null,
                             ),
                             _InfoRow(
                               l10n.profileWeightLabel,
-                              l10n.profileWeightStub,
+                              switch (profile.birthWeightG) {
+                                final g? => l10n.profileWeightValue(formatG(g)),
+                                null => l10n.profileWeightStub,
+                              },
+                              isStub: profile.birthWeightG == null,
                             ),
                           ],
                         ),

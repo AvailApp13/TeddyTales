@@ -73,6 +73,8 @@ class PetSnapshot {
         skin: _skin(pet['skin']),
         zodiac: _zodiac(pet['zodiac']),
         coins: _int(account['coins'] ?? pet['coins']),
+        birthHeightCm: _doubleOrNull(pet['birth_height_cm']),
+        birthWeightG: _doubleOrNull(pet['birth_weight_g']),
       ),
       state: BearState(
         stats: BearCareStats(
@@ -154,6 +156,9 @@ class PetSnapshot {
     String v => int.tryParse(v) ?? 0,
     _ => 0,
   };
+
+  static double? _doubleOrNull(Object? value) =>
+      value is num ? value.toDouble() : null;
 
   static double _double(Object? value, double fallback) => switch (value) {
     num v => v.toDouble(),

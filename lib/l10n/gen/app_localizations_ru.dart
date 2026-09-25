@@ -612,6 +612,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String growthSizeNow(String cm, String g, String cm0, String g0) {
+    return 'Сейчас рост $cm см, вес $g г. При рождении — $cm0 см и $g0 г.';
+  }
+
+  @override
   String get growthTitle => 'Рост и развитие';
 
   @override
@@ -1168,10 +1173,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileFootnote =>
-      'Рост, вес и знак зодиака — заглушки: их определяет сервер при рождении (КП 2.2, 2.5), а таблицу склонностей по знакам даёт Заказчик.';
+      'Знак зодиака ставится по дате регистрации; таблицу склонностей по знакам даёт Заказчик.';
 
   @override
   String get profileHeightLabel => 'Рост';
+
+  @override
+  String profileHeightValue(String cm) {
+    return '$cm см';
+  }
 
   @override
   String get profileHeightStub => '15 см';
@@ -1241,6 +1251,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileWeightLabel => 'Вес';
+
+  @override
+  String profileWeightValue(String g) {
+    return '$g г';
+  }
 
   @override
   String get profileWeightStub => '180 г';

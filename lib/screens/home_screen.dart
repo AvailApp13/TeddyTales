@@ -362,7 +362,9 @@ class _HomeScreenState extends State<HomeScreen>
     game: widget.game,
     calendar: widget.calendar,
     language: widget.language,
-    onOpenGrowth: () => _open(GrowthScreen(controller: widget.controller)),
+    onOpenGrowth: () => _open(
+      GrowthScreen(controller: widget.controller, profile: widget.game.profile),
+    ),
     onOpenDiary: () => _open(const DiaryScreen()),
     onSignOut: widget.onSignOut == null ? null : _signOut,
     onRename: widget.onRename,

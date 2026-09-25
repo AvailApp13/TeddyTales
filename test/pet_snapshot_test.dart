@@ -20,6 +20,8 @@ Map<String, dynamic> _serverJson() => {
     'stage_changed_at': '2026-09-14T08:15:00+00:00',
     'trait': 'curious',
     'coins': 1250,
+    'birth_height_cm': 15.3,
+    'birth_weight_g': 184,
     'created_at': '2026-09-10T08:15:00+00:00',
   },
   'stats': {
@@ -52,6 +54,8 @@ void main() {
       expect(snapshot.profile.coins, 1250);
       expect(snapshot.profile.skin, BearSkin.girl);
       expect(snapshot.profile.zodiac, BearZodiac.leo);
+      expect(snapshot.profile.birthHeightCm, 15.3);
+      expect(snapshot.profile.birthWeightG, 184);
 
       expect(snapshot.state.stage, BearStage.growing);
       expect(snapshot.state.trait, BearTrait.curious);
@@ -81,6 +85,9 @@ void main() {
       expect(snapshot.petId, '');
       expect(snapshot.profile.name, PetProfile.defaultName);
       expect(snapshot.profile.coins, 0);
+      // Рост и вес без сервера неизвестны — карточка покажет заглушку.
+      expect(snapshot.profile.birthHeightCm, isNull);
+      expect(snapshot.profile.birthWeightG, isNull);
       expect(snapshot.state.stage, BearStage.newborn);
       expect(snapshot.state.stats.food, 100);
       expect(snapshot.inventory, isEmpty);

@@ -603,6 +603,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String growthSizeNow(String cm, String g, String cm0, String g0) {
+    return 'Now $cm cm tall and $g g. At birth — $cm0 cm and $g0 g.';
+  }
+
+  @override
   String get growthTitle => 'Growth & development';
 
   @override
@@ -1158,10 +1163,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileFootnote =>
-      'Height, weight and zodiac sign are stubs: the server assigns them at birth (КП 2.2, 2.5), and the zodiac traits table comes from the Client.';
+      'The zodiac sign follows the sign-up date; the zodiac traits table comes from the Client.';
 
   @override
   String get profileHeightLabel => 'Height';
+
+  @override
+  String profileHeightValue(String cm) {
+    return '$cm cm';
+  }
 
   @override
   String get profileHeightStub => '15 cm';
@@ -1232,6 +1242,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileWeightLabel => 'Weight';
+
+  @override
+  String profileWeightValue(String g) {
+    return '$g g';
+  }
 
   @override
   String get profileWeightStub => '180 g';

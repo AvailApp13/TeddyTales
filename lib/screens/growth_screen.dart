@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../bear/bear.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
+import '../l10n/size_l10n.dart';
+import '../game/pet_profile.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -23,7 +25,12 @@ import '../theme/app_theme.dart';
 /// длительности настраиваются с панели), и клиент только принимает событие.
 /// Пока сервера нет, кнопка заменяет его — как и в принятом прототипе.
 class GrowthScreen extends StatelessWidget {
-  const GrowthScreen({super.key, required this.controller});
+  const GrowthScreen({super.key, required this.controller, this.profile});
+
+  /// Карточка мишки — ради роста и веса при рождении, от которых считается
+  /// текущий размер по стадии (КП 2.2, решение заказчика 25.09). `null` —
+  /// строки о размере нет.
+  final PetProfile? profile;
 
   /// Тот же контроллер, что и на главной: экран читает из него текущую стадию
   /// и через него же взрослеет, чтобы риг получил `trg_stage_up` до смены
@@ -107,6 +114,25 @@ class GrowthScreen extends StatelessWidget {
                           _StageRow(stage: item, current: stage),
                           const SizedBox(height: 8),
                         ],
+                        if (profile case final p?)
+                          if (p.birthHeightCm != null && p.birthWeightG != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 2, 4, 12),
+                              child: Text(
+                                key: const ValueKey('growth-size'),
+                                l10n.growthSizeNow(
+                                  formatCm(context, p.heightAt(stage)!),
+                                  formatG(p.weightAt(stage)!),
+                                  formatCm(context, p.birthHeightCm!),
+                                  formatG(p.birthWeightG!),
+                                ),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.textPrimary,
+                                      height: 1.5,
+                                    ),
+                              ),
+                            ),
                         const SizedBox(height: 2),
                         FilledButton(
                           // Взрослому расти некуда: кнопка гаснет, но остаётся
