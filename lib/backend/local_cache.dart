@@ -121,6 +121,10 @@ class LocalCache {
     'inventory': s.inventory.toList(),
     'placed': s.placed.toList(),
     'edu': s.eduProgress,
+    'growth': {
+      'progress': s.growth.progress,
+      'next_stage_at': s.growth.nextStageAt?.toIso8601String(),
+    },
     'zodiac_inclinations': {
       for (final e in s.inclinations.entries) e.key.name: e.value,
     },

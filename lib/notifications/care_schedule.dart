@@ -16,6 +16,7 @@ class CareSchedule {
     this.quietFrom = 22,
     this.quietUntil = 8,
     this.minGap = const Duration(hours: 3),
+    this.maxPerDay = 4,
   });
 
   /// Значение показателя, при котором пора напомнить. Не ноль: по КП 6.3
@@ -31,6 +32,11 @@ class CareSchedule {
   /// до порога почти одновременно — три звонка подряд читаются как
   /// назойливость, даже если каждый по делу.
   final Duration minGap;
+
+  /// Ограничение частоты (КП 13.2): не больше стольких уведомлений за
+  /// любые сутки. Лишние — самые поздние — не ставятся: к их времени
+  /// приложение почти наверняка откроют, и расписание построится заново.
+  final int maxPerDay;
 
   /// Момент, когда показатель дойдёт до порога.
   ///
@@ -81,11 +87,17 @@ class CareSchedule {
   /// Полное расписание напоминаний об уходе от текущих показателей.
   ///
   /// Возвращает пары «тип уведомления — когда». Типы те же, что в КП 13.1.
+  ///
+  /// [extra] — уведомления, время которых известно заранее, а не из
+  /// показателей: «Новая стадия» (прогноз сервера), «Задание» (КП 13.1).
+  /// Они встают в общий ряд: тихие часы, промежутки и дневной предел для
+  /// всех одни.
   Map<String, DateTime> planFrom(
     BearCareStats stats,
     BearDecayConfig decay,
-    DateTime now,
-  ) {
+    DateTime now, {
+    Map<String, DateTime> extra = const {},
+  }) {
     final raw = <String, DateTime>{};
 
     void add(String kind, double value, double perSecond) {
@@ -97,12 +109,36 @@ class CareSchedule {
     add('play', stats.play, decay.playPerSecond);
     add('sleep', stats.sleep, decay.sleepPerSecond);
 
+    for (final entry in extra.entries) {
+      if (entry.value.isAfter(now)) {
+        raw[entry.key] = respectQuietHours(entry.value);
+      }
+    }
+
     if (raw.isEmpty) return const {};
 
     // Сортируем по времени и разводим, чтобы не звонить три раза подряд.
     final order = raw.keys.toList()..sort((a, b) => raw[a]!.compareTo(raw[b]!));
     final spreadOut = spread(order.map((k) => raw[k]!).toList());
 
-    return {for (var i = 0; i < order.length; i++) order[i]: spreadOut[i]};
+    // Дневной предел (КП 13.2): в любые сутки — не больше [maxPerDay].
+    final plan = <String, DateTime>{};
+    final kept = <DateTime>[];
+    for (var i = 0; i < order.length; i++) {
+      final at = spreadOut[i];
+      final sameDay = kept
+          .where((k) => at.difference(k) < const Duration(days: 1))
+          .length;
+      if (sameDay >= maxPerDay) continue;
+      kept.add(at);
+      plan[order[i]] = at;
+    }
+    return plan;
   }
+
+  /// Когда напомнить о задании (КП 13.1): завтра в [hour] — если игрок
+  /// сегодня так и не зайдёт, мишка позовёт учиться. Приложение открыли —
+  /// расписание строится заново, и напоминание уезжает на следующий день.
+  DateTime nextTaskAt(DateTime now, {int hour = 18}) =>
+      DateTime(now.year, now.month, now.day + 1, hour);
 }

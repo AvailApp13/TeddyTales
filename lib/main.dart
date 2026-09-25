@@ -256,6 +256,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       stats: _bear.stats,
       decay: _bear.decay,
       language: _language,
+      stageAt: _game.growth.nextStageAt,
+      learningLeft: _game.hasLearningLeft,
     );
   }
 
@@ -266,6 +268,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // действия. Без этой строки мост создался бы только при первом
     // обращении из разметки, то есть никогда.
     _sync.retry();
+    if (widget.boot.isOnline) _game.setGrowth(widget.boot.snapshot.growth);
     WidgetsBinding.instance.addObserver(_lifecycle);
   }
 

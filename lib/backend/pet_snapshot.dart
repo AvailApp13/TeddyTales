@@ -28,6 +28,7 @@ class PetSnapshot {
     this.account = const AccountInfo(),
     this.named = true,
     this.inclinations = const {},
+    this.growth = const GrowthOutlook(),
   });
 
   /// Идентификатор питомца — с ним ходят все действия ухода и покупки.
@@ -61,6 +62,10 @@ class PetSnapshot {
   /// черты. Таблицу правит Заказчик в панели (миграция 0014); пустая —
   /// знак ни на что не влияет.
   final Map<BearTrait, double> inclinations;
+
+  /// Сколько пройдено на стадии и когда ждать следующую (КП 5.6, 5.7) —
+  /// сервер растит мишку сам (миграция 0015).
+  final GrowthOutlook growth;
 
   /// Та же таблица в виде, который понимает счётчик характера.
   BearZodiacInfluence get zodiacInfluence {
@@ -127,6 +132,10 @@ class PetSnapshot {
       // Имя, данное до появления отметки named_at, тоже считается: такой
       // человек уже называл малыша в профиле, спрашивать заново незачем.
       named: pet['named_at'] != null || name != PetProfile.defaultName,
+      growth: GrowthOutlook(
+        progress: _doubleOrNull(_map(json['growth'])['progress']),
+        nextStageAt: _time(_map(json['growth'])['next_stage_at']),
+      ),
       inclinations: {
         for (final entry in _map(json['zodiac_inclinations']).entries)
           if (_traitOf(entry.key) case final trait?)
@@ -155,6 +164,7 @@ class PetSnapshot {
         account: account ?? this.account,
         named: named,
         inclinations: inclinations,
+        growth: growth,
       );
 
   // --- Разбор отдельных значений ------------------------------------------
@@ -277,4 +287,13 @@ class AccountInfo {
   bool get hasEmail => providers.contains('email') || email != null;
 
   bool get hasApple => providers.contains('apple');
+}
+
+/// Прогноз роста от сервера (КП 5.6, 5.7): доля пройденной стадии 0–1 и
+/// когда при нынешнем уходе ждать следующую. У взрослого оба `null`.
+class GrowthOutlook {
+  const GrowthOutlook({this.progress, this.nextStageAt});
+
+  final double? progress;
+  final DateTime? nextStageAt;
 }

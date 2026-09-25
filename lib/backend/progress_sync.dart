@@ -214,9 +214,21 @@ class ProgressSync {
     _online = true;
     // Состояние с сервера главнее локального: показатели он пересчитал по
     // своим часам (КП 1.5), монеты начислил по своим правилам.
-    bear.restoreState(snapshot.state);
+    // Сервер вырастил мишку (КП 5.6): стадия меняется не молча, а через
+    // переход взросления — риг получает `trg_stage_up` на каждую ступень.
+    final before = bear.state.stage;
+    final after = snapshot.state.stage;
+    if (after.riveValue > before.riveValue) {
+      bear.restoreState(snapshot.state.copyWith(stage: before));
+      while (bear.state.stage.riveValue < after.riveValue) {
+        if (!bear.growUp()) break;
+      }
+    } else {
+      bear.restoreState(snapshot.state);
+    }
     game.setProfile(snapshot.profile);
     game.setAccount(snapshot.account);
+    game.setGrowth(snapshot.growth);
     onSnapshot?.call(snapshot);
   }
 

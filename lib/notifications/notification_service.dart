@@ -110,6 +110,8 @@ class NotificationService {
     required BearDecayConfig decay,
     required BearLanguage language,
     DateTime? now,
+    DateTime? stageAt,
+    bool learningLeft = false,
   }) async {
     if (!_ready) return;
 
@@ -118,7 +120,19 @@ class NotificationService {
     await _cancelCare();
     if (enabled.isEmpty) return;
 
-    final plan = schedule.planFrom(stats, decay, now ?? DateTime.now());
+    final at = now ?? DateTime.now();
+    final plan = schedule.planFrom(
+      stats,
+      decay,
+      at,
+      extra: {
+        // Сервер прислал, когда мишка подрастёт (КП 5.6, 13.1).
+        if (stageAt != null && enabled.contains('stage')) 'stage': stageAt,
+        // Есть непройденные уровни обучения — завтра позовёт учиться.
+        if (learningLeft && enabled.contains('task'))
+          'task': schedule.nextTaskAt(at),
+      },
+    );
     for (final entry in plan.entries) {
       if (!enabled.contains(entry.key)) continue;
       await _schedule(entry.key, entry.value, language);

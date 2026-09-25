@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import '../bear/bear_action.dart';
 import '../bear/bear_controller.dart';
-import '../backend/pet_snapshot.dart' show AccountInfo;
+import '../backend/pet_snapshot.dart' show AccountInfo, GrowthOutlook;
+import 'learning_content.dart' show eduContent, eduLevelsPerCategory;
 import '../bear/bear_state.dart';
 import 'food.dart';
 import 'pet_profile.dart';
@@ -130,6 +131,16 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Прогноз роста с сервера (КП 5.6, 5.7): для уведомления «Новая
+  /// стадия» (КП 13.1). Без сервера — пустой.
+  GrowthOutlook get growth => _growth;
+  GrowthOutlook _growth = const GrowthOutlook();
+
+  void setGrowth(GrowthOutlook growth) {
+    _growth = growth;
+    notifyListeners();
+  }
+
   PetProfile get profile => _profile;
   int get coins => _profile.coins;
 
@@ -194,6 +205,11 @@ class GameState extends ChangeNotifier {
 
   /// Сколько уровней категории пройдено (КП 9.2, по 10 на категорию).
   int eduProgress(String categoryId) => _eduProgress[categoryId] ?? 0;
+
+  /// Остались ли непройденные уровни обучения — тогда есть о чём напомнить
+  /// уведомлением «Задание» (КП 13.1).
+  bool get hasLearningLeft =>
+      eduContent.keys.any((id) => eduProgress(id) < eduLevelsPerCategory);
 
   int? get playerAge => _playerAge;
 
