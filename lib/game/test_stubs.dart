@@ -59,3 +59,8 @@ const String kTestKitchenIdle = String.fromEnvironment('KITCHEN_IDLE');
 /// Принудительный характер для съёмки реакций на угощение:
 /// `--dart-define=KITCHEN_TRAIT=curious`. Пусто — характер мишки.
 const String kTestKitchenTrait = String.fromEnvironment('KITCHEN_TRAIT');
+
+/// Демо-день для съёмки экранов без сервера: `--dart-define=DEMO_DAY=true`.
+/// Подарок дня, задания, рост и вес, «мишка у бабушки» и праздник новой
+/// стадии показываются на примерных данных. В обычной сборке выключено.
+const bool kDemoDay = bool.fromEnvironment('DEMO_DAY');

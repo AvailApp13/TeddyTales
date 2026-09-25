@@ -429,4 +429,25 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(sync.pendingCount, 0, reason: 'память принимает всё');
   });
+
+  test('без сервера снимок из памяти не откатывает мишку', () async {
+    // Песочница и гость без сети: «ответ» хранилища в памяти — стартовый
+    // снимок. Раньше он затирал шкалы и возраст после каждого действия, а
+    // «Уложить спать» тут же отменялось.
+    final bear = BearController();
+    final game = GameState(
+      bear: bear,
+      profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 6, 1)),
+    );
+    ProgressSync(store: MemoryStore(), bear: bear, game: game);
+
+    game.setAsleep(true);
+    bear.putToSleep(amount: 10);
+    final sleep = bear.stats.sleep;
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(game.asleep, isTrue);
+    expect(game.profile.birthAt, DateTime.utc(2026, 6, 1));
+    expect(bear.stats.sleep, sleep);
+  });
 }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../bear/bear_action.dart';
 import '../bear/bear_controller.dart';
 import '../game/game_state.dart';
+import 'memory_store.dart';
 import 'pet_snapshot.dart';
 import 'progress_store.dart';
 
@@ -223,6 +224,12 @@ class ProgressSync {
   Future<void> retry() => _drain();
 
   void _apply(PetSnapshot snapshot) {
+    // Без сервера (гость без сети, песочница) «ответ» — снимок из памяти,
+    // сделанный при запуске. Истиной он не является: применить его значило
+    // бы после каждого «погладить» или «уложить спать» откатывать шкалы и
+    // возраст к стартовым, а сон — отменять. Действие уже сыграно на
+    // телефоне и ждёт сервера в очереди.
+    if (store is MemoryStore) return;
     _online = true;
     // Состояние с сервера главнее локального: показатели он пересчитал по
     // своим часам (КП 1.5), монеты начислил по своим правилам.

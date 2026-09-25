@@ -6,6 +6,7 @@ import 'package:rive/rive.dart' show RiveNative;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'backend/bootstrap.dart';
+import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
 import 'game/game_calendar.dart';
@@ -284,8 +285,54 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         ..setAsleep(widget.boot.snapshot.asleep)
         ..setDaily(widget.boot.snapshot.daily)
         ..welcomeBack = widget.boot.snapshot.welcomeBack;
+    } else if (kDemoDay) {
+      _demoDay();
     }
     WidgetsBinding.instance.addObserver(_lifecycle);
+  }
+
+  /// Съёмка экранов без сервера ([kDemoDay]): примерный день игрока.
+  void _demoDay() {
+    DailyInfo day({required bool gift}) => DailyInfo.fromJson({
+      'gift': {
+        'available': gift,
+        'next_day': gift ? 3 : 4,
+        'claimed_day': gift ? 2 : 3,
+        'rewards': [10, 15, 20, 25, 30, 35, 50],
+      },
+      'tasks': [
+        {'id': 'cook', 'target': 1, 'progress': 1, 'done': true, 'reward': 15},
+        {'id': 'pet', 'target': 3, 'progress': 1, 'done': false, 'reward': 10},
+        {
+          'id': 'meal_on_time',
+          'target': 2,
+          'progress': 0,
+          'done': false,
+          'reward': 15,
+        },
+      ],
+      'weekly': {'days_done': 2, 'target': 5, 'reward': 50, 'claimed': false},
+    });
+    _game
+      ..setProfile(
+        _game.profile.copyWith(birthHeightCm: 15.3, birthWeightG: 184),
+      )
+      ..setDaily(day(gift: true))
+      ..setGrowth(
+        GrowthOutlook(
+          progress: 0.4,
+          nextStageAt: DateTime.now().add(const Duration(hours: 20)),
+        ),
+      )
+      ..welcomeBack = true
+      ..onClaimGift = () async {
+        _game.setDaily(day(gift: false));
+        return true;
+      };
+    // Праздник новой стадии — через полминуты после входа.
+    Future<void>.delayed(const Duration(seconds: 30), () {
+      if (mounted) _game.celebrateStage(BearStage.growing);
+    });
   }
 
   @override
