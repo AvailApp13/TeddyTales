@@ -1170,5 +1170,40 @@
       }
     }
   },
-  "dailyGiftOpenBox": "Открыть большой подарок"
+  "dailyGiftOpenBox": "Открыть большой подарок",
+  "shareAction": "Поделиться",
+  "shareClose": "Закрыть",
+  "shareMeet": "Знакомьтесь: {name}",
+  "@shareMeet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareGrown": "{name} подрос!",
+  "@shareGrown": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareBirthday": "День рождения {date}",
+  "@shareBirthday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shareText": "Мой мишка {name} в TeddyTales",
+  "@shareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailed": "Не получилось поделиться. Попробуй ещё раз."
 }

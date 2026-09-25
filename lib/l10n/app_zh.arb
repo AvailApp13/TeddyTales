@@ -699,5 +699,12 @@
       }
     }
   },
-  "dailyGiftOpenBox": "打开大礼包"
+  "dailyGiftOpenBox": "打开大礼包",
+  "shareAction": "分享",
+  "shareClose": "关闭",
+  "shareMeet": "认识一下：{name}",
+  "shareGrown": "{name}长大了！",
+  "shareBirthday": "生日 {date}",
+  "shareText": "我在 TeddyTales 的小熊{name}",
+  "shareFailed": "分享失败，请再试一次。"
 }

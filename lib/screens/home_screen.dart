@@ -28,6 +28,7 @@ import '../widgets/sleep_thought.dart';
 import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
+import '../widgets/share_card.dart';
 import '../widgets/feed_burst.dart';
 import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
@@ -430,11 +431,15 @@ class _HomeScreenState extends State<HomeScreen>
   /// Сообщение «этого ещё нет». Нарочно одинаковое для всех недоделок:
   /// тестировщик по нему сразу понимает, что нажатие обработано, а работы
   /// ещё идут.
-  void _soon(String text) {
+  void _soon(String text, {SnackBarAction? action}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(text),
+          behavior: SnackBarBehavior.floating,
+          action: action,
+        ),
       );
   }
 
@@ -573,6 +578,16 @@ class _HomeScreenState extends State<HomeScreen>
         l10n.stageUpCelebrate(
           petDisplayName(l10n, widget.game.profile.name),
           stageTitle(l10n, stage),
+        ),
+        // Сверх ТЗ (заказчик 25.09): «подрос!» — карточкой в соцсети.
+        action: SnackBarAction(
+          label: l10n.shareAction,
+          onPressed: () => showShareCard(
+            context,
+            game: widget.game,
+            stage: stage,
+            grown: true,
+          ),
         ),
       );
     }

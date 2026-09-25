@@ -2006,4 +2006,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dailyGiftOpenBox => 'Открыть большой подарок';
+
+  @override
+  String get shareAction => 'Поделиться';
+
+  @override
+  String get shareClose => 'Закрыть';
+
+  @override
+  String shareMeet(String name) {
+    return 'Знакомьтесь: $name';
+  }
+
+  @override
+  String shareGrown(String name) {
+    return '$name подрос!';
+  }
+
+  @override
+  String shareBirthday(String date) {
+    return 'День рождения $date';
+  }
+
+  @override
+  String shareText(String name) {
+    return 'Мой мишка $name в TeddyTales';
+  }
+
+  @override
+  String get shareFailed => 'Не получилось поделиться. Попробуй ещё раз.';
 }

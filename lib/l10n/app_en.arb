@@ -699,5 +699,12 @@
       }
     }
   },
-  "dailyGiftOpenBox": "Open the big gift"
+  "dailyGiftOpenBox": "Open the big gift",
+  "shareAction": "Share",
+  "shareClose": "Close",
+  "shareMeet": "Meet {name}",
+  "shareGrown": "{name} has grown!",
+  "shareBirthday": "Birthday {date}",
+  "shareText": "My teddy {name} in TeddyTales",
+  "shareFailed": "Could not share. Please try again."
 }

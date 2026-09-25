@@ -1994,4 +1994,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyGiftOpenBox => 'Open the big gift';
+
+  @override
+  String get shareAction => 'Share';
+
+  @override
+  String get shareClose => 'Close';
+
+  @override
+  String shareMeet(String name) {
+    return 'Meet $name';
+  }
+
+  @override
+  String shareGrown(String name) {
+    return '$name has grown!';
+  }
+
+  @override
+  String shareBirthday(String date) {
+    return 'Birthday $date';
+  }
+
+  @override
+  String shareText(String name) {
+    return 'My teddy $name in TeddyTales';
+  }
+
+  @override
+  String get shareFailed => 'Could not share. Please try again.';
 }

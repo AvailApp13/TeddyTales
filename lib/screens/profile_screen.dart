@@ -15,6 +15,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/rename_pet_dialog.dart';
+import '../widgets/share_card.dart';
 import '../widgets/sign_out_dialog.dart';
 
 /// Профиль питомца (КП 14.1): карточка рождения, характер, история стадий.
@@ -172,6 +173,14 @@ class ProfileScreen extends StatelessWidget {
                           onRename: onRename == null
                               ? null
                               : () => _rename(context, profile.name),
+                          // Сверх ТЗ (заказчик 25.09): карточка мишки
+                          // картинкой — в любое приложение телефона.
+                          onShare: () => showShareCard(
+                            context,
+                            game: game,
+                            stage: state.stage,
+                            calendar: calendar,
+                          ),
                         ),
 
                         _SectionTitle(l10n.profileSectionBirth),
@@ -385,13 +394,21 @@ class _SheetHeader extends StatelessWidget {
 
 /// Шапка профиля: портрет, имя, герой и цвет меха.
 class _BirthCard extends StatelessWidget {
-  const _BirthCard({required this.name, required this.skin, this.onRename});
+  const _BirthCard({
+    required this.name,
+    required this.skin,
+    this.onRename,
+    this.onShare,
+  });
 
   final String name;
   final BearSkin skin;
 
   /// Открыть переименование. `null` — карандаша нет.
   final VoidCallback? onRename;
+
+  /// Поделиться карточкой мишки. `null` — кнопки нет.
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -453,6 +470,23 @@ class _BirthCard extends StatelessWidget {
                   ),
                 ),
               ],
+              if (onShare != null)
+                IconButton(
+                  key: const ValueKey('profile-share'),
+                  onPressed: onShare,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  tooltip: context.l10n.shareAction,
+                  icon: const Icon(
+                    Icons.ios_share,
+                    size: 17,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 2),

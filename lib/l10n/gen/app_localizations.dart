@@ -3543,6 +3543,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Открыть большой подарок'**
   String get dailyGiftOpenBox;
+
+  /// No description provided for @shareAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поделиться'**
+  String get shareAction;
+
+  /// No description provided for @shareClose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть'**
+  String get shareClose;
+
+  /// No description provided for @shareMeet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Знакомьтесь: {name}'**
+  String shareMeet(String name);
+
+  /// No description provided for @shareGrown.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} подрос!'**
+  String shareGrown(String name);
+
+  /// No description provided for @shareBirthday.
+  ///
+  /// In ru, this message translates to:
+  /// **'День рождения {date}'**
+  String shareBirthday(String date);
+
+  /// No description provided for @shareText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мой мишка {name} в TeddyTales'**
+  String shareText(String name);
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось поделиться. Попробуй ещё раз.'**
+  String get shareFailed;
 }
 
 class _AppLocalizationsDelegate

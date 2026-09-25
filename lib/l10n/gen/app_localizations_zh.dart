@@ -1895,4 +1895,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dailyGiftOpenBox => '打开大礼包';
+
+  @override
+  String get shareAction => '分享';
+
+  @override
+  String get shareClose => '关闭';
+
+  @override
+  String shareMeet(String name) {
+    return '认识一下：$name';
+  }
+
+  @override
+  String shareGrown(String name) {
+    return '$name长大了！';
+  }
+
+  @override
+  String shareBirthday(String date) {
+    return '生日 $date';
+  }
+
+  @override
+  String shareText(String name) {
+    return '我在 TeddyTales 的小熊$name';
+  }
+
+  @override
+  String get shareFailed => '分享失败，请再试一次。';
 }
