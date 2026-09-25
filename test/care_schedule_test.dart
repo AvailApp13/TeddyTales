@@ -69,17 +69,26 @@ void main() {
   });
 
   group('Полное расписание', () {
-    test('три показателя дают три напоминания в верном порядке', () {
+    test('далёкие причины — отдельными напоминаниями, в верном порядке', () {
       const stats = BearCareStats(food: 90, play: 50, sleep: 70, love: 100);
       const decay = BearDecayConfig();
+      // Склейку выключаем: проверяется порядок, а не объединение.
+      const apart = CareSchedule(bundleWindow: Duration.zero);
 
-      final plan = schedule.planFrom(stats, decay, noon);
+      final plan = apart.planFrom(stats, decay, noon);
 
       expect(plan.keys.toSet(), {'hungry', 'play', 'sleep'});
       // Игра падает медленнее еды, но её значение ниже — она и наступит
       // первой. Порядок должен считаться, а не браться из порядка полей.
       final times = plan.values.toList()..sort();
       expect(times.first, plan['play']);
+    });
+
+    test('близкие причины — одним уведомлением (утверждено 25.09)', () {
+      const stats = BearCareStats(food: 90, play: 50, sleep: 70, love: 100);
+      final plan = schedule.planFrom(stats, const BearDecayConfig(), noon);
+      // Игра, еда и сон наступают в пределах полутора часов.
+      expect(plan.keys, ['play+hungry+sleep']);
     });
 
     test('между напоминаниями выдержан промежуток', () {
@@ -157,6 +166,22 @@ void main() {
         extra: {'task': noon.add(const Duration(hours: 5))},
       );
       expect(plan, hasLength(2));
+    });
+  });
+
+  group('Нарастание и подарок не склеиваются с уходом', () {
+    test('скучает, у бабушки, неделя — своими уведомлениями', () {
+      final plan = schedule.planFrom(
+        const BearCareStats(),
+        const BearDecayConfig.disabled(),
+        noon,
+        extra: {
+          'miss': noon.add(const Duration(days: 1)),
+          'away': noon.add(const Duration(days: 3)),
+          'week': noon.add(const Duration(days: 7)),
+        },
+      );
+      expect(plan.keys, ['miss', 'away', 'week']);
     });
   });
 }

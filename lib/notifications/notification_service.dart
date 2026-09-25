@@ -4,9 +4,10 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../bear/bear_phrases.dart' show BearLanguage;
+import '../bear/bear_rig_spec.dart' show BearTrait;
 import '../bear/bear_stats.dart';
 import 'care_schedule.dart';
-import 'notification_texts.dart';
+import 'smart_texts.dart';
 
 /// Напоминания об уходе (КП 13).
 ///
@@ -112,6 +113,9 @@ class NotificationService {
     DateTime? now,
     DateTime? stageAt,
     bool learningLeft = false,
+    String name = '',
+    BearTrait trait = BearTrait.active,
+    bool giftAvailable = false,
   }) async {
     if (!_ready) return;
 
@@ -121,37 +125,50 @@ class NotificationService {
     if (enabled.isEmpty) return;
 
     final at = now ?? DateTime.now();
+    bool on(String kind) => enabled.contains(switchOf(kind));
     final plan = schedule.planFrom(
       stats,
       decay,
       at,
       extra: {
         // Сервер прислал, когда мишка подрастёт (КП 5.6, 13.1).
-        if (stageAt != null && enabled.contains('stage')) 'stage': stageAt,
+        if (stageAt != null && on('stage')) 'stage': stageAt,
         // Есть непройденные уровни обучения — завтра позовёт учиться.
-        if (learningLeft && enabled.contains('task'))
-          'task': schedule.nextTaskAt(at),
+        if (learningLeft && on('task')) 'task': schedule.nextTaskAt(at),
+        // Подарок дня (миграция 0017): не забран — вечером напомнить,
+        // забран — утром, когда появится следующий.
+        if (on('gift'))
+          'gift': giftAvailable
+              ? DateTime(at.year, at.month, at.day, 18)
+              : DateTime(at.year, at.month, at.day + 1, 10),
+        // Нарастание при отсутствии (утверждено 25.09): сутки — скучает,
+        // трое — ждёт у бабушки с подарком (как на сервере, миграция
+        // 0016), неделя — одно тёплое письмо, дальше тишина.
+        if (on('miss')) 'miss': at.add(const Duration(days: 1)),
+        if (on('away')) 'away': at.add(const Duration(days: 3)),
+        if (on('week')) 'week': at.add(const Duration(days: 7)),
       },
     );
+    final seed = at.difference(DateTime(at.year)).inDays;
     for (final entry in plan.entries) {
-      if (!enabled.contains(entry.key)) continue;
-      await _schedule(entry.key, entry.value, language);
+      final copy = composeNotification(
+        entry.key,
+        name: name.isEmpty ? notificationName('', language, '') : name,
+        lang: language,
+        trait: trait,
+        seed: seed,
+      );
+      await _schedule(entry.key, entry.value, copy);
     }
   }
 
-  Future<void> _schedule(
-    String kind,
-    DateTime at,
-    BearLanguage language,
-  ) async {
-    final text = notificationTexts[kind];
-    if (text == null) return;
-
+  Future<void> _schedule(String kind, DateTime at, SmartCopy copy) async {
     try {
       await _plugin.zonedSchedule(
-        id: _idOf(kind),
-        title: text.title(language),
-        body: text.body(language),
+        // Общее уведомление — под номером первой причины.
+        id: _idOf(kind.split('+').first),
+        title: copy.title,
+        body: copy.body,
         scheduledDate: tz.TZDateTime.from(at, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -224,7 +241,7 @@ class NotificationService {
   static const int wakeId = 50;
 
   Future<void> _cancelCare() async {
-    for (final id in const [1, 2, 3, 4, 5, 6, 7, 8, 99]) {
+    for (final id in const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 99]) {
       try {
         await _plugin.cancel(id: id);
       } on Object catch (error) {
@@ -252,6 +269,9 @@ class NotificationService {
     'stage' => 6,
     'event' => 7,
     'shop' => 8,
+    'miss' => 9,
+    'away' => 10,
+    'week' => 11,
     _ => 99,
   };
 }

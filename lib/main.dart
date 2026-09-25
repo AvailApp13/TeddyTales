@@ -14,6 +14,7 @@ import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
+import 'notifications/smart_texts.dart' show notificationName;
 import 'alarm/wake_alarm.dart';
 import 'audio/sounds.dart';
 import 'game/test_stubs.dart';
@@ -260,6 +261,13 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       language: _language,
       stageAt: _game.growth.nextStageAt,
       learningLeft: _game.hasLearningLeft,
+      name: notificationName(
+        _game.profile.name,
+        _language,
+        PetProfile.defaultName,
+      ),
+      trait: _bear.state.trait,
+      giftAvailable: _game.daily.giftAvailable,
     );
   }
 

@@ -17,6 +17,7 @@ class CareSchedule {
     this.quietUntil = 8,
     this.minGap = const Duration(hours: 3),
     this.maxPerDay = 4,
+    this.bundleWindow = const Duration(minutes: 90),
   });
 
   /// Значение показателя, при котором пора напомнить. Не ноль: по КП 6.3
@@ -37,6 +38,10 @@ class CareSchedule {
   /// любые сутки. Лишние — самые поздние — не ставятся: к их времени
   /// приложение почти наверняка откроют, и расписание построится заново.
   final int maxPerDay;
+
+  /// Причины, наступающие ближе этого друг к другу, уходят одним
+  /// уведомлением: «проголодался и хочет спать» вместо двух звонков.
+  final Duration bundleWindow;
 
   /// Момент, когда показатель дойдёт до порога.
   ///
@@ -117,9 +122,26 @@ class CareSchedule {
 
     if (raw.isEmpty) return const {};
 
-    // Сортируем по времени и разводим, чтобы не звонить три раза подряд.
-    final order = raw.keys.toList()..sort((a, b) => raw[a]!.compareTo(raw[b]!));
-    final spreadOut = spread(order.map((k) => raw[k]!).toList());
+    // Сортируем по времени. Близкие причины ухода склеиваются в одно
+    // уведомление с ключом «hungry+sleep», время — у первой.
+    final sorted = raw.keys.toList()
+      ..sort((a, b) => raw[a]!.compareTo(raw[b]!));
+    const bundlable = {'hungry', 'play', 'sleep'};
+    final groups = <List<String>>[];
+    for (final kind in sorted) {
+      final last = groups.isEmpty ? null : groups.last;
+      if (last != null &&
+          bundlable.contains(kind) &&
+          last.every(bundlable.contains) &&
+          raw[kind]!.difference(raw[last.first]!) < bundleWindow) {
+        last.add(kind);
+      } else {
+        groups.add([kind]);
+      }
+    }
+    final order = [for (final g in groups) g.join('+')];
+    final starts = {for (final g in groups) g.join('+'): raw[g.first]!};
+    final spreadOut = spread(order.map((k) => starts[k]!).toList());
 
     // Дневной предел (КП 13.2): в любые сутки — не больше [maxPerDay].
     final plan = <String, DateTime>{};
