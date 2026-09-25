@@ -23,9 +23,8 @@
 --   * «Мишка у бабушки» (away): не заходил больше 3 суток — показатели при
 --     возвращении не ниже 70, подарок монетами и радостная встреча. Ушедших
 --     не наказываем.
---   * Еда (food_rules): одно и то же блюдо за сутки сытит всё меньше
---     (×0,6 за каждый повтор, не меньше ×0,3) — поощряем разнообразие и
---     готовку. Отказ от еды на полный живот — refuse_at; пока 0 (выключен):
+--   * Еда (food_rules): отказ от еды на полный живот — refuse_at; пока 0
+--     (выключен):
 --     в приложении «Еда» закреплена заглушкой испытаний, и отказ сервера
 --     спорил бы с ней. Перед публикацией — 95 (CLAUDE.md, заглушки).
 --   * Гигиена от событий (hygiene_events): поел — чуть испачкался, поиграл
@@ -68,7 +67,7 @@ insert into public.game_config (key, value) values
                "meal_bonus_coins": 5, "meal_bonus_love": 10,
                "bedtime_bonus_coins": 5}'),
   ('away', '{"after_hours": 72, "restore_to": 70, "gift_coins": 20}'),
-  ('food_rules', '{"repeat_factor": 0.6, "min_factor": 0.3, "refuse_at": 0}'),
+  ('food_rules', '{"refuse_at": 0}'),
   ('hygiene_events', '{"feed": 5, "play": 10}')
 on conflict (key) do nothing;
 
@@ -348,37 +347,18 @@ begin
 end;
 $$;
 
--- Прежняя подпись без p_what уступает место новой: две сразу сделали бы
--- вызов feed_pet(id, x) двусмысленным.
-drop function if exists public.feed_pet(uuid, real);
-
--- Покормить на p_food: одно и то же за сутки сытит всё меньше, еда пачкает,
--- мишка просыпается; в окно завтрака, обеда, ужина — бонус.
--- p_what — 'dish:<id>' или 'recipe:<id>', как в книге монет.
-create or replace function public.feed_pet(p_pet_id uuid, p_food real, p_what text default null)
+-- Покормить на p_food: еда пачкает, мишка просыпается; в окно завтрака,
+-- обеда, ужина — бонус. Повтор одного блюда здесь не считается: съеденное
+-- блюдо и так уходит со стола до следующего голода (заказчик 24.09).
+create or replace function public.feed_pet(p_pet_id uuid, p_food real)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
-declare
-  v_player uuid := (select player_id from public.pets where id = p_pet_id);
-  v_repeats integer := 0;
-  v_factor double precision := 1;
 begin
-  if p_what is not null then
-    -- Сама покупка уже записана в книгу — её не считаем.
-    select greatest(count(*) - 1, 0) into v_repeats
-    from public.coin_ledger
-    where player_id = v_player and reason = p_what
-      and happened_at > now() - interval '24 hours';
-    v_factor := greatest(
-      public.cfg_num('food_rules', 'min_factor', 0.3),
-      power(public.cfg_num('food_rules', 'repeat_factor', 1), v_repeats));
-  end if;
-
   perform public.settle_stats(p_pet_id,
-    p_food => (greatest(p_food, 0) * v_factor)::real,
+    p_food => greatest(p_food, 0),
     p_hygiene => -public.cfg_num('hygiene_events', 'feed', 0)::real);
   update public.pets set asleep_since = null where id = p_pet_id;
   insert into public.care_events (pet_id, action) values (p_pet_id, 'feed');
@@ -427,8 +407,7 @@ begin
   if v_price > 0 then
     perform public.wallet_change(v_player, -v_price, 'dish:' || p_dish_id);
   end if;
-  perform public.feed_pet(p_pet_id, coalesce((v_dish ->> 'food')::real, 0),
-                          'dish:' || p_dish_id);
+  perform public.feed_pet(p_pet_id, coalesce((v_dish ->> 'food')::real, 0));
 
   return public.pet_snapshot(p_pet_id);
 end;
@@ -454,8 +433,7 @@ begin
   if v_reward > 0 then
     perform public.wallet_change(v_player, v_reward, 'recipe:' || p_recipe_id);
   end if;
-  perform public.feed_pet(p_pet_id, coalesce((v_recipe ->> 'food')::real, 0),
-                          'recipe:' || p_recipe_id);
+  perform public.feed_pet(p_pet_id, coalesce((v_recipe ->> 'food')::real, 0));
 
   return public.pet_snapshot(p_pet_id);
 end;
@@ -615,7 +593,7 @@ revoke execute on function public.needs_now(uuid) from public, anon, authenticat
 revoke execute on function public.settle_stats(uuid, real, real, real, real, real) from public, anon, authenticated;
 revoke execute on function public.rhythm_bonus(uuid, text) from public, anon, authenticated;
 revoke execute on function public.check_hungry(uuid) from public, anon, authenticated;
-revoke execute on function public.feed_pet(uuid, real, text) from public, anon, authenticated;
+revoke execute on function public.feed_pet(uuid, real) from public, anon, authenticated;
 revoke execute on function public.open_account(integer) from public, anon;
 grant execute on function public.open_account(integer) to authenticated;
 grant execute on function public.record_care(uuid, public.care_action) to authenticated;
