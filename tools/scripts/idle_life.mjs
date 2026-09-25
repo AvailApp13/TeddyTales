@@ -13,10 +13,9 @@
  *   моргание     — 5 раз за петлю с неравными паузами, одно двойное (D23): бусины
  *                  сплющиваются, как смыкающиеся веки, затем проявляются ресницы;
  *   взгляд       — не двигается (смещение бусин читалось неестественно);
- *   уши (D22)    — поворачиваются к зрителю: часть за линией сгиба сжимается вдоль оси
- *                  и чуть расширяется вдоль линии (ближе к зрителю), на складке блик:
- *                  чуть на каждом вдохе, по очереди на 30 %, правое ещё раз на 22 %, и
- *                  «прислушивание» — оба уха на 24 %, голова набок.
+ *   уши (D24)    — нарисованные положения: правое, затем левое повисают и
+ *                  поднимаются, левое на миг «внимание», «прислушивание» — оба уха
+ *                  «внимание», голова набок; на вдохе уши чуть покачиваются.
  * Размах рассчитан на маленького мишку в приложении: при мелком масштабе движения
  * в 1–2 px не видны.
  * Плавные дорожки — ключи каждые 4 кадра с линейной интерполяцией: с кривой
@@ -31,7 +30,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
-import { Tracks, writeTimeline, playInStateMachine, blinkBead, addBlinkLids, keyBeads } from '../lib/timeline.mjs';
+import { Tracks, writeTimeline, playInStateMachine, blinkBead, addBlinkLids, keyBeads, keyEar, earRigs } from '../lib/timeline.mjs';
 
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 240000 }); await c.initialize();
@@ -51,13 +50,12 @@ const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 const BLINKS = [70, 262, 300, 540, 700];                               // 262/300 — двойное
 // уши загибаются на зрителя (D22): сгиб, % — насколько сложилась внешняя часть уха
 // (масштаб кости уха вдоль оси = 100 − сгиб); тень сгиба проявляется вместе с ним
-const EAR_MOVES = [['right', 150, 270, 30], ['left', 370, 490, 30], ['right', 770, 862, 22]];   // [ухо, от, до, сгиб %]
-const EAR_T = 45;                                                       // загиб и возврат, кадров
-const EAR_BREATH = 6, EAR_BREATH_LAG = 14;                             // на каждом вдохе уши чуть загибаются
-const SHADE_FULL = 30, SHADE_MAX = 100;                                 // светотень сгиба проявляется полностью при сгибе 30 % (как simulate_pose.py)
-const EAR_WIDEN = 0.3;                                                  // загнутая часть шире вдоль линии сгиба на 0.3 × сгиб (край ближе к зрителю)
+// уши (D24): нарисованные положения, [ухо, положение, от, до]; переход — EAR_T кадров
+const EAR_MOVES = [['right', 'droop', 150, 280], ['left', 'droop', 380, 510], ['left', 'cup', 790, 858]];
+const EAR_T = 30;
+const EAR_WIG = 3, EAR_WIG_LAG = 14;                                  // на вдохе уши чуть покачиваются, °
 const BELLY = 10, ARMS = 3;                                             // вдох: живот +10 %, лапы 3°
-const LISTEN = { from: 540, to: 760, ear: 24, head: 4, t: 60 };       // прислушивание: уши загибаются вперёд, голова набок; вход и выход по 1 с
+const LISTEN = { from: 560, to: 760, head: 4, t: 40 };                // прислушивание: уши «внимание», голова набок
 
 // голова: медленный дрейф (периоды делят петлю) + прислушивание
 const listen = (f) => sm(LISTEN.from, LISTEN.from + LISTEN.t, f) * (1 - sm(LISTEN.to - LISTEN.t, LISTEN.to, f));
@@ -69,7 +67,7 @@ const inhale = (f) => (1 - Math.cos(PI2 * f / BREATH)) / 2;                 // 0
 const tracks = new Tracks(); const key = tracks.key.bind(tracks);
 const base = (await call('query_property_values', { propertyKeys: {
   [B.root]: [15, 91], [B.root_body]: [15], ...(B.root_belly ? { [B.root_belly]: [16, 17] } : {}), [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
-  [B.root_ear_left]: [16, 17], [B.root_ear_right]: [16, 17],
+  ...Object.fromEntries(Object.keys(B).filter((k) => k.startsWith('root_ear_')).map((k) => [B[k], [15]])),
   } })).values;
 const b = (id, k) => base[id][String(k)];
 const LEAN = 0.4, HEADK = 0.65, LAG = 5;
@@ -88,22 +86,21 @@ for (let f = 0; f <= END; f += STEP) {
     lin(B.root_belly, 17, f, b(B.root_belly, 17) * (1 + 0.6 * BELLY / 100 * inh));
   }
 }
-// уши: знак для левого + (по часовой) = вверх, для правого — наоборот.
-// Всё плавное: дыхание + движения + прислушивание.
-const shadeId = (side) => file.layersV2[`ear_${side}_shade`]?.instance;
-const earKey = (side, f, fold) => {
-  const id = B[`root_ear_${side}`]; lin(id, 16, f, b(id, 16) * (1 - fold / 100)); lin(id, 17, f, b(id, 17) * (1 + EAR_WIDEN * fold / 100));
-  if (shadeId(side)) lin(shadeId(side), 18, f, SHADE_MAX * Math.min(1, Math.max(0, fold) / SHADE_FULL));
-};
-const earAt = (side, f) => {
-  const lag = side === 'right' ? 4 : 0;                                  // уши двигаются не синхронно
-  const eb = (x) => EAR_BREATH * inhale(x - EAR_BREATH_LAG - lag);
-  let a = eb(f) - eb(0);                                                 // кадр 0 — покой
-  for (const [s_, f0, f1, fold] of EAR_MOVES) if (s_ === side) a += fold * sm(f0, f0 + EAR_T, f) * (1 - sm(f1 - EAR_T, f1, f));
-  const up = sm(LISTEN.from + lag, LISTEN.from + LISTEN.t + lag, f) * (1 - sm(LISTEN.to - LISTEN.t, LISTEN.to, f));
-  return a + LISTEN.ear * up;
-};
-for (let f = 0; f <= END; f += STEP) for (const side of ['left', 'right']) earKey(side, f, earAt(side, f));
+// уши (D24): доли положений по времени + лёгкое покачивание на вдохе
+const meta = JSON.parse(readFileSync(resolve(repoRoot, 'handoff', 'layers_v2', 'layers.json'), 'utf8'));
+const rigs = earRigs(file, meta);
+const restRot = Object.fromEntries(Object.keys(B).filter((k) => k.startsWith('root_ear_')).map((k) => [B[k], b(B[k], 15)]));
+const pulse = (f0, f1, f) => sm(f0, f0 + EAR_T, f) * (1 - sm(f1 - EAR_T, f1, f));
+for (const side of ['left', 'right']) {
+  const lag = side === 'right' ? 4 : 0, sign = side === 'left' ? 1 : -1;   // + у левого по часовой = наружу
+  const wig = (x) => EAR_WIG * inhale(x - EAR_WIG_LAG - lag);
+  keyEar(tracks, rigs[side], restRot, END, (f) => {
+    const w = { cup: 0, droop: 0, wig: -sign * (wig(f) - wig(0)) };
+    for (const [sd, st, f0, f1] of EAR_MOVES) if (sd === side) w[st] = Math.max(w[st], pulse(f0, f1, f));
+    w.cup = Math.max(w.cup, pulse(LISTEN.from + lag, LISTEN.to, f));
+    return w;
+  }, STEP);
+}
 // взгляд
 // взгляд не двигается: смещение бусин читалось неестественно (обратная связь)
 // все выражения в покое скрыты (0 на первом и последнем кадре)
@@ -120,5 +117,5 @@ const anim = await writeTimeline(call, { name: NAME, fps: FPS, frames: END, trac
 console.log(`таймлайн ${NAME} (${anim.id}): ${(END / FPS).toFixed(1)} с, ${anim.keys} ключей на ${tracks.size} дорожках`);
 const PLAY = !process.argv.includes('--no-play');
 if (PLAY) { await playInStateMachine(call, anim.id); console.log('машина состояний играет', NAME); }
-file.idleLife = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: anim.keys, blinks: BLINKS, earMoves: EAR_MOVES, earWiden: EAR_WIDEN, earBreath: EAR_BREATH, belly: BELLY, arms: ARMS, listen: LISTEN };
+file.idleLife = { animationId: anim.id, name: NAME, fps: FPS, frames: END, keys: anim.keys, blinks: BLINKS, earMoves: EAR_MOVES, earWig: EAR_WIG, belly: BELLY, arms: ARMS, listen: LISTEN };
 writeFileSync(sp, JSON.stringify(state, null, 2) + '\n');

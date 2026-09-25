@@ -85,3 +85,36 @@ export function keyBeads(tracks, beads, end, k) {
       const v = k(f); tracks.key(id, 17, f, sy * v, 'linear'); tracks.key(id, 18, f, v < 0.06 ? 0 : 100, 'linear');
     }
 }
+
+/**
+ * Уши (D24): нарисованные положения (ear_*_cup — «внимание», ear_*_droop — «повисли»)
+ * вместо деформации. Переход — навстречу: кость уха рига поворачивается и масштабируется к
+ * позе нарисованного уха, кость нарисованного уха — из позы уха рига к своей; картинки
+ * меняются в середине, когда обе в одной позе (~0.3 перехода) — «призраков» нет.
+ *   rig: { base: { bone, image }, states: { cup: { bone, image, angle, scale }, ... } } на ухо
+ *   rest: значения поворота костей в покое (id -> градусы)
+ *   at(f) -> { cup: 0..1, droop: 0..1, wig: градусы } — доля каждого положения и покачивание
+ */
+const smoother = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * t * (t * (6 * t - 15) + 10); };
+export function keyEar(tracks, { base, states }, rest, end, at, step = 4) {
+  const lin = (id, k, f, v) => tracks.key(id, k, f, v, 'linear');
+  for (let f = 0; f <= end; f += step) {
+    const w = at(f); let rot = w.wig ?? 0, sc = 1, tmax = 0;
+    for (const [n, S] of Object.entries(states)) { const t = w[n] ?? 0; rot += S.angle * t; sc *= S.scale ** t; tmax = Math.max(tmax, t); }
+    lin(base.bone, 15, f, rest[base.bone] + rot); lin(base.bone, 16, f, 100 * sc); lin(base.bone, 17, f, 100 * sc);
+    lin(base.image, 18, f, 100 * (1 - smoother(0.42, 0.72, tmax)));
+    for (const [n, S] of Object.entries(states)) {
+      lin(S.bone, 15, f, rest[S.bone] + rot - S.angle); lin(S.bone, 16, f, 100 * sc / S.scale); lin(S.bone, 17, f, 100 * sc / S.scale);
+      lin(S.image, 18, f, 100 * smoother(0.28, 0.58, w[n] ?? 0));
+    }
+  }
+}
+/** Описание ушей для keyEar из editor_state (file) и layers.json (meta). */
+export function earRigs(file, meta) {
+  const B = file.bones, LV = file.layersV2;
+  return Object.fromEntries(['left', 'right'].map((sd) => [sd, {
+    base: { bone: B[`root_ear_${sd}`], image: LV[`ear_${sd}`].instance },
+    states: Object.fromEntries(Object.entries(meta.ear_states ?? {}).map(([st, E]) => [st, {
+      bone: B[`root_ear_${sd}_${st}`], image: LV[`ear_${sd}_${st}`].instance, angle: E[sd].angle, scale: E[sd].scale }])),
+  }]));
+}

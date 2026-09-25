@@ -676,6 +676,22 @@
         "groupId": "0-119",
         "asset": "0-277348",
         "instance": "0-277349"
+      },
+      "ear_left_cup": {
+        "group": "ear_left",
+        "groupId": "0-104"
+      },
+      "ear_left_droop": {
+        "group": "ear_left",
+        "groupId": "0-104"
+      },
+      "ear_right_cup": {
+        "group": "ear_right",
+        "groupId": "0-119"
+      },
+      "ear_right_droop": {
+        "group": "ear_right",
+        "groupId": "0-119"
       }
     },
     "layersV2Transform": {

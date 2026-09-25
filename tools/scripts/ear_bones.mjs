@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Кости ушей (D20): root_ear_left / root_ear_right — изгиб уха без жёсткого поворота.
+ * Кости ушей (D20, D24): root_ear_left / root_ear_right — ухо рига; и по кости на каждое
+ * нарисованное положение уха (root_ear_<сторона>_<состояние>, layers.json → ear_states):
+ * переход — поворот и масштаб костей навстречу друг другу со сменой картинок.
  * Запускать в позе покоя:
  *   RIVE_MCP_URL=... node scripts/with_rest_pose.mjs -- node scripts/ear_bones.mjs
- * затем картинки ушей (replace_layers.mjs ear_left ear_right) и сетки (skin_layers.mjs ear_left ear_right).
+ * затем картинки ушей (replace_layers.mjs) и сетки (skin_layers.mjs) — для всех слоёв ушей.
  *
- * Начало кости — линия сгиба уха (D22, layers.json → ear_pivots.fold).
  * Кость — lib/bones.mjs (копия root_leg_left: MCP костей не создаёт). Ось и кончик —
  * handoff/layers_v2/layers.json → ear_pivots (ось — середина стыка уха с капюшоном,
  * под капюшоном; кончик — край уха); кость лежит в группе ear_<сторона> под
@@ -36,6 +37,7 @@ for (const side of ['left', 'right']) {
   const groupId = objs.find((o) => o.name === `ear_${side}` && o.type === 'Node')?.id;
   // начало кости — на линии сгиба (D22): масштаб кости вдоль оси загибает ухо на
   // зрителя; направление то же, что от оси к краю уха (D20), — ключи поворота прежние
-  await ensureBone(call, file, save, { name: `root_ear_${side}`, groupId, from: art(P.fold ?? P.pivot), to: art(P.tip) });
+  for (const st of ['', ...Object.keys(meta.ear_states ?? {})])   // '' — ухо рига
+    await ensureBone(call, file, save, { name: `root_ear_${side}${st && '_' + st}`, groupId, from: art(P.pivot), to: art(P.tip) });
 }
 save();

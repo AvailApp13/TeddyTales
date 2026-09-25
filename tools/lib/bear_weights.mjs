@@ -18,9 +18,9 @@
  *              расширяется (масштаб ≥ 1): бока и низ толстовки уходят наружу — на
  *              фон и на шорты, которые лежат за толстовкой, дыр не бывает.
  *  paw_*, face: целиком на кости (рука / голова) — без растяжения (D15).
- *  ear_*     : ухо загибается на зрителя (D22): за линией сгиба поперёк кости уха —
- *              кость root_ear_* (масштаб вдоль её оси), до линии — как капюшон в
- *              этой точке (root / root_body). Стык с капюшоном не двигается.
+ *  ear_*     : у капюшона — как капюшон в этой точке, в 60 px от него ухо целиком на
+ *              кости root_ear_* (D20); поворот и масштаб кости — переход к
+ *              нарисованным положениям ушей ear_*_cup / ear_*_droop (D24).
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -72,19 +72,14 @@ export function loadWeights() {
     const h = Math.max(walls, rim);
     return { root: 1 - h, root_body: h };
   };
-  // ухо загибается на зрителя (D22): за линией сгиба поперёк кости уха — кость уха
-  // (её масштаб вдоль оси = насколько загнуто), до линии — как капюшон в этой точке:
-  // нижний конец стыка лежит у плеча, где капюшон частично на root, — иначе при
-  // наклоне головы ухо и капюшон расходились бы у стыка. Сгиб далеко от капюшона,
-  // стык не двигается. Переход через линию — мягкий, как у плюша.
-  const EAR_FOLD = (process.env.EAR_FOLD ?? '-10,22').split(',').map(Number);   // ширина сгиба, px кадра
-  const earW = (bone, en) => {
-    const E = meta.ear_pivots[en]; const [fx, fy] = E.fold;
-    const ux = E.tip[0] - E.pivot[0], uy = E.tip[1] - E.pivot[1], L = Math.hypot(ux, uy);
-    return (x, y) => {
-      const w = smooth(EAR_FOLD[0], EAR_FOLD[1], ((x - fx) * ux + (y - fy) * uy) / L); const h = hoodW(x, y);
-      return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
-    };
+  // ухо (D20, D24): основание у капюшона берёт веса капюшона в этой точке (нижний конец
+  // стыка лежит у плеча, где капюшон частично на root), уже в 60 px от капюшона ухо
+  // целиком идёт с костью уха — поворот и масштаб кости двигают ухо целиком при
+  // переходе к нарисованным положениям (ear_states.py)
+  const EAR_BAND = (process.env.EAR_BAND ?? '3,60').split(',').map(Number);
+  const earW = (bone) => (x, y) => {
+    const w = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y)); const h = hoodW(x, y);
+    return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
   };
   // живот: вес — близость к центру живота; силуэт (бока, низ) дышит вместе с ним
   const [BX, BY] = F.belly;
@@ -102,11 +97,11 @@ export function loadWeights() {
     paw_right: { bones: ['root', 'root_arm_right'], w: () => ({ root_arm_right: 1 }) },
     face: { bones: ['root', 'root_body'], w: () => ({ root_body: 1 }) },
     hood: { bones: ['root', 'root_body'], w: hoodW },
-    ear_left: { bones: ['root', 'root_body', 'root_ear_left'], w: earW('root_ear_left', 'ear_left') },
-    ear_right: { bones: ['root', 'root_body', 'root_ear_right'], w: earW('root_ear_right', 'ear_right') },
-    // тень сгиба уха (ear_shade.py) — на той же сетке, что и ухо
-    ear_left_shade: { bones: ['root', 'root_body', 'root_ear_left'], w: earW('root_ear_left', 'ear_left') },
-    ear_right_shade: { bones: ['root', 'root_body', 'root_ear_right'], w: earW('root_ear_right', 'ear_right') },
+    ear_left: { bones: ['root', 'root_body', 'root_ear_left'], w: earW('root_ear_left') },
+    ear_right: { bones: ['root', 'root_body', 'root_ear_right'], w: earW('root_ear_right') },
+    // нарисованные положения ушей (D24) — те же веса, каждое на своей кости
+    ...Object.fromEntries(Object.keys(meta.ear_states ?? {}).flatMap((st) => ['left', 'right'].map((sd) =>
+      [`ear_${sd}_${st}`, { bones: ['root', 'root_body', `root_ear_${sd}_${st}`], w: earW(`root_ear_${sd}_${st}`) }]))),
     shorts: { bones: ['root', 'root_leg_left', 'root_leg_right'], w: (x, y) => {
       const leg = smooth(1520, 1640, y); const side = smooth(AXIS - 40, AXIS + 40, x);
       return { root: 1 - leg, root_leg_left: leg * (1 - side), root_leg_right: leg * side }; } },

@@ -17,9 +17,7 @@
   "sleeve_right",
   "hood_lining",
   "ear_left",
-  "ear_left_shade",
   "ear_right",
-  "ear_right_shade",
   "face",
   "hood"
  ],
@@ -141,26 +139,6 @@
    ],
    "px": 187658,
    "hidden": true
-  },
-  "ear_left_shade": {
-   "bbox": [
-    337,
-    550,
-    558,
-    790
-   ],
-   "px": 33390,
-   "hidden": true
-  },
-  "ear_right_shade": {
-   "bbox": [
-    772,
-    546,
-    1013,
-    791
-   ],
-   "px": 36147,
-   "hidden": true
   }
  },
  "extensions": {
@@ -184,10 +162,6 @@
     358.2,
     615.6
    ],
-   "fold": [
-    422.5,
-    652.8
-   ],
    "contact": [
     [
      517.6,
@@ -208,10 +182,6 @@
     992.5,
     604.3
    ],
-   "fold": [
-    923.4,
-    647.3
-   ],
    "contact": [
     [
      820.4,
@@ -226,5 +196,59 @@
  },
  "check": {
   "alphaMaxError": 63.74901960784314
+ },
+ "ear_states": {
+  "cup": {
+   "source": "ears_11",
+   "sift_inliers": 38,
+   "sift_matches": 91,
+   "scale": 0.7655,
+   "left": {
+    "file": "ear_left_cup.png",
+    "angle": -7.31,
+    "scale": 0.962,
+    "area": 0.759,
+    "center": [
+     418.9,
+     657.8
+    ]
+   },
+   "right": {
+    "file": "ear_right_cup.png",
+    "angle": 5.71,
+    "scale": 0.834,
+    "area": 0.66,
+    "center": [
+     919.2,
+     654.9
+    ]
+   }
+  },
+  "droop": {
+   "source": "ears_30",
+   "sift_inliers": 57,
+   "sift_matches": 119,
+   "scale": 0.7698,
+   "left": {
+    "file": "ear_left_droop.png",
+    "angle": -36.52,
+    "scale": 0.963,
+    "area": 0.697,
+    "center": [
+     414.5,
+     685.1
+    ]
+   },
+   "right": {
+    "file": "ear_right_droop.png",
+    "angle": 35.9,
+    "scale": 0.941,
+    "area": 0.679,
+    "center": [
+     931.4,
+     681.6
+    ]
+   }
+  }
  }
 }
