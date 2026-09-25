@@ -99,6 +99,9 @@ class _FakeStore implements ProgressStore {
   int gifts = 0;
 
   @override
+  Future<PetSnapshot> restoreGiftStreak() async => answer;
+
+  @override
   Future<ReferralInfo> referral() async => const ReferralInfo(
     code: 'ABC234',
     invited: 0,

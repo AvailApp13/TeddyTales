@@ -1966,4 +1966,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inviteOffline => '无法连接服务器，请稍后再试。';
+
+  @override
+  String get dailyStreakBroken => '昨天没来，连续签到中断了。';
+
+  @override
+  String dailyStreakRestore(int price) {
+    return '花 $price 恢复';
+  }
+
+  @override
+  String get dailyStreakRestored => '连续签到已恢复！';
+
+  @override
+  String get dailyStreakNoCoins => '金币不足';
 }

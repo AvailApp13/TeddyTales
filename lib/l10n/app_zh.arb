@@ -711,5 +711,9 @@
   "inviteUsed": "已使用过好友的邀请码。",
   "inviteLate": "好友邀请码只能在第一周内使用。",
   "inviteFull": "好友的邀请次数已用完。",
-  "inviteOffline": "无法连接服务器，请稍后再试。"
+  "inviteOffline": "无法连接服务器，请稍后再试。",
+  "dailyStreakBroken": "昨天没来，连续签到中断了。",
+  "dailyStreakRestore": "花 {price} 恢复",
+  "dailyStreakRestored": "连续签到已恢复！",
+  "dailyStreakNoCoins": "金币不足"
 }

@@ -117,4 +117,46 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('вчера пропуск — серию можно выкупить за 30 монет', (
+    tester,
+  ) async {
+    final bear = BearController();
+    final game = GameState(
+      bear: bear,
+      profile: PetProfile(name: 'Тедди', birthAt: DateTime(2026, 9, 1)),
+    );
+    addTearDown(game.dispose);
+    addTearDown(bear.dispose);
+    DailyInfo broken({required bool restore}) => DailyInfo.fromJson({
+      'gift': {
+        'available': true,
+        'next_day': restore ? 1 : 4,
+        'claimed_day': 3,
+        'rewards': [20, 20, 20, 20, 20, 20, 70],
+        'can_restore': restore,
+        'restore_price': 30,
+      },
+    });
+    game.setDaily(broken(restore: true));
+    var calls = 0;
+    game.onRestoreStreak = () async {
+      calls++;
+      game.setDaily(broken(restore: false));
+      return RestoreResult.ok;
+    };
+    await tester.pumpWidget(wrap(DailySheet(game: game)));
+    expect(
+      find.text('Вчера пропущен день — серия прервалась.'),
+      findsOneWidget,
+    );
+    expect(find.text('Вернуть за 30'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('daily-restore')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(calls, 1);
+    expect(find.text('Серия вернулась!'), findsOneWidget);
+    expect(find.byKey(const ValueKey('daily-restore')), findsNothing);
+    expect(find.text('Забрать +20'), findsOneWidget);
+  });
 }

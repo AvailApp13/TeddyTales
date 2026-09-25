@@ -293,6 +293,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   }
 
   bool _demoRedeemed = false;
+  bool _demoRestored = false;
 
   /// Съёмка экранов без сервера ([kDemoDay]): примерный день игрока.
   void _demoDay() {
@@ -300,9 +301,13 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     DailyInfo day({required bool gift}) => DailyInfo.fromJson({
       'gift': {
         'available': gift,
-        'next_day': gift ? next : next % 7 + 1,
+        // Вчера пропуск (демо): до выкупа серия с первого дня, после —
+        // продолжается.
+        'next_day': gift ? (_demoRestored ? next : 1) : next % 7 + 1,
         'claimed_day': gift ? next - 1 : next,
         'rewards': [20, 20, 20, 20, 20, 20, 70],
+        'can_restore': gift && !_demoRestored,
+        'restore_price': 30,
         if (!gift) 'last': {'day': next, 'coins': next == 7 ? 70 : 20},
       },
       'tasks': [
@@ -333,6 +338,11 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       ..onClaimGift = () async {
         _game.setDaily(day(gift: false));
         return true;
+      }
+      ..onRestoreStreak = () async {
+        _demoRestored = true;
+        _game.setDaily(day(gift: true));
+        return RestoreResult.ok;
       }
       ..onReferral = () async {
         return ReferralInfo(

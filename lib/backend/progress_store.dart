@@ -60,6 +60,10 @@ abstract interface class ProgressStore {
   /// отказывает (TT409).
   Future<PetSnapshot> claimDailyGift();
 
+  /// Выкупить вчерашний пропуск подарка дня (миграция 0023). Не хватает
+  /// монет — TT402, выкупать нечего — TT409.
+  Future<PetSnapshot> restoreGiftStreak();
+
   /// «Пригласи друга» (миграция 0021): мой код и счёт приглашённых.
   Future<ReferralInfo> referral();
 

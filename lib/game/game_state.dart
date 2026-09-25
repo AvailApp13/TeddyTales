@@ -158,6 +158,12 @@ class GameState extends ChangeNotifier {
 
   Future<bool> claimGift() async => await onClaimGift?.call() ?? false;
 
+  /// Выкупить вчерашний пропуск подарка дня за монеты (миграция 0023).
+  Future<RestoreResult> Function()? onRestoreStreak;
+
+  Future<RestoreResult> restoreStreak() async =>
+      await onRestoreStreak?.call() ?? RestoreResult.failed;
+
   /// «Пригласи друга» (миграция 0021). `null` — нет аккаунта или связи.
   Future<ReferralInfo?> Function()? onReferral;
   Future<RedeemResult> Function(String code)? onRedeemReferral;
@@ -447,6 +453,9 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+/// Итог выкупа серии подарка дня.
+enum RestoreResult { ok, noCoins, failed }
 
 /// Восемь типов уведомлений (КП 13.1).
 enum NotificationKind {

@@ -37,6 +37,28 @@ class DailySheet extends StatefulWidget {
 class _DailySheetState extends State<DailySheet> {
   bool _claiming = false;
 
+  bool _restoring = false;
+
+  /// Вчера пропущен день — выкупить серию за монеты (миграция 0023).
+  Future<void> _restore() async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _restoring = true);
+    final result = await widget.game.restoreStreak();
+    if (!mounted) return;
+    setState(() => _restoring = false);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(switch (result) {
+          RestoreResult.ok => l10n.dailyStreakRestored,
+          RestoreResult.noCoins => l10n.dailyStreakNoCoins,
+          RestoreResult.failed => l10n.dailyGiftFailed,
+        }),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _claim() async {
     setState(() => _claiming = true);
     var failed = false;
@@ -114,6 +136,14 @@ class _DailySheetState extends State<DailySheet> {
                 else ...[
                   _GiftCalendar(daily: daily),
                   const SizedBox(height: 12),
+                  if (daily.canRestore && daily.giftAvailable) ...[
+                    _StreakRestore(
+                      price: daily.restorePrice,
+                      busy: _restoring,
+                      onRestore: _restore,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   FilledButton(
                     key: const ValueKey('daily-claim'),
                     onPressed: daily.giftAvailable && !_claiming
@@ -288,3 +318,54 @@ String dailyTaskTitle(AppLocalizations l10n, String id) => switch (id) {
   'bedtime' => l10n.dailyTaskBedtime,
   _ => id,
 };
+
+/// Серия прервалась вчера — её можно выкупить (заказчик 25.09: «как трата
+/// монет — мне нравится»). Монет за пропущенный день не дают.
+class _StreakRestore extends StatelessWidget {
+  const _StreakRestore({
+    required this.price,
+    required this.busy,
+    required this.onRestore,
+  });
+
+  final int price;
+  final bool busy;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.blush),
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.dailyStreakBroken,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            key: const ValueKey('daily-restore'),
+            onPressed: busy ? null : onRestore,
+            icon: const Icon(
+              Icons.monetization_on,
+              size: 18,
+              color: AppColors.coin,
+            ),
+            label: Text(l10n.dailyStreakRestore(price)),
+          ),
+        ],
+      ),
+    );
+  }
+}

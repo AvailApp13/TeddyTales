@@ -711,5 +711,9 @@
   "inviteUsed": "A friend’s code was already applied.",
   "inviteLate": "A friend’s code works only in the first week.",
   "inviteFull": "Your friend has no invites left.",
-  "inviteOffline": "No connection. Try again later."
+  "inviteOffline": "No connection. Try again later.",
+  "dailyStreakBroken": "You missed yesterday — your streak was broken.",
+  "dailyStreakRestore": "Restore for {price}",
+  "dailyStreakRestored": "Streak restored!",
+  "dailyStreakNoCoins": "Not enough coins"
 }

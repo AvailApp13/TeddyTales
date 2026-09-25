@@ -2077,4 +2077,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get inviteOffline => 'Нет связи с сервером. Попробуй позже.';
+
+  @override
+  String get dailyStreakBroken => 'Вчера пропущен день — серия прервалась.';
+
+  @override
+  String dailyStreakRestore(int price) {
+    return 'Вернуть за $price';
+  }
+
+  @override
+  String get dailyStreakRestored => 'Серия вернулась!';
+
+  @override
+  String get dailyStreakNoCoins => 'Не хватает монет';
 }

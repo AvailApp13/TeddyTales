@@ -62,6 +62,7 @@ class ProgressSync {
         unawaited(levelDone(categoryId, level));
     game.onClaimGift = claimGift;
     if (!localOnly) {
+      game.onRestoreStreak = restoreStreak;
       game.onReferral = referral;
       game.onRedeemReferral = redeemReferral;
     }
@@ -150,6 +151,23 @@ class ProgressSync {
     } on Object catch (error) {
       _offline(error);
       return false;
+    }
+  }
+
+  /// Выкупить вчерашний пропуск подарка дня (миграция 0023).
+  Future<RestoreResult> restoreStreak() async {
+    try {
+      _apply(await store.restoreGiftStreak());
+      return RestoreResult.ok;
+    } on Object catch (error) {
+      if (error is ProgressStoreException && error.isRejected) {
+        _online = true;
+        return error.code == ProgressStoreException.notEnoughCoins
+            ? RestoreResult.noCoins
+            : RestoreResult.failed;
+      }
+      _offline(error);
+      return RestoreResult.failed;
     }
   }
 
@@ -310,6 +328,7 @@ class ProgressSync {
     game.onLevelDone = null;
     game.onPlace = null;
     game.onClaimGift = null;
+    game.onRestoreStreak = null;
     game.onReferral = null;
     game.onRedeemReferral = null;
     _queue.clear();

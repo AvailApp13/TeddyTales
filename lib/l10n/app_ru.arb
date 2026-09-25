@@ -1244,5 +1244,16 @@
   "inviteUsed": "Код друга уже введён.",
   "inviteLate": "Код друга вводят в первую неделю.",
   "inviteFull": "У друга закончились приглашения.",
-  "inviteOffline": "Нет связи с сервером. Попробуй позже."
+  "inviteOffline": "Нет связи с сервером. Попробуй позже.",
+  "dailyStreakBroken": "Вчера пропущен день — серия прервалась.",
+  "dailyStreakRestore": "Вернуть за {price}",
+  "@dailyStreakRestore": {
+    "placeholders": {
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyStreakRestored": "Серия вернулась!",
+  "dailyStreakNoCoins": "Не хватает монет"
 }

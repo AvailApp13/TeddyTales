@@ -2065,4 +2065,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteOffline => 'No connection. Try again later.';
+
+  @override
+  String get dailyStreakBroken =>
+      'You missed yesterday — your streak was broken.';
+
+  @override
+  String dailyStreakRestore(int price) {
+    return 'Restore for $price';
+  }
+
+  @override
+  String get dailyStreakRestored => 'Streak restored!';
+
+  @override
+  String get dailyStreakNoCoins => 'Not enough coins';
 }

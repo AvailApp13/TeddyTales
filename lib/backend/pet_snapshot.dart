@@ -344,6 +344,8 @@ class DailyInfo {
     this.weeklyReward = 0,
     this.weeklyClaimed = false,
     this.lastCoins = 0,
+    this.canRestore = false,
+    this.restorePrice = 0,
   });
 
   factory DailyInfo.fromJson(Map<String, dynamic> json) {
@@ -378,6 +380,8 @@ class DailyInfo {
       weeklyReward: number(weekly['reward'], 0),
       weeklyClaimed: weekly['claimed'] == true,
       lastCoins: number(PetSnapshot._map(gift['last'])['coins'], 0),
+      canRestore: gift['can_restore'] == true,
+      restorePrice: number(gift['restore_price'], 0),
     );
   }
 
@@ -402,6 +406,11 @@ class DailyInfo {
   /// Сколько монет выдал последний подарок.
   final int lastCoins;
 
+  /// Вчера пропущен день — серию можно выкупить за [restorePrice] монет
+  /// (миграция 0023).
+  final bool canRestore;
+  final int restorePrice;
+
   bool get isEmpty => giftRewards.isEmpty && tasks.isEmpty;
 
   Map<String, dynamic> toJson() => {
@@ -411,6 +420,8 @@ class DailyInfo {
       'claimed_day': giftClaimedDay,
       'rewards': giftRewards,
       'last': {'coins': lastCoins},
+      'can_restore': canRestore,
+      'restore_price': restorePrice,
     },
     'tasks': [
       for (final t in tasks)

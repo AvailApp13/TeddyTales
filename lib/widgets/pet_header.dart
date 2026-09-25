@@ -84,7 +84,7 @@ class PetHeader extends StatelessWidget {
         ),
         if (onShare case final onShare?) ...[
           ShareButton(onTap: onShare),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
         _ProfileButton(profile: profile, onTap: onOpenProfile),
       ],
@@ -113,12 +113,12 @@ class _ProfileButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: SizedBox(
-            width: 46,
-            height: 46,
+            width: 40,
+            height: 40,
             child: Center(
               child: Container(
-                width: 34,
-                height: 34,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   // Цвет кружка — по меху героя: SLOW тёплый бежевый, JOY
                   // белый.
@@ -129,7 +129,7 @@ class _ProfileButton extends StatelessWidget {
                 ),
                 // Портрет питомца появится, когда будет риг: КП 3.3
                 // показывает в шапке именно мишку, а не иконку.
-                child: const Icon(Icons.pets, size: 18, color: Colors.white),
+                child: const Icon(Icons.pets, size: 16, color: Colors.white),
               ),
             ),
           ),

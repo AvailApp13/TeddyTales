@@ -230,6 +230,12 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   }
 
   @override
+  Future<PetSnapshot> restoreGiftStreak() async {
+    final id = await _pet();
+    return _snapshot('restore_gift_streak', {'p_pet_id': id});
+  }
+
+  @override
   Future<ReferralInfo> referral() async {
     try {
       final result = await _client.rpc<dynamic>('my_referral');

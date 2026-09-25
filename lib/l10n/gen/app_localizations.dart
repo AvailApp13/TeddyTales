@@ -3657,6 +3657,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нет связи с сервером. Попробуй позже.'**
   String get inviteOffline;
+
+  /// No description provided for @dailyStreakBroken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера пропущен день — серия прервалась.'**
+  String get dailyStreakBroken;
+
+  /// No description provided for @dailyStreakRestore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть за {price}'**
+  String dailyStreakRestore(int price);
+
+  /// No description provided for @dailyStreakRestored.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серия вернулась!'**
+  String get dailyStreakRestored;
+
+  /// No description provided for @dailyStreakNoCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get dailyStreakNoCoins;
 }
 
 class _AppLocalizationsDelegate

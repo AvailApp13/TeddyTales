@@ -62,8 +62,8 @@ class _ShareButtonState extends State<ShareButton>
           key: const ValueKey('header-share'),
           onTap: widget.onTap,
           child: SizedBox(
-            width: 46,
-            height: 46,
+            width: 40,
+            height: 40,
             child: AnimatedBuilder(
               animation: _loop,
               builder: (context, _) {
@@ -89,7 +89,7 @@ class _ShareButtonState extends State<ShareButton>
                         scale: 1 - 0.4 * gift,
                         child: const Icon(
                           Icons.ios_share_rounded,
-                          size: 21,
+                          size: 19,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -104,7 +104,7 @@ class _ShareButtonState extends State<ShareButton>
                             scale: 0.6 + 0.4 * gift,
                             child: const Icon(
                               Icons.card_giftcard_rounded,
-                              size: 23,
+                              size: 21,
                               color: Color(0xFFD42A33),
                             ),
                           ),

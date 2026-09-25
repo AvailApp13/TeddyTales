@@ -86,6 +86,11 @@ class MemoryStore implements ProgressStore {
   }
 
   @override
+  Future<PetSnapshot> restoreGiftStreak() async {
+    throw const ProgressStoreException('Серия — только при связи');
+  }
+
+  @override
   Future<ReferralInfo> referral() async {
     throw const ProgressStoreException('Приглашения — только при связи');
   }
