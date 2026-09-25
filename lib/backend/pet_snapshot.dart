@@ -27,6 +27,7 @@ class PetSnapshot {
     required this.serverTime,
     this.account = const AccountInfo(),
     this.named = true,
+    this.inclinations = const {},
   });
 
   /// Идентификатор питомца — с ним ходят все действия ухода и покупки.
@@ -55,6 +56,20 @@ class PetSnapshot {
   /// Дал ли человек имя малышу (КП 2.3). `false` — приложение спросит имя
   /// на первом запуске.
   final bool named;
+
+  /// Склонности своего знака зодиака (КП 7.2): добавка к счёту каждой
+  /// черты. Таблицу правит Заказчик в панели (миграция 0014); пустая —
+  /// знак ни на что не влияет.
+  final Map<BearTrait, double> inclinations;
+
+  /// Та же таблица в виде, который понимает счётчик характера.
+  BearZodiacInfluence get zodiacInfluence {
+    final zodiac = profile.zodiac;
+    if (zodiac == null || inclinations.values.every((v) => v == 0)) {
+      return BearZodiacInfluence.neutral;
+    }
+    return BearZodiacInfluence({zodiac: inclinations});
+  }
 
   factory PetSnapshot.fromJson(Map<String, dynamic> json) {
     final pet = _map(json['pet']);
@@ -112,7 +127,19 @@ class PetSnapshot {
       // Имя, данное до появления отметки named_at, тоже считается: такой
       // человек уже называл малыша в профиле, спрашивать заново незачем.
       named: pet['named_at'] != null || name != PetProfile.defaultName,
+      inclinations: {
+        for (final entry in _map(json['zodiac_inclinations']).entries)
+          if (_traitOf(entry.key) case final trait?)
+            if (_doubleOrNull(entry.value) case final bonus?) trait: bonus,
+      },
     );
+  }
+
+  static BearTrait? _traitOf(String name) {
+    for (final trait in BearTrait.values) {
+      if (trait.name == name) return trait;
+    }
+    return null;
   }
 
   /// Тот же снимок с другим кабинетом — для кеша и тестов.
@@ -127,6 +154,7 @@ class PetSnapshot {
         serverTime: serverTime,
         account: account ?? this.account,
         named: named,
+        inclinations: inclinations,
       );
 
   // --- Разбор отдельных значений ------------------------------------------

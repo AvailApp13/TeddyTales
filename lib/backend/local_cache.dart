@@ -121,5 +121,8 @@ class LocalCache {
     'inventory': s.inventory.toList(),
     'placed': s.placed.toList(),
     'edu': s.eduProgress,
+    'zodiac_inclinations': {
+      for (final e in s.inclinations.entries) e.key.name: e.value,
+    },
   };
 }

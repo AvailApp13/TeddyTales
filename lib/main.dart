@@ -169,6 +169,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
           ),
     // Заглушка на испытания: еда закреплена, см. `lib/game/test_stubs.dart`.
     pinnedFood: kTestFood,
+    // Склонности знака зодиака смещают характер, который считается из
+    // действий (КП 7.2, 7.3). Таблица с сервера; нет сервера — не влияет.
+    traitTracker: BearTraitTracker(
+      zodiac: widget.boot.snapshot.profile.zodiac,
+      zodiacInfluence: widget.boot.snapshot.zodiacInfluence,
+    ),
   )..startDecay();
 
   late final GameState _game = GameState(

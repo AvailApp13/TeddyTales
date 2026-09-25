@@ -281,6 +281,7 @@ function sections() {
     { id: 'dash', title: 'Дашборд', admin: false, render: renderDash },
     { id: 'economy', title: 'Экономика', admin: true, render: renderEconomy },
     { id: 'prices', title: 'Каталог и цены', admin: true, render: renderPrices },
+    { id: 'zodiac', title: 'Знаки зодиака', admin: true, render: renderZodiac },
     { id: 'content', title: 'Реплики и уведомления', admin: true, render: renderContent },
     { id: 'names', title: 'Модерация имён', admin: true, render: renderNames },
     { id: 'history', title: 'История правок', admin: true, render: renderHistory },
@@ -372,7 +373,7 @@ async function loadConfig() {
 
 async function renderEconomy() {
   const rows = (await loadConfig())
-    .filter((r) => !['item_prices', 'starting_items'].includes(r.key));
+    .filter((r) => !['item_prices', 'starting_items', 'zodiac_inclinations'].includes(r.key));
 
   $('view').innerHTML = `
     <h1>Экономика</h1>
@@ -463,6 +464,77 @@ async function renderPrices() {
     const { error } = await db.from('game_config').update({ value }).eq('key', 'item_prices');
     $('prices-msg').textContent = error ? `Не сохранилось: ${error.message}` : 'Сохранено';
     $('prices-msg').style.color = error ? 'var(--warn)' : 'var(--accent)';
+  };
+}
+
+// --- Склонности по знакам зодиака (КП 7.2) --------------------------------
+//
+// Таблица Заказчика: какой характер знак подталкивает. Добавка к счёту
+// черты 0–1, разумно 0–0,3 — склонность смещает характер, но не перебивает
+// действия игрока (КП 7.3). Стартовый характер нового мишки — черта с
+// наибольшей добавкой знака; все нули — «активный».
+
+const ZODIAC_SIGNS = [
+  ['aries', '♈ Овен'], ['taurus', '♉ Телец'], ['gemini', '♊ Близнецы'],
+  ['cancer', '♋ Рак'], ['leo', '♌ Лев'], ['virgo', '♍ Дева'],
+  ['libra', '♎ Весы'], ['scorpio', '♏ Скорпион'], ['sagittarius', '♐ Стрелец'],
+  ['capricorn', '♑ Козерог'], ['aquarius', '♒ Водолей'], ['pisces', '♓ Рыбы'],
+];
+
+const TRAITS = [
+  ['active', 'Активный'], ['curious', 'Любознательный'],
+  ['affectionate', 'Ласковый'], ['calm', 'Спокойный'],
+  ['independent', 'Самостоятельный'], ['reserved', 'Замкнутый'],
+];
+
+async function renderZodiac() {
+  const rows = await loadConfig();
+  const table = rows.find((r) => r.key === 'zodiac_inclinations')?.value || {};
+
+  $('view').innerHTML = `
+    <h1>Знаки зодиака</h1>
+    <p class="lede">
+      Стартовые склонности характера (КП 7.2). Число — насколько знак
+      подталкивает к черте: 0 — не влияет, 0,1–0,3 — заметно. Новый мишка
+      рождается с чертой, у которой число больше всех; дальше характер
+      складывается из действий игрока, а знак лишь смещает итог.
+    </p>
+    <div class="card">
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Знак</th>${TRAITS.map(([, title]) =>
+            `<th class="num">${esc(title)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${ZODIAC_SIGNS.map(([sign, title]) => `
+              <tr>
+                <td>${esc(title)}</td>
+                ${TRAITS.map(([trait]) => `
+                  <td class="num">
+                    <input class="small" style="width:72px" type="number"
+                           min="0" max="1" step="0.05"
+                           data-sign="${sign}" data-trait="${trait}"
+                           value="${esc(table[sign]?.[trait] ?? 0)}">
+                  </td>`).join('')}
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="action" id="save-zodiac">Сохранить таблицу</button>
+        <span class="note" id="zodiac-msg"></span>
+      </div>
+    </div>`;
+
+  $('save-zodiac').onclick = async () => {
+    const value = {};
+    $('view').querySelectorAll('[data-sign]').forEach((input) => {
+      const bonus = Math.min(1, Math.max(0, Number(input.value) || 0));
+      (value[input.dataset.sign] ??= {})[input.dataset.trait] = bonus;
+    });
+    const { error } = await db.from('game_config')
+      .update({ value }).eq('key', 'zodiac_inclinations');
+    $('zodiac-msg').textContent = error ? `Не сохранилось: ${error.message}` : 'Сохранено';
+    $('zodiac-msg').style.color = error ? 'var(--warn)' : 'var(--accent)';
   };
 }
 

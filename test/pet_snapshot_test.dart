@@ -42,6 +42,7 @@ Map<String, dynamic> _serverJson() => {
   'inventory': ['bed', 'rug', 'lamp'],
   'placed': ['wall_rose', 'floor_wood'],
   'edu': {'colors': 3, 'count': 1},
+  'zodiac_inclinations': {'curious': 0.2, 'active': 0, 'unknown': 5},
 };
 
 void main() {
@@ -69,6 +70,21 @@ void main() {
       expect(snapshot.inventory, {'bed', 'rug', 'lamp'});
       expect(snapshot.placed, {'wall_rose', 'floor_wood'});
       expect(snapshot.eduProgress, {'colors': 3, 'count': 1});
+    });
+
+    test('склонности знака (КП 7.2) доходят до счётчика характера', () {
+      final snapshot = PetSnapshot.fromJson(_serverJson());
+      // Неизвестная черта отброшена, нули остаются нулями.
+      expect(snapshot.inclinations, {
+        BearTrait.curious: 0.2,
+        BearTrait.active: 0.0,
+      });
+      final influence = snapshot.zodiacInfluence;
+      expect(influence.bonus(BearZodiac.leo, BearTrait.curious), 0.2);
+      expect(influence.bonus(BearZodiac.leo, BearTrait.calm), 0);
+      // Таблица из одних нулей — знак не влияет вовсе.
+      final json = _serverJson()..['zodiac_inclinations'] = {'active': 0};
+      expect(PetSnapshot.fromJson(json).zodiacInfluence.isEmpty, isTrue);
     });
 
     test('время сервера приводится к UTC', () {
