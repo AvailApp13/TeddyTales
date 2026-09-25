@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, jsonCaller } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
+import { restPose } from '../lib/rest_pose.mjs';
 import { Tracks, writeTimeline, playInStateMachine, blinkBead, addBlinkLids, keyBeads, keyEar, earRigs } from '../lib/timeline.mjs';
 
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
@@ -60,10 +61,8 @@ const BLINKS = [20, 70, start.smile + 55, start.chew + 75, END - 70];
 // ---- дорожки
 const LEAN = 0.4, HEADK = 0.65, LAG = 5;
 const tracks = new Tracks(); const key = tracks.key.bind(tracks);
-const base = (await call('query_property_values', { propertyKeys: {
-  [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15],
-  ...Object.fromEntries(Object.keys(B).filter((k) => k.startsWith('root_ear_')).map((k) => [B[k], [15]])), ...(B.root_belly ? { [B.root_belly]: [16, 17] } : {}),
-  } })).values;
+// покой — из привязки сеток, не из текущего кадра редактора (lib/rest_pose.mjs)
+const base = await restPose(call, file);
 const b = (id, k) => base[id][String(k)];
 // плавные дорожки: ключи каждые 4 кадра, линейно (кубическая кривая на каждом отрезке давала подёргивание)
 const lin = (id, k, f, v) => key(id, k, f, v, 'linear');

@@ -19,6 +19,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { RiveMcpClient, toolText } from '../lib/rive_mcp.mjs';
 import { repoRoot } from '../lib/rig.mjs';
+import { restPose } from '../lib/rest_pose.mjs';
 
 const NAME = 'demo_moves', FPS = 60, END = 600;
 const statePath = resolve(repoRoot, 'rive', 'editor_state.json');
@@ -62,8 +63,8 @@ for (let f = 310; f < 480; f += 20) { bounce[f] = -7; bounce[f + 10] = 0; }
 Object.assign(bounce, { 480: 0, 505: -14, 525: 0, 540: -8, 555: 0, 600: 0 });
 
 // ---- база: поза покоя ----
-const base = (await call('query_property_values', { propertyKeys: {
-  [B.root]: [15, 91], [B.root_body]: [15], [B.root_arm_left]: [15], [B.root_arm_right]: [15], [B.root_leg_left]: [15], [B.root_leg_right]: [15] } })).values;
+// покой — из привязки сеток, не из текущего кадра редактора (lib/rest_pose.mjs)
+const base = await restPose(call, file);
 const tracks = [
   [B.root_body, 15, head], [B.root_arm_left, 15, armL], [B.root_arm_right, 15, armR],
   [B.root_leg_left, 15, legL], [B.root_leg_right, 15, legR], [B.root, 91, bounce], [B.root, 15, lean],
