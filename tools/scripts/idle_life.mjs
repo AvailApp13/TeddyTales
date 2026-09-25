@@ -53,6 +53,7 @@ const BLINKS = [70, 262, 300, 540, 700];                               // 262/30
 // уши (D24): нарисованные положения, [ухо, положение, от, до]; переход — EAR_T кадров
 const EAR_MOVES = [['right', 'droop', 150, 280], ['left', 'droop', 380, 510], ['left', 'cup', 790, 858]];
 const EAR_T = 30;
+const EAR_UP = 10, EAR_DOWN = 16;                                        // наклон уха целиком, ° (чисто до 22°, D20)
 const EAR_WIG = 3, EAR_WIG_LAG = 14;                                  // на вдохе уши чуть покачиваются, °
 const BELLY = 10, ARMS = 3;                                             // вдох: живот +10 %, лапы 3°
 const LISTEN = { from: 560, to: 760, head: 4, t: 40 };                // прислушивание: уши «внимание», голова набок
@@ -95,10 +96,13 @@ for (const side of ['left', 'right']) {
   const lag = side === 'right' ? 4 : 0, sign = side === 'left' ? 1 : -1;   // + у левого по часовой = наружу
   const wig = (x) => EAR_WIG * inhale(x - EAR_WIG_LAG - lag);
   keyEar(tracks, rigs[side], restRot, END, (f) => {
-    const w = { cup: 0, droop: 0, wig: -sign * (wig(f) - wig(0)) };
-    for (const [sd, st, f0, f1] of EAR_MOVES) if (sd === side) w[st] = Math.max(w[st], pulse(f0, f1, f));
-    w.cup = Math.max(w.cup, pulse(LISTEN.from + lag, LISTEN.to, f));
-    return w;
+    // нарисованные положения (D24) отключены по обратной связи (заломы, «кролик»): ухо
+    // утверждённого кадра наклоняется целиком вокруг основания — «внимание» вверх,
+    // «повисли» вниз-наружу; картинки положений прозрачны (доля 0)
+    let up = 0, down = 0;
+    for (const [sd, st, f0, f1] of EAR_MOVES) if (sd === side) (st === 'cup' ? (up = Math.max(up, pulse(f0, f1, f))) : (down = Math.max(down, pulse(f0, f1, f))));
+    up = Math.max(up, pulse(LISTEN.from + lag, LISTEN.to, f));
+    return { cup: 0, droop: 0, wig: sign * (EAR_UP * up - EAR_DOWN * down) - sign * (wig(f) - wig(0)) };
   }, STEP);
 }
 // взгляд

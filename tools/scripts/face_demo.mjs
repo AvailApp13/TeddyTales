@@ -87,7 +87,9 @@ for (const side of ['left', 'right'])
   keyEar(tracks, rigs[side], restRot, END, (f) => {
     const p = pose(f), { cup, droop } = p.ear;
     // смена «внимание» <-> «повисли» идёт через покой: иначе в середине видны три уха
-    return { cup: Math.max(0, cup - droop), droop: Math.max(0, droop - cup), wig: (side === 'left' ? -3 : 3) * p.inhale };
+    // нарисованные положения отключены: ухо наклоняется целиком (вверх 10°, вниз-наружу 16°)
+    const sign = side === 'left' ? 1 : -1;
+    return { cup: 0, droop: 0, wig: sign * (10 * Math.max(0, cup - droop) - 16 * Math.max(0, droop - cup)) - sign * 3 * p.inhale };
   });
 // прозрачность выражений
 const op = (name, f, v, interp = 'linear') => key(G[`fx_${name}`], 18, f, v, interp);
