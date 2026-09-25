@@ -2082,13 +2082,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteOffline => 'No connection. Try again later.';
-
-  @override
-  String get settingsSectionSelfCare => 'Your teddy cares for you';
-
-  @override
-  String get settingsSelfCareWater => 'Drink water — daytime';
-
-  @override
-  String get settingsSelfCareRest => 'Time for bed — evening';
 }

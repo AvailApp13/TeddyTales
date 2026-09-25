@@ -13,9 +13,6 @@ import '../bear/bear_rig_spec.dart' show BearTrait;
 ///   * `miss` — сутки не заходил: скучает (переключатель «Хочет играть»);
 ///   * `away` — трое суток: гостит у бабушки, ждёт с подарком («Подарок»);
 ///   * `week` — неделя: одно тёплое письмо и тишина («Подарок»).
-///
-/// «Мишка заботится о тебе» (сверх ТЗ, заказчик 25.09) — свои
-/// переключатели: `water` — выпить воды, `rest` — хозяину пора спать.
 class SmartCopy {
   const SmartCopy(this.title, this.body);
 
@@ -145,15 +142,6 @@ const Map<BearLanguage, Map<String, List<(String, String)>>> _variants = {
     'week': [
       ('{name} очень скучает', 'Возвращайся — у бабушки для тебя подарок.'),
     ],
-    'water': [
-      ('{name} пьёт водичку', 'И тебе пора — стакан воды?'),
-      ('Глоток воды?', '{name} заботится: попей немного воды.'),
-      ('Водный перерыв', '{name} напоминает: не забудь про воду.'),
-    ],
-    'rest': [
-      ('{name} уже в кроватке', 'И тебе пора отдыхать. Спокойной ночи!'),
-      ('Пора спать', '{name} зевает: давай отдыхать вместе.'),
-    ],
     'event': [('Сегодня особенный день', 'Заходи, {name} расскажет.')],
   },
   BearLanguage.en: {
@@ -187,15 +175,6 @@ const Map<BearLanguage, Map<String, List<(String, String)>>> _variants = {
     'week': [
       ('{name} misses you a lot', 'Come back — grandma has a gift for you.'),
     ],
-    'water': [
-      ('{name} is having some water', 'Your turn — a glass of water?'),
-      ('Sip of water?', '{name} cares: drink a little water.'),
-      ('Water break', '{name} reminds you: don\'t forget to drink water.'),
-    ],
-    'rest': [
-      ('{name} is already in bed', 'Time for you to rest too. Good night!'),
-      ('Bedtime', '{name} yawns: let\'s rest together.'),
-    ],
     'event': [('Today is special', 'Come in, {name} will tell you.')],
   },
   BearLanguage.zh: {
@@ -216,12 +195,6 @@ const Map<BearLanguage, Map<String, List<(String, String)>>> _variants = {
     'miss': [('{name}想你了', '来看看它吧，哪怕一分钟。')],
     'away': [('{name}在等你', '它在奶奶家，还给你留了礼物。')],
     'week': [('{name}非常想你', '回来吧——奶奶给你准备了礼物。')],
-    'water': [
-      ('{name}在喝水', '你也来一杯水吧？'),
-      ('喝口水吧？', '{name}关心你：喝点水。'),
-      ('喝水时间', '{name}提醒你：别忘了喝水。'),
-    ],
-    'rest': [('{name}已经上床了', '你也该休息了。晚安！'), ('该睡觉了', '{name}打了个哈欠：一起休息吧。')],
     'event': [('今天很特别', '快来，{name}告诉你。')],
   },
 };

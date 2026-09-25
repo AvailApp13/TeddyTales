@@ -2094,13 +2094,4 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get inviteOffline => 'Нет связи с сервером. Попробуй позже.';
-
-  @override
-  String get settingsSectionSelfCare => 'Мишка заботится о тебе';
-
-  @override
-  String get settingsSelfCareWater => 'Выпить воды — днём';
-
-  @override
-  String get settingsSelfCareRest => 'Тебе пора спать — вечером';
 }

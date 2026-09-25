@@ -723,8 +723,5 @@
   "inviteUsed": "已使用过好友的邀请码。",
   "inviteLate": "好友邀请码只能在第一周内使用。",
   "inviteFull": "好友的邀请次数已用完。",
-  "inviteOffline": "无法连接服务器，请稍后再试。",
-  "settingsSectionSelfCare": "小熊关心你",
-  "settingsSelfCareWater": "白天提醒喝水",
-  "settingsSelfCareRest": "晚上提醒睡觉"
+  "inviteOffline": "无法连接服务器，请稍后再试。"
 }

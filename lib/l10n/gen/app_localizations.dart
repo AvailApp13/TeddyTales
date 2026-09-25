@@ -3687,24 +3687,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нет связи с сервером. Попробуй позже.'**
   String get inviteOffline;
-
-  /// No description provided for @settingsSectionSelfCare.
-  ///
-  /// In ru, this message translates to:
-  /// **'Мишка заботится о тебе'**
-  String get settingsSectionSelfCare;
-
-  /// No description provided for @settingsSelfCareWater.
-  ///
-  /// In ru, this message translates to:
-  /// **'Выпить воды — днём'**
-  String get settingsSelfCareWater;
-
-  /// No description provided for @settingsSelfCareRest.
-  ///
-  /// In ru, this message translates to:
-  /// **'Тебе пора спать — вечером'**
-  String get settingsSelfCareRest;
 }
 
 class _AppLocalizationsDelegate

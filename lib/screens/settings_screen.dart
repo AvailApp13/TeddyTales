@@ -110,25 +110,6 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
 
-                        // Сверх ТЗ (заказчик 25.09): мишка напоминает хозяину
-                        // попить воды днём и лечь спать до тихих часов.
-                        _SectionTitle(l10n.settingsSectionSelfCare),
-                        _TogglesCard(
-                          rows: [
-                            _ToggleRow(
-                              title: l10n.settingsSelfCareWater,
-                              value: game.isNotificationOn('water'),
-                              onChanged: (_) =>
-                                  game.toggleNotification('water'),
-                            ),
-                            _ToggleRow(
-                              title: l10n.settingsSelfCareRest,
-                              value: game.isNotificationOn('rest'),
-                              onChanged: (_) => game.toggleNotification('rest'),
-                            ),
-                          ],
-                        ),
-
                         // Звуки кухни (24.09). Выбор хранится на телефоне, а не
                         // в [GameState]: это настройка устройства, как громкость.
                         _SectionTitle(l10n.settingsSectionSound),
