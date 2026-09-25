@@ -51,3 +51,17 @@ export async function playInStateMachine(call, animId) {
   const st = q.layers[0].states.find((s) => s.type === 'animation');
   await call('animation_editor', { command: 'updateStates', data: { updateStates: { states: [{ id: st.id, animationId: animId }] } } });
 }
+
+/**
+ * Моргание (D23): бусина глаза сплющивается по вертикали, как будто смыкаются веки (под
+ * ней — глазница с мехом закрытого глаза), и когда от неё остаётся тонкая линия,
+ * проявляются закрытые глаза с ресницами (fx_eyes_closed). Перетекание картинок
+ * полупрозрачной бусины и века давало «силуэт» бусины — здесь просвечивать нечему.
+ * ~0.37 с: смыкание 6 кадров, закрыто 8, открытие 8.
+ *   beads: [{ id, sy }] — картинки бусин и их масштаб по Y в покое; closedId — группа fx_eyes_closed.
+ */
+export function addBlink(tracks, f0, { beads, closedId }) {
+  for (const { id, sy } of beads)
+    for (const [df, k] of [[0, 1], [6, 0.1], [14, 0.1], [22, 1]]) tracks.key(id, 17, f0 + df, sy * k, 'cubic');
+  for (const [df, v] of [[4, 0], [7, 100], [12, 100], [15, 0]]) tracks.key(closedId, 18, f0 + df, v, 'cubic');
+}

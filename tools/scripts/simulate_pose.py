@@ -32,6 +32,7 @@ BONE = {'root_belly': 'belly', 'root_ear_left': 'ear_left', 'root_ear_right': 'e
 RIGID = {'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
          'foot_left': 'leg_left', 'foot_right': 'leg_right'}
 SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right', 'ear_left_shade', 'ear_right_shade')
+EAR_WIDEN = 0.3   # сгиб уха на зрителя: загнутая часть шире вдоль линии сгиба на 0.3 × сгиб (перспектива)
 SHADE_FULL, SHADE_MAX = 60, 1.0    # затемнённое ухо проявляется полностью при сгибе 60 % (как в idle_life / face_demo)
 MESH_STEP = 6
 
@@ -67,7 +68,8 @@ def bone_affine(pose, ang):
             if ang.get(q): M = M @ _rot(PIVOT[q], ang[q])
         if ang.get(f'{pose}_fold'):          # сгиб уха на зрителя: сжатие вдоль оси кости от линии сгиба
             (p, u), k = FOLD[pose], 1 - ang[f'{pose}_fold'] / 100
-            A = np.eye(2) + (k - 1) * np.outer(u, u)
+            v = np.array([-u[1], u[0]]); w = 1 + EAR_WIDEN * ang[f'{pose}_fold'] / 100   # край ближе к зрителю — чуть шире
+            A = np.eye(2) + (k - 1) * np.outer(u, u) + (w - 1) * np.outer(v, v)
             M = M @ np.vstack([np.hstack([A, (p - A @ p)[:, None]]), [0, 0, 1]])
     elif pose and ang.get(pose): M = _rot(PIVOT[pose], ang[pose])
     if ang.get('body'): M = _rot(PIVOT['body'], ang['body']) @ M

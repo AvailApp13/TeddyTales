@@ -613,14 +613,14 @@
   "socket_l": {
    "file": "gaze_socket_l.png",
    "size": [
-    72,
-    71
+    80,
+    79
    ],
    "center_frame": [
-    589.18,
+    588.89,
     896.47
    ],
-   "px_scale": 1.006534
+   "px_scale": 0.998609
   },
   "bead_r": {
    "file": "gaze_bead_r.png",
@@ -637,14 +637,14 @@
   "socket_r": {
    "file": "gaze_socket_r.png",
    "size": [
-    70,
-    70
+    78,
+    78
    ],
    "center_frame": [
     764.36,
-    896.18
+    895.89
    ],
-   "px_scale": 1.002685
+   "px_scale": 1.002267
   }
  }
 }

@@ -4,6 +4,7 @@
  * Запускать в позе покоя:
  *   RIVE_MCP_URL=... node scripts/with_rest_pose.mjs -- node scripts/place_face_parts.mjs [--replace]
  *   (после --replace перезапустить scripts/face_demo.mjs: ключи взгляда ссылаются на бусины)
+ *   --only=gaze_socket_l,gaze_socket_r — заменить только перечисленные накладки
  *
  * Структура (всё внутри группы head на кости root_body, поверх face_img):
  *   face_fx
@@ -20,6 +21,8 @@ import { repoRoot } from '../lib/rig.mjs';
 
 const D = resolve(repoRoot, 'handoff', 'face_v2');
 const REPLACE = process.argv.includes('--replace');   // заменить уже поставленные накладки (после перенарезки)
+// --only=gaze_socket_l,gaze_socket_r — заменить только эти накладки (остальные не трогать)
+const ONLY = (process.argv.find((a) => a.startsWith('--only=')) ?? '').slice(7).split(',').filter(Boolean);
 const P = JSON.parse(readFileSync(resolve(D, 'face_parts.json'), 'utf8'));
 const sp = resolve(repoRoot, 'rive', 'editor_state.json'); const state = JSON.parse(readFileSync(sp, 'utf8'));
 const c = new RiveMcpClient({ timeoutMs: 180000 }); await c.initialize();
@@ -60,7 +63,7 @@ async function place(part, groupId) {
   const key = part.file.replace(/\.png$/, '');
   const old = fp.images[key];
   if (old && H.all.has(old.instance)) {
-    if (!REPLACE) return old.instance;
+    if (!REPLACE && !ONLY.includes(key)) return old.instance;
     await call('delete_objects', { objectIds: [old.instance, old.asset] }).catch(() => {});   // --replace: новая картинка
   }
   const b64 = readFileSync(resolve(D, part.file)).toString('base64');

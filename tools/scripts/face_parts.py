@@ -115,6 +115,7 @@ NO_EYES = {'chew', 'lick', 'smile', 'tongue'}              # глаза как �
 BLUSH = {'love'}
 
 parts = {'frame': [1333, 2000], 'face_crop_offset': [FX, FY], 'expressions': {}}
+closed_eye = {}   # закрытые глаза, уже в глазницах основы и в цвет меха — из них глазница для взгляда
 names = sorted(os.path.splitext(f)[0][5:] for f in os.listdir(SRC) if f.startswith('face_') and f.endswith(('.png', '.webp')))
 for n in [x for x in names if x != 'base']:
     a = align(load(n)); nose, eyes = locate(a)
@@ -134,6 +135,7 @@ for n in [x for x in names if x != 'base']:
             m = moved(a, bx - ex, (ty - ey) if kind == 'bead' or n in ('laugh', 'love', 'yawn', 'surprised') else 0)
             al = feather(ellipse(bx, by - 25, 135, 140), 30)
             e[f'eye_{k}'] = patch(color_match(m, al), al, f'{n}_eye_{k}')
+            if n == 'eyes_closed': closed_eye[k] = color_match(m, al)
     if n in BLUSH:
         # румянец отдельным слоем: только «розовость» сверх основы
         m = moved(a, 0, NOSE[1] - nose[1])
@@ -146,18 +148,28 @@ for n in [x for x in names if x != 'base']:
     parts['expressions'][n] = e
     print(n, {k: (v['size'] if isinstance(v, dict) and 'size' in v else v) for k, v in e.items()})
 
-# --- взгляд: бусины основы отдельно + глазница без бусины (инпейнтинг мехом)
+# --- взгляд: бусины основы отдельно + глазница без бусины. Глазница — мех закрытого
+# глаза из того же кадра (Higgsfield) без линии ресниц: при моргании бусина сплющивается
+# и открывает глазницу, поэтому мех там должен быть настоящим — дорисовка по краям
+# (inpaint) давала светлое размытое пятно. Ресницы (тонкая линия) закрываются мехом века.
 bead_dark = cv2.cvtColor(base[..., :3], cv2.COLOR_RGB2HSV)[..., 2] < 80
-socket = base.copy(); gaze = {}
+gaze = {}
 for k, (bx, by) in EYE.items():
     m = ndimage.binary_fill_holes(bead_dark & ellipse(bx, by, 70, 65))
     m = ndimage.binary_dilation(ndimage.binary_opening(m, iterations=2), iterations=4)
-    ring = ellipse(bx, by, 95, 90)
-    fill = cv2.inpaint(np.ascontiguousarray(base[..., :3][:, :, ::-1]), (m & ring).astype(np.uint8), 12, cv2.INPAINT_TELEA)[:, :, ::-1]
-    socket[..., :3] = np.where((m & ring)[..., None], fill, socket[..., :3])
+    src = closed_eye[k].copy()
+    hsv = cv2.cvtColor(src[..., :3], cv2.COLOR_RGB2HSV)
+    lash = (hsv[..., 2] < 150) & ellipse(bx, by, 95, 80)
+    lash = ndimage.binary_dilation(lash, iterations=4)
+    # ресницы закрываются мехом века: тот же столбец на LID px выше (фактура сохраняется;
+    # дорисовка inpaint давала гладкое светлое пятно), край — мягкий
+    LID = 26
+    lid = np.roll(src[..., :3], LID, axis=0)
+    wl = feather(lash, 4)[..., None]
+    src[..., :3] = (src[..., :3] * (1 - wl) + lid * wl).round().astype(np.uint8)
     ab = feather(m, 3)
     gaze[f'bead_{k}'] = patch(base, ab, f'gaze_bead_{k}')
-    gaze[f'socket_{k}'] = patch(socket, feather(ndimage.binary_dilation(m, iterations=6), 6), f'gaze_socket_{k}')
+    gaze[f'socket_{k}'] = patch(src, feather(ndimage.binary_dilation(m, iterations=10), 8), f'gaze_socket_{k}')
 parts['gaze'] = gaze
 json.dump(parts, open(f'{OUT}/face_parts.json', 'w'), indent=1, ensure_ascii=False)
 print('ok', len(parts['expressions']), 'выражений')
