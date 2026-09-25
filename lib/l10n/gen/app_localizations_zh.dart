@@ -152,7 +152,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogCountryUsa => '美国';
 
   @override
-  String get catalogDeliveryNote => '配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。';
+  String get catalogDeliveryNote =>
+      '按商店数据配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。订单将进入客户现有的销售系统（需求 12.5）——此表单暂不提交。';
 
   @override
   String get catalogFieldAddress => '地址';
@@ -177,7 +178,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return '鞋子单独出售——$shoes，$price。';
+    return '商品、价格与尺寸均来自 TeddyTales® 官方商店（需求 12.1）。图片暂为同一张占位图：正式照片将来自客户的商品目录。鞋子在商店单独出售——$shoes，$price。';
   }
 
   @override
@@ -205,7 +206,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogPayPalNote => '——也可免账户用银行卡支付';
 
   @override
-  String get catalogPaySection => '支付';
+  String get catalogPaySection => '支付 · 需求 12.4';
 
   @override
   String get catalogPayStub => '支付将在系统对接阶段开通';

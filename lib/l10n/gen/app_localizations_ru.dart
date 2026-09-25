@@ -190,7 +190,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogDeliveryNote =>
-      'Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.';
+      'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.';
 
   @override
   String get catalogFieldAddress => 'Адрес';
@@ -215,7 +215,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return 'Обувь продаётся отдельно — $shoes, $price.';
+    return 'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — $shoes, $price.';
   }
 
   @override
@@ -243,7 +243,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogPayPalNote => ' — и картой без аккаунта';
 
   @override
-  String get catalogPaySection => 'Оплата';
+  String get catalogPaySection => 'Оплата · КП 12.4';
 
   @override
   String get catalogPayStub => 'Оплата подключается на этапе интеграции';

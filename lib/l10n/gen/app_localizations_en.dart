@@ -186,7 +186,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get catalogDeliveryNote =>
-      'Delivery: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7.';
+      'Delivery per the store: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7. Orders go to the Client\'s live sales system (Brief 12.5) — this form doesn\'t submit anything yet.';
 
   @override
   String get catalogFieldAddress => 'Address';
@@ -211,7 +211,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return 'Shoes are sold separately — $shoes, $price.';
+    return 'Items, prices and sizes come from the official TeddyTales® store, as required by Brief 12.1. The photos are identical placeholders: real shots will come from the Client\'s catalog. Shoes are sold there separately — $shoes, $price.';
   }
 
   @override
@@ -239,7 +239,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogPayPalNote => ' — or by card, no account needed';
 
   @override
-  String get catalogPaySection => 'Payment';
+  String get catalogPaySection => 'Payment · Brief 12.4';
 
   @override
   String get catalogPayStub => 'Payments will be connected during integration';

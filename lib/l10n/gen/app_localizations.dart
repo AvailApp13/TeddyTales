@@ -361,7 +361,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogDeliveryNote.
   ///
   /// In ru, this message translates to:
-  /// **'Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.'**
+  /// **'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.'**
   String get catalogDeliveryNote;
 
   /// No description provided for @catalogFieldAddress.
@@ -409,7 +409,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogFootnote.
   ///
   /// In ru, this message translates to:
-  /// **'Обувь продаётся отдельно — {shoes}, {price}.'**
+  /// **'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.'**
   String catalogFootnote(String shoes, String price);
 
   /// No description provided for @catalogGrownSubtitle.
@@ -463,7 +463,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogPaySection.
   ///
   /// In ru, this message translates to:
-  /// **'Оплата'**
+  /// **'Оплата · КП 12.4'**
   String get catalogPaySection;
 
   /// No description provided for @catalogPayStub.

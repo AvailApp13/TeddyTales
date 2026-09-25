@@ -95,7 +95,7 @@
   "catalogCountryKazakhstan": "Казахстан",
   "catalogCountryRussia": "Россия",
   "catalogCountryUsa": "США",
-  "catalogDeliveryNote": "Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.",
+  "catalogDeliveryNote": "Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.",
   "catalogFieldAddress": "Адрес",
   "catalogFieldAddressHint": "Улица, дом, квартира",
   "catalogFieldCountry": "Страна",
@@ -113,7 +113,7 @@
       }
     }
   },
-  "catalogFootnote": "Обувь продаётся отдельно — {shoes}, {price}.",
+  "catalogFootnote": "Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.",
   "catalogGrownSubtitle": "и готов отправиться к тебе домой",
   "catalogGrownTitle": "Твой малыш вырос",
   "catalogItemFortune": "Карманный мишка Фортуна",
@@ -122,7 +122,7 @@
   "catalogItemSpaceSet": "Набор Космонавт и Невеста",
   "catalogOrderButton": "Оформить заказ",
   "catalogPayPalNote": " — и картой без аккаунта",
-  "catalogPaySection": "Оплата",
+  "catalogPaySection": "Оплата · КП 12.4",
   "catalogPayStub": "Оплата подключается на этапе интеграции",
   "@catalogSizeCm": {
     "placeholders": {
