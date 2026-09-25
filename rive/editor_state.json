@@ -648,50 +648,46 @@
         "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-57151",
-        "instance": "0-57152",
+        "asset": "0-343517",
+        "instance": "0-343519",
         "group": "outfit_head",
         "groupId": "0-226"
       },
       "ear_left": {
         "group": "ear_left",
         "groupId": "0-104",
-        "asset": "0-191580",
-        "instance": "0-191581"
+        "asset": "0-343524",
+        "instance": "0-343525"
       },
       "ear_right": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-191582",
-        "instance": "0-191583"
-      },
-      "ear_left_shade": {
-        "group": "ear_left",
-        "groupId": "0-104",
-        "asset": "0-277346",
-        "instance": "0-277347"
-      },
-      "ear_right_shade": {
-        "group": "ear_right",
-        "groupId": "0-119",
-        "asset": "0-277348",
-        "instance": "0-277349"
+        "asset": "0-343526",
+        "instance": "0-343527"
       },
       "ear_left_cup": {
         "group": "ear_left",
-        "groupId": "0-104"
+        "groupId": "0-104",
+        "asset": "0-343528",
+        "instance": "0-343529"
       },
       "ear_left_droop": {
         "group": "ear_left",
-        "groupId": "0-104"
+        "groupId": "0-104",
+        "asset": "0-343530",
+        "instance": "0-343531"
       },
       "ear_right_cup": {
         "group": "ear_right",
-        "groupId": "0-119"
+        "groupId": "0-119",
+        "asset": "0-343532",
+        "instance": "0-343533"
       },
       "ear_right_droop": {
         "group": "ear_right",
-        "groupId": "0-119"
+        "groupId": "0-119",
+        "asset": "0-343534",
+        "instance": "0-343535"
       }
     },
     "layersV2Transform": {
@@ -712,7 +708,11 @@
       "root_leg_right": "0-395",
       "root_ear_left": "0-117528",
       "root_ear_right": "0-117532",
-      "root_belly": "0-155371"
+      "root_belly": "0-155371",
+      "root_ear_left_cup": "0-317334",
+      "root_ear_left_droop": "0-317338",
+      "root_ear_right_cup": "0-317342",
+      "root_ear_right_droop": "0-317346"
     },
     "bonesNote": "Поставлены вручную по handoff/reference/bones_guide.png, координаты выровнены по teddy mcp:bones; руки и ноги лежат внутри root; группы привязаны teddy mcp:bind.",
     "bonesPlan": [
@@ -820,14 +820,6 @@
         ],
         "vertices": 1831
       },
-      "hood": {
-        "meshId": "0-62739",
-        "bones": [
-          "root",
-          "root_body"
-        ],
-        "vertices": 3271
-      },
       "sleeve_left": {
         "meshId": "0-102191",
         "bones": [
@@ -852,8 +844,16 @@
         ],
         "vertices": 2574
       },
+      "hood": {
+        "meshId": "0-343536",
+        "bones": [
+          "root",
+          "root_body"
+        ],
+        "vertices": 3271
+      },
       "ear_left": {
-        "meshId": "0-191588",
+        "meshId": "0-350086",
         "bones": [
           "root",
           "root_body",
@@ -862,7 +862,7 @@
         "vertices": 1464
       },
       "ear_right": {
-        "meshId": "0-194525",
+        "meshId": "0-353023",
         "bones": [
           "root",
           "root_body",
@@ -870,23 +870,41 @@
         ],
         "vertices": 1425
       },
-      "ear_left_shade": {
-        "meshId": "0-277350",
+      "ear_left_cup": {
+        "meshId": "0-355882",
         "bones": [
           "root",
           "root_body",
-          "root_ear_left"
+          "root_ear_left_cup"
         ],
-        "vertices": 1464
+        "vertices": 1717
       },
-      "ear_right_shade": {
-        "meshId": "0-280287",
+      "ear_right_cup": {
+        "meshId": "0-359325",
         "bones": [
           "root",
           "root_body",
-          "root_ear_right"
+          "root_ear_right_cup"
         ],
-        "vertices": 1425
+        "vertices": 1592
+      },
+      "ear_left_droop": {
+        "meshId": "0-362518",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_left_droop"
+        ],
+        "vertices": 1645
+      },
+      "ear_right_droop": {
+        "meshId": "0-365817",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_right_droop"
+        ],
+        "vertices": 1928
       }
     },
     "faceParts": {
@@ -1080,7 +1098,7 @@
       "name": "face_demo",
       "fps": 60,
       "frames": 1332,
-      "keys": 7766,
+      "keys": 13778,
       "order": [
         "smile",
         "laugh",
@@ -1113,7 +1131,7 @@
       "name": "idle_life",
       "fps": 60,
       "frames": 864,
-      "keys": 5031,
+      "keys": 8937,
       "blinks": [
         70,
         262,
@@ -1124,33 +1142,31 @@
       "earMoves": [
         [
           "right",
+          "droop",
           150,
-          270,
-          30
+          280
         ],
         [
           "left",
-          370,
-          490,
-          30
+          "droop",
+          380,
+          510
         ],
         [
-          "right",
-          770,
-          862,
-          22
+          "left",
+          "cup",
+          790,
+          858
         ]
       ],
-      "earWiden": 0.3,
-      "earBreath": 6,
+      "earWig": 3,
       "belly": 10,
       "arms": 3,
       "listen": {
-        "from": 540,
+        "from": 560,
         "to": 760,
-        "ear": 24,
         "head": 4,
-        "t": 60
+        "t": 40
       }
     }
   }

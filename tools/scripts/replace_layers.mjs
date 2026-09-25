@@ -28,6 +28,20 @@ const file = state[String((await call('session_info', {})).activeFileId)];
 const hier = await call('get_artboard_hierarchy', { artboardId: file.artboards.Bear_Boy.id, depth: 14 });
 const byName = new Map(); for (const o of hier.objects ?? []) if (!byName.has(o.name)) byName.set(o.name, o);
 const rigId = byName.get('rig').id;
+// локальный трансформ слоя в группе groupId из лица: та же группа — как у лица; группа —
+// прямой ребёнок группы лица — inv(группа) · лицо. Иначе null (довериться переносу).
+async function expectedLocal(groupId) {
+  const face = file.layersV2.face; if (!face?.instance) return null;
+  const objs = (await call('find_objects', { artboardId: file.artboards.Bear_Boy.id })).objects ?? [];
+  const parent = objs.find((o) => o.id === groupId)?.parentId;
+  const q = (await call('query_property_values', { propertyKeys: { [face.instance]: [13, 14, 15, 16, 17], [groupId]: [13, 14, 15, 16, 17] } })).values;
+  const F = q[face.instance], G = q[groupId];
+  if (groupId === face.groupId) return { 13: F[13], 14: F[14], 15: F[15], 16: F[16], 17: F[17] };
+  if (parent !== face.groupId) return null;
+  const r = (-G[15] * Math.PI) / 180, dx = F[13] - G[13], dy = F[14] - G[14];
+  const x = (Math.cos(r) * dx - Math.sin(r) * dy) / (G[16] / 100), y = (Math.sin(r) * dx + Math.cos(r) * dy) / (G[17] / 100);
+  return { 13: x, 14: y, 15: F[15] - G[15], 16: (F[16] * 100) / G[16], 17: (F[17] * 100) / G[17] };
+}
 // удаление старой картинки и ассета — по одному: если ассета уже нет (устаревший id в
 // состоянии), общий вызов отклоняется целиком и старая картинка оставалась дублем
 async function removeImage(instance, assetId) {
@@ -100,6 +114,18 @@ for (const name of names) {
     if ((rr.reparented ?? []).some((x) => x.id === inst.imageId)) break;
     if (t >= 8) throw new Error(`${name}: не переносится в ${L.group}`);
     await new Promise((r) => setTimeout(r, 1500 * (1 + (t >> 1))));   // редактор иногда отвечает отказом несколько секунд подряд
+  }
+  // перенос в группу иногда пересчитывает положение неверно (масштаб 100 %, сдвиг) —
+  // тогда сетка привязывается к сломанной картинке. Все слои стоят в одном мировом
+  // положении, поэтому для группы, лежащей там же, где лицо, или прямо в его группе,
+  // локальное положение считается от лица и записывается явно (с проверкой).
+  const want = await expectedLocal(g.id);
+  if (want) for (let t = 0; ; t++) {
+    await call('set_property_values', { propertyValues: { [inst.imageId]: want } });
+    await new Promise((r) => setTimeout(r, 400 * (t + 1)));
+    const v = (await call('query_property_values', { propertyKeys: { [inst.imageId]: [13, 14, 16, 17] } })).values?.[inst.imageId] ?? {};
+    if ([13, 14, 16, 17].every((k) => Math.abs(v[k] - want[k]) < 1e-2)) break;
+    if (t >= 5) throw new Error(`${name}: локальное положение в группе не записывается`);
   }
   if (/^ear_(left|right)_/.test(name)) {
     // нарисованное положение уха (D24): над ухом рига, в покое прозрачное — проявляется ключами
