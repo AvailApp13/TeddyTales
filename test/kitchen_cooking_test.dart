@@ -84,6 +84,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await tester.pump(DishPlates.appearDuration);
 
       expect(find.byKey(const ValueKey('recipe-sandwich')), findsOneWidget);
       expect(find.byKey(const ValueKey('recipe-price-board')), findsOneWidget);

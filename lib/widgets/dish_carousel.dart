@@ -206,13 +206,18 @@ BoardText recipeBoard(AppLocalizations l10n, Recipe recipe) => BoardText(
 /// Блюда, тени и табло с ценой — картинка без касаний. Лежит поверх сцены
 /// кухни. На той же дуге стоят и рецепты «Приготовить» — тогда на табло
 /// вместо цены награда ([board]).
-class DishPlates<T extends TablePlate> extends StatelessWidget {
+///
+/// Появление (заказчик 25.09): тарелки по очереди — от той, что перед
+/// мишкой, к краям — опускаются на стол сверху, чуть пружинят, тень под
+/// ними вырастает; табло с названием выезжает последним.
+class DishPlates<T extends TablePlate> extends StatefulWidget {
   const DishPlates({
     super.key,
     required this.arc,
     required this.dishes,
     this.board,
     this.tag = 'dish',
+    this.shown = true,
   });
 
   final DishArc arc;
@@ -224,19 +229,84 @@ class DishPlates<T extends TablePlate> extends StatelessWidget {
   /// Начало ключей виджетов: у блюд — `dish`, у рецептов — `recipe`.
   final String tag;
 
+  /// Блюда на столе. Стало `true` — играется появление.
+  final bool shown;
+
+  /// Сколько длится появление целиком.
+  static const Duration appearDuration = Duration(milliseconds: 950);
+
+  @override
+  State<DishPlates<T>> createState() => _DishPlatesState<T>();
+}
+
+class _DishPlatesState<T extends TablePlate> extends State<DishPlates<T>>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _appear = AnimationController(
+    vsync: this,
+    duration: DishPlates.appearDuration,
+    value: widget.shown ? 0 : 1,
+  );
+
+  // Доля общего времени: задержка между соседними тарелками и сколько
+  // летит одна.
+  static const _stagger = 0.11;
+  static const _flight = 0.5;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.shown) _play();
+  }
+
+  @override
+  void didUpdateWidget(DishPlates<T> old) {
+    super.didUpdateWidget(old);
+    if (widget.shown && !old.shown) _play();
+  }
+
+  void _play() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+        _appear.value = 1;
+      } else {
+        _appear.forward(from: 0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _appear.dispose();
+    super.dispose();
+  }
+
   BoardText _boardOf(AppLocalizations l10n, T plate) =>
-      board?.call(l10n, plate) ?? dishBoard(l10n, plate as Dish);
+      widget.board?.call(l10n, plate) ?? dishBoard(l10n, plate as Dish);
 
   @override
   Widget build(BuildContext context) {
+    final dishes = widget.dishes;
+    final tag = widget.tag;
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) => ListenableBuilder(
-          listenable: arc,
+          listenable: Listenable.merge([widget.arc, _appear]),
           builder: (context, _) {
             final size = constraints.biggest;
+            final v = _appear.value;
+            // Очередь появления: ближние к центру — первыми.
+            final order = widget.arc._placed(dishes, size);
+            double local(int rank) =>
+                ((v - rank * _stagger) / _flight).clamp(0.0, 1.0);
+            final placed = [
+              for (var r = 0; r < order.length; r++) order[r].shown(local(r)),
+            ];
             // Рисуем от дальних к ближним: центральное — поверх соседей.
-            final drawn = arc._placed(dishes, size).reversed.toList();
+            final drawn = placed.reversed.toList();
+            final board = Curves.easeOutBack.transform(
+              ((v - 0.45) / 0.4).clamp(0.0, 1.0),
+            );
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -249,18 +319,22 @@ class DishPlates<T extends TablePlate> extends StatelessWidget {
                   Positioned.fromRect(
                     key: ValueKey('$tag-slot-${p.index}'),
                     rect: p.rect,
-                    child: Opacity(
-                      opacity: p.alpha,
-                      child: Transform.rotate(
-                        angle: p.tilt,
-                        alignment: Alignment.bottomCenter,
-                        child: Image.asset(
-                          dishes[p.index].image,
-                          key: ValueKey('$tag-${dishes[p.index].id}'),
-                          fit: BoxFit.contain,
+                    child: _Landing(
+                      t: p.show,
+                      drop: p.rect.height * 0.55,
+                      child: Opacity(
+                        opacity: p.alpha,
+                        child: Transform.rotate(
+                          angle: p.tilt,
                           alignment: Alignment.bottomCenter,
-                          filterQuality: FilterQuality.medium,
-                          gaplessPlayback: true,
+                          child: Image.asset(
+                            dishes[p.index].image,
+                            key: ValueKey('$tag-${dishes[p.index].id}'),
+                            fit: BoxFit.contain,
+                            alignment: Alignment.bottomCenter,
+                            filterQuality: FilterQuality.medium,
+                            gaplessPlayback: true,
+                          ),
                         ),
                       ),
                     ),
@@ -268,17 +342,50 @@ class DishPlates<T extends TablePlate> extends StatelessWidget {
                 ],
                 // Табло на скатерти: название, описание и цена блюда перед
                 // мишкой (заказчик 24.09, вариант B — «как подписи комнат»).
+                // Появляется последним — когда блюдо уже на столе.
                 _PriceBoard(
                   key: ValueKey('$tag-price-board'),
-                  arc: arc,
+                  arc: widget.arc,
                   count: dishes.length,
                   lineOf: (l10n, i) => _boardOf(l10n, dishes[i]),
                   idOf: (i) => '$tag-board-${dishes[i].id}',
                   size: size,
+                  appear: board,
                 ),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Тарелка опускается на стол: сверху, с прозрачности, чуть сплющивается
+/// в момент касания и выпрямляется. [t] 0 → 1.
+class _Landing extends StatelessWidget {
+  const _Landing({required this.t, required this.drop, required this.child});
+
+  final double t;
+  final double drop;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (t >= 1) return child;
+    // До своей очереди тарелка на месте, но невидима.
+    if (t <= 0) return Opacity(opacity: 0, child: child);
+    // Падение с разгоном — до 70 % времени, потом касание и пружинка.
+    final fall = Curves.easeIn.transform((t / 0.7).clamp(0.0, 1.0));
+    final squash = t > 0.7 ? math.sin((t - 0.7) / 0.3 * math.pi) * 0.08 : 0.0;
+    return Opacity(
+      opacity: (t * 2.5).clamp(0.0, 1.0),
+      child: Transform.translate(
+        offset: Offset(0, -drop * (1 - fall)),
+        child: Transform(
+          alignment: Alignment.bottomCenter,
+          transform: Matrix4.diagonal3Values(1 + squash, 1 - squash, 1),
+          child: child,
         ),
       ),
     );
@@ -455,6 +562,8 @@ class _DishCarouselState<T extends TablePlate> extends State<DishCarousel<T>>
                 size: size,
                 label: widget.closeLabel ?? context.l10n.dishesClose,
                 onClose: onClose,
+                // Проявляется вместе с табло, когда блюда уже на столе.
+                appear: true,
               ),
             // Для тестов и озвучки: какое блюдо сейчас перед мишкой.
             if (widget.dishes.isNotEmpty)
@@ -487,6 +596,7 @@ class _Placed {
     required this.alpha,
     required this.land,
     required this.tableY,
+    this.show = 1,
   });
 
   factory _Placed.at(int index, double s, Size size, double fit) {
@@ -543,6 +653,20 @@ class _Placed {
   /// 1 — стоит на столе, 0 — парит сбоку.
   final double land;
   final double tableY;
+
+  /// Появление на столе: 0 — ещё нет, 1 — стоит (тень растёт вместе с ним).
+  final double show;
+
+  _Placed shown(double value) => _Placed._(
+    index: index,
+    s: s,
+    rect: rect,
+    tilt: tilt,
+    alpha: alpha,
+    land: land,
+    tableY: tableY,
+    show: value,
+  );
 }
 
 /// Тени: под стоящим — плотная у донышка и мягкая пошире; под парящим —
@@ -558,7 +682,8 @@ class _ShadowPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final unit = size.height / 844;
     for (final p in placed) {
-      final w = p.rect.width;
+      final w = p.rect.width * lerpDouble(0.4, 1, p.show)!;
+      final k = p.show;
       final cx = p.rect.center.dx;
       final bottom = p.rect.bottom;
 
@@ -572,9 +697,9 @@ class _ShadowPainter extends CustomPainter {
         );
       }
 
-      oval(p.tableY, w * 0.85, 12 * unit, 0.20 * p.alpha * (1 - p.land), 6);
-      oval(bottom, w * 0.94, w * 0.2, 0.28 * p.land, 7);
-      oval(bottom, w * 0.70, w * 0.08, 0.47 * p.land, 2.5);
+      oval(p.tableY, w * 0.85, 12 * unit, 0.20 * k * p.alpha * (1 - p.land), 6);
+      oval(bottom, w * 0.94, w * 0.2, 0.28 * k * p.land, 7);
+      oval(bottom, w * 0.70, w * 0.08, 0.47 * k * p.land, 2.5);
     }
   }
 
@@ -615,6 +740,7 @@ abstract final class TableBoard {
     required String label,
     required VoidCallback onClose,
     Offset origin = Offset.zero,
+    bool appear = false,
   }) {
     final scale = size.height / 844;
     final diameter = 24 * scale;
@@ -633,14 +759,20 @@ abstract final class TableBoard {
           behavior: HitTestBehavior.opaque,
           onTap: onClose,
           child: Center(
-            child: Container(
-              width: diameter,
-              height: diameter,
-              decoration: decoration(scale, circle: true),
-              child: Icon(
-                Icons.close_rounded,
-                size: 15 * scale,
-                color: Colors.white,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: appear ? 0 : 1, end: 1),
+              duration: DishPlates.appearDuration,
+              curve: const Interval(0.6, 0.9),
+              builder: (context, v, child) => Opacity(opacity: v, child: child),
+              child: Container(
+                width: diameter,
+                height: diameter,
+                decoration: decoration(scale, circle: true),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 15 * scale,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -665,10 +797,14 @@ class _PriceBoard extends StatelessWidget {
     required this.lineOf,
     required this.idOf,
     required this.size,
+    this.appear = 1,
   });
 
   final DishArc arc;
   final int count;
+
+  /// Появление табло: 0 — нет, 1 — на месте (выезжает снизу с пружинкой).
+  final double appear;
   final BoardText Function(AppLocalizations l10n, int index) lineOf;
   final String Function(int index) idOf;
   final Size size;
@@ -692,21 +828,25 @@ class _PriceBoard extends StatelessWidget {
     final cx = size.width * TableBoard.center.dx;
     final cy = size.height * TableBoard.center.dy;
 
+    if (appear <= 0) return const SizedBox.shrink();
     return Positioned(
       left: cx - width / 2,
-      top: cy - height / 2,
+      top: cy - height / 2 + (1 - appear) * 14 * scale,
       width: width,
       height: height,
-      child: DecoratedBox(
-        decoration: TableBoard.decoration(scale),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              _rolled(a, -height * t, 1 - t, idOf(from)),
-              if (t > 0) _rolled(b, height * (1 - t), t, idOf(to)),
-            ],
+      child: Opacity(
+        opacity: appear.clamp(0.0, 1.0),
+        child: DecoratedBox(
+          decoration: TableBoard.decoration(scale),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                _rolled(a, -height * t, 1 - t, idOf(from)),
+                if (t > 0) _rolled(b, height * (1 - t), t, idOf(to)),
+              ],
+            ),
           ),
         ),
       ),

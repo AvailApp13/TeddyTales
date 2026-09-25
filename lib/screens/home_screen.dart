@@ -1359,7 +1359,11 @@ class _RoomScene extends StatelessWidget {
             child: AnimatedOpacity(
               opacity: dishesShown ? 1 : 0,
               duration: const Duration(milliseconds: 260),
-              child: DishPlates(arc: dishArc, dishes: dishes),
+              child: DishPlates(
+                arc: dishArc,
+                dishes: dishes,
+                shown: dishesShown,
+              ),
             ),
           ),
         if (room == RoomKind.kitchen && dishesShown)

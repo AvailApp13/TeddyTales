@@ -190,6 +190,9 @@ void main() {
         ),
       );
       await tester.pump();
+      // Блюда опускаются на стол по очереди (заказчик 25.09) — ждём, пока
+      // все встанут.
+      await tester.pump(DishPlates.appearDuration);
     }
 
     String current(WidgetTester tester) {
