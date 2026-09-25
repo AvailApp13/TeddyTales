@@ -1827,4 +1827,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get buyNotEnoughOk => '知道了';
+
+  @override
+  String welcomeBackGrandma(String name) {
+    return '你不在的时候，$name去奶奶家住了：吃饱了、洗干净了，很想你。奶奶还送来了金币！';
+  }
 }

@@ -229,6 +229,10 @@ class ProgressSync {
     game.setProfile(snapshot.profile);
     game.setAccount(snapshot.account);
     game.setGrowth(snapshot.growth);
+    game.setAsleep(snapshot.asleep);
+    // Шкалы между ответами идут с теми скоростями, что прислал сервер:
+    // во сне медленнее, у малыша быстрее (миграция 0016).
+    if (snapshot.decay case final decay?) bear.setDecayConfig(decay);
     onSnapshot?.call(snapshot);
   }
 

@@ -121,6 +121,8 @@ class LocalCache {
     'inventory': s.inventory.toList(),
     'placed': s.placed.toList(),
     'edu': s.eduProgress,
+    'asleep': s.asleep,
+    'rates': s.rates,
     'growth': {
       'progress': s.growth.progress,
       'next_stage_at': s.growth.nextStageAt?.toIso8601String(),

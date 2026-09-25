@@ -141,6 +141,21 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Долго не заходил — мишка гостил у бабушки (миграция 0016). Главный
+  /// экран один раз показывает встречу и сбрасывает флаг.
+  bool welcomeBack = false;
+
+  /// Спит ли мишка (сервер, миграция 0016): уложили — спит, пока не
+  /// разбудят, не займутся им или не выспится сам.
+  bool get asleep => _asleep;
+  bool _asleep = false;
+
+  void setAsleep(bool asleep) {
+    if (asleep == _asleep) return;
+    _asleep = asleep;
+    notifyListeners();
+  }
+
   PetProfile get profile => _profile;
   int get coins => _profile.coins;
 

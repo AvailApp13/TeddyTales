@@ -3423,6 +3423,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Понятно'**
   String get buyNotEnoughOk;
+
+  /// No description provided for @welcomeBackGrandma.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!'**
+  String welcomeBackGrandma(String name);
 }
 
 class _AppLocalizationsDelegate

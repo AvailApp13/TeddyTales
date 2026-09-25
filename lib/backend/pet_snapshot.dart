@@ -29,6 +29,9 @@ class PetSnapshot {
     this.named = true,
     this.inclinations = const {},
     this.growth = const GrowthOutlook(),
+    this.asleep = false,
+    this.rates = const {},
+    this.welcomeBack = false,
   });
 
   /// Идентификатор питомца — с ним ходят все действия ухода и покупки.
@@ -66,6 +69,21 @@ class PetSnapshot {
   /// Сколько пройдено на стадии и когда ждать следующую (КП 5.6, 5.7) —
   /// сервер растит мишку сам (миграция 0015).
   final GrowthOutlook growth;
+
+  /// Спит ли мишка на сервере (уложили и ещё не проснулся, миграция 0016).
+  final bool asleep;
+
+  /// Скорости показателей «прямо сейчас», % шкалы в час; отрицательная —
+  /// растёт. Пусто — старый сервер или офлайн.
+  final Map<String, double> rates;
+
+  /// Долго не заходил — мишка гостил у бабушки: сыт, доволен, подарок
+  /// (миграция 0016). Приходит только в ответе на вход.
+  final bool welcomeBack;
+
+  /// Скорости для плавного хода шкал между ответами; `null` — нет данных.
+  BearDecayConfig? get decay =>
+      rates.isEmpty ? null : BearDecayConfig.fromPerHour(rates);
 
   /// Та же таблица в виде, который понимает счётчик характера.
   BearZodiacInfluence get zodiacInfluence {
@@ -132,6 +150,12 @@ class PetSnapshot {
       // Имя, данное до появления отметки named_at, тоже считается: такой
       // человек уже называл малыша в профиле, спрашивать заново незачем.
       named: pet['named_at'] != null || name != PetProfile.defaultName,
+      asleep: json['asleep'] == true,
+      welcomeBack: json['welcome_back'] == true,
+      rates: {
+        for (final entry in _map(json['rates']).entries)
+          if (_doubleOrNull(entry.value) case final v?) entry.key: v,
+      },
       growth: GrowthOutlook(
         progress: _doubleOrNull(_map(json['growth'])['progress']),
         nextStageAt: _time(_map(json['growth'])['next_stage_at']),
@@ -165,6 +189,8 @@ class PetSnapshot {
         named: named,
         inclinations: inclinations,
         growth: growth,
+        asleep: asleep,
+        rates: rates,
       );
 
   // --- Разбор отдельных значений ------------------------------------------

@@ -167,6 +167,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
               love: 100,
             ),
           ),
+    // Скорости с сервера: сон, возраст, распорядок (миграция 0016).
+    decay: widget.boot.snapshot.decay ?? const BearDecayConfig(),
     // Заглушка на испытания: еда закреплена, см. `lib/game/test_stubs.dart`.
     pinnedFood: kTestFood,
     // Склонности знака зодиака смещают характер, который считается из
@@ -268,7 +270,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // действия. Без этой строки мост создался бы только при первом
     // обращении из разметки, то есть никогда.
     _sync.retry();
-    if (widget.boot.isOnline) _game.setGrowth(widget.boot.snapshot.growth);
+    if (widget.boot.isOnline) {
+      _game
+        ..setGrowth(widget.boot.snapshot.growth)
+        ..setAsleep(widget.boot.snapshot.asleep)
+        ..welcomeBack = widget.boot.snapshot.welcomeBack;
+    }
     WidgetsBinding.instance.addObserver(_lifecycle);
   }
 

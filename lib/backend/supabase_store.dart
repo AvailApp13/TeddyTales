@@ -176,7 +176,11 @@ class SupabaseStore implements ProgressStore, AccountAuth {
     // Вход в личный кабинет. Сервер сам находит мишку того, кто вошёл
     // (кабинет создаётся вместе с учётной записью, КП 2.4), отмечает визит
     // и отдаёт снимок. Отсюда же берётся id мишки для всех действий.
-    final snapshot = await _snapshot('open_account', const {});
+    // Пояс — для распорядка дня: завтрак, обед, ужин и «пора спать» по
+    // местному времени (миграция 0016).
+    final snapshot = await _snapshot('open_account', {
+      'p_tz_offset_min': DateTime.now().timeZoneOffset.inMinutes,
+    });
     if (snapshot.petId.isEmpty) {
       throw const ProgressStoreException(
         'open_account вернула снимок без мишки',

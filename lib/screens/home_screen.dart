@@ -16,6 +16,7 @@ import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
+import '../l10n/sections_l10n.dart' show petDisplayName;
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_sheet.dart';
@@ -112,8 +113,10 @@ class _HomeScreenState extends State<HomeScreen>
   RoomKind _room = RoomKind.nursery;
 
   /// Мишку уложили спать: глаза закрыты, кнопка на ковре убрана.
-  /// Сбрасывается, когда уходим из спальни.
-  bool _asleep = false;
+  /// Сон живёт на сервере (миграция 0016): уложили — спит, пока не
+  /// разбудят, не покормят, не займутся им или не выспится сам; уход из
+  /// спальни его не будит.
+  bool get _asleep => widget.game.asleep;
 
   /// Картинки спальни раскодированы заранее — один раз на экран.
   bool _bedroomWarm = false;
@@ -122,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen>
     if (room == _room) return;
     setState(() {
       _room = room;
-      _asleep = false;
       // Ушли с кухни — блюда и готовка со стола убираются.
       _dishesShown = false;
       _recipesShown = false;
@@ -133,10 +135,22 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Кнопки на ковре: «Уложить спать» — мишка засыпает и закрывает глаза,
-  /// «Разбудить» — открывает и дальше просто моргает. Показатель сна
-  /// они не трогают: это решение заказчика следующим шагом (22.09).
-  void _putToBed() => setState(() => _asleep = true);
-  void _wake() => setState(() => _asleep = false);
+  /// «Разбудить» — открывает и дальше просто моргает.
+  ///
+  /// Заказчик 22.09 отложил связь с показателем сна «следующим шагом»; 25.09
+  /// утвердил ночной режим: уложенный мишка спит на сервере, сон
+  /// восстанавливается постепенно, остальные потребности падают вчетверо
+  /// медленнее, уложил вовремя (20–23) — бонус (миграция 0016). Шкала сна
+  /// сразу не прыгает до 100 — как и просил заказчик.
+  void _putToBed() {
+    widget.game.setAsleep(true);
+    widget.controller.putToSleep(amount: 10);
+  }
+
+  void _wake() {
+    widget.game.setAsleep(false);
+    widget.controller.wakeBear();
+  }
 
   /// На какое время поставлен будильник «проснёмся вместе».
   ///
@@ -525,10 +539,31 @@ class _HomeScreenState extends State<HomeScreen>
       const Duration(seconds: 30),
       (_) => _refreshEaten(),
     );
+    widget.game.addListener(_onGame);
+    // Долго не заходил — мишка гостил у бабушки (миграция 0016): одна
+    // тёплая строка при входе вместо молчаливо подросших шкал.
+    if (widget.game.welcomeBack) {
+      widget.game.welcomeBack = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _soon(
+          context.l10n.welcomeBackGrandma(
+            petDisplayName(context.l10n, widget.game.profile.name),
+          ),
+        );
+      });
+    }
+  }
+
+  /// Сон пришёл с сервера (уложили на другом устройстве, выспался сам,
+  /// разбудила еда) — спальня перерисовывается.
+  void _onGame() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    widget.game.removeListener(_onGame);
     _closeGap.dispose();
     _hungerTimer?.cancel();
     _eaten

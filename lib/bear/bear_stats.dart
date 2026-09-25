@@ -76,13 +76,13 @@ class BearCareStats {
 
 /// Скорость падения показателей, единиц шкалы в секунду.
 ///
-/// ЗАГЛУШКА. По КП 15.4 скорости показателей настраиваются из панели
-/// управления и хранятся на сервере, а по КП 1.5 время игры серверное —
-/// перевод часов на телефоне не должен ускорять игру. Значения по умолчанию
-/// подобраны только чтобы видеть движение в дев-сборке.
+/// Истина — на сервере (КП 1.5, 15.4): он считает показатели по своим
+/// часам с учётом сна, возраста и распорядка (миграция 0016) и в каждом
+/// ответе присылает скорости «прямо сейчас» — [BearDecayConfig.fromPerHour].
+/// Здесь они только двигают шкалы плавно между ответами. Отрицательная
+/// скорость — показатель растёт (сон, пока мишка спит).
 ///
-/// Когда появится backend (открытый вопрос: стек не подтверждён), этот объект
-/// должен приезжать с сервера, а не жить в коде.
+/// Значения по умолчанию — для офлайна и дев-сборки.
 class BearDecayConfig {
   const BearDecayConfig({
     this.foodPerSecond = 100 / 14400, // полная шкала за 4 часа
@@ -101,6 +101,19 @@ class BearDecayConfig {
       playPerSecond = 0,
       lovePerSecond = 0,
       floor = 0;
+
+  /// Скорости с сервера, в процентах шкалы за час (`snapshot.rates`).
+  factory BearDecayConfig.fromPerHour(Map<String, double> perHour) {
+    double of(String key) => (perHour[key] ?? 0) / 3600;
+    return BearDecayConfig(
+      foodPerSecond: of('food'),
+      hygienePerSecond: of('hygiene'),
+      sleepPerSecond: of('sleep'),
+      playPerSecond: of('play'),
+      lovePerSecond: of('love'),
+      floor: perHour['floor'] ?? 20,
+    );
+  }
 
   final double foodPerSecond;
   final double hygienePerSecond;
@@ -134,6 +147,8 @@ class BearDecayConfig {
 
     double decayed(double value, double rate) {
       final next = value - rate * seconds;
+      // Растёт (сон во сне) — до полной шкалы.
+      if (rate < 0) return next > 100 ? (value > 100 ? value : 100) : next;
       return next < floor ? (value < floor ? value : floor) : next;
     }
 

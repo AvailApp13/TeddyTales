@@ -594,5 +594,7 @@
   "buyConfirmCancel": "取消",
   "buyNotEnoughTitle": "金币不足",
   "buyNotEnough": "还差 {missing} 枚金币",
-  "buyNotEnoughOk": "知道了"
+  "buyNotEnoughOk": "知道了",
+  "welcomeBackGrandma": "你不在的时候，{name}去奶奶家住了：吃饱了、洗干净了，很想你。奶奶还送来了金币！",
+  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}}
 }

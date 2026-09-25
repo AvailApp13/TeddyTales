@@ -1938,4 +1938,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get buyNotEnoughOk => 'Понятно';
+
+  @override
+  String welcomeBackGrandma(String name) {
+    return '$name гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!';
+  }
 }

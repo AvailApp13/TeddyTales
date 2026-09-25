@@ -1065,5 +1065,7 @@
       }
     }
   },
-  "buyNotEnoughOk": "Понятно"
+  "buyNotEnoughOk": "Понятно",
+  "welcomeBackGrandma": "{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!",
+  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}}
 }

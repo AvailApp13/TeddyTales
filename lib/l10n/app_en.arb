@@ -594,5 +594,7 @@
   "buyConfirmCancel": "Cancel",
   "buyNotEnoughTitle": "Not enough coins",
   "buyNotEnough": "{missing, plural, one{You need {missing} more coin} other{You need {missing} more coins}}",
-  "buyNotEnoughOk": "OK"
+  "buyNotEnoughOk": "OK",
+  "welcomeBackGrandma": "{name} stayed with grandma while you were away: fed, washed and missing you a lot. Grandma sent some coins as a gift!",
+  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}}
 }

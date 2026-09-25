@@ -1927,4 +1927,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get buyNotEnoughOk => 'OK';
+
+  @override
+  String welcomeBackGrandma(String name) {
+    return '$name stayed with grandma while you were away: fed, washed and missing you a lot. Grandma sent some coins as a gift!';
+  }
 }

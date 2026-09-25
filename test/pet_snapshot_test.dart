@@ -43,6 +43,16 @@ Map<String, dynamic> _serverJson() => {
   'placed': ['wall_rose', 'floor_wood'],
   'edu': {'colors': 3, 'count': 1},
   'zodiac_inclinations': {'curious': 0.2, 'active': 0, 'unknown': 5},
+  'asleep': true,
+  'rates': {
+    'food': 2.125,
+    'hygiene': 1.275,
+    'sleep': -12,
+    'play': 1.4875,
+    'love': 0.85,
+    'floor': 20,
+  },
+  'welcome_back': true,
 };
 
 void main() {
@@ -85,6 +95,17 @@ void main() {
       // Таблица из одних нулей — знак не влияет вовсе.
       final json = _serverJson()..['zodiac_inclinations'] = {'active': 0};
       expect(PetSnapshot.fromJson(json).zodiacInfluence.isEmpty, isTrue);
+    });
+
+    test('сон, скорости и встреча после отъезда (миграция 0016)', () {
+      final snapshot = PetSnapshot.fromJson(_serverJson());
+      expect(snapshot.asleep, isTrue);
+      expect(snapshot.welcomeBack, isTrue);
+      expect(snapshot.decay!.sleepPerSecond, closeTo(-12 / 3600, 1e-12));
+      expect(snapshot.decay!.floor, 20);
+      // Старый сервер без скоростей — местные по умолчанию.
+      expect(PetSnapshot.fromJson(const {}).decay, isNull);
+      expect(PetSnapshot.fromJson(const {}).asleep, isFalse);
     });
 
     test('время сервера приводится к UTC', () {

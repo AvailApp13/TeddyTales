@@ -94,4 +94,48 @@ void main() {
       expect(decay.apply(stats, const Duration(seconds: -5)), stats);
     });
   });
+
+  group('Скорости с сервера (миграция 0016)', () {
+    test('проценты в час переводятся в секунды', () {
+      final decay = BearDecayConfig.fromPerHour(const {
+        'food': 13,
+        'hygiene': 7.8,
+        'sleep': 6.5,
+        'play': 9.1,
+        'love': 5.2,
+        'floor': 20,
+      });
+      final after = decay.apply(
+        const BearCareStats(
+          food: 80,
+          hygiene: 80,
+          sleep: 80,
+          play: 80,
+          love: 80,
+        ),
+        const Duration(hours: 1),
+      );
+      expect(after.food, closeTo(67, 1e-6));
+      expect(after.love, closeTo(74.8, 1e-6));
+    });
+
+    test('во сне шкала сна растёт, но не выше полной', () {
+      final asleep = BearDecayConfig.fromPerHour(const {
+        'food': 2.5,
+        'sleep': -12,
+        'floor': 20,
+      });
+      final twoHours = asleep.apply(
+        const BearCareStats(food: 60, sleep: 40),
+        const Duration(hours: 2),
+      );
+      expect(twoHours.sleep, closeTo(64, 1e-6));
+      expect(twoHours.food, closeTo(55, 1e-6));
+      final night = asleep.apply(
+        const BearCareStats(sleep: 90),
+        const Duration(hours: 5),
+      );
+      expect(night.sleep, 100);
+    });
+  });
 }

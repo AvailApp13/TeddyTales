@@ -202,6 +202,27 @@ void main() {
       expect(it.game.growth.nextStageAt, DateTime.utc(2026, 9, 17, 12));
     });
 
+    test('сон и скорости с сервера доходят до игры и шкал', () async {
+      final it = _setUp();
+      it.store.answer = PetSnapshot(
+        petId: 'pet',
+        profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+        state: const BearState(),
+        inventory: const {},
+        placed: const {},
+        eduProgress: const {},
+        serverTime: DateTime.utc(2026, 9, 16),
+        asleep: true,
+        rates: const {'food': 2.5, 'sleep': -12, 'floor': 20},
+      );
+      it.bear.putToSleep(amount: 10);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.store.care, [BearAction.sleep]);
+      expect(it.game.asleep, isTrue);
+      expect(it.bear.decay.sleepPerSecond, closeTo(-12 / 3600, 1e-12));
+    });
+
     test('та же стадия — без перехода', () async {
       final it = _setUp();
       final rig = FakeRig();
