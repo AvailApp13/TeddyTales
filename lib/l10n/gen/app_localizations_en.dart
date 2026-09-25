@@ -1988,14 +1988,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String giftItemCaption(String item) {
-    return '“$item” is yours! Find it in the Room';
-  }
-
-  @override
-  String get dailyGiftOpenBox => 'Open the big gift';
-
-  @override
   String get shareAction => 'Share';
 
   @override

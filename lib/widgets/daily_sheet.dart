@@ -51,7 +51,7 @@ class _DailySheetState extends State<DailySheet> {
           return null;
         }
         final daily = widget.game.daily;
-        return GiftOutcome(coins: daily.lastCoins, item: daily.lastItem);
+        return GiftOutcome(coins: daily.lastCoins);
       },
     );
     if (!mounted) return;
@@ -208,10 +208,7 @@ class _GiftCalendar extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      // Седьмой день — сюрприз: большая коробка с вещью.
-                      day == 7
-                          ? '?'
-                          : day <= daily.giftRewards.length
+                      day <= daily.giftRewards.length
                           ? '${daily.giftRewards[day - 1]}'
                           : '',
                       style: const TextStyle(

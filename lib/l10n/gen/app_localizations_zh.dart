@@ -1889,14 +1889,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String giftItemCaption(String item) {
-    return '「$item」归你啦！去「房间」看看吧';
-  }
-
-  @override
-  String get dailyGiftOpenBox => '打开大礼包';
-
-  @override
   String get shareAction => '分享';
 
   @override

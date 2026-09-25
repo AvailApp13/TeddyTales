@@ -691,15 +691,6 @@
       }
     }
   },
-  "giftItemCaption": "“{item}” is yours! Find it in the Room",
-  "@giftItemCaption": {
-    "placeholders": {
-      "item": {
-        "type": "String"
-      }
-    }
-  },
-  "dailyGiftOpenBox": "Open the big gift",
   "shareAction": "Share",
   "shareClose": "Close",
   "shareMeet": "Meet {name}",

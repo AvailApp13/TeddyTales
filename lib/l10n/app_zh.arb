@@ -691,15 +691,6 @@
       }
     }
   },
-  "giftItemCaption": "「{item}」归你啦！去「房间」看看吧",
-  "@giftItemCaption": {
-    "placeholders": {
-      "item": {
-        "type": "String"
-      }
-    }
-  },
-  "dailyGiftOpenBox": "打开大礼包",
   "shareAction": "分享",
   "shareClose": "关闭",
   "shareMeet": "认识一下：{name}",

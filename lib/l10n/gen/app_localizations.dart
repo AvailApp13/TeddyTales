@@ -3532,18 +3532,6 @@ abstract class AppLocalizations {
   /// **'+{coins} монет!'**
   String giftCoinsCaption(int coins);
 
-  /// No description provided for @giftItemCaption.
-  ///
-  /// In ru, this message translates to:
-  /// **'«{item}» теперь твой! Найди в «Комнате»'**
-  String giftItemCaption(String item);
-
-  /// No description provided for @dailyGiftOpenBox.
-  ///
-  /// In ru, this message translates to:
-  /// **'Открыть большой подарок'**
-  String get dailyGiftOpenBox;
-
   /// No description provided for @shareAction.
   ///
   /// In ru, this message translates to:

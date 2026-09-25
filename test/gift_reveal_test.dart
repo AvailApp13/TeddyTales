@@ -66,7 +66,7 @@ void main() {
     expect(result?.coins, 20);
   });
 
-  testWidgets('коробка седьмого дня: вещь с названием', (tester) async {
+  testWidgets('коробка седьмого дня: 70 монет, никаких вещей', (tester) async {
     await tester.pumpWidget(
       wrap(
         Builder(
@@ -75,7 +75,7 @@ void main() {
               onPressed: () => showGiftReveal(
                 context,
                 box: true,
-                claim: () async => const GiftOutcome(item: 'teddy_cream'),
+                claim: () async => const GiftOutcome(coins: 70),
               ),
               child: const Text('open'),
             ),
@@ -87,7 +87,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Нажми на коробку — там сюрприз!'), findsOneWidget);
     await openAndRun(tester);
-    expect(find.textContaining('теперь твой'), findsOneWidget);
+    expect(find.text('+70 монет!'), findsOneWidget);
+    expect(find.text('+70'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('gift-collect')));
     await tester.pumpAndSettle();
   });
@@ -114,13 +115,6 @@ void main() {
   });
 
   test('последний подарок с сервера разбирается', () {
-    final item = DailyInfo.fromJson(const {
-      'gift': {
-        'available': false,
-        'last': {'day': 7, 'item': 'teddy_cream'},
-      },
-    });
-    expect(item.lastItem, 'teddy_cream');
     final coins = DailyInfo.fromJson(const {
       'gift': {
         'available': false,
@@ -128,7 +122,6 @@ void main() {
       },
     });
     expect(coins.lastCoins, 20);
-    expect(coins.lastItem, isNull);
     expect(DailyInfo.fromJson(coins.toJson()).lastCoins, 20);
   });
 }

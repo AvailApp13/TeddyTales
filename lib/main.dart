@@ -302,11 +302,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         'available': gift,
         'next_day': gift ? next : next % 7 + 1,
         'claimed_day': gift ? next - 1 : next,
-        'rewards': [10, 15, 20, 25, 30, 35, 50],
-        if (!gift)
-          'last': next == 7
-              ? {'day': 7, 'item': 'teddy_cream'}
-              : {'day': next, 'coins': 20},
+        'rewards': [20, 20, 20, 20, 20, 20, 70],
+        if (!gift) 'last': {'day': next, 'coins': next == 7 ? 70 : 20},
       },
       'tasks': [
         {'id': 'cook', 'target': 1, 'progress': 1, 'done': true, 'reward': 15},

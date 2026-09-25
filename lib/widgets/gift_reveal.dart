@@ -4,18 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../audio/sounds.dart';
-import '../game/shop_items.dart';
-import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 
-/// Что оказалось в подарке дня (миграция 0020): монеты или вещь.
+/// Что оказалось в подарке дня: монеты (заказчик 25.09 — только монеты,
+/// никаких вещей и мишек).
 class GiftOutcome {
-  const GiftOutcome({this.coins = 0, this.item});
+  const GiftOutcome({this.coins = 0});
 
   final int coins;
-
-  /// id вещи из каталога — только на седьмой день.
-  final String? item;
 }
 
 /// Открытие подарка дня (заказчик 25.09: «конверты мы делаем»).
@@ -23,7 +19,7 @@ class GiftOutcome {
 /// Дни 1–6 — красный конверт с золотой печатью: покачивается, по касанию
 /// дрожит, клапан откидывается, выезжает карточка с монетами, монеты летят
 /// к кошельку, сыплется конфетти. День 7 — большая коробка с бантом на
-/// фоне лучей: крышка слетает, из коробки поднимается вещь.
+/// фоне лучей: крышка слетает, из коробки поднимаются монеты.
 ///
 /// Готовой анимации конверта, доступной для скачивания, не нашлось (сайты
 /// LottieFiles и Rive закрыты для среды сборки), поэтому всё нарисовано
@@ -168,7 +164,6 @@ class _GiftRevealState extends State<GiftReveal> with TickerProviderStateMixin {
                           idle: _idle.value,
                           claiming: _phase == _Phase.claiming,
                           t: t,
-                          item: _outcome?.item,
                           coins: _outcome?.coins ?? 0,
                         )
                       : _Envelope(
@@ -254,9 +249,6 @@ class _GiftRevealState extends State<GiftReveal> with TickerProviderStateMixin {
   String _caption(AppLocalizations l10n) {
     final outcome = _outcome;
     if (outcome == null) return '';
-    if (outcome.item case final item?) {
-      return l10n.giftItemCaption(shopItemName(l10n, item));
-    }
     return l10n.giftCoinsCaption(outcome.coins);
   }
 }
@@ -603,27 +595,17 @@ void _drawCoin(Canvas canvas, Offset c, double r, double squeeze) {
 
 // --- Коробка -----------------------------------------------------------------
 
-/// Картинка вещи; нет такой в каталоге — без картинки.
-String? _imageOf(String id) {
-  for (final item in ItemCatalog.all) {
-    if (item.id == id) return item.image;
-  }
-  return null;
-}
-
 class _Box extends StatelessWidget {
   const _Box({
     required this.idle,
     required this.claiming,
     required this.t,
-    required this.item,
     required this.coins,
   });
 
   final double idle;
   final bool claiming;
   final double t;
-  final String? item;
   final int coins;
 
   @override
@@ -641,9 +623,8 @@ class _Box extends StatelessWidget {
         : 0.0;
     // Крышка: 0.2–0.5 взлетает и уходит вправо-вверх, вращаясь.
     final lid = Curves.easeOutCubic.transform(_seg(t, 0.2, 0.55));
-    // Вещь: 0.35–0.75 поднимается и растёт.
+    // Монеты: 0.35–0.75 поднимаются и растут.
     final rise = Curves.easeOutBack.transform(_seg(t, 0.35, 0.75));
-    final image = item == null ? null : _imageOf(item!);
 
     return Transform.translate(
       offset: Offset(0, hop),
@@ -653,7 +634,7 @@ class _Box extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
           children: [
-            // Вещь поднимается из коробки.
+            // Монеты поднимаются из коробки.
             Positioned(
               bottom: 110 + 120 * rise,
               child: Opacity(
@@ -663,24 +644,22 @@ class _Box extends StatelessWidget {
                   child: SizedBox(
                     width: 150,
                     height: 150,
-                    child: image != null
-                        ? Image.asset(image, fit: BoxFit.contain)
-                        : Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const _CoinIcon(size: 56),
-                                Text(
-                                  '+$coins',
-                                  style: const TextStyle(
-                                    color: _gold,
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ],
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const _CoinIcon(size: 56),
+                          Text(
+                            '+$coins',
+                            style: const TextStyle(
+                              color: _gold,
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

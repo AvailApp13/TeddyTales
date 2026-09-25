@@ -2000,14 +2000,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String giftItemCaption(String item) {
-    return '«$item» теперь твой! Найди в «Комнате»';
-  }
-
-  @override
-  String get dailyGiftOpenBox => 'Открыть большой подарок';
-
-  @override
   String get shareAction => 'Поделиться';
 
   @override

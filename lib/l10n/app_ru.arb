@@ -1162,15 +1162,6 @@
       }
     }
   },
-  "giftItemCaption": "«{item}» теперь твой! Найди в «Комнате»",
-  "@giftItemCaption": {
-    "placeholders": {
-      "item": {
-        "type": "String"
-      }
-    }
-  },
-  "dailyGiftOpenBox": "Открыть большой подарок",
   "shareAction": "Поделиться",
   "shareClose": "Закрыть",
   "shareMeet": "Знакомьтесь: {name}",
