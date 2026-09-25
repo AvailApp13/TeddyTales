@@ -73,7 +73,7 @@
   "birthSkip": "Пропустить",
   "careFeedSubtitle": "Вкусная еда для малыша",
   "careFeedTitle": "Покормить",
-  "careFootnote": "Поглаживания в списке нет: по разделу 8.1 ТЗ это касание экрана — тапните по мишке на главной.",
+  "careFootnote": "Погладить мишку можно прямо на главной — просто коснитесь его.",
   "@careLockedUntilStage": {
     "placeholders": {
       "stage": {
@@ -95,7 +95,7 @@
   "catalogCountryKazakhstan": "Казахстан",
   "catalogCountryRussia": "Россия",
   "catalogCountryUsa": "США",
-  "catalogDeliveryNote": "Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.",
+  "catalogDeliveryNote": "Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.",
   "catalogFieldAddress": "Адрес",
   "catalogFieldAddressHint": "Улица, дом, квартира",
   "catalogFieldCountry": "Страна",
@@ -113,7 +113,7 @@
       }
     }
   },
-  "catalogFootnote": "Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.",
+  "catalogFootnote": "Обувь продаётся отдельно — {shoes}, {price}.",
   "catalogGrownSubtitle": "и готов отправиться к тебе домой",
   "catalogGrownTitle": "Твой малыш вырос",
   "catalogItemFortune": "Карманный мишка Фортуна",
@@ -122,7 +122,7 @@
   "catalogItemSpaceSet": "Набор Космонавт и Невеста",
   "catalogOrderButton": "Оформить заказ",
   "catalogPayPalNote": " — и картой без аккаунта",
-  "catalogPaySection": "Оплата · КП 12.4",
+  "catalogPaySection": "Оплата",
   "catalogPayStub": "Оплата подключается на этапе интеграции",
   "@catalogSizeCm": {
     "placeholders": {
@@ -161,7 +161,6 @@
   "diaryEventFirstBath": "Первое купание",
   "diaryEventFirstCrawl": "Научился ползать",
   "diaryEventFirstTooth": "Первый зубик",
-  "diaryFootnote": "Дневника нет в КП — он с макета. Отнесён ко второй версии, собран как заготовка. Фотоальбом и «Поделиться» потребуют камеры и прав на съёмку. Миниатюра события — заглушка: настоящие снимки появятся вместе с фотоальбомом.",
   "diaryTitle": "Дневник",
   "dishCookie": "Печенье",
   "dishFruit": "Фрукты",
@@ -258,7 +257,6 @@
     }
   },
   "feedCookResult": "Готово! {recipe} · +{reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}}, еда +{gain}",
-  "feedDishesNote": "Ровно 10 блюд по КП 8.2. Цены и прибавки — плейсхолдеры, по КП 10.9 они утверждаются отдельно и настраиваются с сервера.",
   "@feedEatResult": {
     "placeholders": {
       "dish": {
@@ -297,7 +295,6 @@
     }
   },
   "feedRecipeSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
-  "feedRecipesNote": "Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.",
   "@feedStepProgress": {
     "placeholders": {
       "step": {
@@ -395,7 +392,6 @@
   "growthDurationFirstSteps": "1–2 дня",
   "growthDurationGrowing": "до ~14 дня",
   "growthDurationNewborn": "1 день",
-  "growthFootnote": "Названия и длительности — из КП 5. На макете они другие (Малыш, Детёныш, месяцы вместо дней) — это расхождение висит открытым вопросом.",
   "growthGrowUp": "Повзрослеть",
   "growthMarkNow": "сейчас",
   "growthMarkPassed": "пройдено",
@@ -408,7 +404,22 @@
   },
   "growthNewStage": "Новая стадия: {stage}",
   "growthSizeNow": "Сейчас рост {cm} см, вес {g} г. При рождении — {cm0} см и {g0} г.",
-  "@growthSizeNow": {"placeholders": {"cm": {"type": "String"}, "g": {"type": "String"}, "cm0": {"type": "String"}, "g0": {"type": "String"}}},
+  "@growthSizeNow": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      },
+      "g": {
+        "type": "String"
+      },
+      "cm0": {
+        "type": "String"
+      },
+      "g0": {
+        "type": "String"
+      }
+    }
+  },
   "growthTitle": "Рост и развитие",
   "homeCareButton": "Что будем делать?",
   "homeDevPanelTooltip": "Дев-панель рига",
@@ -573,7 +584,6 @@
     }
   },
   "learnLevelsCount": "{count, plural, one{{count} уровень} few{{count} уровня} other{{count} уровней}}",
-  "learnLevelsNote": "По 10 уровней в каждой категории (КП 9.2). Движок рассчитан на 300 заданий, контент даёт Заказчик через панель (КП 9.4) — здесь по три задания на категорию для примера.",
   "learnQuizHintNote": "Верный ответ — анимация радости и награда.",
   "@learnQuizTitle": {
     "placeholders": {
@@ -586,7 +596,7 @@
     }
   },
   "learnQuizTitle": "{category} · уровень {level}",
-  "learnQuizWrongNote": "Не угадали. Попробуйте ещё раз — штрафа нет (КП 9.3).",
+  "learnQuizWrongNote": "Не угадали. Попробуйте ещё раз — штрафа нет.",
   "learnTaskColorsCircle": "Где круг?",
   "learnTaskColorsGreen": "Где зелёный?",
   "learnTaskColorsRed": "Где красный?",
@@ -686,10 +696,15 @@
     }
   },
   "profileBirthFur": "{hero} · мех {fur}",
-  "profileFootnote": "Знак зодиака ставится по дате регистрации; таблицу склонностей по знакам даёт Заказчик.",
   "profileHeightLabel": "Рост",
   "profileHeightValue": "{cm} см",
-  "@profileHeightValue": {"placeholders": {"cm": {"type": "String"}}},
+  "@profileHeightValue": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      }
+    }
+  },
   "profileHeightStub": "15 см",
   "profileLinkDiary": "Дневник",
   "profileLinkDiarySubtitle": "события и фотоальбом",
@@ -698,10 +713,10 @@
   "profileLinkSettings": "Настройки",
   "profileLinkSettingsSubtitle": "язык и уведомления",
   "profileRename": "Изменить имя",
-  "profileSectionBirth": "Карточка рождения · КП 2.2",
-  "profileSectionHistory": "История стадий · КП 14.1",
+  "profileSectionBirth": "Карточка рождения",
+  "profileSectionHistory": "История стадий",
   "profileSectionLinks": "Разделы",
-  "profileSectionTrait": "Характер · КП 7",
+  "profileSectionTrait": "Характер",
   "profileSexBoy": "мальчик",
   "profileSexGirl": "девочка",
   "profileSexLabel": "Пол",
@@ -714,7 +729,13 @@
   "profileTraitNowLabel": "Сейчас",
   "profileWeightLabel": "Вес",
   "profileWeightValue": "{g} г",
-  "@profileWeightValue": {"placeholders": {"g": {"type": "String"}}},
+  "@profileWeightValue": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightStub": "180 г",
   "profileZodiacLabel": "Знак зодиака",
   "recipeCookie": "Печенье",
@@ -722,7 +743,6 @@
   "recipeMeat": "Мясное блюдо",
   "recipeSandwich": "Сэндвич",
   "recipeVeggie": "Овощное блюдо",
-  "roomFooterNote": "52 предмета по КП 10: мебель 10, декор 16, игрушки 10, одежда 16. Сетка мест и предпросмотр — следующий шаг, сейчас предмет просто ставится или убирается.",
   "@roomItemBought": {
     "placeholders": {
       "name": {
@@ -759,7 +779,6 @@
   "roomSlotEmpty": "Свободное место",
   "roomSlotPut": "Поставить",
   "roomTitle": "Моя комната",
-  "settingsFootnote": "Восемь типов уведомлений по КП 13.1, тихие часы и ограничение частоты — по 13.2. Привязка аккаунта и правовые документы (КП 14.2) появятся вместе с бэкендом.",
   "settingsNotifEvent": "Событие",
   "settingsNotifGift": "Подарок",
   "settingsNotifHungry": "Голоден",
@@ -772,11 +791,11 @@
   "legalPrivacy": "Политика конфиденциальности",
   "legalTerms": "Условия использования",
   "settingsSectionAccount": "Аккаунт",
-  "settingsSectionLanguage": "Язык · КП 16.1",
+  "settingsSectionLanguage": "Язык",
   "settingsSectionSound": "Звук",
   "settingsSounds": "Звуки в игре",
   "settingsSectionLegal": "Правовые документы",
-  "settingsSectionNotifications": "Уведомления · КП 13.1, 13.2",
+  "settingsSectionNotifications": "Уведомления",
   "settingsSignOut": "Выйти",
   "settingsSignOutConfirmBody": "Прогресс останется на сервере и вернётся при следующем входе.",
   "settingsSignOutConfirmTitle": "Выйти из аккаунта?",
@@ -1067,7 +1086,13 @@
   },
   "buyNotEnoughOk": "Понятно",
   "welcomeBackGrandma": "{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!",
-  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}},
+  "@welcomeBackGrandma": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "dailyTitle": "Сегодня",
   "dailyGiftClaimed": "Подарок забран — завтра будет следующий",
   "dailyGiftFailed": "Не получилось забрать подарок. Проверьте связь",
@@ -1085,11 +1110,44 @@
   "profileLinkDaily": "Подарок и задания дня",
   "profileLinkDailySubtitle": "календарь на 7 дней и задания",
   "dailyGiftDay": "День {n}",
-  "@dailyGiftDay": {"placeholders": {"n": {"type": "int"}}},
+  "@dailyGiftDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "dailyGiftClaim": "Забрать +{coins}",
-  "@dailyGiftClaim": {"placeholders": {"coins": {"type": "int"}}},
+  "@dailyGiftClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "dailyWeekly": "Задание недели: все задания дня в {target} днях — {done} из {target}, +{coins}",
-  "@dailyWeekly": {"placeholders": {"target": {"type": "int"}, "done": {"type": "int"}, "coins": {"type": "int"}}},
+  "@dailyWeekly": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "stageUpCelebrate": "{name} подрос! Теперь — «{stage}». Подарок: монетки",
-  "@stageUpCelebrate": {"placeholders": {"name": {"type": "String"}, "stage": {"type": "String"}}}
+  "@stageUpCelebrate": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  }
 }

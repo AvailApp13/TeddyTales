@@ -69,14 +69,6 @@ class DiaryScreen extends StatelessWidget {
                       _DiaryRow(event: event),
                       const SizedBox(height: 8),
                     ],
-                    const SizedBox(height: 2),
-                    Text(
-                      context.l10n.diaryFootnote,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
                   ],
                 ),
               ),

@@ -28,7 +28,7 @@
   "birthSkip": "Skip",
   "careFeedSubtitle": "Something tasty for your little one",
   "careFeedTitle": "Feed",
-  "careFootnote": "Petting isn't on the list: per spec section 8.1 it's a screen touch — just tap your bear on the home screen.",
+  "careFootnote": "To pet your bear, just tap them on the home screen.",
   "careLockedUntilStage": "Unlocks at stage {stage}",
   "carePlaySubtitle": "Fun and games together",
   "carePlayTitle": "Play",
@@ -43,7 +43,7 @@
   "catalogCountryKazakhstan": "Kazakhstan",
   "catalogCountryRussia": "Russia",
   "catalogCountryUsa": "USA",
-  "catalogDeliveryNote": "Delivery per the store: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7. Orders go to the Client's live sales system (Brief 12.5) — this form doesn't submit anything yet.",
+  "catalogDeliveryNote": "Delivery: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7.",
   "catalogFieldAddress": "Address",
   "catalogFieldAddressHint": "Street, building, apartment",
   "catalogFieldCountry": "Country",
@@ -51,7 +51,7 @@
   "catalogFieldNameHint": "As in your ID",
   "catalogFieldPhone": "Phone",
   "catalogFieldPostcode": "Postcode",
-  "catalogFootnote": "Items, prices and sizes come from the official TeddyTales® store, as required by Brief 12.1. The photos are identical placeholders: real shots will come from the Client's catalog. Shoes are sold there separately — {shoes}, {price}.",
+  "catalogFootnote": "Shoes are sold separately — {shoes}, {price}.",
   "catalogGrownSubtitle": "and ready to come home to you",
   "catalogGrownTitle": "Your little one is all grown up",
   "catalogItemFortune": "Fortune Pocket Bear",
@@ -60,7 +60,7 @@
   "catalogItemSpaceSet": "Astronaut & Bride Set",
   "catalogOrderButton": "Order now",
   "catalogPayPalNote": " — or by card, no account needed",
-  "catalogPaySection": "Payment · Brief 12.4",
+  "catalogPaySection": "Payment",
   "catalogPayStub": "Payments will be connected during integration",
   "catalogSizeCm": "{size} cm",
   "catalogSummaryItem": "Item",
@@ -85,7 +85,6 @@
   "diaryEventFirstBath": "First bath",
   "diaryEventFirstCrawl": "Learned to crawl",
   "diaryEventFirstTooth": "First tooth",
-  "diaryFootnote": "The diary isn't in the КП — it comes from the mockup. Slated for version two and built as a draft. The photo album and sharing will need the camera and photo permissions. Event thumbnails are stubs: real photos arrive with the album.",
   "diaryTitle": "Diary",
   "dishCookie": "Cookies",
   "dishFruit": "Fruit",
@@ -114,7 +113,6 @@
   "dishDescPie": "with raspberries and blueberries",
   "feedCookHint": "Add the ingredients in order. Slip up? We'll simply try again.",
   "feedCookResult": "Done! {recipe} · +{reward, plural, one{{reward} coin} other{{reward} coins}}, food +{gain}",
-  "feedDishesNote": "Exactly 10 dishes per spec 8.2. Prices and gains are placeholders — per spec 10.9 they are approved separately and configured from the server.",
   "feedEatResult": "{dish} · food +{gain}, −{price, plural, one{{price} coin} other{{price} coins}}",
   "feedFavourite": "Favourite",
   "feedFoodGain": "food +{gain}",
@@ -126,7 +124,6 @@
   "feedHintReserved": "Could I just have some fruit?",
   "feedNotEnoughCoins": "Not enough coins",
   "feedRecipeSteps": "{count, plural, one{{count} step} other{{count} steps}}",
-  "feedRecipesNote": "Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.",
   "feedStepProgress": "Step {step} of {total}. Reward: {reward, plural, one{{reward} coin} other{{reward} coins}} and food +{gain}.",
   "feedTabCook": "Cook",
   "feedTabReady": "Ready meals",
@@ -149,13 +146,27 @@
   "growthDurationFirstSteps": "1–2 days",
   "growthDurationGrowing": "until around day 14",
   "growthDurationNewborn": "1 day",
-  "growthFootnote": "Names and durations come from КП 5. The mockup uses different ones (Baby, Cub, months instead of days) — that mismatch is still an open question.",
   "growthGrowUp": "Grow up",
   "growthMarkNow": "now",
   "growthMarkPassed": "done",
   "growthNewStage": "New stage: {stage}",
   "growthSizeNow": "Now {cm} cm tall and {g} g. At birth — {cm0} cm and {g0} g.",
-  "@growthSizeNow": {"placeholders": {"cm": {"type": "String"}, "g": {"type": "String"}, "cm0": {"type": "String"}, "g0": {"type": "String"}}},
+  "@growthSizeNow": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      },
+      "g": {
+        "type": "String"
+      },
+      "cm0": {
+        "type": "String"
+      },
+      "g0": {
+        "type": "String"
+      }
+    }
+  },
   "growthTitle": "Growth & development",
   "homeCareButton": "What shall we do?",
   "homeDevPanelTooltip": "Rig dev panel",
@@ -285,10 +296,9 @@
   "learnGamesTitle": "Games",
   "learnLevelDoneToast": "{coins, plural, one{Level complete! +{coins} coin} other{Level complete! +{coins} coins}}",
   "learnLevelsCount": "{count, plural, one{{count} level} other{{count} levels}}",
-  "learnLevelsNote": "10 levels per category (spec 9.2). The engine is built for 300 tasks; content comes from the Client via the admin panel (spec 9.4) — three sample tasks per category for now.",
   "learnQuizHintNote": "A correct answer brings a happy animation and a reward.",
   "learnQuizTitle": "{category} · level {level}",
-  "learnQuizWrongNote": "Not quite. Try again — no penalty (spec 9.3).",
+  "learnQuizWrongNote": "Not quite. Try again — no penalty.",
   "learnTaskColorsCircle": "Where is the circle?",
   "learnTaskColorsGreen": "Where is green?",
   "learnTaskColorsRed": "Where is red?",
@@ -361,10 +371,15 @@
   "petDefaultName": "My little one",
   "profileAgeLabel": "Age",
   "profileBirthFur": "{hero} · {fur} fur",
-  "profileFootnote": "The zodiac sign follows the sign-up date; the zodiac traits table comes from the Client.",
   "profileHeightLabel": "Height",
   "profileHeightValue": "{cm} cm",
-  "@profileHeightValue": {"placeholders": {"cm": {"type": "String"}}},
+  "@profileHeightValue": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      }
+    }
+  },
   "profileHeightStub": "15 cm",
   "profileLinkDiary": "Diary",
   "profileLinkDiarySubtitle": "moments and photo album",
@@ -373,10 +388,10 @@
   "profileLinkSettings": "Settings",
   "profileLinkSettingsSubtitle": "language and notifications",
   "profileRename": "Change the name",
-  "profileSectionBirth": "Birth card · КП 2.2",
-  "profileSectionHistory": "Stage history · КП 14.1",
+  "profileSectionBirth": "Birth card",
+  "profileSectionHistory": "Stage history",
   "profileSectionLinks": "More",
-  "profileSectionTrait": "Personality · КП 7",
+  "profileSectionTrait": "Personality",
   "profileSexBoy": "boy",
   "profileSexGirl": "girl",
   "profileSexLabel": "Sex",
@@ -389,7 +404,13 @@
   "profileTraitNowLabel": "Right now",
   "profileWeightLabel": "Weight",
   "profileWeightValue": "{g} g",
-  "@profileWeightValue": {"placeholders": {"g": {"type": "String"}}},
+  "@profileWeightValue": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightStub": "180 g",
   "profileZodiacLabel": "Zodiac sign",
   "recipeCookie": "Cookies",
@@ -397,7 +418,6 @@
   "recipeMeat": "Meat dish",
   "recipeSandwich": "Sandwich",
   "recipeVeggie": "Veggie dish",
-  "roomFooterNote": "52 items per brief section 10: furniture 10, decor 16, toys 10, clothes 16. The placement grid and room preview come next — for now an item is simply placed or put away.",
   "roomItemBought": "{name} purchased",
   "roomItemPlaced": "{name} placed",
   "roomItemRemoved": "{name} put away",
@@ -413,7 +433,6 @@
   "roomSlotEmpty": "An empty spot",
   "roomSlotPut": "Put here",
   "roomTitle": "My Room",
-  "settingsFootnote": "Eight notification types per КП 13.1; quiet hours and frequency limits per 13.2. Account linking and legal documents (КП 14.2) arrive together with the backend.",
   "settingsNotifEvent": "Event",
   "settingsNotifGift": "Gift",
   "settingsNotifHungry": "Hungry",
@@ -426,11 +445,11 @@
   "legalPrivacy": "Privacy Policy",
   "legalTerms": "Terms of Use",
   "settingsSectionAccount": "Account",
-  "settingsSectionLanguage": "Language · КП 16.1",
+  "settingsSectionLanguage": "Language",
   "settingsSectionSound": "Sound",
   "settingsSounds": "Game sounds",
   "settingsSectionLegal": "Legal",
-  "settingsSectionNotifications": "Notifications · КП 13.1, 13.2",
+  "settingsSectionNotifications": "Notifications",
   "settingsSignOut": "Sign out",
   "settingsSignOutConfirmBody": "Your progress stays on the server and comes back next time you sign in.",
   "settingsSignOutConfirmTitle": "Sign out?",
@@ -596,7 +615,13 @@
   "buyNotEnough": "{missing, plural, one{You need {missing} more coin} other{You need {missing} more coins}}",
   "buyNotEnoughOk": "OK",
   "welcomeBackGrandma": "{name} stayed with grandma while you were away: fed, washed and missing you a lot. Grandma sent some coins as a gift!",
-  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}},
+  "@welcomeBackGrandma": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "dailyTitle": "Today",
   "dailyGiftClaimed": "Claimed — the next gift comes tomorrow",
   "dailyGiftFailed": "Couldn't claim the gift. Check your connection",
@@ -614,11 +639,44 @@
   "profileLinkDaily": "Daily gift and tasks",
   "profileLinkDailySubtitle": "7-day calendar and tasks",
   "dailyGiftDay": "Day {n}",
-  "@dailyGiftDay": {"placeholders": {"n": {"type": "int"}}},
+  "@dailyGiftDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "dailyGiftClaim": "Claim +{coins}",
-  "@dailyGiftClaim": {"placeholders": {"coins": {"type": "int"}}},
+  "@dailyGiftClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "dailyWeekly": "Weekly task: all daily tasks on {target} days — {done} of {target}, +{coins}",
-  "@dailyWeekly": {"placeholders": {"target": {"type": "int"}, "done": {"type": "int"}, "coins": {"type": "int"}}},
+  "@dailyWeekly": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "stageUpCelebrate": "{name} has grown! Now: “{stage}”. A gift of coins",
-  "@stageUpCelebrate": {"placeholders": {"name": {"type": "String"}, "stage": {"type": "String"}}}
+  "@stageUpCelebrate": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  }
 }

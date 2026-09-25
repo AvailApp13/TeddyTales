@@ -271,7 +271,7 @@ abstract class AppLocalizations {
   /// No description provided for @careFootnote.
   ///
   /// In ru, this message translates to:
-  /// **'Поглаживания в списке нет: по разделу 8.1 ТЗ это касание экрана — тапните по мишке на главной.'**
+  /// **'Погладить мишку можно прямо на главной — просто коснитесь его.'**
   String get careFootnote;
 
   /// No description provided for @careLockedUntilStage.
@@ -361,7 +361,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogDeliveryNote.
   ///
   /// In ru, this message translates to:
-  /// **'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.'**
+  /// **'Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.'**
   String get catalogDeliveryNote;
 
   /// No description provided for @catalogFieldAddress.
@@ -409,7 +409,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogFootnote.
   ///
   /// In ru, this message translates to:
-  /// **'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.'**
+  /// **'Обувь продаётся отдельно — {shoes}, {price}.'**
   String catalogFootnote(String shoes, String price);
 
   /// No description provided for @catalogGrownSubtitle.
@@ -463,7 +463,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogPaySection.
   ///
   /// In ru, this message translates to:
-  /// **'Оплата · КП 12.4'**
+  /// **'Оплата'**
   String get catalogPaySection;
 
   /// No description provided for @catalogPayStub.
@@ -609,12 +609,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Первый зубик'**
   String get diaryEventFirstTooth;
-
-  /// No description provided for @diaryFootnote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Дневника нет в КП — он с макета. Отнесён ко второй версии, собран как заготовка. Фотоальбом и «Поделиться» потребуют камеры и прав на съёмку. Миниатюра события — заглушка: настоящие снимки появятся вместе с фотоальбомом.'**
-  String get diaryFootnote;
 
   /// No description provided for @diaryTitle.
   ///
@@ -784,12 +778,6 @@ abstract class AppLocalizations {
   /// **'Готово! {recipe} · +{reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}}, еда +{gain}'**
   String feedCookResult(String recipe, int reward, int gain);
 
-  /// No description provided for @feedDishesNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ровно 10 блюд по КП 8.2. Цены и прибавки — плейсхолдеры, по КП 10.9 они утверждаются отдельно и настраиваются с сервера.'**
-  String get feedDishesNote;
-
   /// No description provided for @feedEatResult.
   ///
   /// In ru, this message translates to:
@@ -855,12 +843,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
   String feedRecipeSteps(int count);
-
-  /// No description provided for @feedRecipesNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.'**
-  String get feedRecipesNote;
 
   /// No description provided for @feedStepProgress.
   ///
@@ -993,12 +975,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'1 день'**
   String get growthDurationNewborn;
-
-  /// No description provided for @growthFootnote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Названия и длительности — из КП 5. На макете они другие (Малыш, Детёныш, месяцы вместо дней) — это расхождение висит открытым вопросом.'**
-  String get growthFootnote;
 
   /// No description provided for @growthGrowUp.
   ///
@@ -1762,12 +1738,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} уровень} few{{count} уровня} other{{count} уровней}}'**
   String learnLevelsCount(int count);
 
-  /// No description provided for @learnLevelsNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'По 10 уровней в каждой категории (КП 9.2). Движок рассчитан на 300 заданий, контент даёт Заказчик через панель (КП 9.4) — здесь по три задания на категорию для примера.'**
-  String get learnLevelsNote;
-
   /// No description provided for @learnQuizHintNote.
   ///
   /// In ru, this message translates to:
@@ -1783,7 +1753,7 @@ abstract class AppLocalizations {
   /// No description provided for @learnQuizWrongNote.
   ///
   /// In ru, this message translates to:
-  /// **'Не угадали. Попробуйте ещё раз — штрафа нет (КП 9.3).'**
+  /// **'Не угадали. Попробуйте ещё раз — штрафа нет.'**
   String get learnQuizWrongNote;
 
   /// No description provided for @learnTaskColorsCircle.
@@ -2032,12 +2002,6 @@ abstract class AppLocalizations {
   /// **'{hero} · мех {fur}'**
   String profileBirthFur(String hero, String fur);
 
-  /// No description provided for @profileFootnote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Знак зодиака ставится по дате регистрации; таблицу склонностей по знакам даёт Заказчик.'**
-  String get profileFootnote;
-
   /// No description provided for @profileHeightLabel.
   ///
   /// In ru, this message translates to:
@@ -2101,13 +2065,13 @@ abstract class AppLocalizations {
   /// No description provided for @profileSectionBirth.
   ///
   /// In ru, this message translates to:
-  /// **'Карточка рождения · КП 2.2'**
+  /// **'Карточка рождения'**
   String get profileSectionBirth;
 
   /// No description provided for @profileSectionHistory.
   ///
   /// In ru, this message translates to:
-  /// **'История стадий · КП 14.1'**
+  /// **'История стадий'**
   String get profileSectionHistory;
 
   /// No description provided for @profileSectionLinks.
@@ -2119,7 +2083,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileSectionTrait.
   ///
   /// In ru, this message translates to:
-  /// **'Характер · КП 7'**
+  /// **'Характер'**
   String get profileSectionTrait;
 
   /// No description provided for @profileSexBoy.
@@ -2236,12 +2200,6 @@ abstract class AppLocalizations {
   /// **'Овощное блюдо'**
   String get recipeVeggie;
 
-  /// No description provided for @roomFooterNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'52 предмета по КП 10: мебель 10, декор 16, игрушки 10, одежда 16. Сетка мест и предпросмотр — следующий шаг, сейчас предмет просто ставится или убирается.'**
-  String get roomFooterNote;
-
   /// No description provided for @roomItemBought.
   ///
   /// In ru, this message translates to:
@@ -2332,12 +2290,6 @@ abstract class AppLocalizations {
   /// **'Моя комната'**
   String get roomTitle;
 
-  /// No description provided for @settingsFootnote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Восемь типов уведомлений по КП 13.1, тихие часы и ограничение частоты — по 13.2. Привязка аккаунта и правовые документы (КП 14.2) появятся вместе с бэкендом.'**
-  String get settingsFootnote;
-
   /// No description provided for @settingsNotifEvent.
   ///
   /// In ru, this message translates to:
@@ -2413,7 +2365,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSectionLanguage.
   ///
   /// In ru, this message translates to:
-  /// **'Язык · КП 16.1'**
+  /// **'Язык'**
   String get settingsSectionLanguage;
 
   /// No description provided for @settingsSectionSound.
@@ -2437,7 +2389,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSectionNotifications.
   ///
   /// In ru, this message translates to:
-  /// **'Уведомления · КП 13.1, 13.2'**
+  /// **'Уведомления'**
   String get settingsSectionNotifications;
 
   /// No description provided for @settingsSignOut.

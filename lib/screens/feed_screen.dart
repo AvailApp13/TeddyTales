@@ -323,8 +323,6 @@ class _FeedScreenState extends State<FeedScreen> {
             );
           },
         ),
-        const SizedBox(height: 10),
-        _Note(context.l10n.feedDishesNote),
       ],
     );
   }
@@ -342,8 +340,6 @@ class _FeedScreenState extends State<FeedScreen> {
           _RecipeTile(recipe: recipe, onTap: () => _openRecipe(recipe)),
           const SizedBox(height: 8),
         ],
-        const SizedBox(height: 2),
-        _Note(context.l10n.feedRecipesNote),
       ],
     );
   }

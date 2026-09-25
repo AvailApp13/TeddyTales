@@ -312,16 +312,6 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-
-                        const SizedBox(height: 10),
-                        Text(
-                          l10n.profileFootnote,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                height: 1.5,
-                              ),
-                        ),
                       ],
                     ),
                   ),

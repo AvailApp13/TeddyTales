@@ -28,7 +28,7 @@
   "birthSkip": "跳过",
   "careFeedSubtitle": "给小家伙的美味",
   "careFeedTitle": "喂饭",
-  "careFootnote": "列表里没有抚摸：按技术规范 8.1，它是触屏动作——在主界面轻点小熊即可。",
+  "careFootnote": "想抚摸小熊，在主界面轻点它即可。",
   "careLockedUntilStage": "将在第 {stage} 阶段解锁",
   "carePlaySubtitle": "一起开心玩游戏",
   "carePlayTitle": "玩耍",
@@ -43,7 +43,7 @@
   "catalogCountryKazakhstan": "哈萨克斯坦",
   "catalogCountryRussia": "俄罗斯",
   "catalogCountryUsa": "美国",
-  "catalogDeliveryNote": "按商店数据配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。订单将进入客户现有的销售系统（需求 12.5）——此表单暂不提交。",
+  "catalogDeliveryNote": "配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。",
   "catalogFieldAddress": "地址",
   "catalogFieldAddressHint": "街道、门牌、房号",
   "catalogFieldCountry": "国家/地区",
@@ -51,7 +51,7 @@
   "catalogFieldNameHint": "与证件一致",
   "catalogFieldPhone": "电话",
   "catalogFieldPostcode": "邮政编码",
-  "catalogFootnote": "商品、价格与尺寸均来自 TeddyTales® 官方商店（需求 12.1）。图片暂为同一张占位图：正式照片将来自客户的商品目录。鞋子在商店单独出售——{shoes}，{price}。",
+  "catalogFootnote": "鞋子单独出售——{shoes}，{price}。",
   "catalogGrownSubtitle": "准备好去你家啦",
   "catalogGrownTitle": "你的小家伙长大了",
   "catalogItemFortune": "口袋幸运小熊",
@@ -60,7 +60,7 @@
   "catalogItemSpaceSet": "宇航员与新娘套装",
   "catalogOrderButton": "立即下单",
   "catalogPayPalNote": "——也可免账户用银行卡支付",
-  "catalogPaySection": "支付 · 需求 12.4",
+  "catalogPaySection": "支付",
   "catalogPayStub": "支付将在系统对接阶段开通",
   "catalogSizeCm": "{size} 厘米",
   "catalogSummaryItem": "商品",
@@ -85,7 +85,6 @@
   "diaryEventFirstBath": "第一次洗澡",
   "diaryEventFirstCrawl": "学会了爬",
   "diaryEventFirstTooth": "第一颗小牙",
-  "diaryFootnote": "日记不在 КП 中，源自设计稿，归入第二版，目前只是雏形。相册和分享功能需要相机及拍摄权限。事件缩略图为占位：真正的照片将随相册一起上线。",
   "diaryTitle": "日记",
   "dishCookie": "饼干",
   "dishFruit": "水果",
@@ -114,7 +113,6 @@
   "dishDescPie": "配覆盆子和蓝莓",
   "feedCookHint": "按顺序加入食材。放错了也没关系，再试一次就好。",
   "feedCookResult": "做好啦！{recipe} · +{reward} 金币，食物 +{gain}",
-  "feedDishesNote": "按需求 8.2 共 10 道菜。价格与数值为占位值，按需求 10.9 另行确定并由服务器配置。",
   "feedEatResult": "{dish} · 食物 +{gain}，−{price} 金币",
   "feedFavourite": "最爱",
   "feedFoodGain": "食物 +{gain}",
@@ -126,7 +124,6 @@
   "feedHintReserved": "就吃点水果，可以吗？",
   "feedNotEnoughCoins": "金币不够",
   "feedRecipeSteps": "{count, plural, other{{count} 步}}",
-  "feedRecipesNote": "按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。",
   "feedStepProgress": "第 {step} 步，共 {total} 步。奖励：{reward} 金币，食物 +{gain}。",
   "feedTabCook": "动手做",
   "feedTabReady": "现成美食",
@@ -149,13 +146,27 @@
   "growthDurationFirstSteps": "1–2 天",
   "growthDurationGrowing": "到第 14 天左右",
   "growthDurationNewborn": "1 天",
-  "growthFootnote": "名称与时长取自 КП 5。设计稿里的写法不同（宝宝、幼崽，以月而非天计）——这一差异仍是待定问题。",
   "growthGrowUp": "长大一步",
   "growthMarkNow": "当前",
   "growthMarkPassed": "已完成",
   "growthNewStage": "新阶段：{stage}",
   "growthSizeNow": "现在身高 {cm} 厘米，体重 {g} 克。出生时 {cm0} 厘米、{g0} 克。",
-  "@growthSizeNow": {"placeholders": {"cm": {"type": "String"}, "g": {"type": "String"}, "cm0": {"type": "String"}, "g0": {"type": "String"}}},
+  "@growthSizeNow": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      },
+      "g": {
+        "type": "String"
+      },
+      "cm0": {
+        "type": "String"
+      },
+      "g0": {
+        "type": "String"
+      }
+    }
+  },
   "growthTitle": "成长与发育",
   "homeCareButton": "我们做点什么呢？",
   "homeDevPanelTooltip": "骨骼调试面板",
@@ -285,10 +296,9 @@
   "learnGamesTitle": "游戏",
   "learnLevelDoneToast": "{coins, plural, other{通关啦！+{coins}金币}}",
   "learnLevelsCount": "{count, plural, other{{count}个关卡}}",
-  "learnLevelsNote": "每个类别10关(规格9.2)。引擎可容纳300道题，内容由客户通过管理面板提供(规格9.4)——目前每个类别有三道示例题。",
   "learnQuizHintNote": "答对了会有开心动画和奖励。",
   "learnQuizTitle": "{category} · 第{level}关",
-  "learnQuizWrongNote": "没答对。再试一次吧——不扣分(规格9.3)。",
+  "learnQuizWrongNote": "没答对。再试一次吧——不扣分。",
   "learnTaskColorsCircle": "圆形在哪里？",
   "learnTaskColorsGreen": "绿色在哪里？",
   "learnTaskColorsRed": "红色在哪里？",
@@ -361,10 +371,15 @@
   "petDefaultName": "我的宝贝",
   "profileAgeLabel": "年龄",
   "profileBirthFur": "{hero} · 毛色 {fur}",
-  "profileFootnote": "星座按注册日期确定；星座性格对照表由客户方提供。",
   "profileHeightLabel": "身高",
   "profileHeightValue": "{cm} 厘米",
-  "@profileHeightValue": {"placeholders": {"cm": {"type": "String"}}},
+  "@profileHeightValue": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      }
+    }
+  },
   "profileHeightStub": "15 厘米",
   "profileLinkDiary": "日记",
   "profileLinkDiarySubtitle": "大事记与相册",
@@ -373,10 +388,10 @@
   "profileLinkSettings": "设置",
   "profileLinkSettingsSubtitle": "语言与通知",
   "profileRename": "修改名字",
-  "profileSectionBirth": "出生卡 · КП 2.2",
-  "profileSectionHistory": "成长阶段记录 · КП 14.1",
+  "profileSectionBirth": "出生卡",
+  "profileSectionHistory": "成长阶段记录",
   "profileSectionLinks": "更多",
-  "profileSectionTrait": "性格 · КП 7",
+  "profileSectionTrait": "性格",
   "profileSexBoy": "男孩",
   "profileSexGirl": "女孩",
   "profileSexLabel": "性别",
@@ -389,7 +404,13 @@
   "profileTraitNowLabel": "当前",
   "profileWeightLabel": "体重",
   "profileWeightValue": "{g} 克",
-  "@profileWeightValue": {"placeholders": {"g": {"type": "String"}}},
+  "@profileWeightValue": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
   "profileWeightStub": "180 克",
   "profileZodiacLabel": "星座",
   "recipeCookie": "饼干",
@@ -397,7 +418,6 @@
   "recipeMeat": "肉食料理",
   "recipeSandwich": "三明治",
   "recipeVeggie": "蔬菜料理",
-  "roomFooterNote": "需求第 10 节共 52 件物品：家具 10、装饰 16、玩具 10、服装 16。摆放网格和房间预览是下一步，目前物品只是简单地摆放或收起。",
   "roomItemBought": "已购买「{name}」",
   "roomItemPlaced": "已摆放「{name}」",
   "roomItemRemoved": "已收起「{name}」",
@@ -413,7 +433,6 @@
   "roomSlotEmpty": "空位",
   "roomSlotPut": "放置",
   "roomTitle": "我的房间",
-  "settingsFootnote": "八种通知类型依据 КП 13.1，免打扰时段与频率限制依据 13.2。账号绑定和法律文件（КП 14.2）将随后端一起推出。",
   "settingsNotifEvent": "活动",
   "settingsNotifGift": "礼物",
   "settingsNotifHungry": "饿了",
@@ -426,11 +445,11 @@
   "legalPrivacy": "隐私政策",
   "legalTerms": "使用条款",
   "settingsSectionAccount": "账号",
-  "settingsSectionLanguage": "语言 · КП 16.1",
+  "settingsSectionLanguage": "语言",
   "settingsSectionSound": "声音",
   "settingsSounds": "游戏音效",
   "settingsSectionLegal": "法律文件",
-  "settingsSectionNotifications": "通知 · КП 13.1、13.2",
+  "settingsSectionNotifications": "通知",
   "settingsSignOut": "退出登录",
   "settingsSignOutConfirmBody": "进度保存在服务器，下次登录会恢复。",
   "settingsSignOutConfirmTitle": "确定退出登录？",
@@ -596,7 +615,13 @@
   "buyNotEnough": "还差 {missing} 枚金币",
   "buyNotEnoughOk": "知道了",
   "welcomeBackGrandma": "你不在的时候，{name}去奶奶家住了：吃饱了、洗干净了，很想你。奶奶还送来了金币！",
-  "@welcomeBackGrandma": {"placeholders": {"name": {"type": "String"}}},
+  "@welcomeBackGrandma": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "dailyTitle": "今天",
   "dailyGiftClaimed": "已领取——明天还有新礼物",
   "dailyGiftFailed": "礼物领取失败，请检查网络",
@@ -614,11 +639,44 @@
   "profileLinkDaily": "每日礼物和任务",
   "profileLinkDailySubtitle": "7天日历和任务",
   "dailyGiftDay": "第{n}天",
-  "@dailyGiftDay": {"placeholders": {"n": {"type": "int"}}},
+  "@dailyGiftDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "dailyGiftClaim": "领取 +{coins}",
-  "@dailyGiftClaim": {"placeholders": {"coins": {"type": "int"}}},
+  "@dailyGiftClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "dailyWeekly": "本周任务：{target}天完成全部每日任务——已完成{done}/{target}，+{coins}",
-  "@dailyWeekly": {"placeholders": {"target": {"type": "int"}, "done": {"type": "int"}, "coins": {"type": "int"}}},
+  "@dailyWeekly": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "stageUpCelebrate": "{name}长大了！现在是「{stage}」。奖励金币",
-  "@stageUpCelebrate": {"placeholders": {"name": {"type": "String"}, "stage": {"type": "String"}}}
+  "@stageUpCelebrate": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  }
 }

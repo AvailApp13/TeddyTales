@@ -187,23 +187,6 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-
-                        const SizedBox(height: 10),
-                        // Текст подписи — дословно из прототипа. Он объясняет
-                        // две вещи сразу: почему переключателей ровно восемь и
-                        // куда делись остальные пункты КП 14.2.
-                        //
-                        // ЗАГЛУШКА: ограничение частоты (КП 13.2) упомянуто, но
-                        // ручки для него нет ни здесь, ни в прототипе —
-                        // частоту держит отправляющая сторона, то есть сервер.
-                        Text(
-                          l10n.settingsFootnote,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                height: 1.5,
-                              ),
-                        ),
                       ],
                     ),
                   ),

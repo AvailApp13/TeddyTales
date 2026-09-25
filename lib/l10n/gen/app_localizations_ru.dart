@@ -142,7 +142,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get careFootnote =>
-      'Поглаживания в списке нет: по разделу 8.1 ТЗ это касание экрана — тапните по мишке на главной.';
+      'Погладить мишку можно прямо на главной — просто коснитесь его.';
 
   @override
   String careLockedUntilStage(int stage) {
@@ -190,7 +190,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogDeliveryNote =>
-      'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.';
+      'Доставка: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7.';
 
   @override
   String get catalogFieldAddress => 'Адрес';
@@ -215,7 +215,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return 'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — $shoes, $price.';
+    return 'Обувь продаётся отдельно — $shoes, $price.';
   }
 
   @override
@@ -243,7 +243,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogPayPalNote => ' — и картой без аккаунта';
 
   @override
-  String get catalogPaySection => 'Оплата · КП 12.4';
+  String get catalogPaySection => 'Оплата';
 
   @override
   String get catalogPayStub => 'Оплата подключается на этапе интеграции';
@@ -320,10 +320,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get diaryEventFirstTooth => 'Первый зубик';
-
-  @override
-  String get diaryFootnote =>
-      'Дневника нет в КП — он с макета. Отнесён ко второй версии, собран как заготовка. Фотоальбом и «Поделиться» потребуют камеры и прав на съёмку. Миниатюра события — заглушка: настоящие снимки появятся вместе с фотоальбомом.';
 
   @override
   String get diaryTitle => 'Дневник';
@@ -432,10 +428,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get feedDishesNote =>
-      'Ровно 10 блюд по КП 8.2. Цены и прибавки — плейсхолдеры, по КП 10.9 они утверждаются отдельно и настраиваются с сервера.';
-
-  @override
   String feedEatResult(String dish, int gain, int price) {
     String _temp0 = intl.Intl.pluralLogic(
       price,
@@ -489,10 +481,6 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote =>
-      'Ровно 5 рецептов по КП 8.5: печенье и сэндвич — по 3 шага, остальные — от 4 до 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -592,10 +580,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get growthDurationNewborn => '1 день';
-
-  @override
-  String get growthFootnote =>
-      'Названия и длительности — из КП 5. На макете они другие (Малыш, Детёныш, месяцы вместо дней) — это расхождение висит открытым вопросом.';
 
   @override
   String get growthGrowUp => 'Повзрослеть';
@@ -1018,10 +1002,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get learnLevelsNote =>
-      'По 10 уровней в каждой категории (КП 9.2). Движок рассчитан на 300 заданий, контент даёт Заказчик через панель (КП 9.4) — здесь по три задания на категорию для примера.';
-
-  @override
   String get learnQuizHintNote => 'Верный ответ — анимация радости и награда.';
 
   @override
@@ -1031,7 +1011,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get learnQuizWrongNote =>
-      'Не угадали. Попробуйте ещё раз — штрафа нет (КП 9.3).';
+      'Не угадали. Попробуйте ещё раз — штрафа нет.';
 
   @override
   String get learnTaskColorsCircle => 'Где круг?';
@@ -1172,10 +1152,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get profileFootnote =>
-      'Знак зодиака ставится по дате регистрации; таблицу склонностей по знакам даёт Заказчик.';
-
-  @override
   String get profileHeightLabel => 'Рост';
 
   @override
@@ -1208,16 +1184,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileRename => 'Изменить имя';
 
   @override
-  String get profileSectionBirth => 'Карточка рождения · КП 2.2';
+  String get profileSectionBirth => 'Карточка рождения';
 
   @override
-  String get profileSectionHistory => 'История стадий · КП 14.1';
+  String get profileSectionHistory => 'История стадий';
 
   @override
   String get profileSectionLinks => 'Разделы';
 
   @override
-  String get profileSectionTrait => 'Характер · КП 7';
+  String get profileSectionTrait => 'Характер';
 
   @override
   String get profileSexBoy => 'мальчик';
@@ -1279,10 +1255,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recipeVeggie => 'Овощное блюдо';
 
   @override
-  String get roomFooterNote =>
-      '52 предмета по КП 10: мебель 10, декор 16, игрушки 10, одежда 16. Сетка мест и предпросмотр — следующий шаг, сейчас предмет просто ставится или убирается.';
-
-  @override
   String roomItemBought(String name) {
     return 'Куплено: $name';
   }
@@ -1334,10 +1306,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get roomTitle => 'Моя комната';
 
   @override
-  String get settingsFootnote =>
-      'Восемь типов уведомлений по КП 13.1, тихие часы и ограничение частоты — по 13.2. Привязка аккаунта и правовые документы (КП 14.2) появятся вместе с бэкендом.';
-
-  @override
   String get settingsNotifEvent => 'Событие';
 
   @override
@@ -1374,7 +1342,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsSectionAccount => 'Аккаунт';
 
   @override
-  String get settingsSectionLanguage => 'Язык · КП 16.1';
+  String get settingsSectionLanguage => 'Язык';
 
   @override
   String get settingsSectionSound => 'Звук';
@@ -1386,7 +1354,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsSectionLegal => 'Правовые документы';
 
   @override
-  String get settingsSectionNotifications => 'Уведомления · КП 13.1, 13.2';
+  String get settingsSectionNotifications => 'Уведомления';
 
   @override
   String get settingsSignOut => 'Выйти';

@@ -138,7 +138,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get careFootnote =>
-      'Petting isn\'t on the list: per spec section 8.1 it\'s a screen touch — just tap your bear on the home screen.';
+      'To pet your bear, just tap them on the home screen.';
 
   @override
   String careLockedUntilStage(int stage) {
@@ -186,7 +186,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get catalogDeliveryNote =>
-      'Delivery per the store: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7. Orders go to the Client\'s live sales system (Brief 12.5) — this form doesn\'t submit anything yet.';
+      'Delivery: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7.';
 
   @override
   String get catalogFieldAddress => 'Address';
@@ -211,7 +211,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return 'Items, prices and sizes come from the official TeddyTales® store, as required by Brief 12.1. The photos are identical placeholders: real shots will come from the Client\'s catalog. Shoes are sold there separately — $shoes, $price.';
+    return 'Shoes are sold separately — $shoes, $price.';
   }
 
   @override
@@ -239,7 +239,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogPayPalNote => ' — or by card, no account needed';
 
   @override
-  String get catalogPaySection => 'Payment · Brief 12.4';
+  String get catalogPaySection => 'Payment';
 
   @override
   String get catalogPayStub => 'Payments will be connected during integration';
@@ -316,10 +316,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diaryEventFirstTooth => 'First tooth';
-
-  @override
-  String get diaryFootnote =>
-      'The diary isn\'t in the КП — it comes from the mockup. Slated for version two and built as a draft. The photo album and sharing will need the camera and photo permissions. Event thumbnails are stubs: real photos arrive with the album.';
 
   @override
   String get diaryTitle => 'Diary';
@@ -426,10 +422,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get feedDishesNote =>
-      'Exactly 10 dishes per spec 8.2. Prices and gains are placeholders — per spec 10.9 they are approved separately and configured from the server.';
-
-  @override
   String feedEatResult(String dish, int gain, int price) {
     String _temp0 = intl.Intl.pluralLogic(
       price,
@@ -481,10 +473,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote =>
-      'Exactly 5 recipes per spec 8.5: cookies and the sandwich take 3 steps, the rest take 4 to 6.';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -583,10 +571,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get growthDurationNewborn => '1 day';
-
-  @override
-  String get growthFootnote =>
-      'Names and durations come from КП 5. The mockup uses different ones (Baby, Cub, months instead of days) — that mismatch is still an open question.';
 
   @override
   String get growthGrowUp => 'Grow up';
@@ -1007,10 +991,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get learnLevelsNote =>
-      '10 levels per category (spec 9.2). The engine is built for 300 tasks; content comes from the Client via the admin panel (spec 9.4) — three sample tasks per category for now.';
-
-  @override
   String get learnQuizHintNote =>
       'A correct answer brings a happy animation and a reward.';
 
@@ -1020,8 +1000,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get learnQuizWrongNote =>
-      'Not quite. Try again — no penalty (spec 9.3).';
+  String get learnQuizWrongNote => 'Not quite. Try again — no penalty.';
 
   @override
   String get learnTaskColorsCircle => 'Where is the circle?';
@@ -1162,10 +1141,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get profileFootnote =>
-      'The zodiac sign follows the sign-up date; the zodiac traits table comes from the Client.';
-
-  @override
   String get profileHeightLabel => 'Height';
 
   @override
@@ -1199,16 +1174,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileRename => 'Change the name';
 
   @override
-  String get profileSectionBirth => 'Birth card · КП 2.2';
+  String get profileSectionBirth => 'Birth card';
 
   @override
-  String get profileSectionHistory => 'Stage history · КП 14.1';
+  String get profileSectionHistory => 'Stage history';
 
   @override
   String get profileSectionLinks => 'More';
 
   @override
-  String get profileSectionTrait => 'Personality · КП 7';
+  String get profileSectionTrait => 'Personality';
 
   @override
   String get profileSexBoy => 'boy';
@@ -1270,10 +1245,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeVeggie => 'Veggie dish';
 
   @override
-  String get roomFooterNote =>
-      '52 items per brief section 10: furniture 10, decor 16, toys 10, clothes 16. The placement grid and room preview come next — for now an item is simply placed or put away.';
-
-  @override
   String roomItemBought(String name) {
     return '$name purchased';
   }
@@ -1325,10 +1296,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roomTitle => 'My Room';
 
   @override
-  String get settingsFootnote =>
-      'Eight notification types per КП 13.1; quiet hours and frequency limits per 13.2. Account linking and legal documents (КП 14.2) arrive together with the backend.';
-
-  @override
   String get settingsNotifEvent => 'Event';
 
   @override
@@ -1365,7 +1332,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionAccount => 'Account';
 
   @override
-  String get settingsSectionLanguage => 'Language · КП 16.1';
+  String get settingsSectionLanguage => 'Language';
 
   @override
   String get settingsSectionSound => 'Sound';
@@ -1377,7 +1344,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionLegal => 'Legal';
 
   @override
-  String get settingsSectionNotifications => 'Notifications · КП 13.1, 13.2';
+  String get settingsSectionNotifications => 'Notifications';
 
   @override
   String get settingsSignOut => 'Sign out';

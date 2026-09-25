@@ -579,8 +579,6 @@ class _LearningScreenState extends State<LearningScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 10),
-              _Note(context.l10n.learnLevelsNote),
             ],
           ),
         ),

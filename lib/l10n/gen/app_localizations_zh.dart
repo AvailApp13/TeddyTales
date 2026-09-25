@@ -105,7 +105,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get careFeedTitle => '喂饭';
 
   @override
-  String get careFootnote => '列表里没有抚摸：按技术规范 8.1，它是触屏动作——在主界面轻点小熊即可。';
+  String get careFootnote => '想抚摸小熊，在主界面轻点它即可。';
 
   @override
   String careLockedUntilStage(int stage) {
@@ -152,8 +152,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogCountryUsa => '美国';
 
   @override
-  String get catalogDeliveryNote =>
-      '按商店数据配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。订单将进入客户现有的销售系统（需求 12.5）——此表单暂不提交。';
+  String get catalogDeliveryNote => '配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。';
 
   @override
   String get catalogFieldAddress => '地址';
@@ -178,7 +177,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String catalogFootnote(String shoes, String price) {
-    return '商品、价格与尺寸均来自 TeddyTales® 官方商店（需求 12.1）。图片暂为同一张占位图：正式照片将来自客户的商品目录。鞋子在商店单独出售——$shoes，$price。';
+    return '鞋子单独出售——$shoes，$price。';
   }
 
   @override
@@ -206,7 +205,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogPayPalNote => '——也可免账户用银行卡支付';
 
   @override
-  String get catalogPaySection => '支付 · 需求 12.4';
+  String get catalogPaySection => '支付';
 
   @override
   String get catalogPayStub => '支付将在系统对接阶段开通';
@@ -283,10 +282,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get diaryEventFirstTooth => '第一颗小牙';
-
-  @override
-  String get diaryFootnote =>
-      '日记不在 КП 中，源自设计稿，归入第二版，目前只是雏形。相册和分享功能需要相机及拍摄权限。事件缩略图为占位：真正的照片将随相册一起上线。';
 
   @override
   String get diaryTitle => '日记';
@@ -379,10 +374,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get feedDishesNote =>
-      '按需求 8.2 共 10 道菜。价格与数值为占位值，按需求 10.9 另行确定并由服务器配置。';
-
-  @override
   String feedEatResult(String dish, int gain, int price) {
     return '$dish · 食物 +$gain，−$price 金币';
   }
@@ -425,9 +416,6 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get feedRecipesNote => '按需求 8.5 共 5 个食谱：饼干和三明治各 3 步，其余 4 到 6 步。';
 
   @override
   String feedStepProgress(int step, int total, int reward, int gain) {
@@ -517,10 +505,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get growthDurationNewborn => '1 天';
-
-  @override
-  String get growthFootnote =>
-      '名称与时长取自 КП 5。设计稿里的写法不同（宝宝、幼崽，以月而非天计）——这一差异仍是待定问题。';
 
   @override
   String get growthGrowUp => '长大一步';
@@ -935,10 +919,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get learnLevelsNote =>
-      '每个类别10关(规格9.2)。引擎可容纳300道题，内容由客户通过管理面板提供(规格9.4)——目前每个类别有三道示例题。';
-
-  @override
   String get learnQuizHintNote => '答对了会有开心动画和奖励。';
 
   @override
@@ -947,7 +927,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get learnQuizWrongNote => '没答对。再试一次吧——不扣分(规格9.3)。';
+  String get learnQuizWrongNote => '没答对。再试一次吧——不扣分。';
 
   @override
   String get learnTaskColorsCircle => '圆形在哪里？';
@@ -1087,9 +1067,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get profileFootnote => '星座按注册日期确定；星座性格对照表由客户方提供。';
-
-  @override
   String get profileHeightLabel => '身高';
 
   @override
@@ -1122,16 +1099,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileRename => '修改名字';
 
   @override
-  String get profileSectionBirth => '出生卡 · КП 2.2';
+  String get profileSectionBirth => '出生卡';
 
   @override
-  String get profileSectionHistory => '成长阶段记录 · КП 14.1';
+  String get profileSectionHistory => '成长阶段记录';
 
   @override
   String get profileSectionLinks => '更多';
 
   @override
-  String get profileSectionTrait => '性格 · КП 7';
+  String get profileSectionTrait => '性格';
 
   @override
   String get profileSexBoy => '男孩';
@@ -1193,10 +1170,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recipeVeggie => '蔬菜料理';
 
   @override
-  String get roomFooterNote =>
-      '需求第 10 节共 52 件物品：家具 10、装饰 16、玩具 10、服装 16。摆放网格和房间预览是下一步，目前物品只是简单地摆放或收起。';
-
-  @override
   String roomItemBought(String name) {
     return '已购买「$name」';
   }
@@ -1248,10 +1221,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get roomTitle => '我的房间';
 
   @override
-  String get settingsFootnote =>
-      '八种通知类型依据 КП 13.1，免打扰时段与频率限制依据 13.2。账号绑定和法律文件（КП 14.2）将随后端一起推出。';
-
-  @override
   String get settingsNotifEvent => '活动';
 
   @override
@@ -1288,7 +1257,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionAccount => '账号';
 
   @override
-  String get settingsSectionLanguage => '语言 · КП 16.1';
+  String get settingsSectionLanguage => '语言';
 
   @override
   String get settingsSectionSound => '声音';
@@ -1300,7 +1269,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionLegal => '法律文件';
 
   @override
-  String get settingsSectionNotifications => '通知 · КП 13.1、13.2';
+  String get settingsSectionNotifications => '通知';
 
   @override
   String get settingsSignOut => '退出登录';
