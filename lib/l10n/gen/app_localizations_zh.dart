@@ -1983,4 +1983,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inviteOffline => '无法连接服务器，请稍后再试。';
+
+  @override
+  String get settingsSectionSelfCare => '小熊关心你';
+
+  @override
+  String get settingsSelfCareWater => '白天提醒喝水';
+
+  @override
+  String get settingsSelfCareRest => '晚上提醒睡觉';
 }

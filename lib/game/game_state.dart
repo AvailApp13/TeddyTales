@@ -114,7 +114,13 @@ class GameState extends ChangeNotifier {
   final Map<String, int> _eduProgress = {};
   final Map<String, bool> _notifications = {
     for (final k in NotificationKind.values) k.id: k.onByDefault,
+    for (final k in selfCareKinds) k: true,
   };
+
+  /// «Мишка заботится о тебе» (сверх ТЗ, заказчик 25.09): напоминания
+  /// хозяину — выпить воды и лечь спать. Не входят в восемь типов КП 13.1,
+  /// поэтому отдельно от [NotificationKind].
+  static const List<String> selfCareKinds = ['water', 'rest'];
   bool _quietHours = true;
 
   /// Возраст игрока. `null` — ещё не спрашивали; раздел игр спросит при

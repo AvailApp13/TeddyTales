@@ -723,5 +723,8 @@
   "inviteUsed": "A friend’s code was already applied.",
   "inviteLate": "A friend’s code works only in the first week.",
   "inviteFull": "Your friend has no invites left.",
-  "inviteOffline": "No connection. Try again later."
+  "inviteOffline": "No connection. Try again later.",
+  "settingsSectionSelfCare": "Your teddy cares for you",
+  "settingsSelfCareWater": "Drink water — daytime",
+  "settingsSelfCareRest": "Time for bed — evening"
 }

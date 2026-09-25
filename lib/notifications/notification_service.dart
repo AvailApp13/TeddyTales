@@ -150,6 +150,7 @@ class NotificationService {
       },
     );
     final seed = at.difference(DateTime(at.year)).inDays;
+    await _scheduleSelfCare(at, name, language, seed);
     for (final entry in plan.entries) {
       final copy = composeNotification(
         entry.key,
@@ -161,6 +162,69 @@ class NotificationService {
       await _schedule(entry.key, entry.value, copy);
     }
   }
+
+  /// «Мишка заботится о тебе» (сверх ТЗ, заказчик 25.09): ежедневные
+  /// напоминания хозяину — вода днём, сон перед тихими часами. Повторяются
+  /// каждый день сами, даже если приложение не открывают.
+  Future<void> _scheduleSelfCare(
+    DateTime at,
+    String name,
+    BearLanguage language,
+    int seed,
+  ) async {
+    final who = name.isEmpty ? notificationName('', language, '') : name;
+    if (enabled.contains('water')) {
+      final hours = CareSchedule.waterHours;
+      for (var i = 0; i < hours.length; i++) {
+        await _scheduleDaily(
+          selfCareId + i,
+          CareSchedule.nextAt(at, hours[i]),
+          composeNotification(
+            'water',
+            name: who,
+            lang: language,
+            seed: seed + i,
+          ),
+        );
+      }
+    }
+    if (enabled.contains('rest')) {
+      final time = schedule.restTime;
+      await _scheduleDaily(
+        selfCareId + 3,
+        CareSchedule.nextAt(at, time.hour, time.minute),
+        composeNotification('rest', name: who, lang: language, seed: seed),
+      );
+    }
+  }
+
+  Future<void> _scheduleDaily(int id, DateTime at, SmartCopy copy) async {
+    try {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: copy.title,
+        body: copy.body,
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'selfcare',
+            'Мишка заботится о тебе',
+            channelDescription: 'Выпить воды и лечь спать',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] забота $id не запланирована: $error');
+    }
+  }
+
+  /// Номера «заботы о тебе»: 20–22 вода, 23 сон.
+  static const int selfCareId = 20;
 
   Future<void> _schedule(String kind, DateTime at, SmartCopy copy) async {
     try {
@@ -241,7 +305,24 @@ class NotificationService {
   static const int wakeId = 50;
 
   Future<void> _cancelCare() async {
-    for (final id in const [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 99]) {
+    for (final id in const [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      20,
+      21,
+      22,
+      23,
+      99,
+    ]) {
       try {
         await _plugin.cancel(id: id);
       } on Object catch (error) {

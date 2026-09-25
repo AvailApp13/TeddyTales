@@ -158,6 +158,22 @@ class CareSchedule {
     return plan;
   }
 
+  /// «Мишка заботится о тебе» (сверх ТЗ, заказчик 25.09): в какие часы
+  /// напомнить хозяину выпить воды — днём, раз в три часа.
+  static const List<int> waterHours = [11, 14, 17];
+
+  /// Когда напомнить хозяину лечь спать: за четверть часа до тихих часов.
+  ({int hour, int minute}) get restTime {
+    final minutes = (quietFrom * 60 - 15) % (24 * 60);
+    return (hour: minutes ~/ 60, minute: minutes % 60);
+  }
+
+  /// Ближайший момент с этим временем суток — сегодня или завтра.
+  static DateTime nextAt(DateTime now, int hour, [int minute = 0]) {
+    final today = DateTime(now.year, now.month, now.day, hour, minute);
+    return today.isAfter(now) ? today : today.add(const Duration(days: 1));
+  }
+
   /// Когда напомнить о задании (КП 13.1): завтра в [hour] — если игрок
   /// сегодня так и не зайдёт, мишка позовёт учиться. Приложение открыли —
   /// расписание строится заново, и напоминание уезжает на следующий день.

@@ -256,6 +256,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     service.enabled = {
       for (final kind in NotificationKind.values)
         if (_game.isNotificationOn(kind.id)) kind.id,
+      for (final kind in GameState.selfCareKinds)
+        if (_game.isNotificationOn(kind)) kind,
     };
     service.reschedule(
       stats: _bear.stats,
