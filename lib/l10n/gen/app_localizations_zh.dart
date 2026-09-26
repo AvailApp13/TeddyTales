@@ -2136,4 +2136,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restorePurchasesStarted => '正在检查购买记录…';
+
+  @override
+  String get kitchenBottle => '奶瓶';
+
+  @override
+  String get kitchenBottleSoon => '奶瓶喂奶即将上线——等待宝宝动画';
+
+  @override
+  String get bathActionDiaper => '尿布';
+
+  @override
+  String get bathDiaperSoon => '换尿布即将上线——等待宝宝动画';
 }

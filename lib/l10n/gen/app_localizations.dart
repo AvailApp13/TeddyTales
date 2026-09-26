@@ -3969,6 +3969,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверяем покупки…'**
   String get restorePurchasesStarted;
+
+  /// No description provided for @kitchenBottle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бутылочка'**
+  String get kitchenBottle;
+
+  /// No description provided for @kitchenBottleSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бутылочка с молоком — скоро: ждём анимацию малыша'**
+  String get kitchenBottleSoon;
+
+  /// No description provided for @bathActionDiaper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подгузник'**
+  String get bathActionDiaper;
+
+  /// No description provided for @bathDiaperSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смена подгузника — скоро: ждём анимацию малыша'**
+  String get bathDiaperSoon;
 }
 
 class _AppLocalizationsDelegate

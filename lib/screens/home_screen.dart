@@ -446,6 +446,12 @@ class _HomeScreenState extends State<HomeScreen>
   /// купания.
   void _wash() => _soon(context.l10n.bathWashSoon);
 
+  /// Бутылочка и подгузник новорождённого (КП 5, заказчик 26.09: «с
+  /// заглушками до анимации»). ⚠ Ждут клипов аниматора — пока честное
+  /// «скоро», как у душа и горшка.
+  void _bottle() => _soon(context.l10n.kitchenBottleSoon);
+  void _diaper() => _soon(context.l10n.bathDiaperSoon);
+
   /// Сообщение «этого ещё нет». Нарочно одинаковое для всех недоделок:
   /// тестировщик по нему сразу понимает, что нажатие обработано, а работы
   /// ещё идут.
@@ -1003,6 +1009,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   onWash: _wash,
                   onToilet: _toilet,
+                  onBottle: _bottle,
+                  onDiaper: _diaper,
                   onOpenCare: () => _open(
                     CareScreen(
                       controller: widget.controller,
@@ -1193,6 +1201,8 @@ class _RoomScene extends StatelessWidget {
     required this.cookCallbacks,
     required this.onWash,
     required this.onToilet,
+    required this.onBottle,
+    required this.onDiaper,
   });
 
   final BearController controller;
@@ -1267,6 +1277,11 @@ class _RoomScene extends StatelessWidget {
   final VoidCallback onWash;
   final VoidCallback onToilet;
 
+  /// Новорождённый (КП 5): бутылочка на кухне и подгузник в ванной вместо
+  /// горшка. ⚠ Ждут анимации — пока честное «скоро», как у душа.
+  final VoidCallback onBottle;
+  final VoidCallback onDiaper;
+
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
   /// ДОПУЩЕНИЕ: ставим её в угол комнаты.
@@ -1283,6 +1298,7 @@ class _RoomScene extends StatelessWidget {
   }
 
   Widget _build(BuildContext context, RoomFrame frame) {
+    final newborn = controller.state.stage == BearStage.newborn;
     return Stack(
       children: [
         // Потолок — всё, что выше кадра комнаты. Рисуется кодом, пока нет
@@ -1519,6 +1535,7 @@ class _RoomScene extends StatelessWidget {
             right: _pawSpace,
             bottom: 34,
             child: _KitchenMenu(
+              onBottle: newborn ? onBottle : null,
               dishesShown: dishesShown,
               onToggleDishes: onToggleDishes,
               cookShown: recipesShown || cooking != null,
@@ -1551,7 +1568,11 @@ class _RoomScene extends StatelessWidget {
             left: 16,
             right: _pawSpace,
             bottom: 34,
-            child: _BathMenu(onWash: onWash, onToilet: onToilet),
+            child: _BathMenu(
+              onWash: onWash,
+              onToilet: onToilet,
+              onDiaper: newborn ? onDiaper : null,
+            ),
           ),
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.
@@ -1635,10 +1656,17 @@ class _BedroomMenu extends StatelessWidget {
 
 /// Две кнопки ванной: искупаться и на горшок.
 class _BathMenu extends StatelessWidget {
-  const _BathMenu({required this.onWash, required this.onToilet});
+  const _BathMenu({
+    required this.onWash,
+    required this.onToilet,
+    this.onDiaper,
+  });
 
   final VoidCallback onWash;
   final VoidCallback onToilet;
+
+  /// Новорождённому — подгузник вместо горшка (КП 5). `null` — горшок.
+  final VoidCallback? onDiaper;
 
   @override
   Widget build(BuildContext context) {
@@ -1652,11 +1680,19 @@ class _BathMenu extends StatelessWidget {
           onTap: onWash,
         ),
         const SizedBox(width: 8),
-        _Pill(
-          label: l10n.bathActionToilet,
-          icon: Icons.wc_outlined,
-          onTap: onToilet,
-        ),
+        if (onDiaper case final diaper?)
+          _Pill(
+            key: const ValueKey('bath-diaper'),
+            label: l10n.bathActionDiaper,
+            icon: Icons.baby_changing_station_outlined,
+            onTap: diaper,
+          )
+        else
+          _Pill(
+            label: l10n.bathActionToilet,
+            icon: Icons.wc_outlined,
+            onTap: onToilet,
+          ),
       ],
     );
   }
@@ -1750,11 +1786,15 @@ class _WakeMenu extends StatelessWidget {
 /// Две кнопки выбора еды, стоящие прямо на кухне.
 class _KitchenMenu extends StatelessWidget {
   const _KitchenMenu({
+    this.onBottle,
     required this.dishesShown,
     required this.onToggleDishes,
     required this.cookShown,
     required this.onToggleCook,
   });
+
+  /// Новорождённому — бутылочка первой кнопкой (КП 5). `null` — нет.
+  final VoidCallback? onBottle;
 
   final bool dishesShown;
   final VoidCallback onToggleDishes;
@@ -1769,6 +1809,15 @@ class _KitchenMenu extends StatelessWidget {
 
     return _ActionRow(
       children: [
+        if (onBottle case final bottle?) ...[
+          _Pill(
+            key: const ValueKey('kitchen-bottle'),
+            label: l10n.kitchenBottle,
+            icon: Icons.local_drink_outlined,
+            onTap: bottle,
+          ),
+          const SizedBox(width: 8),
+        ],
         // Готовые блюда — прямо на стол, не в отдельный лист: нажал — блюда
         // выехали, нажал ещё раз — убрались.
         _Pill(
@@ -1793,6 +1842,7 @@ class _KitchenMenu extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   const _Pill({
+    super.key,
     required this.label,
     required this.icon,
     required this.onTap,

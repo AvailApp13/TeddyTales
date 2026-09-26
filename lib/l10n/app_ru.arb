@@ -1351,5 +1351,9 @@
   "linkAppleDone": "Готово: мишка сохранён в вашем Apple ID.",
   "restorePurchases": "Восстановить покупки",
   "restorePurchasesHint": "Вернуть купленное в App Store или Google Play",
-  "restorePurchasesStarted": "Проверяем покупки…"
+  "restorePurchasesStarted": "Проверяем покупки…",
+  "kitchenBottle": "Бутылочка",
+  "kitchenBottleSoon": "Бутылочка с молоком — скоро: ждём анимацию малыша",
+  "bathActionDiaper": "Подгузник",
+  "bathDiaperSoon": "Смена подгузника — скоро: ждём анимацию малыша"
 }

@@ -763,5 +763,9 @@
   "linkAppleDone": "完成：小熊已保存到你的 Apple ID。",
   "restorePurchases": "恢复购买",
   "restorePurchasesHint": "找回在 App Store 或 Google Play 购买的物品",
-  "restorePurchasesStarted": "正在检查购买记录…"
+  "restorePurchasesStarted": "正在检查购买记录…",
+  "kitchenBottle": "奶瓶",
+  "kitchenBottleSoon": "奶瓶喂奶即将上线——等待宝宝动画",
+  "bathActionDiaper": "尿布",
+  "bathDiaperSoon": "换尿布即将上线——等待宝宝动画"
 }

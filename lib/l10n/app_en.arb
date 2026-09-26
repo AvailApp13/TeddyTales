@@ -763,5 +763,9 @@
   "linkAppleDone": "Done: your bear is saved to your Apple ID.",
   "restorePurchases": "Restore purchases",
   "restorePurchasesHint": "Bring back what you bought in the App Store or Google Play",
-  "restorePurchasesStarted": "Checking your purchases…"
+  "restorePurchasesStarted": "Checking your purchases…",
+  "kitchenBottle": "Bottle",
+  "kitchenBottleSoon": "Milk bottle is coming soon — waiting for the baby animation",
+  "bathActionDiaper": "Diaper",
+  "bathDiaperSoon": "Diaper change is coming soon — waiting for the baby animation"
 }

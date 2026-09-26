@@ -2251,4 +2251,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get restorePurchasesStarted => 'Проверяем покупки…';
+
+  @override
+  String get kitchenBottle => 'Бутылочка';
+
+  @override
+  String get kitchenBottleSoon =>
+      'Бутылочка с молоком — скоро: ждём анимацию малыша';
+
+  @override
+  String get bathActionDiaper => 'Подгузник';
+
+  @override
+  String get bathDiaperSoon => 'Смена подгузника — скоро: ждём анимацию малыша';
 }

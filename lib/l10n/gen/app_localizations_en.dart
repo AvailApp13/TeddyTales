@@ -2242,4 +2242,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restorePurchasesStarted => 'Checking your purchases…';
+
+  @override
+  String get kitchenBottle => 'Bottle';
+
+  @override
+  String get kitchenBottleSoon =>
+      'Milk bottle is coming soon — waiting for the baby animation';
+
+  @override
+  String get bathActionDiaper => 'Diaper';
+
+  @override
+  String get bathDiaperSoon =>
+      'Diaper change is coming soon — waiting for the baby animation';
 }
