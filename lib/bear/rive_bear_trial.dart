@@ -61,8 +61,8 @@ enum BearFace {
     upset => 'emo_upset',
   };
 
-  /// Касания по очереди (заказчик 26.09).
-  static const List<BearFace> taps = [love, laugh, surprised, upset, lick];
+  /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
+  static const List<BearFace> taps = values;
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
   /// файле только подменяется, поэтому эмоцию играет корпус — наклон,
