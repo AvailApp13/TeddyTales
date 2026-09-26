@@ -41,11 +41,13 @@ PAD = 4                   # прозрачная рамка вокруг пли�
 EYES = [(297, 345, 175, 145), (729, 345, 175, 145)]
 MOUTH = [(512, 735, 250, 150)]
 
-# имя → (картинка, зоны); порядок — сверху вниз
+# имя → (картинка, зоны) или (имя, [(картинка, зоны), …]) — лицо, собранное
+# из частей разных картинок; порядок — сверху вниз.
+# laugh2 и chew_open (смена рта на каждом «ха» и жевке) убраны: заказчик
+# 26.09 — «рот дёргается вверх-вниз, нужна плавность»; рот теперь один,
+# движение дают кости. Картинки лежат в assets_src на будущее.
 OVERLAYS = [
     ('blink', 'eyes_closed', EYES),          # моргание: только глаза
-    ('laugh2', 'laugh2', MOUTH),             # «хи» между «ха»: только рот
-    ('chew_open', 'chew_open', MOUTH),       # жевок: только рот
     ('smile', 'smile', EYES + MOUTH),
     ('laugh', 'laugh', EYES + MOUTH),
     ('surprised', 'surprised', EYES + MOUTH),
@@ -55,7 +57,10 @@ OVERLAYS = [
     ('yawn', 'yawn', EYES + MOUTH),
     ('sleepy', 'sleepy', EYES + MOUTH),
     ('asleep', 'eyes_closed', EYES + MOUTH),
-    ('upset', 'upset', EYES + MOUTH),
+    # обида (заказчик 26.09: «глаза злые — не нужно»): надулся — тяжёлые
+    # веки «Сонного» и надутые губы «Обиды»; «хмф!» — глаза закрыты
+    ('pout', [('sleepy', EYES), ('upset', MOUTH)]),
+    ('pout_shut', [('eyes_closed', EYES), ('upset', MOUTH)]),
 ]
 
 
@@ -83,16 +88,24 @@ def _tiles(tex):
     nose = Image.fromarray((nose * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))
     nose = np.asarray(nose.filter(ImageFilter.GaussianBlur(2)), np.float64) / 255
     out = {}
-    for name, pic, zones in OVERLAYS:
-        gen = np.asarray(Image.open(os.path.join(SRC, f'{pic}.webp')).convert('RGB'), np.float64)
-        a = _zones(zones, w, h) * (1 - nose) * alpha
-        # цвет: сдвиг к текстуре по кольцу у края каждой зоны
-        for zone in zones:
-            za = _zones([zone], w, h)
-            band = (za > 0.05) & (za < 0.6) & (alpha > 0.9)
-            if band.sum() > 50:
-                d = (rgb[band] - gen[band]).mean(0)
-                gen = gen + d * (za[..., None] > 0.01)
+    for name, *spec in OVERLAYS:
+        parts = spec[0] if len(spec) == 1 else [(spec[0], spec[1])]
+        gen_all = np.zeros((h, w, 3))
+        a = np.zeros((h, w))
+        for pic, zones in parts:
+            gen = np.asarray(Image.open(os.path.join(SRC, f'{pic}.webp')).convert('RGB'), np.float64)
+            # цвет: сдвиг к текстуре по кольцу у края каждой зоны
+            for zone in zones:
+                za = _zones([zone], w, h)
+                band = (za > 0.05) & (za < 0.6) & (alpha > 0.9)
+                if band.sum() > 50:
+                    d = (rgb[band] - gen[band]).mean(0)
+                    gen = gen + d * (za[..., None] > 0.01)
+            za = _zones(zones, w, h)
+            gen_all += gen * za[..., None]
+            a += za
+        gen = gen_all / np.maximum(a, 1e-6)[..., None]
+        a = np.clip(a, 0, 1) * (1 - nose) * alpha
         img = np.dstack([np.clip(gen, 0, 255), a * 255]).astype(np.uint8)
         pad = np.zeros((h + 2 * PAD, w + 2 * PAD, 4), np.uint8)
         pad[PAD:PAD + h, PAD:PAD + w] = img
@@ -117,7 +130,7 @@ def build(project, rive_root, ab, byname, next_id):
     holder = next(p for p in ab.iter() if top in list(p))
     at = list(holder).index(top)
     ids = {}
-    for n, _, _ in OVERLAYS:
+    for n, *_ in OVERLAYS:
         fn = f'bear_face_{n}.png'
         Image.fromarray(tiles[n], 'RGBA').save(os.path.join(project, fn))
         asset_id = next_id()
