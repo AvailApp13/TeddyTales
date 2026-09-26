@@ -4,6 +4,7 @@ import '../game/game_calendar.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
+import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
 
 /// Экран «Дневник» — четыре события из жизни питомца.
@@ -48,12 +49,13 @@ class DiaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _SheetHeader(title: context.l10n.diaryTitle),
+            GlassScreenHeader(title: context.l10n.diaryTitle),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -62,8 +64,7 @@ class DiaryScreen extends StatelessWidget {
                   AppDimens.pagePadding,
                   AppDimens.pagePadding,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: GlassStagger(
                   children: [
                     for (final event in _events) ...[
                       _DiaryRow(event: event),
@@ -121,7 +122,7 @@ class _DiaryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white.withValues(alpha: 0.64),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
         border: Border.all(color: AppColors.outline),
       ),
@@ -168,66 +169,6 @@ class _DiaryRow extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Шапка листа: круглая кнопка «назад», заголовок по центру, справа пусто.
-///
-/// Кошелька здесь нет намеренно — как и в прототипе: дневник ничего не
-/// продаёт, монеты на нём не тратятся и не начисляются.
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.pagePadding,
-        8,
-        AppDimens.pagePadding,
-        10,
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: AppColors.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const CircleBorder(
-              side: BorderSide(color: AppColors.outline),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Center(
-                  child: Icon(
-                    Icons.chevron_left,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          // Ширина кнопки «назад» плюс тот же зазор — заголовок остаётся ровно
-          // по центру экрана.
-          const SizedBox(width: 42),
         ],
       ),
     );

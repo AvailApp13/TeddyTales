@@ -33,6 +33,7 @@ import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/share_card.dart';
 import '../widgets/gift_reveal.dart' show showCoinReward;
+import '../widgets/glass_panel.dart' show glassRoute;
 import '../widgets/sleep_countdown.dart';
 import '../game/referral_info.dart';
 import '../widgets/feed_burst.dart';
@@ -292,6 +293,11 @@ class _HomeScreenState extends State<HomeScreen>
     ).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
+  /// Экран поверх размытой комнаты (заказчик 26.09): профиль, рост,
+  /// дневник, настройки — комната остаётся сзади.
+  Future<void> _openGlass(Widget screen) =>
+      Navigator.of(context).push<void>(glassRoute(screen));
+
   /// Раздел открывается листом поверх комнаты, а не отдельным экраном
   /// (решение заказчика 20.09). Мишка при этом остаётся виден над листом —
   /// покупка и обучение происходят при нём, а не вместо него.
@@ -369,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen>
       case AppSection.catalog:
         _openSheet(CatalogScreen(controller: widget.controller));
       case AppSection.profile:
-        _openSheet(_profileScreen());
+        _openGlass(_profileScreen());
       // «Главная» — это и есть комната на экране. Отдельного перехода у неё
       // нет: закрыл лист — ты дома.
       case AppSection.home:
@@ -384,13 +390,13 @@ class _HomeScreenState extends State<HomeScreen>
     game: widget.game,
     calendar: widget.calendar,
     language: widget.language,
-    onOpenGrowth: () => _open(
+    onOpenGrowth: () => _openGlass(
       GrowthScreen(controller: widget.controller, profile: widget.game.profile),
     ),
-    onOpenDiary: () => _open(const DiaryScreen()),
+    onOpenDiary: () => _openGlass(const DiaryScreen()),
     onSignOut: widget.onSignOut == null ? null : _signOut,
     onRename: widget.onRename,
-    onOpenSettings: () => _open(
+    onOpenSettings: () => _openGlass(
       SettingsScreen(
         game: widget.game,
         language: widget.language,
@@ -1005,7 +1011,7 @@ class _HomeScreenState extends State<HomeScreen>
                           profile: profile,
                           age: age,
                           fx: _fx,
-                          onOpenProfile: () => _open(_profileScreen()),
+                          onOpenProfile: () => _openGlass(_profileScreen()),
                           onShare: () => showShareCard(
                             context,
                             game: widget.game,

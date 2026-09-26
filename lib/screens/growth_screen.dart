@@ -6,6 +6,7 @@ import '../l10n/sections_l10n.dart';
 import '../l10n/size_l10n.dart';
 import '../game/pet_profile.dart';
 import '../theme/app_colors.dart';
+import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
 
 /// Экран «Рост и развитие» — пять стадий взросления (КП 5).
@@ -86,6 +87,7 @@ class GrowthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: AnimatedBuilder(
@@ -98,7 +100,7 @@ class GrowthScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SheetHeader(title: l10n.growthTitle),
+                GlassScreenHeader(title: l10n.growthTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -107,8 +109,7 @@ class GrowthScreen extends StatelessWidget {
                       AppDimens.pagePadding,
                       AppDimens.pagePadding,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: GlassStagger(
                       children: [
                         for (final item in BearStage.values) ...[
                           _StageRow(stage: item, current: stage),
@@ -206,7 +207,9 @@ class _StageRow extends StatelessWidget {
       decoration: BoxDecoration(
         // Текущая стадия — единственная заливка на экране: список длинный, и
         // взгляд должен находить «где я» без чтения.
-        color: isNow ? AppColors.sageSoft : AppColors.surface,
+        color: isNow
+            ? AppColors.sageSoft.withValues(alpha: 0.85)
+            : Colors.white.withValues(alpha: 0.64),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
         border: Border.all(color: isNow ? AppColors.sage : AppColors.outline),
       ),
@@ -246,66 +249,6 @@ class _StageRow extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Шапка листа: круглая кнопка «назад», заголовок по центру, справа пусто.
-///
-/// Кошелька здесь нет намеренно — как и в прототипе: на этом экране ничего не
-/// покупается, взросление монет не стоит.
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.pagePadding,
-        8,
-        AppDimens.pagePadding,
-        10,
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: AppColors.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const CircleBorder(
-              side: BorderSide(color: AppColors.outline),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Center(
-                  child: Icon(
-                    Icons.chevron_left,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          // Ширина кнопки «назад» плюс тот же зазор — заголовок остаётся ровно
-          // по центру экрана.
-          const SizedBox(width: 42),
         ],
       ),
     );

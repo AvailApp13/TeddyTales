@@ -362,7 +362,7 @@ void main() {
       expect(find.textContaining('24 сентября 2026'), findsWidgets);
 
       // Лист длинный: смотрим и то, что ниже края экрана.
-      expect(find.text('ЛИЧНЫЙ КАБИНЕТ', skipOffstage: false), findsOneWidget);
+      expect(find.text('Личный кабинет', skipOffstage: false), findsOneWidget);
       expect(
         find.text('mama@example.com · не подтверждена', skipOffstage: false),
         findsOneWidget,

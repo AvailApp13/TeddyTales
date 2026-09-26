@@ -334,3 +334,206 @@ InputDecoration glassField({String? hint, String? error, String? counter}) =>
         borderSide: const BorderSide(color: AppColors.sageDark, width: 2),
       ),
     );
+
+// --- Экраны на фоне комнаты ---------------------------------------------------
+
+/// Экран поверх комнаты (заказчик 26.09): профиль, рост, дневник,
+/// настройки открываются не на кремовой странице, а на размытой комнате —
+/// она остаётся сзади. Экран въезжает снизу, фон плавно размывается.
+Route<T> glassRoute<T>(Widget screen) => PageRouteBuilder<T>(
+  opaque: false,
+  transitionDuration: const Duration(milliseconds: 340),
+  reverseTransitionDuration: const Duration(milliseconds: 240),
+  pageBuilder: (context, _, _) => screen,
+  transitionsBuilder: (context, animation, _, child) {
+    final t = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: t,
+            builder: (context, _) => BackdropFilter(
+              filter: ui.ImageFilter.blur(
+                sigmaX: 16 * t.value,
+                sigmaY: 16 * t.value,
+              ),
+              child: ColoredBox(
+                color: const Color(
+                  0xFFFFF6E8,
+                ).withValues(alpha: 0.38 * t.value),
+              ),
+            ),
+          ),
+        ),
+        FadeTransition(
+          opacity: t,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 0.04),
+              end: Offset.zero,
+            ).animate(t),
+            child: child,
+          ),
+        ),
+      ],
+    );
+  },
+);
+
+/// Карточка экрана на фоне комнаты: светлое стекло с белой каймой.
+BoxDecoration glassCard({double radius = 20}) => BoxDecoration(
+  color: Colors.white.withValues(alpha: 0.64),
+  borderRadius: BorderRadius.circular(radius),
+  border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+  boxShadow: [
+    BoxShadow(
+      color: AppColors.textPrimary.withValues(alpha: 0.10),
+      blurRadius: 16,
+      offset: const Offset(0, 6),
+    ),
+  ],
+);
+
+/// Шапка экрана: белая кнопка «назад», как кнопки сцены, и заголовок
+/// округлым шрифтом.
+class GlassScreenHeader extends StatelessWidget {
+  const GlassScreenHeader({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: MaterialLocalizations.of(context).backButtonTooltip,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).maybePop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.outline, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.18),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.chevron_left_rounded,
+                  size: 26,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: glassText(24, 900, color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Заголовок раздела — тёмная капсула, как подписи комнат.
+class GlassSectionTitle extends StatelessWidget {
+  const GlassSectionTitle(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.textPrimary.withValues(alpha: 0.86),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(text, style: glassText(12.5, 800)),
+        ),
+      ),
+    );
+  }
+}
+
+/// Блоки экрана появляются по очереди: каждый чуть позже предыдущего
+/// выплывает снизу и проявляется.
+class GlassStagger extends StatefulWidget {
+  const GlassStagger({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  State<GlassStagger> createState() => _GlassStaggerState();
+}
+
+class _GlassStaggerState extends State<GlassStagger>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _in = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        _in.value = 1;
+      } else {
+        _in.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _in.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final n = widget.children.length;
+    return AnimatedBuilder(
+      animation: _in,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < n; i++) _staggered(i, n, widget.children[i]),
+        ],
+      ),
+    );
+  }
+
+  Widget _staggered(int i, int n, Widget child) {
+    // Первые — сразу, дальше с шагом; каждый выплывает за 40 % времени.
+    final start = (i / (n + 2)).clamp(0.0, 0.6);
+    final v = Curves.easeOutCubic.transform(
+      ((_in.value - start) / 0.4).clamp(0.0, 1.0),
+    );
+    if (v >= 1) return child;
+    return Opacity(
+      opacity: v,
+      child: Transform.translate(offset: Offset(0, 18 * (1 - v)), child: child),
+    );
+  }
+}

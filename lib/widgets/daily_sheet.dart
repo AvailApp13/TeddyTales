@@ -268,7 +268,9 @@ class _TaskRow extends StatelessWidget {
           Icon(
             task.done ? Icons.check_circle : Icons.radio_button_unchecked,
             size: 22,
-            color: task.done ? AppColors.sageDark : AppColors.outline,
+            color: task.done
+                ? AppColors.sageDark
+                : AppColors.textSecondary.withValues(alpha: 0.6),
           ),
           const SizedBox(width: 10),
           Expanded(

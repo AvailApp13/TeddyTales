@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import '../l10n/notifications_l10n.dart';
 import 'legal_screen.dart';
 import '../theme/app_colors.dart';
+import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sign_out_dialog.dart';
 
@@ -54,6 +55,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: AnimatedBuilder(
@@ -63,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SheetHeader(title: l10n.settingsTitle),
+                GlassScreenHeader(title: l10n.settingsTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -72,16 +74,15 @@ class SettingsScreen extends StatelessWidget {
                       AppDimens.pagePadding,
                       AppDimens.pagePadding,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: GlassStagger(
                       children: [
-                        _SectionTitle(l10n.settingsSectionLanguage),
+                        GlassSectionTitle(l10n.settingsSectionLanguage),
                         _LanguageRow(
                           current: language,
                           onSelected: onLanguageChanged,
                         ),
 
-                        _SectionTitle(l10n.settingsSectionNotifications),
+                        GlassSectionTitle(l10n.settingsSectionNotifications),
                         _TogglesCard(
                           rows: [
                             // Порядок типов не алфавитный и не случайный: он
@@ -112,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
 
                         // Звуки кухни (24.09). Выбор хранится на телефоне, а не
                         // в [GameState]: это настройка устройства, как громкость.
-                        _SectionTitle(l10n.settingsSectionSound),
+                        GlassSectionTitle(l10n.settingsSectionSound),
                         ValueListenableBuilder<bool>(
                           valueListenable: Sounds.on,
                           builder: (context, on, _) => _TogglesCard(
@@ -129,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
                         // Условия и политика (КП 14.2): видны и гостю, поэтому
                         // не в карточке аккаунта.
                         const SizedBox(height: 18),
-                        _SectionTitle(l10n.settingsSectionLegal),
+                        GlassSectionTitle(l10n.settingsSectionLegal),
                         const SizedBox(height: 6),
                         Card(
                           margin: EdgeInsets.zero,
@@ -154,7 +155,7 @@ class SettingsScreen extends StatelessWidget {
 
                         if (onSignOut != null) ...[
                           const SizedBox(height: 18),
-                          _SectionTitle(l10n.settingsSectionAccount),
+                          GlassSectionTitle(l10n.settingsSectionAccount),
                           const SizedBox(height: 6),
                           Card(
                             margin: EdgeInsets.zero,
@@ -200,93 +201,11 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// Шапка листа: круглая кнопка «назад», заголовок по центру, справа пусто.
-///
-/// Пустое место справа шириной с кнопку — чтобы заголовок стоял ровно по центру
-/// экрана, а не съезжал влево. Та же шапка, что в профиле и на экране ухода.
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.pagePadding,
-        8,
-        AppDimens.pagePadding,
-        10,
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: AppColors.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const CircleBorder(
-              side: BorderSide(color: AppColors.outline),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Center(
-                  child: Icon(
-                    Icons.chevron_left,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 42),
-        ],
-      ),
-    );
-  }
-}
-
 /// Подзаголовок раздела: капслок, разрядка, приглушённый цвет.
 /// Версия приложения. Держится строкой, а не читается из пакета: ради
 /// одной подписи тянуть зависимость и асинхронную загрузку незачем.
 /// Значение то же, что в `pubspec.yaml`.
 const String _appVersion = '0.1.0';
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 16, 0, 7),
-      child: Text(
-        // Капслок делается здесь, а не в тексте: так строку видно в исходнике
-        // так же, как в прототипе, и её проще сверять с КП.
-        text.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
 
 /// Ряд чипов выбора языка (КП 16.1): русский, английский, китайский.
 class _LanguageRow extends StatelessWidget {
@@ -342,7 +261,7 @@ class _LanguageChip extends StatelessWidget {
     final radius = BorderRadius.circular(AppDimens.radiusChip);
 
     return Material(
-      color: selected ? AppColors.sage : AppColors.surface,
+      color: selected ? AppColors.sage : Colors.white.withValues(alpha: 0.64),
       borderRadius: radius,
       child: InkWell(
         onTap: onTap,
@@ -393,8 +312,8 @@ class _TogglesCard extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.outline),
+        color: Colors.white.withValues(alpha: 0.64),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
       ),
       child: Column(

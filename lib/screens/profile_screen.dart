@@ -12,6 +12,7 @@ import '../l10n/sections_l10n.dart';
 import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import '../theme/app_colors.dart';
+import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/rename_pet_dialog.dart';
@@ -124,6 +125,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: AnimatedBuilder(
@@ -150,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SheetHeader(title: l10n.profileTitle),
+                GlassScreenHeader(title: l10n.profileTitle),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
@@ -159,8 +161,7 @@ class ProfileScreen extends StatelessWidget {
                       AppDimens.pagePadding,
                       AppDimens.pagePadding,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: GlassStagger(
                       children: [
                         _BirthCard(
                           name: petDisplayName(l10n, profile.name),
@@ -174,7 +175,7 @@ class ProfileScreen extends StatelessWidget {
                               : () => _rename(context, profile.name),
                         ),
 
-                        _SectionTitle(l10n.profileSectionBirth),
+                        GlassSectionTitle(l10n.profileSectionBirth),
                         _InfoRows(
                           rows: [
                             _InfoRow(
@@ -231,11 +232,11 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
                         if (game.account case final account?) ...[
-                          _SectionTitle(l10n.profileSectionAccount),
+                          GlassSectionTitle(l10n.profileSectionAccount),
                           _InfoRows(rows: _accountRows(context, account)),
                         ],
 
-                        _SectionTitle(l10n.profileSectionTrait),
+                        GlassSectionTitle(l10n.profileSectionTrait),
                         _InfoRows(
                           rows: [
                             _InfoRow(
@@ -254,10 +255,10 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
 
-                        _SectionTitle(l10n.profileSectionHistory),
+                        GlassSectionTitle(l10n.profileSectionHistory),
                         _StageTimeline(history: history, current: state.stage),
 
-                        _SectionTitle(l10n.profileSectionLinks),
+                        GlassSectionTitle(l10n.profileSectionLinks),
                         _LinkTile(
                           icon: Icons.trending_up,
                           title: l10n.profileLinkGrowth,
@@ -325,64 +326,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-/// Шапка листа: круглая кнопка «назад», заголовок по центру, справа пусто.
-///
-/// Пустое место справа шириной с кнопку — чтобы заголовок стоял ровно по центру
-/// экрана, а не съезжал влево. Та же шапка, что на экране ухода.
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.pagePadding,
-        8,
-        AppDimens.pagePadding,
-        10,
-      ),
-      child: Row(
-        children: [
-          Material(
-            color: AppColors.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const CircleBorder(
-              side: BorderSide(color: AppColors.outline),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Center(
-                  child: Icon(
-                    Icons.chevron_left,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 42),
-        ],
-      ),
-    );
-  }
-}
-
 /// Шапка профиля: портрет, имя, герой и цвет меха.
 class _BirthCard extends StatelessWidget {
   const _BirthCard({required this.name, required this.skin, this.onRename});
@@ -400,8 +343,8 @@ class _BirthCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.outline),
+        color: Colors.white.withValues(alpha: 0.64),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
       ),
       child: Column(
@@ -473,31 +416,6 @@ class _BirthCard extends StatelessWidget {
   }
 }
 
-/// Подзаголовок раздела: капслок, разрядка, приглушённый цвет.
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 16, 0, 7),
-      child: Text(
-        // Капслок делается здесь, а не в тексте: так строку видно в исходнике
-        // так же, как в прототипе, и её проще сверять с КП.
-        text.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
-
 /// Одна строка карточки: подпись слева, значение справа.
 class _InfoRow {
   const _InfoRow(this.label, this.value, {this.isStub = false});
@@ -520,8 +438,8 @@ class _InfoRows extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.outline),
+        color: Colors.white.withValues(alpha: 0.64),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
       ),
       child: Column(
@@ -714,7 +632,7 @@ class _LinkTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Material(
-      color: AppColors.surface,
+      color: Colors.white.withValues(alpha: 0.64),
       borderRadius: BorderRadius.circular(AppDimens.radiusCard),
       child: InkWell(
         onTap: onTap,
