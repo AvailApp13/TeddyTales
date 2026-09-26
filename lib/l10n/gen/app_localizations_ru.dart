@@ -2130,4 +2130,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rewardInviter => 'Друг пришёл по твоему коду!';
+
+  @override
+  String get sleepAwayTitle => 'Мишка спит';
+
+  @override
+  String get sleepAwayLead => 'Сладко посапывает в спальне.';
+
+  @override
+  String get sleepAwayWakeBreakfast => 'Разбудить и позвать завтракать';
+
+  @override
+  String get sleepAwayWakeLunch => 'Разбудить и позвать обедать';
+
+  @override
+  String get sleepAwayWakeDinner => 'Разбудить и позвать ужинать';
+
+  @override
+  String get sleepAwayWakeSnack => 'Разбудить и позвать перекусить';
+
+  @override
+  String get sleepAwayWakePlay => 'Разбудить и позвать играть';
+
+  @override
+  String get sleepAwayWakeBath => 'Разбудить и позвать купаться';
+
+  @override
+  String get sleepAwayLetSleep => 'Пусть спит';
+
+  @override
+  String get sleepAwayNight => 'Сейчас ночь — мишке лучше поспать.';
+
+  @override
+  String sleepAwayTired(int pct) {
+    return 'Ещё не выспался — Сон $pct %';
+  }
 }

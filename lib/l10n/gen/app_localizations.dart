@@ -3747,6 +3747,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Друг пришёл по твоему коду!'**
   String get rewardInviter;
+
+  /// No description provided for @sleepAwayTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка спит'**
+  String get sleepAwayTitle;
+
+  /// No description provided for @sleepAwayLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сладко посапывает в спальне.'**
+  String get sleepAwayLead;
+
+  /// No description provided for @sleepAwayWakeBreakfast.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать завтракать'**
+  String get sleepAwayWakeBreakfast;
+
+  /// No description provided for @sleepAwayWakeLunch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать обедать'**
+  String get sleepAwayWakeLunch;
+
+  /// No description provided for @sleepAwayWakeDinner.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать ужинать'**
+  String get sleepAwayWakeDinner;
+
+  /// No description provided for @sleepAwayWakeSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать перекусить'**
+  String get sleepAwayWakeSnack;
+
+  /// No description provided for @sleepAwayWakePlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать играть'**
+  String get sleepAwayWakePlay;
+
+  /// No description provided for @sleepAwayWakeBath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать купаться'**
+  String get sleepAwayWakeBath;
+
+  /// No description provided for @sleepAwayLetSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пусть спит'**
+  String get sleepAwayLetSleep;
+
+  /// No description provided for @sleepAwayNight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас ночь — мишке лучше поспать.'**
+  String get sleepAwayNight;
+
+  /// No description provided for @sleepAwayTired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё не выспался — Сон {pct} %'**
+  String sleepAwayTired(int pct);
 }
 
 class _AppLocalizationsDelegate

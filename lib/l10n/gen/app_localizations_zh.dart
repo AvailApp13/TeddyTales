@@ -2019,4 +2019,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rewardInviter => '好友用你的邀请码加入了！';
+
+  @override
+  String get sleepAwayTitle => '小熊在睡觉';
+
+  @override
+  String get sleepAwayLead => '正在卧室里香甜地睡着。';
+
+  @override
+  String get sleepAwayWakeBreakfast => '叫醒它吃早饭';
+
+  @override
+  String get sleepAwayWakeLunch => '叫醒它吃午饭';
+
+  @override
+  String get sleepAwayWakeDinner => '叫醒它吃晚饭';
+
+  @override
+  String get sleepAwayWakeSnack => '叫醒它吃点东西';
+
+  @override
+  String get sleepAwayWakePlay => '叫醒它一起玩';
+
+  @override
+  String get sleepAwayWakeBath => '叫醒它洗澡';
+
+  @override
+  String get sleepAwayLetSleep => '让它继续睡';
+
+  @override
+  String get sleepAwayNight => '现在是夜里，最好让小熊睡觉。';
+
+  @override
+  String sleepAwayTired(int pct) {
+    return '还没睡够——睡眠 $pct%';
+  }
 }

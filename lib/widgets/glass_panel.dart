@@ -225,12 +225,15 @@ class GlassButton extends StatelessWidget {
                   Icon(icon, size: 18, color: Colors.white),
                   const SizedBox(width: 6),
                 ],
+                // Длинная подпись уменьшается, а не обрезается многоточием.
                 Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: glassText(15, primary ? 800 : 700),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: glassText(15, primary ? 800 : 700),
+                    ),
                   ),
                 ),
               ],

@@ -32,6 +32,7 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/share_card.dart';
+import '../widgets/sleeping_elsewhere.dart';
 import '../widgets/gift_reveal.dart' show showCoinReward;
 import '../widgets/glass_panel.dart' show glassRoute;
 import '../widgets/sleep_countdown.dart';
@@ -1280,15 +1281,25 @@ class _RoomScene extends StatelessWidget {
         // Кухня живая так же: мишка за столом собран из частей, дышит,
         // моргает, ест и радуется. Голоден — иногда грустит (ТЗ:
         // `idle_hungry`).
+        // Спит — на кухне его нет (заказчик 26.09: он в спальне); разбудили
+        // — плавно появляется за столом.
         if (room == RoomKind.kitchen)
           Positioned.fromRect(
             rect: frame.rect,
-            child: KitchenScene(
-              meal: meal,
-              idle: _kitchenIdle(controller.state.mood),
-              pet: pets,
-              refuse: refusals,
-              trait: _kitchenTrait(controller.state.trait),
+            child: IgnorePointer(
+              ignoring: asleep,
+              child: AnimatedOpacity(
+                opacity: asleep ? 0 : 1,
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.easeOut,
+                child: KitchenScene(
+                  meal: meal,
+                  idle: _kitchenIdle(controller.state.mood),
+                  pet: pets,
+                  refuse: refusals,
+                  trait: _kitchenTrait(controller.state.trait),
+                ),
+              ),
             ),
           ),
         if (room == RoomKind.bedroom) ...[
@@ -1354,7 +1365,7 @@ class _RoomScene extends StatelessWidget {
         // душевой; во сне и на кухне оставляем». Там мишка — часть живой
         // сцены (KitchenScene, BedroomScene), здесь же был бы временный
         // демонстрационный, поэтому в игровой и душевой его пока нет.
-        if (room == RoomKind.kitchen || room == RoomKind.bedroom)
+        if ((room == RoomKind.kitchen && !asleep) || room == RoomKind.bedroom)
           for (final slice in frame.bearSlices)
             Positioned(
               left: frame.bearCenterX - frame.rect.width / 2,
@@ -1472,7 +1483,7 @@ class _RoomScene extends StatelessWidget {
               onFinished: cookCallbacks.onFinished,
             ),
           ),
-        if (room == RoomKind.kitchen)
+        if (room == RoomKind.kitchen && !asleep)
           Positioned(
             left: 16,
             right: _pawSpace,
@@ -1505,12 +1516,26 @@ class _RoomScene extends StatelessWidget {
             bottom: 34 + 44 + 12,
             child: _WakeMenu(alarm: alarm, onPickAlarm: onPickAlarm),
           ),
-        if (room == RoomKind.bath)
+        if (room == RoomKind.bath && !asleep)
           Positioned(
             left: 16,
             right: _pawSpace,
             bottom: 34,
             child: _BathMenu(onWash: onWash, onToilet: onToilet),
+          ),
+        // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
+        // «Мишка спит»: разбудить и позвать сюда или оставить спать.
+        if (asleep && room != RoomKind.bedroom && !furnishing)
+          Positioned.fill(
+            child: Align(
+              alignment: const Alignment(0, 0.15),
+              child: SleepingElsewhere(
+                room: room,
+                sleep: controller.stats.sleep,
+                onWake: onWake,
+                onLetSleep: () => onRoomChanged(RoomKind.bedroom),
+              ),
+            ),
           ),
       ],
     );

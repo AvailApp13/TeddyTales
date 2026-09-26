@@ -2119,4 +2119,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rewardInviter => 'A friend joined with your code!';
+
+  @override
+  String get sleepAwayTitle => 'Teddy is asleep';
+
+  @override
+  String get sleepAwayLead => 'Snoozing sweetly in the bedroom.';
+
+  @override
+  String get sleepAwayWakeBreakfast => 'Wake up for breakfast';
+
+  @override
+  String get sleepAwayWakeLunch => 'Wake up for lunch';
+
+  @override
+  String get sleepAwayWakeDinner => 'Wake up for dinner';
+
+  @override
+  String get sleepAwayWakeSnack => 'Wake up for a snack';
+
+  @override
+  String get sleepAwayWakePlay => 'Wake up to play';
+
+  @override
+  String get sleepAwayWakeBath => 'Wake up for a bath';
+
+  @override
+  String get sleepAwayLetSleep => 'Let it sleep';
+
+  @override
+  String get sleepAwayNight => 'It’s night — better let teddy sleep.';
+
+  @override
+  String sleepAwayTired(int pct) {
+    return 'Not rested yet — Sleep $pct%';
+  }
 }

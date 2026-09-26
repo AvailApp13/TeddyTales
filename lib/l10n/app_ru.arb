@@ -1293,5 +1293,23 @@
   },
   "friendCodeSkip": "Пропустить",
   "rewardFromFriend": "Подарок от друга — и другу тоже!",
-  "rewardInviter": "Друг пришёл по твоему коду!"
+  "rewardInviter": "Друг пришёл по твоему коду!",
+  "sleepAwayTitle": "Мишка спит",
+  "sleepAwayLead": "Сладко посапывает в спальне.",
+  "sleepAwayWakeBreakfast": "Разбудить и позвать завтракать",
+  "sleepAwayWakeLunch": "Разбудить и позвать обедать",
+  "sleepAwayWakeDinner": "Разбудить и позвать ужинать",
+  "sleepAwayWakeSnack": "Разбудить и позвать перекусить",
+  "sleepAwayWakePlay": "Разбудить и позвать играть",
+  "sleepAwayWakeBath": "Разбудить и позвать купаться",
+  "sleepAwayLetSleep": "Пусть спит",
+  "sleepAwayNight": "Сейчас ночь — мишке лучше поспать.",
+  "sleepAwayTired": "Ещё не выспался — Сон {pct} %",
+  "@sleepAwayTired": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -726,5 +726,16 @@
   "friendCodeClaim": "领取 +{coins}",
   "friendCodeSkip": "跳过",
   "rewardFromFriend": "好友送的礼物——好友也有一份！",
-  "rewardInviter": "好友用你的邀请码加入了！"
+  "rewardInviter": "好友用你的邀请码加入了！",
+  "sleepAwayTitle": "小熊在睡觉",
+  "sleepAwayLead": "正在卧室里香甜地睡着。",
+  "sleepAwayWakeBreakfast": "叫醒它吃早饭",
+  "sleepAwayWakeLunch": "叫醒它吃午饭",
+  "sleepAwayWakeDinner": "叫醒它吃晚饭",
+  "sleepAwayWakeSnack": "叫醒它吃点东西",
+  "sleepAwayWakePlay": "叫醒它一起玩",
+  "sleepAwayWakeBath": "叫醒它洗澡",
+  "sleepAwayLetSleep": "让它继续睡",
+  "sleepAwayNight": "现在是夜里，最好让小熊睡觉。",
+  "sleepAwayTired": "还没睡够——睡眠 {pct}%"
 }

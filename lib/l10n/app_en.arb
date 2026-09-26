@@ -726,5 +726,16 @@
   "friendCodeClaim": "Get +{coins}",
   "friendCodeSkip": "Skip",
   "rewardFromFriend": "A gift from your friend — and for them too!",
-  "rewardInviter": "A friend joined with your code!"
+  "rewardInviter": "A friend joined with your code!",
+  "sleepAwayTitle": "Teddy is asleep",
+  "sleepAwayLead": "Snoozing sweetly in the bedroom.",
+  "sleepAwayWakeBreakfast": "Wake up for breakfast",
+  "sleepAwayWakeLunch": "Wake up for lunch",
+  "sleepAwayWakeDinner": "Wake up for dinner",
+  "sleepAwayWakeSnack": "Wake up for a snack",
+  "sleepAwayWakePlay": "Wake up to play",
+  "sleepAwayWakeBath": "Wake up for a bath",
+  "sleepAwayLetSleep": "Let it sleep",
+  "sleepAwayNight": "It’s night — better let teddy sleep.",
+  "sleepAwayTired": "Not rested yet — Sleep {pct}%"
 }
