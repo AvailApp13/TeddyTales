@@ -12,10 +12,11 @@ import 'package:rive/rive.dart';
 /// движения). Действий ухода (еда, сон, мытьё, игра) в файле пока нет —
 /// их делает аниматор в редакторе Rive.
 ///
-/// Копия в `assets/rive/` отличается от присланной одним числом: фон
-/// артборда (тёмный, 0xFF282828) сделан прозрачным, иначе в комнате мишка
-/// стоял бы на тёмном квадрате. Попросить аниматора убрать фон в самом
-/// файле.
+/// Копия в `assets/rive/` собрана Rive CLI из исходника `.rev` заказчика
+/// (26.09): фон артборда прозрачный (был тёмный 0xFF282828) и добавлена
+/// анимация `emo_smile` — улыбка всем телом (моргнул → улыбка с румянцем,
+/// наклон с пружинкой, подскок, лапки и уши, вдох; 1,8 с). Исходник и
+/// шаги сборки — `docs/rive-bear.md`.
 ///
 /// Здесь: покой крутится всегда, а выражение лица накладывается поверх на
 /// пару секунд — одним застывшим кадром из `face_demo` ([BearFace]).
@@ -44,6 +45,13 @@ enum BearFace {
 
   /// Сколько держать, вместе с плавными входом и выходом.
   final double hold;
+
+  /// Своя анимация в файле: её играют кости и лицо целиком, без
+  /// застывшего кадра и без позы корпуса из приложения. `null` — пока нет.
+  String? get clip => switch (this) {
+    love => 'emo_smile',
+    _ => null,
+  };
 
   /// Касания по очереди (заказчик 26.09).
   static const List<BearFace> taps = [love, laugh, surprised, upset, lick];
@@ -123,7 +131,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
   /// Эмоция целиком: лицо из файла и поза корпуса.
   void _react(BearFace face) {
     _painter.play(face);
-    _bodyFace = face;
+    // Своя анимация сама двигает тело — поза из приложения не нужна.
+    _bodyFace = face.clip == null ? face : null;
     _body
       ..duration = Duration(milliseconds: (face.hold * 1000).round())
       ..forward(from: 0);
@@ -254,10 +263,23 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   Animation? _idle;
   Animation? _faces;
+  final Map<String, Animation> _clips = {};
+  Animation? _clip;
   BearFace? _face;
   double _t = 0;
 
   void play(BearFace face) {
+    final name = face.clip;
+    final clip = name == null ? null : _clips[name];
+    if (clip != null) {
+      clip.time = 0;
+      _clip = clip;
+      _face = null;
+      _t = 0;
+      scheduleRepaint();
+      return;
+    }
+    _clip = null;
     _face = face;
     _t = 0;
     scheduleRepaint();
@@ -270,12 +292,37 @@ final class _TrialPainter extends BasicArtboardPainter {
     _faces?.dispose();
     _idle = artboard.animationNamed('idle_life');
     _faces = artboard.animationNamed('face_demo');
+    for (final clip in _clips.values) {
+      clip.dispose();
+    }
+    _clips.clear();
+    for (final face in BearFace.values) {
+      final name = face.clip;
+      if (name == null || _clips.containsKey(name)) continue;
+      final animation = artboard.animationNamed(name);
+      if (animation != null) _clips[name] = animation;
+    }
     notifyListeners();
   }
 
   @override
   bool advance(double elapsedSeconds) {
     _idle?.advanceAndApply(elapsedSeconds);
+    final clip = _clip;
+    if (clip != null) {
+      // Своя анимация поверх покоя; края смешиваются за 0,15 с, чтобы
+      // покой и первая поза анимации не расходились рывком.
+      clip.advance(elapsedSeconds);
+      final t = clip.time;
+      final left = clip.duration - t;
+      if (left <= 0) {
+        _clip = null;
+      } else {
+        const edge = 0.15;
+        final mix = t < edge ? t / edge : (left < edge ? left / edge : 1.0);
+        clip.apply(mix: mix.clamp(0.0, 1.0));
+      }
+    }
     final face = _face;
     final faces = _faces;
     if (face != null && faces != null) {
@@ -300,6 +347,9 @@ final class _TrialPainter extends BasicArtboardPainter {
   void dispose() {
     _idle?.dispose();
     _faces?.dispose();
+    for (final clip in _clips.values) {
+      clip.dispose();
+    }
     super.dispose();
   }
 }
