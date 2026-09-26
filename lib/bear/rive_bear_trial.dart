@@ -120,11 +120,7 @@ class BearFaceCue extends ChangeNotifier {
 }
 
 class RiveBearTrial extends StatefulWidget {
-  const RiveBearTrial({
-    super.key,
-    required this.cue,
-    this.onTap,
-  });
+  const RiveBearTrial({super.key, required this.cue, this.onTap});
 
   final BearFaceCue cue;
 
@@ -280,6 +276,10 @@ final class _TrialPainter extends BasicArtboardPainter {
   double _t = 0;
 
   void play(BearFace face) {
+    // Прежняя эмоция ещё идёт — вернуть её в покой, иначе её лицо и поза
+    // остаются поверх новой (заказчик 26.09: после каждой кнопки мишка
+    // должен возвращаться в обычное состояние).
+    _rest(_clip);
     final name = face.clip;
     final clip = name == null ? null : _clips[name];
     if (clip != null) {
@@ -294,6 +294,14 @@ final class _TrialPainter extends BasicArtboardPainter {
     _face = face;
     _t = 0;
     scheduleRepaint();
+  }
+
+  /// Первый кадр каждой эмоции — покой: лицо-накладки скрыты, кости
+  /// эмоции на месте.
+  void _rest(Animation? clip) {
+    if (clip == null) return;
+    clip.time = 0;
+    clip.apply(mix: 1);
   }
 
   @override
@@ -327,6 +335,7 @@ final class _TrialPainter extends BasicArtboardPainter {
       final t = clip.time;
       final left = clip.duration - t;
       if (left <= 0) {
+        _rest(clip);
         _clip = null;
       } else {
         const edge = 0.15;
