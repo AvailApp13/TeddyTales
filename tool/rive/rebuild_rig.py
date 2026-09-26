@@ -22,6 +22,7 @@ sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from xf import M, f, world_map  # noqa: E402
 import mesh_refine  # noqa: E402
 import lids  # noqa: E402
+import mouths  # noqa: E402
 
 UP = -math.pi / 2
 
@@ -198,7 +199,7 @@ def weights_for(layer, x, y, B):
 
 
 def _weights_for(layer, x, y, B):
-    if layer in ('face_img', 'lid_patch_img'):
+    if layer in ('face_img', 'lid_patch_img') or layer.startswith('mouth_'):
         d = math.hypot((x - 512) / 118, (y - 425) / 108)
         k = 1 - smooth(0.8, 1.22, d)
         w = {'face': k, 'head': 1 - k} if k < 1 else {'face': 1.0}
@@ -430,6 +431,13 @@ class Emo:
         self.ch[(E_IDS[name], key)] = frames
         return self
 
+    def show(self, mouth, pts):
+        """Рот из `mouths.py`: pts [(кадр, прозрачность 0..1[, кривая])]."""
+        frames = [(0, 0.0, EI)] + [(p[0], p[1], p[2] if len(p) > 2 else EI) for p in pts]
+        frames.append((self.dur - 2, 0.0, None))
+        self.ch[(E_IDS[f'mouth_{mouth}'], self.OP)] = frames
+        return self
+
     def pair(self, name, key, pts, mirror=False):
         """Левая и правая кость; mirror — у правой знак обратный."""
         self.track(f'{name}_l', key, pts)
@@ -452,7 +460,7 @@ class Emo:
                 self.track(name, self.Y, [(p[0], shift * p[1], *p[2:]) for p in pts])
             # почти закрыт — бусина тает, остаётся веко (иначе чёрная черта)
             if any(p[1] > 0.8 for p in pts):
-                self.track(name, self.OP, [(p[0], min(1.0, max(0.0, (0.95 - p[1]) / 0.12)) - 1, *p[2:]) for p in pts])
+                self.track(name, self.OP, [(p[0], min(1.0, max(0.0, (0.9 - p[1]) / 0.12)) - 1, *p[2:]) for p in pts])
         return self
 
     def build(self):
@@ -474,9 +482,11 @@ def emo_smile():
     догоняют. Держит и мягко возвращается."""
     e = Emo(150)
     e.eyes([(10, -0.03), (38, 0.1, EO), (104, 0.08)])
-    e.pair('mouth', Emo.X, [(12, -0.5), (38, 8.5, EO), (104, 7.8)])
-    e.pair('mouth', Emo.Y, [(38, -2), (104, -1.8)], mirror=True)
-    e.track('mouth', Emo.X, [(38, -3), (104, -2.6)])
+    # рот — улыбка с приоткрытым ртом (Higgsfield, mouths.py); уголки
+    # чуть вверх, чтобы проявление шло вместе с движением
+    e.show('smile', [(16, 0.0), (32, 1.0, EO), (104, 1.0), (122, 0.0)])
+    e.pair('mouth', Emo.X, [(12, -0.5), (38, 2.5, EO), (104, 2.2)])
+    e.track('mouth', Emo.X, [(38, -0.8), (104, -0.6)])
     e.track('chin', Emo.X, [(38, 1.2), (104, 1)])
     e.track('chin', Emo.SY, [(38, 0.05), (104, 0.04)])
     e.track('muzzle', Emo.X, [(38, 1), (104, 0.8)])
@@ -510,9 +520,8 @@ def emo_laugh():
     g = [36, 54, 72, 90, 108]
     e.eyes([(8, -0.03), (30, 0.16, EO), (120, 0.15), (140, 0.13)])
     e.pair('eye', Emo.SX, [(30, -0.08), (140, -0.07)])
-    e.pair('mouth', Emo.X, [(30, 9.5, EO), (140, 8.8)])
-    e.pair('mouth', Emo.Y, [(30, -2.2), (140, -2)], mirror=True)
-    e.track('mouth', Emo.X, [(30, -3.3), (140, -3)])
+    e.show('laugh', [(10, 0.0), (22, 1.0, EO), (140, 1.0), (156, 0.0)])
+    e.pair('mouth', Emo.X, [(30, 2.5, EO), (140, 2.2)])
     e.track('chin', Emo.X, [(30, 1.8)] + pulses(g, 6, 12, 2.4, 1.6) + [(140, 1.5)])
     e.track('chin', Emo.SY, [(30, 0.06), (140, 0.05)])
     e.track('muzzle', Emo.X, [(30, 1.3), (140, 1)])
@@ -542,6 +551,7 @@ def emo_surprised():
     подпрыгивает и вытягивается, уши торчком, капюшон вздрагивает."""
     e = Emo(132)
     e.eyes([(6, -0.06), (20, 0.14, BACK), (96, 0.1)], lid='wide')
+    e.show('o', [(6, 0.0), (16, 1.0, EO), (92, 1.0), (108, 0.0)])
     e.pair('brow', Emo.X, [(6, -0.5), (20, 4.5, BACK), (96, 3.5)])
     e.pair('lid', Emo.X, [(20, -2.5, BACK), (96, -2)])
     e.pair('ulid', Emo.X, [(20, 3, BACK), (96, 2.4)])
@@ -574,8 +584,12 @@ def emo_sad():
     уголки рта вниз, голова клонится и опускается, плечи, уши и кончик
     капюшона никнут."""
     e = Emo(180)
-    e.eyes([(40, 0.08), (150, 0.07)], lid='top')
-    e.pair('ulid', Emo.X, [(40, -9), (150, -8.2)])
+    # глаза зажмуривает (заказчик 26.09: «в грусти он глазки зажимает»):
+    # веки сходятся сверху и снизу, на вздохе — сильнее
+    e.eyes([(30, 0.25), (70, 0.45), (100, 0.35), (150, 0.3)], lid='both')
+    e.pair('ulid', Emo.X, [(30, -9), (70, -13), (100, -11), (150, -10)])
+    e.pair('lid', Emo.X, [(30, 5), (70, 8), (100, 6.5), (150, 6)])
+    e.pair('eye', Emo.SX, [(30, -0.06), (70, -0.1), (150, -0.07)])
     e.track('brow_l', Emo.R, [(40, -0.12), (150, -0.1)])
     e.track('brow_r', Emo.R, [(40, 0.12), (150, 0.1)])
     e.pair('brow', Emo.X, [(40, 1.5), (150, 1.2)])
@@ -583,7 +597,6 @@ def emo_sad():
     e.track('mouth', Emo.X, [(40, 0.8), (150, 0.6)])
     e.track('chin', Emo.X, [(40, -0.8), (150, -0.6)])
     e.pair('cheek', Emo.X, [(40, -2), (150, -1.8)])
-    e.pair('lid', Emo.X, [(40, 0.5), (150, 0.4)])
     e.track('breath', Emo.SY, [(24, 0.035), (70, -0.035), (150, -0.03)])
     e.track('hips', Emo.Y, [(24, -2), (70, 4), (150, 3.5)])
     e.track('chest', Emo.R, [(60, -0.015), (150, -0.012)])
@@ -612,6 +625,8 @@ def emo_chew():
     e.eyes([(16, 0.05), (140, 0.04)])
     e.pair('lid', Emo.X, [(16, 5), (140, 4.5)])
     e.track('chin', Emo.X, pulses(c, 10, 14, 1.0, -2.2))
+    # рот приоткрывается, когда подбородок внизу
+    e.show('chew', pulses(c, 10, 14, 0.0, 1.0))
     e.pair('mouth', Emo.X, pulses(c, 10, 14, 1.2, -0.6))
     e.track('mouth', Emo.X, pulses(c, 10, 14, 0.6, -0.4))
     e.track('muzzle', Emo.X, pulses(c, 10, 14, 0.9, -0.3))
@@ -633,6 +648,7 @@ def emo_lick():
     e = Emo(132)
     s = [18, 42, 66]
     e.eyes([(14, 0.06), (110, 0.05)])
+    e.show('lick', [(14, 0.0), (26, 1.0, EO), (96, 1.0), (110, 0.0)])
     e.track('mouth_l', Emo.X, pulses(s[0::2], 8, 16, 3.2, 0.6))
     e.track('mouth_r', Emo.X, pulses(s[1:2], 8, 16, 3.2, 0.6))
     e.track('mouth', Emo.X, pulses(s, 8, 16, -1.2, -0.3))
@@ -655,6 +671,7 @@ def emo_yawn():
     вытягивается), лапы в стороны; выдох, встряхнул головой."""
     e = Emo(210)
     e.eyes([(30, 0.3), (60, 0.93), (125, 0.93), (150, 0.2), (180, 0.05)], lid='both')
+    e.show('yawn', [(26, 0.0), (58, 1.0), (125, 1.0), (148, 0.0)])
     e.pair('brow', Emo.X, [(60, 3), (125, 2.5), (150, 0)])
     e.pair('lid', Emo.X, [(60, 6), (125, 5.5), (150, 0)])
     e.pair('ulid', Emo.X, [(60, -6), (125, -5.5), (150, 0)])
@@ -862,6 +879,8 @@ def main(project):
     eyes = [(byname['gaze_socket_l_img'], byname['gaze_bead_l_img']),
             (byname['gaze_socket_r_img'], byname['gaze_bead_r_img'])]
     lids.build(project, root, ab, W, byname, fm, eyes, lambda: ident(next(ids)))
+    for n, mid in mouths.build(project, root, ab, byname, lambda: ident(next(ids))).items():
+        E_IDS[f'mouth_{n}'] = mid
 
     # 5. Сетки: новые сухожилия и веса.
     for img in ab.iter('Image'):
