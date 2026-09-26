@@ -13,9 +13,11 @@ import 'package:rive/rive.dart';
 /// их делает аниматор в редакторе Rive.
 ///
 /// Копия в `assets/rive/` собрана Rive CLI из исходника `.rev` заказчика
-/// (26.09): фон прозрачный, скелет пересобран заново (18 костей), покой
-/// `idle_life` — дыхание всем телом и мягкое моргание, `emo_smile` —
-/// улыбка всем телом: щёки, рот, прищур, наклон головы, капюшон, уши. Исходник и сборка — `docs/rive-bear.md`.
+/// (26.09): фон прозрачный, скелет пересобран заново (26 костей), покой
+/// `idle_life` — дыхание всем телом и мягкое моргание, у каждого
+/// выражения своя анимация всем телом (`emo_smile`, `emo_laugh`,
+/// `emo_surprised`, `emo_sad`, `emo_chew`, `emo_lick`, `emo_yawn`,
+/// `emo_sleepy`, `emo_upset`). Исходник и сборка — `docs/rive-bear.md`.
 ///
 /// Здесь: покой крутится всегда, а выражение лица накладывается поверх на
 /// пару секунд — одним застывшим кадром из `face_demo` ([BearFace]).
@@ -49,7 +51,14 @@ enum BearFace {
   /// застывшего кадра и без позы корпуса из приложения. `null` — пока нет.
   String? get clip => switch (this) {
     love => 'emo_smile',
-    _ => null,
+    laugh => 'emo_laugh',
+    surprised => 'emo_surprised',
+    sad => 'emo_sad',
+    chew => 'emo_chew',
+    lick => 'emo_lick',
+    yawn => 'emo_yawn',
+    sleepy => 'emo_sleepy',
+    upset => 'emo_upset',
   };
 
   /// Касания по очереди (заказчик 26.09).
@@ -102,14 +111,9 @@ class RiveBearTrial extends StatefulWidget {
     super.key,
     required this.cue,
     this.onTap,
-    this.greeting,
   });
 
   final BearFaceCue cue;
-
-  /// Чем встретить при входе в игровую — по состоянию (заказчик 26.09):
-  /// голоден — грусть, хочет спать — зевает, всё хорошо — улыбка.
-  final BearFace? Function()? greeting;
 
   /// Касание мишки (КП 3.1).
   final VoidCallback? onTap;
@@ -152,12 +156,6 @@ class _RiveBearTrialState extends State<RiveBearTrial>
             return;
           }
           setState(() => _file = file);
-          final greet = widget.greeting?.call();
-          if (greet != null) {
-            Future<void>.delayed(const Duration(milliseconds: 600), () {
-              if (mounted) _react(greet);
-            });
-          }
         })
         .catchError((Object error) {
           debugPrint('[TeddyTales] $kTrialBearAsset не загрузился: $error');

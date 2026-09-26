@@ -142,13 +142,19 @@ def along(p, a, b):
 EAR_HOOD_CONTACTS = [(394, 204), (619, 205)]
 
 
-def pin(w, x, y, r0=30, r1=75, bone='head'):
+def pin(w, x, y, r0=26, r1=70):
+    """У стыка и капюшон, и ухо получают одинаковую привязку — наполовину
+    к уху, наполовину к конусу капюшона: стык движется вместе с ними и не
+    расходится (заказчик 26.09: «уголки неподвижны — сделай правильно»)."""
     d = min(math.hypot(x - px, y - py) for px, py in EAR_HOOD_CONTACTS)
     k = 1 - smooth(r0, r1, d)
     if k <= 0:
         return w
+    ear = 'ear_l1' if x < 517 else 'ear_r1'
+    shared = {'hood1': 0.5, ear: 0.5}
     w = {b: v * (1 - k) for b, v in w.items()}
-    w[bone] = w.get(bone, 0) + k
+    for b, v in shared.items():
+        w[b] = w.get(b, 0) + v * k
     return w
 
 
@@ -410,6 +416,229 @@ def smile(rest):
     return 108, ch
 
 
+# Накладки лица (исходник): у каких есть свои глаза — бусины тогда прячем.
+FX = {'laugh': '0:107284', 'surprised': '0:107320', 'sad': '0:107303', 'chew': '0:107276',
+      'lick': '0:107291', 'yawn': '0:107334', 'eyes_closed': '0:107279', 'upset': '0:107327'}
+FX_WITH_EYES = {'laugh', 'surprised', 'sad', 'yawn', 'eyes_closed', 'upset'}
+
+
+class Emo:
+    """Сборщик одной эмоции: ключи — смещения от покоя."""
+    R, SX, SY, X, Y, OP = 15, 16, 17, 90, 91, 18
+
+    def __init__(self, rest, dur):
+        self.rest, self.dur, self.ch = rest, dur, {}
+
+    def base(self, bone, key):
+        r = self.rest[bone]
+        return {15: r.get('rotation', 0), 90: r.get('x', 0), 91: r.get('y', 0)}.get(key, 1.0)
+
+    def track(self, bone, key, pts):
+        """pts: [(кадр, смещение[, кривая])]; начало и конец — покой."""
+        b = self.base(bone, key)
+        frames = [(0, b, EI)]
+        for p in pts:
+            fr, off = p[0], p[1]
+            ease = p[2] if len(p) > 2 else EI
+            frames.append((fr, b + off, ease))
+        frames.append((self.dur - 2, b, None))
+        self.ch[(bone, key)] = frames
+
+    def face(self, fx, a, b, c, d, hide_beads=None):
+        """Накладка: проявляется a→b, держится, уходит c→d."""
+        self.ch[(FX[fx], self.OP)] = [(0, 0, None), (a, 0, EI), (b, 1, None), (c, 1, EI), (d, 0, None)]
+        if hide_beads is None:
+            hide_beads = fx in FX_WITH_EYES
+        if hide_beads:
+            for bead, rest_v in BEAD_REST.items():
+                self.ch[(bead, self.SY)] = [(0, rest_v, EIN), (a, rest_v * 0.5, EO), (b, 0.02, None),
+                                            (c, 0.02, EO), (d + 4, rest_v, None)]
+                self.ch[(bead, self.OP)] = [(0, 1, None), (b, 0, None), (c + 2, 1, None)]
+        return self
+
+    def build(self):
+        return self.dur, self.ch
+
+
+def emo_laugh(rest):
+    e = Emo(rest, 96)
+    e.face('laugh', 4, 12, 78, 90)
+    for c in ('cheek_l', 'cheek_r'):
+        e.track(c, Emo.X, [(14, 7), (40, 5), (58, 7), (84, 6)])
+        e.track(c, Emo.SY, [(14, 0.07), (84, 0.06)])
+    e.track('mouth', Emo.SY, [(12, 0.12), (84, 0.1)])
+    e.track('mouth', Emo.X, [(12, 3), (84, 2)])
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(12, -0.18), (84, -0.16)])
+    # два мягких подскока «хи-хи»
+    e.track('hips', Emo.Y, [(6, 2, EO), (18, -7, EIN), (30, 0, EO), (40, -5, EIN), (52, 0, EO), (70, -1)])
+    e.track('head', Emo.R, [(8, 0.02), (22, -0.05, BACK), (46, 0.03), (70, -0.02)])
+    e.track('face', Emo.X, [(22, 4), (70, 2)])
+    e.track('breath', Emo.SY, [(18, 0.05), (40, 0.02), (58, 0.05)])
+    e.track('hood2', Emo.R, [(24, 0.08), (42, -0.06), (60, 0.05), (78, -0.02)])
+    e.track('hood1', Emo.R, [(24, 0.03), (48, -0.02)])
+    e.track('ear_l1', Emo.R, [(16, -0.12, EO), (36, 0.04), (56, -0.06)])
+    e.track('ear_r1', Emo.R, [(18, 0.12, EO), (38, -0.04), (58, 0.06)])
+    e.track('arm_l1', Emo.R, [(18, 0.05), (60, 0.03)])
+    e.track('arm_r1', Emo.R, [(18, -0.05), (60, -0.03)])
+    return e.build()
+
+
+def emo_surprised(rest):
+    e = Emo(rest, 90)
+    e.face('surprised', 2, 8, 70, 82)
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(4, -0.05, EO), (12, 0.14, BACK), (70, 0.12)])
+        e.track(eye, Emo.SY, [(12, 0.08, BACK), (70, 0.06)])
+    e.track('mouth', Emo.SX, [(10, 0.12, BACK), (70, 0.1)])
+    e.track('mouth', Emo.SY, [(10, -0.06), (70, -0.05)])
+    for c in ('cheek_l', 'cheek_r'):
+        e.track(c, Emo.X, [(10, -2), (70, -2)])
+    e.track('hips', Emo.Y, [(5, 3, EO), (14, -10, BACK), (30, -4), (60, -3)])
+    e.track('head', Emo.R, [(12, -0.04, BACK), (60, -0.03)])
+    e.track('face', Emo.X, [(12, 6, BACK), (66, 4)])
+    e.track('breath', Emo.SY, [(12, 0.07), (64, 0.05)])
+    e.track('hood2', Emo.R, [(16, 0.1), (32, -0.07), (50, 0.03)])
+    e.track('hood1', Emo.R, [(16, 0.035), (36, -0.02)])
+    for side, sgn in (('l', 1), ('r', -1)):
+        e.track(f'ear_{side}1', Emo.R, [(10, -0.14 * sgn, BACK), (66, -0.1 * sgn)])
+        e.track(f'ear_{side}1', Emo.SX, [(10, 0.08, BACK), (66, 0.06)])
+        e.track(f'ear_{side}2', Emo.R, [(14, -0.12 * sgn, BACK), (66, -0.08 * sgn)])
+    e.track('arm_l1', Emo.R, [(12, 0.08, BACK), (64, 0.06)])
+    e.track('arm_r1', Emo.R, [(12, -0.08, BACK), (64, -0.06)])
+    return e.build()
+
+
+def emo_sad(rest):
+    e = Emo(rest, 132)
+    e.face('sad', 10, 30, 104, 122)
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(30, -0.06), (104, -0.05)])
+    e.track('mouth', Emo.X, [(30, -2), (104, -2)])
+    for c in ('cheek_l', 'cheek_r'):
+        e.track(c, Emo.X, [(30, -3), (104, -2)])
+    e.track('hips', Emo.Y, [(40, 4), (104, 3)])
+    e.track('breath', Emo.SY, [(40, -0.03), (104, -0.02)])
+    e.track('chest', Emo.R, [(40, -0.02), (104, -0.015)])
+    e.track('head', Emo.R, [(40, 0.05), (80, 0.045), (104, 0.05)])
+    e.track('face', Emo.X, [(40, -6), (104, -5)])
+    e.track('hood2', Emo.R, [(50, 0.07), (104, 0.06)])
+    e.track('hood1', Emo.R, [(46, 0.02), (104, 0.02)])
+    for side, sgn in (('l', 1), ('r', -1)):
+        e.track(f'ear_{side}1', Emo.R, [(40, 0.14 * sgn), (104, 0.12 * sgn)])
+        e.track(f'ear_{side}1', Emo.SX, [(40, -0.1), (104, -0.08)])
+        e.track(f'ear_{side}2', Emo.R, [(48, 0.12 * sgn), (104, 0.1 * sgn)])
+    e.track('arm_l1', Emo.R, [(40, -0.03), (104, -0.025)])
+    e.track('arm_r1', Emo.R, [(40, 0.03), (104, 0.025)])
+    return e.build()
+
+
+def emo_chew(rest):
+    e = Emo(rest, 96)
+    e.face('chew', 4, 12, 80, 90)
+    # челюсть: три жевка, щёки раздуваются по очереди
+    e.track('mouth', Emo.X, [(12, -3), (22, 1), (32, -3), (42, 1), (52, -3), (62, 1), (72, -2)])
+    e.track('mouth', Emo.SY, [(12, 0.06), (22, 0.02), (32, 0.06), (42, 0.02), (52, 0.06), (72, 0.03)])
+    e.track('cheek_l', Emo.SY, [(14, 0.08), (24, 0.02), (34, 0.03), (44, 0.08), (54, 0.02), (74, 0.04)])
+    e.track('cheek_r', Emo.SY, [(14, 0.02), (24, 0.08), (34, 0.02), (44, 0.03), (54, 0.08), (74, 0.03)])
+    e.track('head', Emo.R, [(12, 0.01), (22, -0.012), (32, 0.012), (42, -0.012), (52, 0.012), (70, 0)])
+    e.track('face', Emo.X, [(12, -1.5), (22, 1), (32, -1.5), (42, 1), (52, -1.5), (70, 0)])
+    e.track('hood2', Emo.R, [(20, 0.02), (40, -0.02), (60, 0.015)])
+    e.track('ear_l1', Emo.R, [(22, -0.03), (42, 0.02), (62, -0.02)])
+    e.track('ear_r1', Emo.R, [(24, 0.03), (44, -0.02), (64, 0.02)])
+    return e.build()
+
+
+def emo_lick(rest):
+    e = Emo(rest, 84)
+    e.face('lick', 4, 12, 66, 76)
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(12, -0.08), (66, -0.06)])
+    e.track('mouth', Emo.SY, [(12, 0.06), (40, 0.08), (66, 0.05)])
+    e.track('cheek_l', Emo.X, [(14, 3), (66, 2)])
+    e.track('cheek_r', Emo.X, [(14, 4), (66, 3)])
+    e.track('head', Emo.R, [(16, 0.05, BACK), (50, 0.04), (66, 0.045)])
+    e.track('face', Emo.Y, [(16, 3), (66, 2)])
+    e.track('hood2', Emo.R, [(24, -0.05), (44, 0.03), (62, -0.01)])
+    e.track('ear_r1', Emo.R, [(18, 0.06), (40, -0.02)])
+    e.track('ear_l1', Emo.R, [(20, -0.04), (42, 0.02)])
+    return e.build()
+
+
+def emo_yawn(rest):
+    e = Emo(rest, 120)
+    e.face('yawn', 14, 30, 86, 102)
+    # рот не растягиваем: нарисованный зевок не тянется, края бы разошлись
+    e.track('mouth', Emo.X, [(30, -1), (86, -1)])
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(30, -0.14), (86, -0.12)])
+    for c in ('cheek_l', 'cheek_r'):
+        e.track(c, Emo.X, [(30, 3), (86, 2)])
+    # потягивается: грудь набирает воздух, голова назад, лапы в стороны
+    e.track('breath', Emo.SY, [(30, 0.09), (70, 0.08), (96, 0)])
+    e.track('breath', Emo.SX, [(30, 0.05), (70, 0.04)])
+    e.track('hips', Emo.Y, [(30, -5), (70, -4), (96, 2)])
+    e.track('chest', Emo.R, [(30, 0.02), (80, 0.015)])
+    e.track('head', Emo.R, [(30, -0.05), (80, -0.04), (100, 0.01)])
+    e.track('face', Emo.X, [(30, 5), (80, 4)])
+    e.track('arm_l1', Emo.R, [(34, 0.1), (80, 0.08)])
+    e.track('arm_r1', Emo.R, [(34, -0.1), (80, -0.08)])
+    e.track('arm_l2', Emo.R, [(40, 0.08), (80, 0.06)])
+    e.track('arm_r2', Emo.R, [(40, -0.08), (80, -0.06)])
+    e.track('hood2', Emo.R, [(40, 0.07), (70, 0.05), (96, -0.04)])
+    for side, sgn in (('l', 1), ('r', -1)):
+        e.track(f'ear_{side}1', Emo.R, [(34, 0.1 * sgn), (80, 0.08 * sgn)])
+        e.track(f'ear_{side}1', Emo.SX, [(34, -0.12), (80, -0.1)])
+    return e.build()
+
+
+def emo_sleepy(rest):
+    e = Emo(rest, 132)
+    # глаза медленно закрываются, голова клюёт, потом просыпается
+    e.face('eyes_closed', 20, 50, 92, 104)
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(50, -0.12), (92, -0.1), (106, 0.03)])
+    e.track('head', Emo.R, [(50, 0.04), (80, 0.07), (92, 0.075), (100, -0.01, BACK)])
+    e.track('face', Emo.X, [(50, -3), (92, -5), (102, 2)])
+    e.track('hips', Emo.Y, [(60, 3), (92, 3), (102, -2)])
+    e.track('breath', Emo.SY, [(50, -0.02), (92, -0.02)])
+    e.track('hood2', Emo.R, [(64, 0.07), (96, 0.08), (110, -0.04)])
+    for side, sgn in (('l', 1), ('r', -1)):
+        e.track(f'ear_{side}1', Emo.R, [(56, 0.1 * sgn), (92, 0.12 * sgn), (104, -0.04 * sgn)])
+        e.track(f'ear_{side}1', Emo.SX, [(56, -0.08), (92, -0.1)])
+    return e.build()
+
+
+def emo_upset(rest):
+    e = Emo(rest, 90)
+    e.face('upset', 4, 12, 70, 82)
+    for eye in ('eye_l', 'eye_r'):
+        e.track(eye, Emo.SX, [(12, -0.2), (70, -0.18)])
+        e.track(eye, Emo.SY, [(12, -0.06), (70, -0.05)])
+    for c in ('cheek_l', 'cheek_r'):
+        e.track(c, Emo.X, [(12, 4), (70, 3)])
+    e.track('mouth', Emo.SY, [(12, -0.06), (70, -0.05)])
+    # сжался: присел, плечи вверх, уши прижаты
+    e.track('hips', Emo.Y, [(12, 5), (70, 4)])
+    e.track('breath', Emo.SY, [(12, -0.03), (70, -0.02)])
+    e.track('head', Emo.R, [(12, 0.015), (40, -0.015), (70, 0)])
+    e.track('face', Emo.X, [(12, -3), (70, -2)])
+    e.track('arm_l1', Emo.R, [(12, -0.05), (70, -0.04)])
+    e.track('arm_r1', Emo.R, [(12, 0.05), (70, 0.04)])
+    e.track('hood2', Emo.R, [(18, -0.05), (36, 0.03), (56, -0.01)])
+    for side, sgn in (('l', 1), ('r', -1)):
+        e.track(f'ear_{side}1', Emo.R, [(12, 0.12 * sgn), (70, 0.1 * sgn)])
+        e.track(f'ear_{side}1', Emo.SX, [(12, -0.14), (70, -0.12)])
+    return e.build()
+
+
+EMOTION_ANIMS = {
+    'emo_laugh': emo_laugh, 'emo_surprised': emo_surprised, 'emo_sad': emo_sad,
+    'emo_chew': emo_chew, 'emo_lick': emo_lick, 'emo_yawn': emo_yawn,
+    'emo_sleepy': emo_sleepy, 'emo_upset': emo_upset,
+}
+
+
 def cubic_key(parent, frame, value, ease):
     if ease is None:
         ET.SubElement(parent, 'KeyFrameDouble', {'value': fmt(value), 'frame': str(frame),
@@ -541,12 +770,17 @@ def main(project):
             ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(val), 'frame': str(fr),
                                                  'interpolationType': 'linear'})
 
-    # 8. emo_smile — заново на новых костях.
-    emo = next((a for a in root.iter('LinearAnimation') if a.attrib.get('name') == 'emo_smile'), None)
-    if emo is not None:
+    # 8. Эмоции на новых костях: emo_smile заново, остальные — новые.
+    anims = {a.attrib.get('name'): a for a in root.iter('LinearAnimation')}
+    builders = {'emo_smile': smile, **EMOTION_ANIMS}
+    for name, fn in builders.items():
+        emo = anims.get(name)
+        if emo is None:
+            emo = ET.Element('LinearAnimation', {'duration': '1', 'loopValue': '0', 'name': name})
+            ab.insert(list(ab).index(anims['idle_life']), emo)
         for ko in list(emo.findall('KeyedObject')):
             emo.remove(ko)
-        dur, ch = smile(rest)
+        dur, ch = fn(rest)
         emo.set('duration', str(dur))
         for (target, key), frames in ch.items():
             oid = B[target]['id'] if target in B else target
