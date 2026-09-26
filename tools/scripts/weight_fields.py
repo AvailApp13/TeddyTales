@@ -27,6 +27,10 @@ base = hood & ndimage.binary_dilation(under, iterations=3)
 out['hood_base'] = np.round(np.minimum(ndimage.distance_transform_edt(~base)[::STEP, ::STEP], 400)).astype(int).tolist()
 # от капюшона — для изгиба ушей: основание уха (под капюшоном и у кромки) стоит
 out['hood'] = np.round(np.minimum(ndimage.distance_transform_edt(~hood)[::STEP, ::STEP], 400)).astype(int).tolist()
+# от видимой части каждого уха — капюшон у уха идёт за ухом (D26)
+for _e in ('ear_left', 'ear_right'):
+    _vis = (np.asarray(Image.open(f'{D}/{_e}.png'))[..., 3] > 128) & ~hood
+    out[f'{_e}_vis'] = np.round(np.minimum(ndimage.distance_transform_edt(~_vis)[::STEP, ::STEP], 400)).astype(int).tolist()
 # живот (дыхание): центр видимой части корпуса толстовки ниже груди
 # (не под рукавами, лапами и капюшоном) — tools/lib/bear_weights.mjs → shirt
 shirt = np.asarray(Image.open(f'{D}/shirt.png'))[..., 3] > 128

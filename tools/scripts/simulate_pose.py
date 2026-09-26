@@ -43,7 +43,7 @@ def _rot(pivot, deg):
 # оси ушей — середина линии стыка с капюшоном (layers.json, split_full_bear.py, кадр) -> артборд
 to_art = lambda xf, yf: (CX + (xf - 666.5) * S, CY + (yf - 1000) * S)
 for _e, _p in json.load(open(f'{D}/layers.json')).get('ear_pivots', {}).items():
-    PIVOT[_e] = to_art(*_p['pivot'])
+    PIVOT[_e] = to_art(*_p.get('swing', _p['pivot']))   # ось уха в голове (D26, ear_swing.py)
 # центр живота (weight_fields.py): belly=… — масштаб кости root_belly, % (дыхание, D21)
 PIVOT['belly'] = to_art(*json.load(open(f'{D}/weight_fields.json'))['belly'])
 # кость уха — дочерняя головы: сначала изгиб уха, затем голова

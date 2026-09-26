@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Ставит начало костей ушей root_ear_left/right на ось уха (D20, D25): середина стыка с
- * капюшоном, 20 px под капюшоном (layers.json → ear_pivots.pivot). reparent_objects в
+ * Ставит начало костей ушей root_ear_left/right на ось уха: ear_pivots.swing — в голове,
+ * от центра круга уха к лицу (D26, ear_swing.py), без неё — ear_pivots.pivot, середина стыка
+ * с капюшоном (D20, D25). reparent_objects в
  * редакторе сдвигал кость при переносе в группу уха — начало стояло на 34–37 px наружу, в
  * теле уха: ухо поворачивалось вокруг точки в себе, край у капюшона уходил, полоса у
  * капюшона оставалась — залом («крючок») у нижнего конца стыка.
@@ -30,7 +31,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const side of ['left', 'right']) {
   const bone = file.bones[`root_ear_${side}`]; const G = await restWorld(call, file, parentOf[bone]);
-  const P = art(meta.ear_pivots[`ear_${side}`].pivot); const [lx, ly] = toLocal(G, P);
+  const E = meta.ear_pivots[`ear_${side}`]; const P = art(E.swing ?? E.pivot); const [lx, ly] = toLocal(G, P);   // ось D26 (ear_swing.py), иначе D20
   // тенданы этой кости во всех сетках — мировое положение при привязке переезжает на ось
   const tendons = [];
   for (const s of Object.values(file.skins)) {

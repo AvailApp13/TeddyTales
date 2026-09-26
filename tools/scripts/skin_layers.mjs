@@ -50,6 +50,10 @@ for (const name of todo) {
   const tendons = skinObj.children;
   const tv = (await call('query_property_values', { propertyKeys: Object.fromEntries(tendons.map((t) => [t, [95]])) })).values;
   const idxOf = {}; tendons.forEach((t, i) => { const boneId = tv[t]['95']; const key = Object.keys(B).find((k) => B[k] === boneId); idxOf[key] = i + 1; });
+  // новая кость у уже привязанной сетки (капюшон и кости ушей, D26) может не добавиться — иначе
+  // индексы весов молча указали бы не на ту кость
+  const missing = p.bones.filter((b) => !idxOf[b]);
+  if (missing.length) throw new Error(`${name}: кости ${missing.join(', ')} не привязались к сетке ${meshId}`);
   // вершина -> Weight
   const verts = objs.filter((o) => /MeshVertex$/.test(o.types[0]));
   const vpos = (await call('query_property_values', { propertyKeys: Object.fromEntries(verts.map((v) => [v.id, [24, 25]])) })).values;

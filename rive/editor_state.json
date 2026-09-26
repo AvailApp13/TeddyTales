@@ -848,7 +848,9 @@
         "meshId": "0-343536",
         "bones": [
           "root",
-          "root_body"
+          "root_body",
+          "root_ear_left",
+          "root_ear_right"
         ],
         "vertices": 3271
       },
