@@ -6,7 +6,10 @@
    заказчика, 26.09) в RML-проект во временной папке.
 2. Скрипт правит RML: фон артборда прозрачный, добавляет эмоции
    (`EMOTIONS` ниже — сейчас `emo_smile`).
-3. `rive <dir> --once` собирает `.riv` → `assets/rive/bear_boy_v2.riv`.
+3. `rebuild_rig.py`: новый скелет вместо старого, веса сеток заново,
+   `idle_life` — дыхание всем телом (заказчик 26.09). Ключи старых костей
+   из эмоций при этом убираются — остаётся лицо.
+4. `rive <dir> --once` собирает `.riv` → `assets/rive/bear_boy_v2.riv`.
 
 Нужен Rive CLI 1.1.1 (`docs/rive-bear.md`). Вход в аккаунт Rive для этого
 не нужен.
@@ -15,7 +18,11 @@
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rebuild_rig  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, 'assets_src/rive/bear_boy_v2.rev')
@@ -110,6 +117,7 @@ def main():
                   + ''.join(body) + '</LinearAnimation>\n        ')
     s = s[:anchor] + extra + s[anchor:]
     open(scene, 'w', encoding='utf-8').write(s)
+    rebuild_rig.main(project)
     subprocess.run(['rive', project, '--once'], env=env, check=True)
     shutil.copy(os.path.join(project, 'build', 'bear.riv'), OUT)
     print('готово:', OUT)
