@@ -568,6 +568,9 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(() async {
+        // Первый запуск (рождение, имя, код друга) — сначала он.
+        await _afterOnboarding();
+        if (!mounted) return;
         // Сначала праздник пригласившего (друг пришёл по коду), потом
         // окно «Сегодня» — не друг поверх друга.
         await _maybeInviterReward();
@@ -640,6 +643,21 @@ class _HomeScreenState extends State<HomeScreen>
         title: context.l10n.rewardFromFriend,
       );
     }
+  }
+
+  /// Ждёт, пока закончится первый запуск: окна не должны открываться
+  /// поверх «Родился малыш!» и выбора имени.
+  Future<void> _afterOnboarding() async {
+    final flag = widget.game.onboarding;
+    if (!flag.value) return;
+    final done = Completer<void>();
+    void listener() {
+      if (!flag.value && !done.isCompleted) done.complete();
+    }
+
+    flag.addListener(listener);
+    await done.future;
+    flag.removeListener(listener);
   }
 
   /// По коду пригласившего пришёл друг (заказчик 26.09): при входе —

@@ -164,6 +164,17 @@ class GameState extends ChangeNotifier {
   Future<RestoreResult> restoreStreak() async =>
       await onRestoreStreak?.call() ?? RestoreResult.failed;
 
+  /// Идёт первый запуск: «Родился малыш!», имя, «Тебя пригласил друг?».
+  /// Пока `true`, остальные окна (подарок дня, праздник монет) ждут —
+  /// не открываются поверх.
+  final ValueNotifier<bool> onboarding = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    onboarding.dispose();
+    super.dispose();
+  }
+
   /// «Пригласи друга» (миграция 0021). `null` — нет аккаунта или связи.
   Future<ReferralInfo?> Function()? onReferral;
   Future<RedeemResult> Function(String code)? onRedeemReferral;

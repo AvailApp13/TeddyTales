@@ -68,3 +68,7 @@ const bool kDemoDay = bool.fromEnvironment('DEMO_DAY');
 /// Какой день календаря подарков в демо-дне: `--dart-define=DEMO_GIFT_DAY=7`
 /// — коробка с вещью, иначе конверт третьего дня.
 const int kDemoGiftDay = int.fromEnvironment('DEMO_GIFT_DAY', defaultValue: 3);
+
+/// Демо-сборка открывает «Родился малыш!» при входе — для съёмки экрана
+/// (`--dart-define=DEMO_BIRTH=true`). В обычной сборке выключено.
+const bool kDemoBirth = bool.fromEnvironment('DEMO_BIRTH');

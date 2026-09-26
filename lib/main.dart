@@ -465,6 +465,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     if (_askedName || !_signedIn) return;
     if (!widget.boot.isOnline || widget.boot.snapshot.named) return;
     _askedName = true;
+    // Остальные окна ждут конца первого запуска (см. GameState.onboarding).
+    _game.onboarding.value = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final context = _navigator.currentContext;
@@ -485,6 +487,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       if (after != null && after.mounted) {
         await showFriendCodeDialog(after, _game);
       }
+      _game.onboarding.value = false;
     });
   }
 
@@ -502,8 +505,22 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         : PetNameError.network;
   }
 
+  /// Демо-съёмка «Родился малыш!» ([kDemoBirth]) — уже в комнате.
+  bool _demoBirthShown = false;
+
   Widget _home() {
     _askNameOnFirstRun();
+    if (kDemoBirth && !_demoBirthShown) {
+      _demoBirthShown = true;
+      _game.onboarding.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final context = _navigator.currentContext;
+        if (context != null) {
+          await showBirthIntro(context, game: _game, trait: _bear.state.trait);
+        }
+        _game.onboarding.value = false;
+      });
+    }
     return HomeScreen(
       controller: _bear,
       game: _game,
