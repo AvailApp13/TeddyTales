@@ -1934,11 +1934,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String inviteCount(int count) {
-    return '已加入的好友：$count';
-  }
-
-  @override
   String get inviteHaveCode => '有好友的邀请码？';
 
   @override
@@ -1983,4 +1978,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sleepCountdownLabel => '快睡着了';
+
+  @override
+  String get inviteStatsFriends => '位好友已加入';
+
+  @override
+  String get inviteStatsEarned => '金币已获得';
+
+  @override
+  String inviteNextBonus(int left, int bonus) {
+    return '再邀请 $left 位，额外奖励 +$bonus';
+  }
+
+  @override
+  String get inviteLadderDone => '好友奖励已全部获得！';
+
+  @override
+  String get friendCodeTitle => '是好友邀请你的吗？';
+
+  @override
+  String friendCodeFound(String code, int coins) {
+    return '找到了好友的邀请码 $code。你们各得 $coins 金币。';
+  }
+
+  @override
+  String friendCodeAsk(int coins) {
+    return '输入好友的邀请码，你们各得 $coins 金币。';
+  }
+
+  @override
+  String friendCodeClaim(int coins) {
+    return '领取 +$coins';
+  }
+
+  @override
+  String get friendCodeSkip => '跳过';
 }

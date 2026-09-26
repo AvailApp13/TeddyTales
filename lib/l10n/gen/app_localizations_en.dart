@@ -2033,11 +2033,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String inviteCount(int count) {
-    return 'Friends joined: $count';
-  }
-
-  @override
   String get inviteHaveCode => 'Have a friend’s code?';
 
   @override
@@ -2083,4 +2078,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepCountdownLabel => 'Falling asleep';
+
+  @override
+  String get inviteStatsFriends => 'friends joined';
+
+  @override
+  String get inviteStatsEarned => 'coins earned';
+
+  @override
+  String inviteNextBonus(int left, int bonus) {
+    return '$left more for a +$bonus bonus';
+  }
+
+  @override
+  String get inviteLadderDone => 'All friend bonuses earned!';
+
+  @override
+  String get friendCodeTitle => 'Did a friend invite you?';
+
+  @override
+  String friendCodeFound(String code, int coins) {
+    return 'We found your friend’s code $code. You both get $coins coins.';
+  }
+
+  @override
+  String friendCodeAsk(int coins) {
+    return 'Enter your friend’s code — you both get $coins coins.';
+  }
+
+  @override
+  String friendCodeClaim(int coins) {
+    return 'Get +$coins';
+  }
+
+  @override
+  String get friendCodeSkip => 'Skip';
 }

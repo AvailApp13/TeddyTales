@@ -3598,12 +3598,6 @@ abstract class AppLocalizations {
   /// **'Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}'**
   String inviteShareText(String code, int coins, String link);
 
-  /// No description provided for @inviteCount.
-  ///
-  /// In ru, this message translates to:
-  /// **'Друзей пришло: {count}'**
-  String inviteCount(int count);
-
   /// No description provided for @inviteHaveCode.
   ///
   /// In ru, this message translates to:
@@ -3687,6 +3681,60 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Засыпает'**
   String get sleepCountdownLabel;
+
+  /// No description provided for @inviteStatsFriends.
+  ///
+  /// In ru, this message translates to:
+  /// **'друзей пришло'**
+  String get inviteStatsFriends;
+
+  /// No description provided for @inviteStatsEarned.
+  ///
+  /// In ru, this message translates to:
+  /// **'монет получено'**
+  String get inviteStatsEarned;
+
+  /// No description provided for @inviteNextBonus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё {left} — и бонус +{bonus}'**
+  String inviteNextBonus(int left, int bonus);
+
+  /// No description provided for @inviteLadderDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все бонусы за друзей получены!'**
+  String get inviteLadderDone;
+
+  /// No description provided for @friendCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тебя пригласил друг?'**
+  String get friendCodeTitle;
+
+  /// No description provided for @friendCodeFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нашли код друга {code}. Вам обоим — по {coins} монет.'**
+  String friendCodeFound(String code, int coins);
+
+  /// No description provided for @friendCodeAsk.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введи код друга — вам обоим по {coins} монет.'**
+  String friendCodeAsk(int coins);
+
+  /// No description provided for @friendCodeClaim.
+  ///
+  /// In ru, this message translates to:
+  /// **'Получить +{coins}'**
+  String friendCodeClaim(int coins);
+
+  /// No description provided for @friendCodeSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get friendCodeSkip;
 }
 
 class _AppLocalizationsDelegate

@@ -111,7 +111,7 @@ void main() {
     };
     await open(tester, game);
     expect(find.text('ZP65BM'), findsOneWidget);
-    expect(find.textContaining('Друзей пришло: 2'), findsOneWidget);
+    expect(find.text('друзей пришло'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const ValueKey('invite-field')),
@@ -139,5 +139,40 @@ void main() {
       info.inviteLink,
       'https://availapp13.github.io/TeddyTales/?ref=ZP65BM',
     );
+  });
+
+  test('код друга находится в буфере', () {
+    expect(ReferralInfo.codeFrom('TEDDY-ZP65BM'), 'ZP65BM');
+    expect(ReferralInfo.codeFrom('teddy zp65bm'), 'ZP65BM');
+    expect(
+      ReferralInfo.codeFrom('https://x.io/TeddyTales/invite.html?ref=E576DR'),
+      'E576DR',
+    );
+    expect(ReferralInfo.codeFrom('просто текст'), isNull);
+    expect(ReferralInfo.codeFrom(null), isNull);
+  });
+
+  testWidgets('статистика: друзья, монеты, лестница бонусов', (tester) async {
+    final game = game0();
+    game.onReferral = () async => const ReferralInfo(
+      code: 'ZP65BM',
+      invited: 3,
+      coins: 100,
+      link: '',
+      canRedeem: false,
+      earned: 350,
+      milestones: [
+        (friends: 3, bonus: 50),
+        (friends: 5, bonus: 100),
+        (friends: 10, bonus: 250),
+      ],
+    );
+    await open(tester, game);
+    await tester.ensureVisible(find.byKey(const ValueKey('invite-earned')));
+    expect(find.text('350'), findsOneWidget);
+    expect(find.text('монет получено'), findsOneWidget);
+    expect(find.text('+100'), findsOneWidget);
+    expect(find.text('Ещё 2 — и бонус +100'), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
   });
 }

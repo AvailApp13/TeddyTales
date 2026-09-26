@@ -143,15 +143,7 @@ class _ShareDialogState extends State<_ShareDialog> {
     final result = await widget.game.redeemReferral(code);
     if (!mounted) return;
     setState(() => _redeeming = false);
-    _say(switch (result) {
-      RedeemResult.ok => l10n.inviteDone(info.coins),
-      RedeemResult.notFound => l10n.inviteNotFound,
-      RedeemResult.ownCode => l10n.inviteOwn,
-      RedeemResult.alreadyUsed => l10n.inviteUsed,
-      RedeemResult.tooLate => l10n.inviteLate,
-      RedeemResult.inviterFull => l10n.inviteFull,
-      RedeemResult.offline => l10n.inviteOffline,
-    });
+    _say(redeemMessage(l10n, result, info.coins));
     if (result != RedeemResult.offline && result != RedeemResult.notFound) {
       _friend.clear();
       await _load();
@@ -291,12 +283,16 @@ class _InviteBlock extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Text(
-              '${l10n.inviteLead(info.coins)} '
-              '${l10n.inviteCount(info.invited)}',
+              l10n.inviteLead(info.coins),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InviteStats(info: info),
           ),
           if (info.canRedeem) ...[
             const Divider(height: 20, color: AppColors.outline),
@@ -476,3 +472,194 @@ class _Chip extends StatelessWidget {
     );
   }
 }
+
+/// Статистика приглашений (заказчик 26.09): сколько друзей пришло, сколько
+/// монет это принесло, и лестница бонусов — 3, 5, 10 друзей.
+class InviteStats extends StatelessWidget {
+  const InviteStats({super.key, required this.info});
+
+  final ReferralInfo info;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final next = info.nextMilestone;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _Stat(
+                key: const ValueKey('invite-friends'),
+                value: '${info.invited}',
+                label: l10n.inviteStatsFriends,
+                icon: Icons.people_alt_rounded,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _Stat(
+                key: const ValueKey('invite-earned'),
+                value: '${info.earned}',
+                label: l10n.inviteStatsEarned,
+                icon: Icons.monetization_on,
+                iconColor: AppColors.coin,
+              ),
+            ),
+          ],
+        ),
+        if (info.milestones.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final m in info.milestones)
+                Expanded(
+                  child: _Step(
+                    friends: m.friends,
+                    bonus: m.bonus,
+                    reached: info.invited >= m.friends,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            next == null
+                ? l10n.inviteLadderDone
+                : l10n.inviteNextBonus(next.friends - info.invited, next.bonus),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.iconColor = AppColors.sageDark,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ступень лестницы: кружок с числом друзей, под ним бонус; пройдена —
+/// зелёная с галочкой.
+class _Step extends StatelessWidget {
+  const _Step({
+    required this.friends,
+    required this.bonus,
+    required this.reached,
+  });
+
+  final int friends;
+  final int bonus;
+  final bool reached;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: reached ? AppColors.sage : AppColors.surface,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: reached ? AppColors.sageDark : AppColors.outline,
+              width: 2,
+            ),
+          ),
+          child: reached
+              ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+              : Text(
+                  '$friends',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          '+$bonus',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: reached ? AppColors.sageDark : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Что сказать после ввода кода друга.
+String redeemMessage(AppLocalizations l10n, RedeemResult result, int coins) =>
+    switch (result) {
+      RedeemResult.ok => l10n.inviteDone(coins),
+      RedeemResult.notFound => l10n.inviteNotFound,
+      RedeemResult.ownCode => l10n.inviteOwn,
+      RedeemResult.alreadyUsed => l10n.inviteUsed,
+      RedeemResult.tooLate => l10n.inviteLate,
+      RedeemResult.inviterFull => l10n.inviteFull,
+      RedeemResult.offline => l10n.inviteOffline,
+    };

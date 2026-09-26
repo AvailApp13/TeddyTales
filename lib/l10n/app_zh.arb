@@ -702,7 +702,6 @@
   "inviteYourCode": "你的邀请码",
   "inviteCopied": "邀请码已复制",
   "inviteShareText": "来 TeddyTales 养一只小熊吧！在个人资料里输入我的邀请码 {code}，我们各得 {coins} 金币。{link}",
-  "inviteCount": "已加入的好友：{count}",
   "inviteHaveCode": "有好友的邀请码？",
   "inviteRedeem": "使用",
   "inviteDone": "你和好友各得 +{coins} 金币！",
@@ -716,5 +715,14 @@
   "dailyStreakRestore": "花 {price} 恢复",
   "dailyStreakRestored": "连续签到已恢复！",
   "dailyStreakNoCoins": "金币不足",
-  "sleepCountdownLabel": "快睡着了"
+  "sleepCountdownLabel": "快睡着了",
+  "inviteStatsFriends": "位好友已加入",
+  "inviteStatsEarned": "金币已获得",
+  "inviteNextBonus": "再邀请 {left} 位，额外奖励 +{bonus}",
+  "inviteLadderDone": "好友奖励已全部获得！",
+  "friendCodeTitle": "是好友邀请你的吗？",
+  "friendCodeFound": "找到了好友的邀请码 {code}。你们各得 {coins} 金币。",
+  "friendCodeAsk": "输入好友的邀请码，你们各得 {coins} 金币。",
+  "friendCodeClaim": "领取 +{coins}",
+  "friendCodeSkip": "跳过"
 }

@@ -20,6 +20,7 @@ import 'notifications/smart_texts.dart' show notificationName;
 import 'alarm/wake_alarm.dart';
 import 'audio/sounds.dart';
 import 'game/test_stubs.dart';
+import 'widgets/friend_code_dialog.dart';
 import 'widgets/rename_pet_dialog.dart';
 import 'screens/dev_screen.dart';
 import 'screens/email_auth_screen.dart';
@@ -351,6 +352,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
           coins: 100,
           link: 'https://availapp13.github.io/TeddyTales/',
           canRedeem: !_demoRedeemed,
+          earned: 250,
+          milestones: const [
+            (friends: 3, bonus: 50),
+            (friends: 5, bonus: 100),
+            (friends: 10, bonus: 250),
+          ],
         );
       }
       ..onRedeemReferral = (code) async {
@@ -458,15 +465,21 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     if (!widget.boot.isOnline || widget.boot.snapshot.named) return;
     _askedName = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final context = _navigator.currentContext;
       if (context == null) return;
-      showRenamePetDialog(
+      await showRenamePetDialog(
         context: context,
         current: '',
         onSubmit: _rename,
         firstRun: true,
       );
+      // Следом — «Тебя пригласил друг?» (заказчик 26.09): код со страницы
+      // приглашения находится сам, обоим по 100 монет.
+      final after = _navigator.currentContext;
+      if (after != null && after.mounted) {
+        await showFriendCodeDialog(after, _game);
+      }
     });
   }
 

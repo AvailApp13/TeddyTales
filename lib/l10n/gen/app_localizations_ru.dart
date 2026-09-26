@@ -2045,11 +2045,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String inviteCount(int count) {
-    return 'Друзей пришло: $count';
-  }
-
-  @override
   String get inviteHaveCode => 'Есть код друга?';
 
   @override
@@ -2094,4 +2089,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sleepCountdownLabel => 'Засыпает';
+
+  @override
+  String get inviteStatsFriends => 'друзей пришло';
+
+  @override
+  String get inviteStatsEarned => 'монет получено';
+
+  @override
+  String inviteNextBonus(int left, int bonus) {
+    return 'Ещё $left — и бонус +$bonus';
+  }
+
+  @override
+  String get inviteLadderDone => 'Все бонусы за друзей получены!';
+
+  @override
+  String get friendCodeTitle => 'Тебя пригласил друг?';
+
+  @override
+  String friendCodeFound(String code, int coins) {
+    return 'Нашли код друга $code. Вам обоим — по $coins монет.';
+  }
+
+  @override
+  String friendCodeAsk(int coins) {
+    return 'Введи код друга — вам обоим по $coins монет.';
+  }
+
+  @override
+  String friendCodeClaim(int coins) {
+    return 'Получить +$coins';
+  }
+
+  @override
+  String get friendCodeSkip => 'Пропустить';
 }

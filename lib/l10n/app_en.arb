@@ -702,7 +702,6 @@
   "inviteYourCode": "Your code",
   "inviteCopied": "Code copied",
   "inviteShareText": "Adopt a teddy in TeddyTales! Enter my code {code} in your profile and we both get {coins} coins. {link}",
-  "inviteCount": "Friends joined: {count}",
   "inviteHaveCode": "Have a friend’s code?",
   "inviteRedeem": "Apply",
   "inviteDone": "+{coins} coins for you and your friend!",
@@ -716,5 +715,14 @@
   "dailyStreakRestore": "Restore for {price}",
   "dailyStreakRestored": "Streak restored!",
   "dailyStreakNoCoins": "Not enough coins",
-  "sleepCountdownLabel": "Falling asleep"
+  "sleepCountdownLabel": "Falling asleep",
+  "inviteStatsFriends": "friends joined",
+  "inviteStatsEarned": "coins earned",
+  "inviteNextBonus": "{left} more for a +{bonus} bonus",
+  "inviteLadderDone": "All friend bonuses earned!",
+  "friendCodeTitle": "Did a friend invite you?",
+  "friendCodeFound": "We found your friend’s code {code}. You both get {coins} coins.",
+  "friendCodeAsk": "Enter your friend’s code — you both get {coins} coins.",
+  "friendCodeClaim": "Get +{coins}",
+  "friendCodeSkip": "Skip"
 }

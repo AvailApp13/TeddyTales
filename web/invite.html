@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>TeddyTales — приглашение</title>
+  <meta property="og:title" content="TeddyTales">
+  <meta property="og:description" content="Друг приглашает тебя в TeddyTales — вам обоим по 100 монет">
+  <meta property="og:image" content="assets/assets/images/share_bear.jpg">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <!--
+    Страница приглашения (заказчик 26.09). Ссылка из «Поделиться» ведёт
+    сюда с ?ref=КОД. Кнопка копирует «TEDDY-КОД» в буфер и ведёт в магазин
+    приложений; при первом запуске приложение само находит код в буфере и
+    предлагает «Получить +100» — монеты приходят обоим.
+
+    STORE_IOS / STORE_ANDROID — адреса в App Store и Google Play. Пока
+    приложения там нет, кнопка ведёт в веб-версию с тем же кодом.
+  -->
+  <style>
+    :root {
+      --bg: #FAF3E6; --card: #FFFBF2; --muted: #F5E9D6; --line: #EBDCC4;
+      --ink: #4A3B2A; --soft: #8C7A66; --sage: #90BF90; --sage-dark: #6FA173;
+      --red: #D42A33; --gold: #EFC15E;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif; }
+    main { max-width: 420px; margin: 0 auto; padding: 20px 16px 32px; display: grid; gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; }
+    .photo { display: block; width: 100%; height: 300px; object-fit: cover; object-position: 50% 58%; background: #E9EAEE; }
+    .body { padding: 18px 20px 20px; display: grid; gap: 12px; text-align: center; }
+    h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+    p { margin: 0; color: var(--soft); font-size: 15px; line-height: 1.45; }
+    .code { justify-self: center; background: var(--muted); border-radius: 16px; padding: 10px 18px;
+      font-size: 28px; font-weight: 800; letter-spacing: 6px; }
+    .gift { justify-self: center; display: inline-flex; gap: 8px; align-items: center; font-weight: 700; }
+    .coin { width: 18px; height: 18px; border-radius: 50%; background: var(--gold); display: inline-block; }
+    button { appearance: none; border: 0; border-radius: 999px; padding: 16px 20px; width: 100%;
+      background: var(--sage-dark); color: #fff; font-size: 17px; font-weight: 800; cursor: pointer; }
+    button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .done { display: none; color: var(--sage-dark); font-weight: 700; }
+    .brand { text-align: center; color: #C1A07D; font-weight: 800; letter-spacing: .5px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <img class="photo" src="assets/assets/images/share_bear.jpg" alt="TeddyTales">
+      <div class="body">
+        <h1 id="title">Друг приглашает тебя в TeddyTales</h1>
+        <p id="lead">Заведи своего мишку. Код друга уже здесь — вам обоим по 100 монет.</p>
+        <div class="code" id="code">······</div>
+        <div class="gift"><span class="coin"></span><span id="gift">+100 тебе и другу</span></div>
+        <button id="go" type="button">Скопировать код и установить</button>
+        <p class="done" id="done">Код скопирован. Открой TeddyTales — монеты придут сами.</p>
+        <p id="hint">При первом запуске приложение спросит «Тебя пригласил друг?» — нажми «Получить».</p>
+      </div>
+    </div>
+    <div class="brand">TeddyTales</div>
+  </main>
+  <script>
+    // Адреса в магазинах — появятся после публикации.
+    var STORE_IOS = '';
+    var STORE_ANDROID = '';
+
+    var texts = {
+      ru: { title: 'Друг приглашает тебя в TeddyTales',
+            lead: 'Заведи своего мишку. Код друга уже здесь — вам обоим по 100 монет.',
+            gift: '+100 тебе и другу', go: 'Скопировать код и установить',
+            done: 'Код скопирован. Открой TeddyTales — монеты придут сами.',
+            hint: 'При первом запуске приложение спросит «Тебя пригласил друг?» — нажми «Получить».' },
+      en: { title: 'A friend invites you to TeddyTales',
+            lead: 'Adopt your own teddy. Your friend’s code is here — you both get 100 coins.',
+            gift: '+100 for you and your friend', go: 'Copy code and install',
+            done: 'Code copied. Open TeddyTales — the coins will arrive.',
+            hint: 'On first launch the app asks “Did a friend invite you?” — tap “Get”.' },
+      zh: { title: '好友邀请你加入 TeddyTales',
+            lead: '领养你自己的小熊。好友的邀请码已经在这里——你们各得 100 金币。',
+            gift: '你和好友各得 +100', go: '复制邀请码并安装',
+            done: '邀请码已复制。打开 TeddyTales，金币会自动到账。',
+            hint: '首次启动时应用会问“是好友邀请你的吗？”——点“领取”。' }
+    };
+    var lang = (navigator.language || 'ru').slice(0, 2);
+    var t = texts[lang] || texts.en;
+    document.documentElement.lang = texts[lang] ? lang : 'en';
+    ['title', 'lead', 'gift', 'go', 'done', 'hint'].forEach(function (id) {
+      document.getElementById(id).textContent = t[id];
+    });
+    document.title = 'TeddyTales';
+
+    var ref = (new URLSearchParams(location.search).get('ref') || '')
+      .toUpperCase().replace(/[^A-HJKMNP-Z2-9]/g, '').slice(0, 6);
+    if (ref) document.getElementById('code').textContent = ref;
+
+    function target() {
+      var ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod/.test(ua) && STORE_IOS) return STORE_IOS;
+      if (/Android/.test(ua) && STORE_ANDROID) return STORE_ANDROID;
+      // Магазинов пока нет — веб-версия, код подставится сам.
+      return './' + (ref ? '?ref=' + ref : '');
+    }
+
+    function copy(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      var area = document.createElement('textarea');
+      area.value = text; document.body.appendChild(area); area.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(area);
+      return Promise.resolve();
+    }
+
+    document.getElementById('go').addEventListener('click', function () {
+      var go = function () {
+        document.getElementById('done').style.display = 'block';
+        setTimeout(function () { location.href = target(); }, 700);
+      };
+      copy(ref ? 'TEDDY-' + ref : '').then(go, go);
+    });
+  </script>
+</body>
+</html>

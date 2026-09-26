@@ -1221,14 +1221,6 @@
       }
     }
   },
-  "inviteCount": "Друзей пришло: {count}",
-  "@inviteCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "inviteHaveCode": "Есть код друга?",
   "inviteRedeem": "Ввести",
   "inviteDone": "+{coins} монет — тебе и другу!",
@@ -1256,5 +1248,48 @@
   },
   "dailyStreakRestored": "Серия вернулась!",
   "dailyStreakNoCoins": "Не хватает монет",
-  "sleepCountdownLabel": "Засыпает"
+  "sleepCountdownLabel": "Засыпает",
+  "inviteStatsFriends": "друзей пришло",
+  "inviteStatsEarned": "монет получено",
+  "inviteNextBonus": "Ещё {left} — и бонус +{bonus}",
+  "@inviteNextBonus": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      },
+      "bonus": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteLadderDone": "Все бонусы за друзей получены!",
+  "friendCodeTitle": "Тебя пригласил друг?",
+  "friendCodeFound": "Нашли код друга {code}. Вам обоим — по {coins} монет.",
+  "@friendCodeFound": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeAsk": "Введи код друга — вам обоим по {coins} монет.",
+  "@friendCodeAsk": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeClaim": "Получить +{coins}",
+  "@friendCodeClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeSkip": "Пропустить"
 }
