@@ -1459,15 +1459,25 @@ class _RoomScene extends StatelessWidget {
               ),
             ),
         // ⚠ Проверка файла аниматора (заказчик 26.09: «ставь в игровую на
-        // проверку»): мишка из bear_boy_v2.riv — живой покой, касание —
-        // улыбка, «Игра» — смех. Не финальный: действий ухода в файле нет.
+        // проверку»): мишка из bear_boy_v2.riv — живой покой; при входе —
+        // лицо по состоянию, касания — выражения по кругу, «Игра» — смех.
+        // Не финальный: действий ухода в файле нет.
         if (room == RoomKind.nursery && !asleep && !furnishing)
           Positioned(
             left: frame.bearCenterX - frame.bearHeight * 0.6,
             top: frame.bearTop,
             width: frame.bearHeight * 1.2,
             height: frame.bearHeight,
-            child: RiveBearTrial(cue: faceCue, onTap: controller.petBear),
+            child: RiveBearTrial(
+              cue: faceCue,
+              onTap: controller.petBear,
+              greeting: () {
+                final stats = controller.stats;
+                if (stats.food < 30) return BearFace.sad;
+                if (stats.sleep < 30) return BearFace.yawn;
+                return BearFace.love;
+              },
+            ),
           ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
         // остальное прозрачно для касаний: погладить мишку по-прежнему

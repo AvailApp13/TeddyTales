@@ -16,25 +16,35 @@ import 'package:rive/rive.dart';
 /// файле.
 ///
 /// Здесь: покой крутится всегда, а выражение лица накладывается поверх на
-/// пару секунд — отрезком из `face_demo` ([BearFace]).
+/// пару секунд — одним застывшим кадром из `face_demo` ([BearFace]).
+/// Кадр, а не отрезок: в демо смех заложен с «трясучкой» (голова и тело
+/// ходят ±3–4 % ширины 2,5 раза в секунду) — в комнате это читалось как
+/// «бьёт током» (заказчик 26.09). Кадры подобраны там, где лицо полное, а
+/// голова ближе всего к покою; вход и выход плавные.
 const String kTrialBearAsset = 'assets/rive/bear_boy_v2.riv';
 
-/// Выражения лица — отрезки `face_demo`, секунды размечены по кадрам.
+/// Выражения лица — кадр `face_demo` (секунда) и сколько его держать.
 enum BearFace {
-  love(5.0, 6.6),
-  laugh(3.4, 4.6),
-  surprised(6.9, 8.1),
-  sad(8.9, 11.6),
-  chew(12.4, 13.4),
-  lick(14.2, 15.0),
-  yawn(15.8, 16.8),
-  sleepy(16.9, 18.6),
-  upset(19.1, 20.1);
+  love(5.85, 1.8),
+  laugh(4.4, 1.6),
+  surprised(7.7, 1.5),
+  sad(10.15, 2.2),
+  chew(12.9, 1.4),
+  lick(14.45, 1.4),
+  yawn(16.35, 1.8),
+  sleepy(17.5, 2.0),
+  upset(19.4, 1.4);
 
-  const BearFace(this.start, this.end);
+  const BearFace(this.frame, this.hold);
 
-  final double start;
-  final double end;
+  /// Секунда `face_demo`, где выражение полное и голова стоит ровно.
+  final double frame;
+
+  /// Сколько держать, вместе с плавными входом и выходом.
+  final double hold;
+
+  /// Касания по очереди (заказчик 26.09).
+  static const List<BearFace> taps = [love, laugh, surprised, upset, lick];
 }
 
 /// Кто просит выражение: экран дёргает [show], мишка откликается.
@@ -53,9 +63,18 @@ class BearFaceCue extends ChangeNotifier {
 }
 
 class RiveBearTrial extends StatefulWidget {
-  const RiveBearTrial({super.key, required this.cue, this.onTap});
+  const RiveBearTrial({
+    super.key,
+    required this.cue,
+    this.onTap,
+    this.greeting,
+  });
 
   final BearFaceCue cue;
+
+  /// Чем встретить при входе в игровую — по состоянию (заказчик 26.09):
+  /// голоден — грусть, хочет спать — зевает, всё хорошо — улыбка.
+  final BearFace? Function()? greeting;
 
   /// Касание мишки (КП 3.1).
   final VoidCallback? onTap;
@@ -68,6 +87,9 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
   File? _file;
   late final _TrialPainter _painter = _TrialPainter();
 
+  /// Какое по счёту касание — выражения идут по кругу.
+  int _taps = 0;
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +101,12 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
             return;
           }
           setState(() => _file = file);
+          final greet = widget.greeting?.call();
+          if (greet != null) {
+            Future<void>.delayed(const Duration(milliseconds: 600), () {
+              if (mounted) _painter.play(greet);
+            });
+          }
         })
         .catchError((Object error) {
           debugPrint('[TeddyTales] $kTrialBearAsset не загрузился: $error');
@@ -115,7 +143,7 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
       key: const ValueKey('rive-bear-trial'),
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        _painter.play(BearFace.love);
+        _painter.play(BearFace.taps[_taps++ % BearFace.taps.length]);
         widget.onTap?.call();
       },
       child: RiveFileWidget(
@@ -132,7 +160,8 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
 final class _TrialPainter extends BasicArtboardPainter {
   _TrialPainter() : super(fit: Fit.contain, alignment: Alignment.bottomCenter);
 
-  static const double _fade = 0.25;
+  /// Вход и выход выражения, секунды: голова доходит до позы плавно.
+  static const double _fade = 0.4;
 
   Animation? _idle;
   Animation? _faces;
@@ -162,19 +191,16 @@ final class _TrialPainter extends BasicArtboardPainter {
     final faces = _faces;
     if (face != null && faces != null) {
       _t += elapsedSeconds;
-      final length = face.end - face.start;
-      if (_t >= length) {
+      if (_t >= face.hold) {
         _face = null;
       } else {
-        final mix =
-            (_t < _fade
-                    ? _t / _fade
-                    : _t > length - _fade
-                    ? (length - _t) / _fade
-                    : 1.0)
-                .clamp(0.0, 1.0);
-        faces.time = face.start + _t;
-        faces.apply(mix: mix);
+        final edge = _t < _fade
+            ? _t / _fade
+            : _t > face.hold - _fade
+            ? (face.hold - _t) / _fade
+            : 1.0;
+        faces.time = face.frame;
+        faces.apply(mix: Curves.easeInOut.transform(edge.clamp(0.0, 1.0)));
       }
     }
     super.advance(0);
