@@ -2183,4 +2183,49 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get birthIntroName => 'Дать имя';
+
+  @override
+  String get notifyDenied =>
+      'Телефон не разрешил уведомления. Включите их в настройках телефона → TeddyTales.';
+
+  @override
+  String get notifyAskTitle => 'Напоминать о малыше?';
+
+  @override
+  String notifyAskLead(String name) {
+    return '$name даст знать, когда проголодается, захочет играть или пора спать. Не чаще нужного и не в тихие часы.';
+  }
+
+  @override
+  String get notifyAskYes => 'Да, напоминать';
+
+  @override
+  String get notifyAskLater => 'Не сейчас';
+
+  @override
+  String get notifyAskLaterHint => 'Включить можно в настройках → Уведомления.';
+
+  @override
+  String get deleteAccount => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountHint => 'Мишка, монеты и прогресс удалятся навсегда';
+
+  @override
+  String get deleteAccountTitle => 'Удалить аккаунт?';
+
+  @override
+  String deleteAccountLead(String name) {
+    return '$name, монеты, вещи и весь прогресс удалятся с сервера навсегда. Вернуть их будет нельзя.';
+  }
+
+  @override
+  String get deleteAccountConfirm => 'Удалить навсегда';
+
+  @override
+  String get deleteAccountCancel => 'Оставить';
+
+  @override
+  String get deleteAccountFailed =>
+      'Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.';
 }

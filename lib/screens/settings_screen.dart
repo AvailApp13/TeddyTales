@@ -92,8 +92,20 @@ class SettingsScreen extends StatelessWidget {
                               _ToggleRow(
                                 title: notificationTitle(l10n, kind),
                                 value: game.isNotificationOn(kind.id),
-                                onChanged: (_) =>
-                                    game.toggleNotification(kind.id),
+                                onChanged: (_) async {
+                                  final ok = await game.toggleNotification(
+                                    kind.id,
+                                  );
+                                  if (ok || !context.mounted) return;
+                                  // Телефон не разрешил — без подсказки
+                                  // переключатель просто «не включается».
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(l10n.notifyDenied),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
                               ),
                             // Тихие часы (КП 13.2) стоят в той же карточке, а не
                             // отдельным блоком: для пользователя это такой же
@@ -184,6 +196,27 @@ class SettingsScreen extends StatelessWidget {
                                   onTap: () =>
                                       confirmSignOut(context, onSignOut),
                                 ),
+                                if (game.onDeleteAccount != null) ...[
+                                  const Divider(height: 1),
+                                  ListTile(
+                                    key: const ValueKey('delete-account'),
+                                    title: Text(
+                                      l10n.deleteAccount,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFFB3261E),
+                                      ),
+                                    ),
+                                    subtitle: Text(l10n.deleteAccountHint),
+                                    trailing: const Icon(
+                                      Icons.delete_forever_rounded,
+                                      size: 20,
+                                      color: Color(0xFFB3261E),
+                                    ),
+                                    onTap: () =>
+                                        confirmDeleteAccount(context, game),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

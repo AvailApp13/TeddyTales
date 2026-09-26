@@ -454,9 +454,47 @@ class GameState extends ChangeNotifier {
 
   // --- Уведомления (КП 13.2) -----------------------------------------------
 
-  void toggleNotification(String id) {
-    _notifications[id] = !(_notifications[id] ?? false);
+  /// Удалить аккаунт навсегда (правило App Store 5.1.1: аккаунт создаётся в
+  /// приложении — значит, и удаляется в нём). `true` — удалён, приложение
+  /// возвращается на стартовую страницу. `null` — без сервера пункта нет.
+  Future<bool> Function()? onDeleteAccount;
+
+  /// Спросить у телефона разрешение на уведомления. Ставит хозяин
+  /// приложения; `null` — уведомлений на этой платформе нет (веб, тесты).
+  Future<bool> Function()? onAskNotifications;
+
+  /// Можно ли вообще спрашивать про напоминания.
+  bool get canAskNotifications => onAskNotifications != null;
+
+  /// Переключатель в настройках. Включили — телефон спрашивает разрешение:
+  /// без него iPhone молча не покажет ни одного напоминания (КП 13.1).
+  /// Отказ — переключатель возвращается назад, результат `false`.
+  Future<bool> toggleNotification(String id) async {
+    final on = !(_notifications[id] ?? false);
+    _notifications[id] = on;
     notifyListeners();
+    final ask = onAskNotifications;
+    if (!on || ask == null) return true;
+    if (await ask()) return true;
+    _notifications[id] = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// «Да, напоминать» в мягком вопросе: разрешение и напоминания об уходе
+  /// (голод, игра, сон). `false` — телефон не разрешил.
+  Future<bool> enableCareReminders() async {
+    final ask = onAskNotifications;
+    if (ask == null || !await ask()) return false;
+    for (final kind in const [
+      NotificationKind.hungry,
+      NotificationKind.play,
+      NotificationKind.sleep,
+    ]) {
+      _notifications[kind.id] = true;
+    }
+    notifyListeners();
+    return true;
   }
 
   void setQuietHours(bool value) {

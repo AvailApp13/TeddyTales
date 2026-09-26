@@ -291,6 +291,13 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     } else if (kDemoDay) {
       _demoDay();
     }
+    // Разрешение на уведомления спрашивает телефон (КП 13.1). Нет
+    // сервиса — нет и вопроса «Напоминать о малыше?».
+    final notifications = widget.notifications;
+    if (notifications != null) {
+      _game.onAskNotifications = notifications.requestPermission;
+    }
+    if (widget.boot.isOnline) _game.onDeleteAccount = _deleteAccount;
     WidgetsBinding.instance.addObserver(_lifecycle);
   }
 
@@ -429,6 +436,19 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// Напоминания снимаем обязательно. Они запланированы на часы вперёд и
   /// говорят от лица питомца — «малыш проголодался» человеку, который из
   /// аккаунта вышел, выглядит как чужое уведомление на своём телефоне.
+  /// «Удалить аккаунт» в настройках: сервер стирает учётную запись со
+  /// всем прогрессом, дальше — как выход, на стартовую страницу.
+  Future<bool> _deleteAccount() async {
+    try {
+      await widget.boot.store.deleteAccount();
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] аккаунт не удалён: $error');
+      return false;
+    }
+    _signOut();
+    return true;
+  }
+
   void _signOut() {
     widget.notifications?.cancelAll();
     // Будильник «проснёмся вместе» тоже от лица питомца — снимаем. Из

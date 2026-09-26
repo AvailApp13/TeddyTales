@@ -35,6 +35,7 @@ import '../widgets/share_card.dart';
 import '../widgets/sleeping_elsewhere.dart';
 import '../widgets/gift_reveal.dart' show showCoinReward;
 import '../widgets/glass_panel.dart' show glassRoute;
+import '../widgets/notify_prompt.dart';
 import '../widgets/sleep_countdown.dart';
 import '../game/referral_info.dart';
 import '../widgets/feed_burst.dart';
@@ -574,21 +575,25 @@ class _HomeScreenState extends State<HomeScreen>
         // Сначала праздник пригласившего (друг пришёл по коду), потом
         // окно «Сегодня» — не друг поверх друга.
         await _maybeInviterReward();
-        if (mounted) _maybeShowDaily();
+        if (mounted) await _maybeShowDaily();
         if (mounted) await _maybeRedeemLink();
+        // Мишке исполнился день — «Напоминать о малыше?» (КП 13.1).
+        if (mounted) await maybeAskNotifications(context, widget.game);
+        // «Гостил у бабушки» — последним, когда окна закрыты: строка не
+        // должна прятаться под «Сегодня» или «Родился малыш!».
+        if (mounted) _maybeWelcomeBack();
       }());
     });
-    if (widget.game.welcomeBack) {
-      widget.game.welcomeBack = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _soon(
-          context.l10n.welcomeBackGrandma(
-            petDisplayName(context.l10n, widget.game.profile.name),
-          ),
-        );
-      });
-    }
+  }
+
+  void _maybeWelcomeBack() {
+    if (!widget.game.welcomeBack) return;
+    widget.game.welcomeBack = false;
+    _soon(
+      context.l10n.welcomeBackGrandma(
+        petDisplayName(context.l10n, widget.game.profile.name),
+      ),
+    );
   }
 
   /// Сон пришёл с сервера (уложили на другом устройстве, выспался сам,
@@ -693,10 +698,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// запуск (миграция 0017).
   static bool _dailyShown = false;
 
-  void _maybeShowDaily() {
+  Future<void> _maybeShowDaily() async {
     if (_dailyShown || !widget.game.daily.giftAvailable) return;
     _dailyShown = true;
-    showDailySheet(context, widget.game);
+    await showDailySheet(context, widget.game);
   }
 
   @override

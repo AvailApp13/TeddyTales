@@ -2172,4 +2172,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get birthIntroName => 'Give a name';
+
+  @override
+  String get notifyDenied =>
+      'Your phone blocked notifications. Turn them on in phone Settings → TeddyTales.';
+
+  @override
+  String get notifyAskTitle => 'Remind you about your cub?';
+
+  @override
+  String notifyAskLead(String name) {
+    return '$name will let you know when hungry, playful or sleepy. Only when needed and never during quiet hours.';
+  }
+
+  @override
+  String get notifyAskYes => 'Yes, remind me';
+
+  @override
+  String get notifyAskLater => 'Not now';
+
+  @override
+  String get notifyAskLaterHint =>
+      'You can turn them on in Settings → Notifications.';
+
+  @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountHint =>
+      'Your bear, coins and progress will be gone for good';
+
+  @override
+  String get deleteAccountTitle => 'Delete account?';
+
+  @override
+  String deleteAccountLead(String name) {
+    return '$name, coins, items and all progress will be deleted from the server for good. They cannot be restored.';
+  }
+
+  @override
+  String get deleteAccountConfirm => 'Delete forever';
+
+  @override
+  String get deleteAccountCancel => 'Keep';
+
+  @override
+  String get deleteAccountFailed =>
+      'Could not delete the account. Check your connection and try again.';
 }

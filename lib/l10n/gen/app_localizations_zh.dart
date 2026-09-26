@@ -2072,4 +2072,47 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get birthIntroName => '起名字';
+
+  @override
+  String get notifyDenied => '手机未允许通知。请在手机设置 → TeddyTales 中开启。';
+
+  @override
+  String get notifyAskTitle => '要提醒你照顾宝宝吗？';
+
+  @override
+  String notifyAskLead(String name) {
+    return '$name饿了、想玩或该睡觉时会告诉你。只在需要时提醒，安静时段不打扰。';
+  }
+
+  @override
+  String get notifyAskYes => '好的，提醒我';
+
+  @override
+  String get notifyAskLater => '以后再说';
+
+  @override
+  String get notifyAskLaterHint => '可在设置 → 通知中开启。';
+
+  @override
+  String get deleteAccount => '删除账号';
+
+  @override
+  String get deleteAccountHint => '小熊、金币和进度将被永久删除';
+
+  @override
+  String get deleteAccountTitle => '删除账号？';
+
+  @override
+  String deleteAccountLead(String name) {
+    return '$name、金币、物品和全部进度将从服务器永久删除，无法恢复。';
+  }
+
+  @override
+  String get deleteAccountConfirm => '永久删除';
+
+  @override
+  String get deleteAccountCancel => '保留';
+
+  @override
+  String get deleteAccountFailed => '无法删除账号。请检查网络后重试。';
 }

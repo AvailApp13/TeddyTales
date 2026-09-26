@@ -743,5 +743,18 @@
   "birthIntroVideoSoon": "即将上线",
   "birthIntroSex": "性别",
   "birthIntroTrait": "第一个性格",
-  "birthIntroName": "起名字"
+  "birthIntroName": "起名字",
+  "notifyDenied": "手机未允许通知。请在手机设置 → TeddyTales 中开启。",
+  "notifyAskTitle": "要提醒你照顾宝宝吗？",
+  "notifyAskLead": "{name}饿了、想玩或该睡觉时会告诉你。只在需要时提醒，安静时段不打扰。",
+  "notifyAskYes": "好的，提醒我",
+  "notifyAskLater": "以后再说",
+  "notifyAskLaterHint": "可在设置 → 通知中开启。",
+  "deleteAccount": "删除账号",
+  "deleteAccountHint": "小熊、金币和进度将被永久删除",
+  "deleteAccountTitle": "删除账号？",
+  "deleteAccountLead": "{name}、金币、物品和全部进度将从服务器永久删除，无法恢复。",
+  "deleteAccountConfirm": "永久删除",
+  "deleteAccountCancel": "保留",
+  "deleteAccountFailed": "无法删除账号。请检查网络后重试。"
 }

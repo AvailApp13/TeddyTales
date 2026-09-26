@@ -1317,5 +1317,32 @@
   "birthIntroVideoSoon": "скоро здесь",
   "birthIntroSex": "Пол",
   "birthIntroTrait": "Первая черта",
-  "birthIntroName": "Дать имя"
+  "birthIntroName": "Дать имя",
+  "notifyDenied": "Телефон не разрешил уведомления. Включите их в настройках телефона → TeddyTales.",
+  "notifyAskTitle": "Напоминать о малыше?",
+  "notifyAskLead": "{name} даст знать, когда проголодается, захочет играть или пора спать. Не чаще нужного и не в тихие часы.",
+  "@notifyAskLead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifyAskYes": "Да, напоминать",
+  "notifyAskLater": "Не сейчас",
+  "notifyAskLaterHint": "Включить можно в настройках → Уведомления.",
+  "deleteAccount": "Удалить аккаунт",
+  "deleteAccountHint": "Мишка, монеты и прогресс удалятся навсегда",
+  "deleteAccountTitle": "Удалить аккаунт?",
+  "deleteAccountLead": "{name}, монеты, вещи и весь прогресс удалятся с сервера навсегда. Вернуть их будет нельзя.",
+  "@deleteAccountLead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirm": "Удалить навсегда",
+  "deleteAccountCancel": "Оставить",
+  "deleteAccountFailed": "Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз."
 }

@@ -743,5 +743,18 @@
   "birthIntroVideoSoon": "coming soon",
   "birthIntroSex": "Sex",
   "birthIntroTrait": "First trait",
-  "birthIntroName": "Give a name"
+  "birthIntroName": "Give a name",
+  "notifyDenied": "Your phone blocked notifications. Turn them on in phone Settings → TeddyTales.",
+  "notifyAskTitle": "Remind you about your cub?",
+  "notifyAskLead": "{name} will let you know when hungry, playful or sleepy. Only when needed and never during quiet hours.",
+  "notifyAskYes": "Yes, remind me",
+  "notifyAskLater": "Not now",
+  "notifyAskLaterHint": "You can turn them on in Settings → Notifications.",
+  "deleteAccount": "Delete account",
+  "deleteAccountHint": "Your bear, coins and progress will be gone for good",
+  "deleteAccountTitle": "Delete account?",
+  "deleteAccountLead": "{name}, coins, items and all progress will be deleted from the server for good. They cannot be restored.",
+  "deleteAccountConfirm": "Delete forever",
+  "deleteAccountCancel": "Keep",
+  "deleteAccountFailed": "Could not delete the account. Check your connection and try again."
 }

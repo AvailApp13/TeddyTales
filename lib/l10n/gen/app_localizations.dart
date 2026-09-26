@@ -3849,6 +3849,84 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Дать имя'**
   String get birthIntroName;
+
+  /// No description provided for @notifyDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон не разрешил уведомления. Включите их в настройках телефона → TeddyTales.'**
+  String get notifyDenied;
+
+  /// No description provided for @notifyAskTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать о малыше?'**
+  String get notifyAskTitle;
+
+  /// No description provided for @notifyAskLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} даст знать, когда проголодается, захочет играть или пора спать. Не чаще нужного и не в тихие часы.'**
+  String notifyAskLead(String name);
+
+  /// No description provided for @notifyAskYes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да, напоминать'**
+  String get notifyAskYes;
+
+  /// No description provided for @notifyAskLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не сейчас'**
+  String get notifyAskLater;
+
+  /// No description provided for @notifyAskLaterHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить можно в настройках → Уведомления.'**
+  String get notifyAskLaterHint;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка, монеты и прогресс удалятся навсегда'**
+  String get deleteAccountHint;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name}, монеты, вещи и весь прогресс удалятся с сервера навсегда. Вернуть их будет нельзя.'**
+  String deleteAccountLead(String name);
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить навсегда'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оставить'**
+  String get deleteAccountCancel;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.'**
+  String get deleteAccountFailed;
 }
 
 class _AppLocalizationsDelegate
