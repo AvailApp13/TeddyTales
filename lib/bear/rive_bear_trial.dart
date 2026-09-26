@@ -64,6 +64,19 @@ enum BearFace {
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
   static const List<BearFace> taps = values;
 
+  /// Подпись на проверочной панели ([EmotionTestPanel]).
+  String get label => switch (this) {
+    love => 'Улыбка',
+    laugh => 'Смех',
+    surprised => 'Удивление',
+    sad => 'Грусть',
+    chew => 'Жуёт',
+    lick => 'Смакует',
+    yawn => 'Зевок',
+    sleepy => 'Сонный',
+    upset => 'Обида',
+  };
+
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
   /// файле только подменяется, поэтому эмоцию играет корпус — наклон,
   /// сжатие-растяжение, подъём.
@@ -349,5 +362,132 @@ final class _TrialPainter extends BasicArtboardPainter {
       clip.dispose();
     }
     super.dispose();
+  }
+}
+
+/// ⚠ ПРОВЕРОЧНАЯ ПАНЕЛЬ — снять перед публикацией (заказчик 26.09: «кнопки
+/// 1, 2, 3… с правой стороны, подпиши каждую эмоцию — так проще вносить
+/// корректировки»). Номер и название: нажали — мишка играет эту эмоцию.
+class EmotionTestPanel extends StatefulWidget {
+  const EmotionTestPanel({super.key, required this.cue});
+
+  final BearFaceCue cue;
+
+  @override
+  State<EmotionTestPanel> createState() => _EmotionTestPanelState();
+}
+
+class _EmotionTestPanelState extends State<EmotionTestPanel> {
+  @override
+  void initState() {
+    super.initState();
+    widget.cue.addListener(_changed);
+  }
+
+  @override
+  void didUpdateWidget(EmotionTestPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cue != widget.cue) {
+      oldWidget.cue.removeListener(_changed);
+      widget.cue.addListener(_changed);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.cue.removeListener(_changed);
+    super.dispose();
+  }
+
+  void _changed() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final current = widget.cue.face;
+    return Column(
+      key: const ValueKey('emotion-test-panel'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final (i, face) in BearFace.values.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: _EmotionButton(
+              number: i + 1,
+              face: face,
+              selected: face == current,
+              onTap: () => widget.cue.show(face),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _EmotionButton extends StatelessWidget {
+  const _EmotionButton({
+    required this.number,
+    required this.face,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final int number;
+  final BearFace face;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const ink = Color(0xFF3B2A1E);
+    return GestureDetector(
+      key: ValueKey('emotion-test-${face.name}'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 26,
+        padding: const EdgeInsets.only(left: 3, right: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFFFFE3A3)
+              : Colors.white.withValues(alpha: 0.82),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(
+            color: selected ? const Color(0xFFE0A33A) : const Color(0x33000000),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFFE0A33A) : ink,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              face.label,
+              style: const TextStyle(
+                color: ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

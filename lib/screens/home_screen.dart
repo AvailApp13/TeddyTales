@@ -1608,6 +1608,14 @@ class _RoomScene extends StatelessWidget {
               onDiaper: newborn ? onDiaper : null,
             ),
           ),
+        // ⚠ Проверочная панель эмоций — снять перед публикацией (заказчик
+        // 26.09: кнопки 1–9 справа с подписями, чтобы видеть, какая где).
+        if (room == RoomKind.nursery && !asleep && !furnishing)
+          Positioned(
+            right: 8,
+            top: frame.bearTop + frame.bearHeight * 0.08,
+            child: EmotionTestPanel(cue: faceCue),
+          ),
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.
         if (asleep && room != RoomKind.bedroom && !furnishing)
