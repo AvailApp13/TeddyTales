@@ -648,8 +648,8 @@
         "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-343517",
-        "instance": "0-343519",
+        "asset": "0-471031",
+        "instance": "0-471032",
         "group": "outfit_head",
         "groupId": "0-226"
       },
@@ -849,16 +849,6 @@
           "root_belly"
         ],
         "vertices": 2574
-      },
-      "hood": {
-        "meshId": "0-343536",
-        "bones": [
-          "root",
-          "root_body",
-          "root_ear_left",
-          "root_ear_right"
-        ],
-        "vertices": 3271
       },
       "ear_left_cup": {
         "meshId": "0-355882",
