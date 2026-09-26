@@ -66,6 +66,78 @@ workflows:
           success: true
           failure: true
 
+  # Android: бета во внутреннем канале Google Play (КП 17.2).
+  #
+  # ⚠ ЖДЁТ НАСТРОЙКИ — без неё сборка упадёт на подписи или публикации:
+  #   1. Google Play Console: приложение com.teddytales.app создано, первый
+  #      AAB загружен вручную (так требует Google для нового приложения),
+  #      в «Внутреннее тестирование» добавлены тестировщики.
+  #   2. Codemagic → Teams → Code signing identities → Android keystores:
+  #      ключ загрузки с именем `teddytales_upload` (создать один раз и
+  #      хранить — потеря ключа = новое приложение в Google Play).
+  #   3. Группа переменных `google_play` с GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+  #      — JSON сервисного аккаунта с доступом к Play Console (выпуски).
+  # Порядок — docs/release-android.md.
+  android-play-internal:
+    name: Android → Google Play (внутренний)
+    instance_type: linux_x2
+    max_build_duration: 45
+
+    environment:
+      flutter: *flutter_version
+      java: 21
+      android_signing:
+        - teddytales_upload
+      groups:
+        - google_play
+      vars:
+        PACKAGE_NAME: com.teddytales.app
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+
+    scripts:
+      - name: Зависимости
+        script: flutter pub get
+
+      - name: Анализ и тесты
+        script: |
+          flutter analyze
+          flutter test
+
+      - name: Номер сборки
+        # Google Play принимает только растущий versionCode: берём последний
+        # из магазина плюс один.
+        script: |
+          set -e
+          LATEST=$(google-play get-latest-build-number \
+            --package-name "$PACKAGE_NAME" 2>/dev/null || echo 0)
+          BUILD_NUMBER=$(( ${LATEST:-0} + 1 ))
+          echo "Номер этой сборки: $BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+      - name: Сборка AAB
+        script: |
+          flutter build appbundle --release --build-number=$BUILD_NUMBER
+
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        # Пока приложение не прошло проверку Google, выпуск — черновиком.
+        release_status: draft
+      email:
+        recipients:
+          - ru.life3@gmail.com
+        notify:
+          success: true
+          failure: true
+
   ios-testflight:
     name: iOS → TestFlight
     instance_type: mac_mini_m2

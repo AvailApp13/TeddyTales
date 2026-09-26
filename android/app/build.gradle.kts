@@ -28,11 +28,27 @@ android {
         versionName = flutter.versionName
     }
 
+    // Ключ Google Play (КП 17.2). Codemagic кладёт его сам, когда в сборке
+    // подключён `android_signing` (переменные CM_KEYSTORE_*). Нет ключа —
+    // отладочная подпись, как раньше: APK для тестировщиков ставится
+    // напрямую, без Google Play.
+    val uploadKeystore = System.getenv("CM_KEYSTORE_PATH")
+    signingConfigs {
+        if (uploadKeystore != null) {
+            create("upload") {
+                storeFile = file(uploadKeystore)
+                storePassword = System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CM_KEY_ALIAS")
+                keyPassword = System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Пока подписываем отладочным ключом: APK для тестировщиков ставится
-            // напрямую, без Google Play. Ключ магазина — отдельным шагом.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(
+                if (uploadKeystore != null) "upload" else "debug",
+            )
         }
     }
 }
