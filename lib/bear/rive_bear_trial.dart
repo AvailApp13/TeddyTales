@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart' hide Animation;
 import 'package:rive/rive.dart';
 
@@ -45,6 +47,32 @@ enum BearFace {
 
   /// Касания по очереди (заказчик 26.09).
   static const List<BearFace> taps = [love, laugh, surprised, upset, lick];
+
+  /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
+  /// файле только подменяется, поэтому эмоцию играет корпус — наклон,
+  /// сжатие-растяжение, подъём.
+  BodyPose get pose => switch (this) {
+    love => const BodyPose(tilt: 3.5, stretch: 0.025, lift: 0.012),
+    laugh => const BodyPose(tilt: -1.5, stretch: 0.04, lift: 0.022),
+    surprised => const BodyPose(stretch: 0.055, lift: 0.028),
+    sad => const BodyPose(tilt: -2.5, stretch: -0.03, lift: -0.008),
+    chew => const BodyPose(stretch: -0.012),
+    lick => const BodyPose(tilt: -3, stretch: 0.01),
+    yawn => const BodyPose(tilt: 2, stretch: 0.045, lift: 0.01),
+    sleepy => const BodyPose(tilt: 3, stretch: -0.025, lift: -0.006),
+    upset => const BodyPose(stretch: -0.04, lift: -0.004),
+  };
+}
+
+/// Поза корпуса: наклон в градусах (плюс — вправо), растяжение по высоте
+/// (минус — сжался, ширина меняется обратно, объём сохраняется) и подъём —
+/// доля высоты мишки.
+class BodyPose {
+  const BodyPose({this.tilt = 0, this.stretch = 0, this.lift = 0});
+
+  final double tilt;
+  final double stretch;
+  final double lift;
 }
 
 /// Кто просит выражение: экран дёргает [show], мишка откликается.
@@ -83,9 +111,23 @@ class RiveBearTrial extends StatefulWidget {
   State<RiveBearTrial> createState() => _RiveBearTrialState();
 }
 
-class _RiveBearTrialState extends State<RiveBearTrial> {
+class _RiveBearTrialState extends State<RiveBearTrial>
+    with SingleTickerProviderStateMixin {
   File? _file;
   late final _TrialPainter _painter = _TrialPainter();
+
+  /// Реакция корпуса на эмоцию — длиной с саму эмоцию.
+  late final AnimationController _body = AnimationController(vsync: this);
+  BearFace? _bodyFace;
+
+  /// Эмоция целиком: лицо из файла и поза корпуса.
+  void _react(BearFace face) {
+    _painter.play(face);
+    _bodyFace = face;
+    _body
+      ..duration = Duration(milliseconds: (face.hold * 1000).round())
+      ..forward(from: 0);
+  }
 
   /// Какое по счёту касание — выражения идут по кругу.
   int _taps = 0;
@@ -104,7 +146,7 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
           final greet = widget.greeting?.call();
           if (greet != null) {
             Future<void>.delayed(const Duration(milliseconds: 600), () {
-              if (mounted) _painter.play(greet);
+              if (mounted) _react(greet);
             });
           }
         })
@@ -115,7 +157,7 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
 
   void _onCue() {
     final face = widget.cue.face;
-    if (face != null) _painter.play(face);
+    if (face != null) _react(face);
   }
 
   @override
@@ -130,6 +172,7 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
   @override
   void dispose() {
     widget.cue.removeListener(_onCue);
+    _body.dispose();
     _painter.dispose();
     _file?.dispose();
     super.dispose();
@@ -143,15 +186,61 @@ class _RiveBearTrialState extends State<RiveBearTrial> {
       key: const ValueKey('rive-bear-trial'),
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        _painter.play(BearFace.taps[_taps++ % BearFace.taps.length]);
+        _react(BearFace.taps[_taps++ % BearFace.taps.length]);
         widget.onTap?.call();
       },
-      child: RiveFileWidget(
-        file: file,
-        painter: _painter,
-        artboardName: 'Bear_Boy',
+      child: LayoutBuilder(
+        builder: (context, box) => AnimatedBuilder(
+          animation: _body,
+          builder: (context, child) => Transform(
+            alignment: const Alignment(0, 0.92),
+            transform: _bodyTransform(box.maxHeight),
+            child: child,
+          ),
+          child: RiveFileWidget(
+            file: file,
+            painter: _painter,
+            artboardName: 'Bear_Boy',
+          ),
+        ),
       ),
     );
+  }
+
+  /// Корпус на эмоцию, как у мультяшных питомцев: замах (присел), пружинка
+  /// в позу с лёгким перелётом, держит, мягко возвращается. Опора — стопы.
+  Matrix4 _bodyTransform(double height) {
+    final face = _bodyFace;
+    if (face == null || !_body.isAnimating) return Matrix4.identity();
+    final total = face.hold;
+    final t = _body.value * total;
+    const windup = 0.14; // присел перед движением
+    const rise = 0.42; // пружинка в позу
+    const back = 0.5; // возврат
+    double k; // доля позы, 0 — покой, 1 — поза
+    var squat = 0.0;
+    if (t < windup) {
+      k = 0;
+      squat = math.sin(math.pi * t / windup) * 0.028;
+    } else if (t < windup + rise) {
+      k = Curves.easeOutBack.transform((t - windup) / rise);
+    } else if (t > total - back) {
+      k =
+          1 -
+          Curves.easeInOutCubic.transform(
+            ((t - (total - back)) / back).clamp(0.0, 1.0),
+          );
+    } else {
+      k = 1;
+    }
+    final pose = face.pose;
+    final stretch = pose.stretch * k - squat;
+    final sy = 1 + stretch;
+    final sx = 1 - stretch * 0.6;
+    return Matrix4.identity()
+      ..translateByDouble(0, -pose.lift * k * height, 0, 1)
+      ..rotateZ(pose.tilt * k * math.pi / 180)
+      ..scaleByDouble(sx, sy, 1, 1);
   }
 }
 
@@ -161,7 +250,7 @@ final class _TrialPainter extends BasicArtboardPainter {
   _TrialPainter() : super(fit: Fit.contain, alignment: Alignment.bottomCenter);
 
   /// Вход и выход выражения, секунды: голова доходит до позы плавно.
-  static const double _fade = 0.4;
+  static const double _fade = 0.5;
 
   Animation? _idle;
   Animation? _faces;
@@ -200,7 +289,7 @@ final class _TrialPainter extends BasicArtboardPainter {
             ? (face.hold - _t) / _fade
             : 1.0;
         faces.time = face.frame;
-        faces.apply(mix: Curves.easeInOut.transform(edge.clamp(0.0, 1.0)));
+        faces.apply(mix: Curves.easeInOutCubic.transform(edge.clamp(0.0, 1.0)));
       }
     }
     super.advance(0);
