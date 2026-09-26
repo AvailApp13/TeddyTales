@@ -688,6 +688,10 @@
         "groupId": "0-119",
         "asset": "0-343534",
         "instance": "0-343535"
+      },
+      "hood_back": {
+        "group": "hood_back",
+        "groupId": "0-471023"
       }
     },
     "layersV2Transform": {
