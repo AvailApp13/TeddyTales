@@ -128,6 +128,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// спальни его не будит.
   bool get _asleep => widget.game.asleep;
 
+  /// Облачко-реплика мишки над кольцами (КП 3.4, 13.3). Заказчик 26.09:
+  /// пока скрыто во всех комнатах, вернём позже — включить здесь.
+  static const bool _showSpeechBubble = false;
+
   /// Картинки спальни раскодированы заранее — один раз на экран.
   bool _bedroomWarm = false;
 
@@ -1040,7 +1044,10 @@ class _HomeScreenState extends State<HomeScreen>
                         // время сна они не должны присутствовать, убрать с
                         // комнаты сон». Нужна ли она там потом и в каком
                         // виде — решение отдельное.
-                        if (_room != RoomKind.bedroom)
+                        //
+                        // Заказчик 26.09: реплику пока убрать из всех
+                        // комнат — вернём, когда решим, с какой логикой.
+                        if (_showSpeechBubble && _room != RoomKind.bedroom)
                           Padding(
                             padding: const EdgeInsets.only(right: 64),
                             child: Align(
