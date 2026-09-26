@@ -57,3 +57,40 @@ export async function restPose(call, file) {
   }
   return rest;
 }
+
+/**
+ * Мировая матрица узла (группы) в покое: [a, b, c, d, tx, ty] (x' = a·x + c·y + tx,
+ * y' = b·x + d·y + ty). Цепочка групп вверх до ближайшей кости — её поза покоя из привязки
+ * сеток (тенданы), либо до артборда. Нужна, чтобы ставить кость в группу по мировой точке:
+ * reparent_objects в редакторе пересчитывает локальное положение неверно (кости ушей стояли
+ * на 34–37 px от оси — ухо поворачивалось вокруг точки в своём теле, D25).
+ */
+export async function restWorld(call, file, nodeId) {
+  const h = (await call('get_artboard_hierarchy', { artboardId: file.artboards.Bear_Boy.id })).objects ?? [];
+  const obj = Object.fromEntries(h.map((o) => [o.id, o])); const parent = {};
+  for (const o of h) for (const ch of o.children ?? []) parent[typeof ch === 'string' ? ch : ch.id] = o.id;
+  const mul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3],
+    A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
+  const nodes = []; let p = nodeId;
+  while (p && !/Bone$/.test(obj[p].types[0]) && obj[p].types[0] !== 'Artboard') { nodes.push(p); p = parent[p]; }
+  let M = [1, 0, 0, 1, 0, 0];
+  if (p && /Bone$/.test(obj[p].types[0])) {
+    const skins = Object.values(file.skins ?? {});
+    for (const s of skins) {
+      const skin = ((await call('query_objects', { objectIds: [s.meshId] })).objects ?? []).find((o) => o.types[0] === 'Skin'); if (!skin) continue;
+      const v = (await call('query_property_values', { propertyKeys: Object.fromEntries(skin.children.map((t) => [t, [95, 96, 97, 98, 99, 100, 101]])) })).values;
+      const x = Object.values(v).find((t) => t['95'] === p); if (!x) continue;
+      M = [x['96'], x['98'], x['97'], x['99'], x['100'], x['101']]; break;
+    }
+    if (M[0] === 1 && M[4] === 0) throw new Error(`кость ${obj[p].name} не привязана ни к одной сетке — положение в покое неизвестно`);
+  }
+  const vals = nodes.length ? (await call('query_property_values', { propertyKeys: Object.fromEntries(nodes.map((n) => [n, [13, 14, 15, 16, 17]])) })).values : {};
+  for (const n of nodes.reverse()) {
+    const v = vals[n]; const r = v['15'] * Math.PI / 180, sx = v['16'] / 100, sy = v['17'] / 100;
+    M = mul(M, [Math.cos(r) * sx, Math.sin(r) * sx, -Math.sin(r) * sy, Math.cos(r) * sy, v['13'], v['14']]);
+  }
+  return M;
+}
+/** Точка артборда -> локальные координаты узла с мировой матрицей M. */
+export const toLocal = (M, [x, y]) => { const det = M[0] * M[3] - M[1] * M[2]; const dx = x - M[4], dy = y - M[5];
+  return [(M[3] * dx - M[2] * dy) / det, (-M[1] * dx + M[0] * dy) / det]; };

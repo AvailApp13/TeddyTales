@@ -5,6 +5,7 @@
  * -> начало, угол, длина -> перенос в свою группу (мировое положение сохраняется).
  * Масштаб кости в редакторе — в процентах (100 = 1:1).
  */
+import { restWorld, toLocal } from './rest_pose.mjs';
 
 /**
  * Создаёт или переставляет кость `name` от точки `from` к `to` (артборд) в группе `groupId`.
@@ -44,6 +45,17 @@ export async function ensureBone(call, file, save, { name, groupId, from, to }) 
     if ((rr.reparented ?? []).some((o) => o.id === bone)) break;
     if (t >= 8) throw new Error(`${name}: не переносится в группу ${groupId}`);
     await new Promise((r) => setTimeout(r, 1500 * (1 + (t >> 1))));
+  }
+  // перенос в группу пересчитывает локальное положение неверно (кости ушей уезжали на 34–37 px,
+  // D25): локальные начало и угол — заново, из мировой матрицы группы в покое
+  const G = await restWorld(call, file, groupId); const [lx, ly] = toLocal(G, from);
+  const lr = rot - Math.atan2(G[1], G[0]) * 180 / Math.PI;
+  for (let t = 0; ; t++) {
+    await call('set_property_values', { propertyValues: { [bone]: { 90: lx, 91: ly, 15: lr } } });
+    await new Promise((r) => setTimeout(r, 400 * (t + 1)));
+    const v = (await call('query_property_values', { propertyKeys: { [bone]: [90, 91, 15] } })).values?.[bone] ?? {};
+    if (Math.abs(v['90'] - lx) < 1e-2 && Math.abs(v['91'] - ly) < 1e-2 && Math.abs(v['15'] - lr) < 1e-2) break;
+    if (t >= 5) throw new Error(`${name}: локальное положение в группе не записывается (${JSON.stringify(v)})`);
   }
   console.log(`${name}: начало (${x0.toFixed(1)}, ${y0.toFixed(1)}), ${rot.toFixed(1)}°, длина ${len.toFixed(1)}`);
   return bone;
