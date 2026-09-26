@@ -1,0 +1,2259 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String ageDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '$count day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '$count month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageMonthsDays(int months, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '$months month',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '$days day',
+    );
+    return '$_temp0 $_temp1';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count years',
+      one: '$count year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get appTitle => 'TeddyTales';
+
+  @override
+  String get bathActionToilet => 'Potty';
+
+  @override
+  String get bathActionWash => 'Take a bath';
+
+  @override
+  String get bedroomActionSleep => 'Put to bed';
+
+  @override
+  String get bedroomWakeTogether => 'Let\'s wake up together';
+
+  @override
+  String get bedroomAlarmQuestion => 'What time should the alarm ring?';
+
+  @override
+  String bedroomAlarmSet(String time) {
+    return 'Alarm at $time';
+  }
+
+  @override
+  String get bedroomAlarmHelp => 'When do we wake up?';
+
+  @override
+  String get bedroomActionWake => 'Wake up';
+
+  @override
+  String get bedroomAlarmDone => 'Done';
+
+  @override
+  String get bathWashSoon => 'Fixing the shower — bath time is coming soon';
+
+  @override
+  String get bathToiletSoon => 'The potty is still in the works';
+
+  @override
+  String bearRigMissingHint(String path) {
+    return 'Add $path to the app';
+  }
+
+  @override
+  String get bearRigMissingTitle => 'The rig isn’t hooked up yet';
+
+  @override
+  String get birthCueAwakening =>
+      'The little one opens their eyes and looks around.';
+
+  @override
+  String get birthCueCradle =>
+      'A warm little bed. Someone is breathing softly under the blanket…';
+
+  @override
+  String get birthCueFinale => 'Calm at last. Hello, little one.';
+
+  @override
+  String get birthCueFirstBreath => 'The first breath…';
+
+  @override
+  String get birthCueFirstCry => 'The first cry — calling out for you.';
+
+  @override
+  String get birthCueStars => 'Little stars drift in the soft light.';
+
+  @override
+  String get birthSceneNotReady => 'The birth scene isn\'t assembled yet';
+
+  @override
+  String get birthSkip => 'Skip';
+
+  @override
+  String get careFeedSubtitle => 'Something tasty for your little one';
+
+  @override
+  String get careFeedTitle => 'Feed';
+
+  @override
+  String get careFootnote =>
+      'To pet your bear, just tap them on the home screen.';
+
+  @override
+  String careLockedUntilStage(int stage) {
+    return 'Unlocks at stage $stage';
+  }
+
+  @override
+  String get carePlaySubtitle => 'Fun and games together';
+
+  @override
+  String get carePlayTitle => 'Play';
+
+  @override
+  String get careSleepSubtitle => 'Good night, little bear';
+
+  @override
+  String get careSleepTitle => 'Tuck in';
+
+  @override
+  String get careTitle => 'What shall we do?';
+
+  @override
+  String get careWashSubtitle => 'Bath time!';
+
+  @override
+  String get careWashTitle => 'Bathe';
+
+  @override
+  String get catalogCheckoutTitle => 'Checkout';
+
+  @override
+  String get catalogCountryChina => 'China';
+
+  @override
+  String get catalogCountryGermany => 'Germany';
+
+  @override
+  String get catalogCountryKazakhstan => 'Kazakhstan';
+
+  @override
+  String get catalogCountryRussia => 'Russia';
+
+  @override
+  String get catalogCountryUsa => 'USA';
+
+  @override
+  String get catalogDeliveryNote =>
+      'Delivery per the store: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7. Orders go to the Client\'s live sales system (Brief 12.5) — this form doesn\'t submit anything yet.';
+
+  @override
+  String get catalogFieldAddress => 'Address';
+
+  @override
+  String get catalogFieldAddressHint => 'Street, building, apartment';
+
+  @override
+  String get catalogFieldCountry => 'Country';
+
+  @override
+  String get catalogFieldName => 'Full name';
+
+  @override
+  String get catalogFieldNameHint => 'As in your ID';
+
+  @override
+  String get catalogFieldPhone => 'Phone';
+
+  @override
+  String get catalogFieldPostcode => 'Postcode';
+
+  @override
+  String catalogFootnote(String shoes, String price) {
+    return 'Items, prices and sizes come from the official TeddyTales® store, as required by Brief 12.1. The photos are identical placeholders: real shots will come from the Client\'s catalog. Shoes are sold there separately — $shoes, $price.';
+  }
+
+  @override
+  String get catalogGrownSubtitle => 'and ready to come home to you';
+
+  @override
+  String get catalogGrownTitle => 'Your little one is all grown up';
+
+  @override
+  String get catalogItemFortune => 'Fortune Pocket Bear';
+
+  @override
+  String get catalogItemHug => 'Peachy Cuddle Bear';
+
+  @override
+  String get catalogItemShortFur => 'Short-Fur Teddy';
+
+  @override
+  String get catalogItemSpaceSet => 'Astronaut & Bride Set';
+
+  @override
+  String get catalogOrderButton => 'Order now';
+
+  @override
+  String get catalogPayPalNote => ' — or by card, no account needed';
+
+  @override
+  String get catalogPaySection => 'Payment · Brief 12.4';
+
+  @override
+  String get catalogPayStub => 'Payments will be connected during integration';
+
+  @override
+  String catalogSizeCm(int size) {
+    return '$size cm';
+  }
+
+  @override
+  String get catalogSummaryItem => 'Item';
+
+  @override
+  String get catalogSummaryPrice => 'Price';
+
+  @override
+  String get catalogSummarySize => 'Size';
+
+  @override
+  String get catalogTitle => 'Order a bear';
+
+  @override
+  String get categoryAccessory => 'Accessories';
+
+  @override
+  String get categoryBottom => 'Bottoms';
+
+  @override
+  String get categoryDecor => 'Decor';
+
+  @override
+  String get categoryFloor => 'Floor';
+
+  @override
+  String get categoryFurniture => 'Furniture';
+
+  @override
+  String get categoryHeadwear => 'Headwear';
+
+  @override
+  String get categoryOutfit => 'Outfits';
+
+  @override
+  String get categoryShoes => 'Shoes';
+
+  @override
+  String get categoryTop => 'Tops';
+
+  @override
+  String get categoryToy => 'Toys';
+
+  @override
+  String get categoryWallpaper => 'Wallpaper';
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String commonCoins(int count) {
+    return '$count coins';
+  }
+
+  @override
+  String get diaryEventFavoriteToy => 'A favorite toy';
+
+  @override
+  String get diaryEventFirstBath => 'First bath';
+
+  @override
+  String get diaryEventFirstCrawl => 'Learned to crawl';
+
+  @override
+  String get diaryEventFirstTooth => 'First tooth';
+
+  @override
+  String get diaryTitle => 'Diary';
+
+  @override
+  String get dishCookie => 'Cookies';
+
+  @override
+  String get dishFruit => 'Fruit';
+
+  @override
+  String get dishOmelette => 'Omelette';
+
+  @override
+  String get dishPasta => 'Pasta';
+
+  @override
+  String get dishPie => 'Pie';
+
+  @override
+  String get dishPorridge => 'Porridge';
+
+  @override
+  String get dishSalad => 'Salad';
+
+  @override
+  String get dishSandwich => 'Sandwich';
+
+  @override
+  String get dishSoup => 'Soup';
+
+  @override
+  String get dishYogurt => 'Yogurt';
+
+  @override
+  String get dishesClose => 'Clear the table';
+
+  @override
+  String get dishesAllEaten =>
+      'All eaten! The dishes will be back when your bear gets hungry.';
+
+  @override
+  String cookSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count steps',
+      one: '$count step',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cookClose => 'Stop cooking';
+
+  @override
+  String cookIngredient(String ingredient) {
+    return 'Add: $ingredient';
+  }
+
+  @override
+  String get dishDescPorridge => 'with berries and honey';
+
+  @override
+  String get dishDescSoup => 'with carrots and peas';
+
+  @override
+  String get dishDescSandwich => 'with cheese and ham';
+
+  @override
+  String get dishDescFruit => 'strawberry, banana, grapes';
+
+  @override
+  String get dishDescYogurt => 'with granola and berries';
+
+  @override
+  String get dishDescCookie => 'chocolate chip and teddy bears';
+
+  @override
+  String get dishDescSalad => 'cucumber, tomato, corn';
+
+  @override
+  String get dishDescPasta => 'with tomato sauce';
+
+  @override
+  String get dishDescOmelette => 'with green onion';
+
+  @override
+  String get dishDescPie => 'with raspberries and blueberries';
+
+  @override
+  String get feedCookHint =>
+      'Add the ingredients in order. Slip up? We\'ll simply try again.';
+
+  @override
+  String feedCookResult(String recipe, int reward, int gain) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reward,
+      locale: localeName,
+      other: '$reward coins',
+      one: '$reward coin',
+    );
+    return 'Done! $recipe · +$_temp0, food +$gain';
+  }
+
+  @override
+  String feedEatResult(String dish, int gain, int price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      price,
+      locale: localeName,
+      other: '$price coins',
+      one: '$price coin',
+    );
+    return '$dish · food +$gain, −$_temp0';
+  }
+
+  @override
+  String get feedFavourite => 'Favourite';
+
+  @override
+  String feedFoodGain(int gain) {
+    return 'food +$gain';
+  }
+
+  @override
+  String get feedHintActive =>
+      'I\'ve been dashing about all day — let\'s have something filling!';
+
+  @override
+  String get feedHintAffectionate =>
+      'I\'d love something sweet… with you close by.';
+
+  @override
+  String get feedHintCalm => 'Something warm and simple would be lovely.';
+
+  @override
+  String get feedHintCurious => 'Shall we cook something new?';
+
+  @override
+  String get feedHintIndependent => 'I could manage on my own. Well, almost.';
+
+  @override
+  String get feedHintReserved => 'Could I just have some fruit?';
+
+  @override
+  String get feedNotEnoughCoins => 'Not enough coins';
+
+  @override
+  String feedRecipeSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count steps',
+      one: '$count step',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String feedStepProgress(int step, int total, int reward, int gain) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reward,
+      locale: localeName,
+      other: '$reward coins',
+      one: '$reward coin',
+    );
+    return 'Step $step of $total. Reward: $_temp0 and food +$gain.';
+  }
+
+  @override
+  String get feedTabCook => 'Cook';
+
+  @override
+  String get feedTabReady => 'Ready meals';
+
+  @override
+  String get feedTitle => 'What shall we eat?';
+
+  @override
+  String feedWrongStep(String ingredient) {
+    return 'Not quite. What we need now: $ingredient. Try again — no penalty.';
+  }
+
+  @override
+  String game2048Hint(int target, int score) {
+    return 'Swipe to merge equal tiles. Goal: $target. Score: $score';
+  }
+
+  @override
+  String get game2048StuckHint =>
+      'No moves left — start over with the button below.';
+
+  @override
+  String game2048Title(int level) {
+    return '2048 · level $level';
+  }
+
+  @override
+  String game2048WonHint(int target) {
+    return 'You got $target! Enjoy your reward 🎉';
+  }
+
+  @override
+  String gamePairsHint(int moves) {
+    return 'Flip two matching cards. Moves: $moves';
+  }
+
+  @override
+  String gamePairsSolvedHint(int moves) {
+    String _temp0 = intl.Intl.pluralLogic(
+      moves,
+      locale: localeName,
+      other: 'All pairs found in $moves moves 🎉',
+      one: 'All pairs found in $moves move 🎉',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gamePairsTitle(int level) {
+    return 'Memory · level $level';
+  }
+
+  @override
+  String get gamePuzzleHint =>
+      'Tap tiles to slide them and complete the photo.';
+
+  @override
+  String get gamePuzzleSolvedHint => 'Done! Enjoy your reward 🎉';
+
+  @override
+  String gamePuzzleTitle(int level) {
+    return 'Puzzle · level $level';
+  }
+
+  @override
+  String get gameRestart => 'Restart';
+
+  @override
+  String get growthAlreadyAdult => 'Your bear is all grown up';
+
+  @override
+  String get growthDurationAdult => 'onwards, no limits';
+
+  @override
+  String get growthDurationCrawling => '~2 days';
+
+  @override
+  String get growthDurationFirstSteps => '1–2 days';
+
+  @override
+  String get growthDurationGrowing => 'until around day 14';
+
+  @override
+  String get growthDurationNewborn => '1 day';
+
+  @override
+  String get growthGrowUp => 'Grow up';
+
+  @override
+  String get growthMarkNow => 'now';
+
+  @override
+  String get growthMarkPassed => 'done';
+
+  @override
+  String growthNewStage(String stage) {
+    return 'New stage: $stage';
+  }
+
+  @override
+  String growthSizeNow(String cm, String g, String cm0, String g0) {
+    return 'Now $cm cm tall and $g g. At birth — $cm0 cm and $g0 g.';
+  }
+
+  @override
+  String get growthTitle => 'Growth & development';
+
+  @override
+  String get homeCareButton => 'What shall we do?';
+
+  @override
+  String get homeDevPanelTooltip => 'Rig dev panel';
+
+  @override
+  String homeScreenNotReady(String name) {
+    return 'The “$name” screen isn’t ready yet';
+  }
+
+  @override
+  String get ingredientApple => 'Apple';
+
+  @override
+  String get ingredientBanana => 'Banana';
+
+  @override
+  String get ingredientBread => 'Bread';
+
+  @override
+  String get ingredientButter => 'Butter';
+
+  @override
+  String get ingredientCabbage => 'Cabbage';
+
+  @override
+  String get ingredientCandy => 'Candy';
+
+  @override
+  String get ingredientCarrot => 'Carrot';
+
+  @override
+  String get ingredientCheese => 'Cheese';
+
+  @override
+  String get ingredientChocolate => 'Chocolate';
+
+  @override
+  String get ingredientFish => 'Fish';
+
+  @override
+  String get ingredientFlour => 'Flour';
+
+  @override
+  String get ingredientGreens => 'Herbs';
+
+  @override
+  String get ingredientHoney => 'Honey';
+
+  @override
+  String get ingredientMeat => 'Meat';
+
+  @override
+  String get ingredientOnion => 'Onion';
+
+  @override
+  String get ingredientOrange => 'Orange';
+
+  @override
+  String get ingredientPepper => 'Pepper';
+
+  @override
+  String get ingredientPotato => 'Potato';
+
+  @override
+  String get ingredientSalt => 'Salt';
+
+  @override
+  String get ingredientSpices => 'Spices';
+
+  @override
+  String get ingredientSugar => 'Sugar';
+
+  @override
+  String get ingredientTomato => 'Tomato';
+
+  @override
+  String get ingredientYogurt => 'Yogurt';
+
+  @override
+  String get itemAccBow => 'Bow';
+
+  @override
+  String get itemArmchair => 'Armchair';
+
+  @override
+  String get itemBall => 'Ball';
+
+  @override
+  String get itemBasket => 'Basket';
+
+  @override
+  String get itemShelfHouse => 'House shelf';
+
+  @override
+  String get itemShelfMoon => 'Moon shelf';
+
+  @override
+  String get itemArmchairSage => 'Sage armchair';
+
+  @override
+  String get itemArmchairBean => 'Bean chair';
+
+  @override
+  String get itemArmchairFlower => 'Flower armchair';
+
+  @override
+  String get itemArmchairWing => 'Wing armchair';
+
+  @override
+  String get itemSwing => 'Hanging chair';
+
+  @override
+  String get itemBasketStar => 'Star basket';
+
+  @override
+  String get itemRugCloud => 'Cloud rug';
+
+  @override
+  String get itemRugHeart => 'Heart rug';
+
+  @override
+  String get itemPicHeart => 'Heart picture';
+
+  @override
+  String get itemPlantIvy => 'Ivy on a stand';
+
+  @override
+  String get itemPlantBear => 'Bear planter';
+
+  @override
+  String get itemFlowersDaisy => 'Daisies in a jar';
+
+  @override
+  String get itemFlowersOrchid => 'Orchid';
+
+  @override
+  String get itemFlowersEuc => 'Eucalyptus';
+
+  @override
+  String get itemTeddyCream => 'Cream teddy';
+
+  @override
+  String get itemBunny => 'Bunny';
+
+  @override
+  String get itemBunnyPink => 'Pink bunny';
+
+  @override
+  String get itemPyramid => 'Stacking rings';
+
+  @override
+  String get itemDollhouse => 'Dollhouse';
+
+  @override
+  String get itemHouseFelt => 'Felt house';
+
+  @override
+  String get itemBed => 'Bed';
+
+  @override
+  String get itemBotBlue => 'Blue Pants';
+
+  @override
+  String get itemBotSkirt => 'Pink Skirt';
+
+  @override
+  String get itemBotYellow => 'Yellow Shorts';
+
+  @override
+  String get itemCactus => 'Cactus';
+
+  @override
+  String get itemCar => 'Toy Car';
+
+  @override
+  String get itemChair => 'Chair';
+
+  @override
+  String get itemClock => 'Clock';
+
+  @override
+  String get itemCubes => 'Blocks';
+
+  @override
+  String get itemDresser => 'Dresser';
+
+  @override
+  String get itemDrum => 'Drum';
+
+  @override
+  String get itemDuck => 'Rubber Duck';
+
+  @override
+  String get itemFloorCarpet => 'Carpet Floor';
+
+  @override
+  String get itemFloorLight => 'Light Floor';
+
+  @override
+  String get itemFloorWood => 'Wooden Floor';
+
+  @override
+  String get itemGarland => 'Fairy Lights';
+
+  @override
+  String get itemHatCap => 'Hat';
+
+  @override
+  String get itemKite => 'Kite';
+
+  @override
+  String get itemLamp => 'Lamp';
+
+  @override
+  String get itemOutBear => 'Bear Costume';
+
+  @override
+  String get itemOutBee => 'Bee Costume';
+
+  @override
+  String get itemOutBerry => 'Strawberry Costume';
+
+  @override
+  String get itemOutGlasses => 'Glasses Set';
+
+  @override
+  String get itemOutSailor => 'Sailor Outfit';
+
+  @override
+  String get itemOutSport => 'Sporty Outfit';
+
+  @override
+  String get itemOutWinter => 'Winter Outfit';
+
+  @override
+  String get itemOutYellow => 'Yellow Outfit';
+
+  @override
+  String get itemPicBear => 'Bear Picture';
+
+  @override
+  String get itemPicForest => 'Forest Picture';
+
+  @override
+  String get itemPicMoon => 'Moon Picture';
+
+  @override
+  String get itemPillowHeart => 'Heart Pillow';
+
+  @override
+  String get itemPillowStar => 'Star Pillow';
+
+  @override
+  String get itemPlant => 'Plant';
+
+  @override
+  String get itemPoster => 'Poster';
+
+  @override
+  String get itemPuzzle => 'Puzzle';
+
+  @override
+  String get itemRocket => 'Rocket';
+
+  @override
+  String get itemRug => 'Rug';
+
+  @override
+  String get itemShelf => 'Bookshelf';
+
+  @override
+  String get itemTable => 'Table';
+
+  @override
+  String get itemTeddy => 'Teddy Bear';
+
+  @override
+  String get itemTopBlue => 'Blue Hoodie';
+
+  @override
+  String get itemTopRose => 'Pink Sweater';
+
+  @override
+  String get itemTopSage => 'Green Cardigan';
+
+  @override
+  String get itemTrain => 'Toy Train';
+
+  @override
+  String get itemWallRose => 'Pink Wallpaper';
+
+  @override
+  String get itemWallSage => 'Green Wallpaper';
+
+  @override
+  String get itemWallSky => 'Sky Wallpaper';
+
+  @override
+  String get itemWardrobe => 'Wardrobe';
+
+  @override
+  String get learnAdultLevelsNote =>
+      'Finish a level to earn coins and unlock the next one. Difficulty grows with the level number.';
+
+  @override
+  String get learnAdultLogicSubtitle => '2048 in brand colors';
+
+  @override
+  String get learnAdultLogicTitle => 'Brain Teasers';
+
+  @override
+  String get learnAdultMemorySubtitle => 'Find the pairs';
+
+  @override
+  String get learnAdultMemoryTitle => 'Memory';
+
+  @override
+  String get learnAdultPuzzleSubtitle => 'Put together a bear photo';
+
+  @override
+  String get learnAdultPuzzleTitle => 'Puzzles';
+
+  @override
+  String get learnAgeAdultSubtitle => 'Bear puzzles, 2048, memory';
+
+  @override
+  String get learnAgeAdultTitle => 'Adult';
+
+  @override
+  String get learnAgeChildSubtitle =>
+      'Colors and shapes, counting, the world around';
+
+  @override
+  String learnAgeChildTitle(int age) {
+    return 'Child under $age';
+  }
+
+  @override
+  String get learnAgeGateSubtitle =>
+      'The set of games depends on age. You can change it anytime.';
+
+  @override
+  String get learnAgeGateTitle => 'Who\'s playing?';
+
+  @override
+  String get learnCatColorsTitle => 'Colors and Shapes';
+
+  @override
+  String get learnCatCountTitle => 'Counting and Simple Logic';
+
+  @override
+  String learnCatLocked(String stage) {
+    return 'Opens at the «$stage» stage';
+  }
+
+  @override
+  String get learnCatWorldTitle => 'The World Around';
+
+  @override
+  String learnCorrectToast(int coins) {
+    String _temp0 = intl.Intl.pluralLogic(
+      coins,
+      locale: localeName,
+      other: 'Correct! +$coins coins',
+      one: 'Correct! +$coins coin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get learnGamesTitle => 'Games';
+
+  @override
+  String learnLevelDoneToast(int coins) {
+    String _temp0 = intl.Intl.pluralLogic(
+      coins,
+      locale: localeName,
+      other: 'Level complete! +$coins coins',
+      one: 'Level complete! +$coins coin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String learnLevelsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count levels',
+      one: '$count level',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get learnQuizHintNote =>
+      'A correct answer brings a happy animation and a reward.';
+
+  @override
+  String learnQuizTitle(String category, int level) {
+    return '$category · level $level';
+  }
+
+  @override
+  String get learnQuizWrongNote => 'Not quite. Try again — no penalty.';
+
+  @override
+  String get learnTaskColorsCircle => 'Where is the circle?';
+
+  @override
+  String get learnTaskColorsGreen => 'Where is green?';
+
+  @override
+  String get learnTaskColorsRed => 'Where is red?';
+
+  @override
+  String get learnTaskCountApples => 'How many apples? 🍎🍎🍎';
+
+  @override
+  String get learnTaskCountBigger => 'Which one is bigger?';
+
+  @override
+  String get learnTaskCountNext => 'What comes next? 1, 2, 3…';
+
+  @override
+  String learnTaskProgress(int current, int total) {
+    return 'Question $current of $total';
+  }
+
+  @override
+  String get learnTaskWorldApples => 'Where do apples grow?';
+
+  @override
+  String get learnTaskWorldDay => 'What shines in the daytime?';
+
+  @override
+  String get learnTaskWorldWater => 'Who lives in water?';
+
+  @override
+  String get learnTitle => 'Learning';
+
+  @override
+  String get moodDirty => 'Messy';
+
+  @override
+  String get moodHappy => 'Happy';
+
+  @override
+  String get moodHungry => 'Hungry';
+
+  @override
+  String get moodNormal => 'Content';
+
+  @override
+  String get moodSad => 'Sad';
+
+  @override
+  String get moodSleepy => 'Sleepy';
+
+  @override
+  String nameChanged(String name) {
+    return 'The little one is now called $name';
+  }
+
+  @override
+  String get nameFirstLead =>
+      'Your little one has arrived. What will you call them? You can change the name later in the profile.';
+
+  @override
+  String get nameFirstSave => 'Name';
+
+  @override
+  String get nameFirstLater => 'Later';
+
+  @override
+  String get nameDialogHint => 'Pet name';
+
+  @override
+  String nameDialogNote(int min, int max) {
+    return 'From $min to $max characters. Letters, space and hyphen.';
+  }
+
+  @override
+  String get nameDialogSave => 'Save';
+
+  @override
+  String get nameDialogTitle => 'What\'s the little one\'s name?';
+
+  @override
+  String get nameErrorBlocked => 'That name will not do for a little one';
+
+  @override
+  String get nameErrorCharacters => 'Letters, space and hyphen only';
+
+  @override
+  String get nameErrorEmpty => 'Please enter a name';
+
+  @override
+  String nameErrorLong(int max) {
+    return 'No more than $max characters';
+  }
+
+  @override
+  String get nameErrorNetwork => 'Could not save — please try again';
+
+  @override
+  String nameErrorShort(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String navLockReason(String stage) {
+    return 'Unlocks at the “$stage” stage';
+  }
+
+  @override
+  String get navSectionCatalog => 'Bears';
+
+  @override
+  String get navSectionHome => 'Home';
+
+  @override
+  String get navSectionLearning => 'Learning';
+
+  @override
+  String get navSectionProfile => 'Profile';
+
+  @override
+  String get navSectionRoom => 'Decorate';
+
+  @override
+  String get navSectionShop => 'Shop';
+
+  @override
+  String get petDefaultName => 'My little one';
+
+  @override
+  String get profileAgeLabel => 'Age';
+
+  @override
+  String profileBirthFur(String hero, String fur) {
+    return '$hero · $fur fur';
+  }
+
+  @override
+  String get profileHeightLabel => 'Height';
+
+  @override
+  String profileHeightValue(String cm) {
+    return '$cm cm';
+  }
+
+  @override
+  String get profileHeightStub => '15 cm';
+
+  @override
+  String get profileLinkDiary => 'Diary';
+
+  @override
+  String get profileLinkDiarySubtitle => 'moments and photo album';
+
+  @override
+  String get profileLinkGrowth => 'Growth & development';
+
+  @override
+  String get profileLinkGrowthSubtitle =>
+      'five stages and the road between them';
+
+  @override
+  String get profileLinkSettings => 'Settings';
+
+  @override
+  String get profileLinkSettingsSubtitle => 'language and notifications';
+
+  @override
+  String get profileRename => 'Change the name';
+
+  @override
+  String get profileSectionBirth => 'Birth card';
+
+  @override
+  String get profileSectionHistory => 'Stage history';
+
+  @override
+  String get profileSectionLinks => 'More';
+
+  @override
+  String get profileSectionTrait => 'Personality';
+
+  @override
+  String get profileSexBoy => 'boy';
+
+  @override
+  String get profileSexGirl => 'girl';
+
+  @override
+  String get profileSexLabel => 'Sex';
+
+  @override
+  String get profileStageNow => 'now';
+
+  @override
+  String get profileStagePassed => 'done';
+
+  @override
+  String get profileStubBadge => 'stub';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileTraitHowLabel => 'How it\'s counted';
+
+  @override
+  String get profileTraitHowValue => 'from the last 3 days of care';
+
+  @override
+  String get profileTraitNowLabel => 'Right now';
+
+  @override
+  String get profileWeightLabel => 'Weight';
+
+  @override
+  String profileWeightValue(String g) {
+    return '$g g';
+  }
+
+  @override
+  String get profileWeightStub => '180 g';
+
+  @override
+  String get profileZodiacLabel => 'Zodiac sign';
+
+  @override
+  String get recipeCookie => 'Cookies';
+
+  @override
+  String get recipeFruitSalad => 'Fruit salad';
+
+  @override
+  String get recipeMeat => 'Meat dish';
+
+  @override
+  String get recipeSandwich => 'Sandwich';
+
+  @override
+  String get recipeVeggie => 'Veggie dish';
+
+  @override
+  String roomItemBought(String name) {
+    return '$name purchased';
+  }
+
+  @override
+  String roomItemPlaced(String name) {
+    return '$name placed';
+  }
+
+  @override
+  String roomItemRemoved(String name) {
+    return '$name put away';
+  }
+
+  @override
+  String get roomKindBath => 'Bathroom';
+
+  @override
+  String get roomKindKitchen => 'Kitchen';
+
+  @override
+  String get roomKindNursery => 'Nursery';
+
+  @override
+  String get roomNotEnoughCoins => 'Not enough coins';
+
+  @override
+  String get roomOwnedLabel => 'Owned';
+
+  @override
+  String get roomSelectedLabel => 'Selected';
+
+  @override
+  String get roomSheetOwned => 'owned';
+
+  @override
+  String get roomSheetRemove => 'Remove from the room';
+
+  @override
+  String get roomSheetReplace => 'Replace with';
+
+  @override
+  String get roomSlotEmpty => 'An empty spot';
+
+  @override
+  String get roomSlotPut => 'Put here';
+
+  @override
+  String get roomTitle => 'My Room';
+
+  @override
+  String get settingsNotifEvent => 'Event';
+
+  @override
+  String get settingsNotifGift => 'Gift';
+
+  @override
+  String get settingsNotifHungry => 'Hungry';
+
+  @override
+  String get settingsNotifPlay => 'Wants to play';
+
+  @override
+  String get settingsNotifShopNews => 'Shop news';
+
+  @override
+  String get settingsNotifSleep => 'Bedtime';
+
+  @override
+  String get settingsNotifStage => 'New stage';
+
+  @override
+  String get settingsNotifTask => 'Task';
+
+  @override
+  String get settingsQuietHours => 'Quiet hours 22:00 — 8:00';
+
+  @override
+  String get legalPrivacy => 'Privacy Policy';
+
+  @override
+  String get legalTerms => 'Terms of Use';
+
+  @override
+  String get settingsSectionAccount => 'Account';
+
+  @override
+  String get settingsSectionLanguage => 'Language';
+
+  @override
+  String get settingsSectionSound => 'Sound';
+
+  @override
+  String get settingsSounds => 'Game sounds';
+
+  @override
+  String get settingsSectionLegal => 'Legal';
+
+  @override
+  String get settingsSectionNotifications => 'Notifications';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsSignOutConfirmBody =>
+      'Your progress stays on the server and comes back next time you sign in.';
+
+  @override
+  String get settingsSignOutConfirmTitle => 'Sign out?';
+
+  @override
+  String get settingsSignOutHint => 'Takes you back to the sign-in options';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsVersion => 'Version';
+
+  @override
+  String get shopGroupLater => 'For when they grow up';
+
+  @override
+  String get shopGroupNow => 'For your little one now';
+
+  @override
+  String get shopNotEnoughCoins => 'Not enough coins';
+
+  @override
+  String get furnishPickItem => 'Pick a thing';
+
+  @override
+  String get furnishPickSlot => 'Now pick a spot';
+
+  @override
+  String get furnishDone => 'Done';
+
+  @override
+  String get furnishBuyMore => 'Buy more';
+
+  @override
+  String furnishPlaced(String name) {
+    return '$name is in place';
+  }
+
+  @override
+  String furnishRemoved(String name) {
+    return '$name taken away';
+  }
+
+  @override
+  String get furnishNoSlot => 'No spot for this here';
+
+  @override
+  String get shopZoom => 'Take a closer look';
+
+  @override
+  String get shopOwnedLabel => 'Owned';
+
+  @override
+  String get shopTabClothes => 'Clothes';
+
+  @override
+  String get shopTabDecor => 'Decor';
+
+  @override
+  String get shopTabFurniture => 'Furniture';
+
+  @override
+  String get shopTabToys => 'Toys';
+
+  @override
+  String get shopTitle => 'Shop';
+
+  @override
+  String get signInAlipay => 'Sign in with Alipay';
+
+  @override
+  String get signInApple => 'Sign in with Apple';
+
+  @override
+  String get signInGoogle => 'Sign in with Google';
+
+  @override
+  String get signInLegalPrefix => 'By continuing you accept the ';
+
+  @override
+  String get signInLegalTermsLink => 'terms of use';
+
+  @override
+  String get signInLegalAnd => ' and the ';
+
+  @override
+  String get signInLegalPrivacyLink => 'privacy policy';
+
+  @override
+  String get signInPrompt => 'Choose how to sign in';
+
+  @override
+  String get signInQq => 'Sign in with QQ';
+
+  @override
+  String get signInSkip => 'Skip and explore the app';
+
+  @override
+  String signInSoonBody(String method) {
+    return 'Signing in with $method is coming later. For now, sign up or sign in with e-mail.';
+  }
+
+  @override
+  String get signInSoonTitle => 'This feature is still in development';
+
+  @override
+  String get signInTagline => 'A plush little one who grows up with you';
+
+  @override
+  String get signInWeChat => 'Sign in with WeChat';
+
+  @override
+  String get skinJoy => 'JOY';
+
+  @override
+  String get skinSlow => 'SLOW';
+
+  @override
+  String get stageAdult => 'Grown-up';
+
+  @override
+  String get stageCrawling => 'Crawling baby';
+
+  @override
+  String get stageFirstSteps => 'First steps';
+
+  @override
+  String get stageGrowing => 'Growing up';
+
+  @override
+  String get stageNewborn => 'Newborn';
+
+  @override
+  String get statsFood => 'Food';
+
+  @override
+  String get statsHygiene => 'Hygiene';
+
+  @override
+  String get statsLove => 'Love';
+
+  @override
+  String get statsShow => 'Show care';
+
+  @override
+  String get statsHide => 'Hide care';
+
+  @override
+  String get statsPlay => 'Play';
+
+  @override
+  String get statsSleep => 'Sleep';
+
+  @override
+  String get traitActive => 'Active';
+
+  @override
+  String get traitAffectionate => 'Affectionate';
+
+  @override
+  String get traitCalm => 'Calm';
+
+  @override
+  String get traitCurious => 'Curious';
+
+  @override
+  String get traitIndependent => 'Independent';
+
+  @override
+  String get traitReserved => 'Reserved';
+
+  @override
+  String get zodiacAquarius => 'Aquarius';
+
+  @override
+  String get zodiacAries => 'Aries';
+
+  @override
+  String get zodiacCancer => 'Cancer';
+
+  @override
+  String get zodiacCapricorn => 'Capricorn';
+
+  @override
+  String get zodiacGemini => 'Gemini';
+
+  @override
+  String get zodiacInfluenceAquarius =>
+      'An inventive free spirit: full of surprises and their own ways.';
+
+  @override
+  String get zodiacInfluenceAries =>
+      'Bold and impulsive: eager to try everything on their own from day one.';
+
+  @override
+  String get zodiacInfluenceCancer =>
+      'A gentle homebody: care and long hugs make them bloom.';
+
+  @override
+  String get zodiacInfluenceCapricorn =>
+      'Patient and persistent: reaches big things one small step at a time.';
+
+  @override
+  String get zodiacInfluenceGemini =>
+      'Curious and sociable: reaches for anything new with both paws.';
+
+  @override
+  String get zodiacInfluenceLeo =>
+      'Warm and theatrical: adores attention and gives back plenty of affection.';
+
+  @override
+  String get zodiacInfluenceLibra =>
+      'A friendly peacemaker: fond of beauty, company and a gentle tone.';
+
+  @override
+  String get zodiacInfluencePisces =>
+      'Dreamy and sensitive: quietly attuned to your mood.';
+
+  @override
+  String get zodiacInfluenceSagittarius =>
+      'A cheerful adventurer: games and outings are their element.';
+
+  @override
+  String get zodiacInfluenceScorpio =>
+      'Deep and devoted: forms bonds that are serious and lasting.';
+
+  @override
+  String get zodiacInfluenceTaurus =>
+      'Calm and steady: loves comfort, good food and a familiar routine.';
+
+  @override
+  String get zodiacInfluenceVirgo =>
+      'Attentive and tidy: notices the little things and likes everything in order.';
+
+  @override
+  String get zodiacLeo => 'Leo';
+
+  @override
+  String get zodiacLibra => 'Libra';
+
+  @override
+  String get zodiacPisces => 'Pisces';
+
+  @override
+  String get zodiacSagittarius => 'Sagittarius';
+
+  @override
+  String get zodiacScorpio => 'Scorpio';
+
+  @override
+  String get zodiacTaurus => 'Taurus';
+
+  @override
+  String get zodiacVirgo => 'Virgo';
+
+  @override
+  String get shopGroupAll => 'All';
+
+  @override
+  String get shopGroupBeds => 'Beds';
+
+  @override
+  String get shopGroupChairs => 'Armchairs';
+
+  @override
+  String get shopGroupDressers => 'Dressers';
+
+  @override
+  String get shopGroupTables => 'Tables';
+
+  @override
+  String get shopGroupBaskets => 'Toy baskets';
+
+  @override
+  String get shopGroupShelves => 'Wall shelves';
+
+  @override
+  String get shopGroupLamps => 'Lamps';
+
+  @override
+  String get shopGroupRugs => 'Rugs';
+
+  @override
+  String get shopGroupPictures => 'Pictures';
+
+  @override
+  String get shopGroupPlants => 'Plants';
+
+  @override
+  String get shopGroupFlowers => 'Flowers';
+
+  @override
+  String get shopGroupPillows => 'Pillows';
+
+  @override
+  String get shopGroupWalls => 'Wallpaper';
+
+  @override
+  String get shopGroupFloors => 'Floors';
+
+  @override
+  String get shopGroupPlush => 'Plush toys';
+
+  @override
+  String get shopGroupHouses => 'Playhouses';
+
+  @override
+  String get shopGroupToys => 'Toys';
+
+  @override
+  String get shopGroupOutfits => 'Outfits';
+
+  @override
+  String get shopGroupTops => 'Tops';
+
+  @override
+  String get shopGroupBottoms => 'Bottoms';
+
+  @override
+  String get shopGroupHats => 'Hats';
+
+  @override
+  String get shopGroupShoes => 'Shoes';
+
+  @override
+  String get shopGroupExtras => 'Accessories';
+
+  @override
+  String get shopGroupSeats => 'Chairs';
+
+  @override
+  String get shopGroupWardrobes => 'Wardrobes';
+
+  @override
+  String get shopGroupClocks => 'Clocks';
+
+  @override
+  String get shopGroupGarlands => 'Garlands';
+
+  @override
+  String wakeAlarmLabel(String name) {
+    return 'Wake up together with $name';
+  }
+
+  @override
+  String wakeAlarmBody(String name) {
+    return '$name is awake and waiting for you';
+  }
+
+  @override
+  String get wakeAlarmStop => 'I\'m up';
+
+  @override
+  String wakeAlarmClock(String time) {
+    return 'Alarm set for $time in your phone\'s Clock';
+  }
+
+  @override
+  String wakeAlarmClockOld(String time) {
+    return 'The previous one, at $time, is still in Clock — turn it off there';
+  }
+
+  @override
+  String get wakeAlarmOpenClock => 'Open Clock';
+
+  @override
+  String wakeAlarmSystem(String time) {
+    return 'Alarm set for $time. It will ring even in silent mode';
+  }
+
+  @override
+  String wakeAlarmNotification(String time) {
+    return 'We\'ll wake you at $time with a sound notification. In silent mode it will only vibrate';
+  }
+
+  @override
+  String wakeAlarmPreview(String time) {
+    return 'On a phone, the $time alarm goes into the Android Clock or rings as a system alarm on iPhone. This preview version doesn\'t ring';
+  }
+
+  @override
+  String get wakeAlarmDenied =>
+      'The alarm needs permission. Turn on notifications for Teddy Tales in your phone settings';
+
+  @override
+  String get wakeAlarmFailed => 'Couldn\'t set the alarm. Please try again';
+
+  @override
+  String get signInEmail => 'Sign up with e-mail';
+
+  @override
+  String get emailTitle => 'E-mail';
+
+  @override
+  String get emailTabSignUp => 'Sign up';
+
+  @override
+  String get emailTabSignIn => 'Sign in';
+
+  @override
+  String get emailField => 'E-mail';
+
+  @override
+  String get emailPassword => 'Password';
+
+  @override
+  String emailPasswordHint(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String get emailSubmitSignUp => 'Create account';
+
+  @override
+  String get emailSubmitSignIn => 'Sign in';
+
+  @override
+  String get emailLeadSignUp =>
+      'Your little one is born on the day you sign up — their age and zodiac sign count from that day.';
+
+  @override
+  String get emailLeadSignIn =>
+      'Sign in to get your bear, coins and purchases back on any phone.';
+
+  @override
+  String get emailErrorInvalid => 'Check the e-mail address';
+
+  @override
+  String emailErrorPassword(int min) {
+    return 'Password must be at least $min characters';
+  }
+
+  @override
+  String get emailErrorExists => 'This e-mail is already registered — sign in';
+
+  @override
+  String get emailErrorCredentials => 'Wrong e-mail or password';
+
+  @override
+  String get emailErrorNotConfirmed =>
+      'E-mail not confirmed — enter the code from the message';
+
+  @override
+  String get emailErrorDisabled => 'E-mail sign-up is turned off for now';
+
+  @override
+  String get emailErrorRateLimit => 'Too many messages — try again later';
+
+  @override
+  String get emailErrorNetwork => 'Can\'t reach the server — try again';
+
+  @override
+  String get emailErrorUnknown => 'Something went wrong — try again';
+
+  @override
+  String get profileBirthdayLabel => 'Birthday';
+
+  @override
+  String get profileSectionAccount => 'Account';
+
+  @override
+  String get profileAccountLogin => 'Signed in with';
+
+  @override
+  String get profileAccountGuest => 'No account yet';
+
+  @override
+  String profileAccountUnconfirmed(String email) {
+    return '$email · not confirmed';
+  }
+
+  @override
+  String get profileAccountRegistered => 'Registered';
+
+  @override
+  String get profileAccountWallet => 'Wallet';
+
+  @override
+  String get emailCodeTitle => 'Enter the code from the e-mail';
+
+  @override
+  String emailCodeBody(String email, int length) {
+    return 'We sent a $length-digit code to $email. If you can\'t find it, check the spam folder.';
+  }
+
+  @override
+  String get emailCodeField => 'Code';
+
+  @override
+  String get emailCodeSubmit => 'Confirm';
+
+  @override
+  String get emailCodeResend => 'Send the code again';
+
+  @override
+  String emailCodeResendIn(int seconds) {
+    return 'Send again in $seconds s';
+  }
+
+  @override
+  String get emailCodeSent => 'A new code is on its way';
+
+  @override
+  String get emailCodeChangeEmail => 'Change e-mail';
+
+  @override
+  String get emailEnterCode => 'Enter the code from the e-mail';
+
+  @override
+  String get emailErrorCode => 'Wrong or expired code — request a new one';
+
+  @override
+  String get buyConfirmTitle => 'Confirm your purchase';
+
+  @override
+  String buyConfirmBalance(int coins, int left) {
+    return 'You have $coins · $left left after';
+  }
+
+  @override
+  String get buyConfirmAction => 'Buy';
+
+  @override
+  String get buyConfirmCancel => 'Cancel';
+
+  @override
+  String get buyNotEnoughTitle => 'Not enough coins';
+
+  @override
+  String buyNotEnough(int missing) {
+    String _temp0 = intl.Intl.pluralLogic(
+      missing,
+      locale: localeName,
+      other: 'You need $missing more coins',
+      one: 'You need $missing more coin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get buyNotEnoughOk => 'OK';
+
+  @override
+  String welcomeBackGrandma(String name) {
+    return '$name stayed with grandma while you were away: fed, washed and missing you a lot. Grandma sent some coins as a gift!';
+  }
+
+  @override
+  String get dailyTitle => 'Today';
+
+  @override
+  String get dailyGiftClaimed => 'Claimed — the next gift comes tomorrow';
+
+  @override
+  String get dailyGiftFailed =>
+      'Couldn\'t claim the gift. Check your connection';
+
+  @override
+  String get dailyTasksTitle => 'Today\'s tasks';
+
+  @override
+  String get dailyWeeklyDone => 'Weekly task done!';
+
+  @override
+  String get dailyOffline =>
+      'Gifts and tasks will appear once the server is reachable';
+
+  @override
+  String get dailyTaskPet => 'Pet your bear';
+
+  @override
+  String get dailyTaskPlay => 'Play with your bear';
+
+  @override
+  String get dailyTaskWash => 'Give your bear a bath';
+
+  @override
+  String get dailyTaskFeed => 'Serve a ready dish';
+
+  @override
+  String get dailyTaskCook => 'Cook a dish';
+
+  @override
+  String get dailyTaskLearn => 'Complete a lesson';
+
+  @override
+  String get dailyTaskMealOnTime => 'Feed on time: breakfast, lunch or dinner';
+
+  @override
+  String get dailyTaskBedtime => 'Put to bed on time (8–11 pm)';
+
+  @override
+  String get profileLinkDaily => 'Daily gift and tasks';
+
+  @override
+  String get profileLinkDailySubtitle => '7-day calendar and tasks';
+
+  @override
+  String dailyGiftDay(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String dailyGiftClaim(int coins) {
+    return 'Claim +$coins';
+  }
+
+  @override
+  String dailyWeekly(int target, int done, int coins) {
+    return 'Weekly task: all daily tasks on $target days — $done of $target, +$coins';
+  }
+
+  @override
+  String stageUpCelebrate(String name, String stage) {
+    return '$name has grown! Now: “$stage”. A gift of coins';
+  }
+
+  @override
+  String get giftEnvelopeTap => 'Tap the envelope to open it';
+
+  @override
+  String get giftBoxTap => 'Tap the box — there is a surprise inside!';
+
+  @override
+  String get giftBoxDay7 => 'DAY 7 · BIG GIFT';
+
+  @override
+  String get giftCollect => 'Collect';
+
+  @override
+  String giftCoinsCaption(int coins) {
+    return '+$coins coins!';
+  }
+
+  @override
+  String get shareAction => 'Share';
+
+  @override
+  String get shareClose => 'Close';
+
+  @override
+  String shareMeet(String name) {
+    return 'Meet $name';
+  }
+
+  @override
+  String shareGrown(String name) {
+    return '$name has grown!';
+  }
+
+  @override
+  String shareBirthday(String date) {
+    return 'Birthday $date';
+  }
+
+  @override
+  String shareText(String name) {
+    return 'My teddy $name in TeddyTales';
+  }
+
+  @override
+  String get shareFailed => 'Could not share. Please try again.';
+
+  @override
+  String inviteLead(int coins) {
+    return 'A friend installs TeddyTales and enters your code — you both get $coins coins.';
+  }
+
+  @override
+  String get inviteYourCode => 'Your code';
+
+  @override
+  String get inviteCopied => 'Code copied';
+
+  @override
+  String inviteShareText(String code, int coins, String link) {
+    return 'Adopt a teddy in TeddyTales! Enter my code $code in your profile and we both get $coins coins. $link';
+  }
+
+  @override
+  String get inviteHaveCode => 'Have a friend’s code?';
+
+  @override
+  String get inviteRedeem => 'Apply';
+
+  @override
+  String inviteDone(int coins) {
+    return '+$coins coins for you and your friend!';
+  }
+
+  @override
+  String get inviteNotFound => 'No such code. Check the letters.';
+
+  @override
+  String get inviteOwn => 'That’s your own code.';
+
+  @override
+  String get inviteUsed => 'A friend’s code was already applied.';
+
+  @override
+  String get inviteLate => 'A friend’s code works only in the first week.';
+
+  @override
+  String get inviteFull => 'Your friend has no invites left.';
+
+  @override
+  String get inviteOffline => 'No connection. Try again later.';
+
+  @override
+  String get dailyStreakBroken =>
+      'You missed yesterday — your streak was broken.';
+
+  @override
+  String dailyStreakRestore(int price) {
+    return 'Restore for $price';
+  }
+
+  @override
+  String get dailyStreakRestored => 'Streak restored!';
+
+  @override
+  String get dailyStreakNoCoins => 'Not enough coins';
+
+  @override
+  String get sleepCountdownLabel => 'Falling asleep';
+
+  @override
+  String get inviteStatsFriends => 'friends joined';
+
+  @override
+  String get inviteStatsEarned => 'coins earned';
+
+  @override
+  String inviteNextBonus(int left, int bonus) {
+    return '$left more for a +$bonus bonus';
+  }
+
+  @override
+  String get inviteLadderDone => 'All friend bonuses earned!';
+
+  @override
+  String get friendCodeTitle => 'Did a friend invite you?';
+
+  @override
+  String friendCodeFound(String code, int coins) {
+    return 'We found your friend’s code $code. You both get $coins coins.';
+  }
+
+  @override
+  String friendCodeAsk(int coins) {
+    return 'Enter your friend’s code — you both get $coins coins.';
+  }
+
+  @override
+  String friendCodeClaim(int coins) {
+    return 'Get +$coins';
+  }
+
+  @override
+  String get friendCodeSkip => 'Skip';
+
+  @override
+  String get rewardFromFriend => 'A gift from your friend — and for them too!';
+
+  @override
+  String get rewardInviter => 'A friend joined with your code!';
+
+  @override
+  String get sleepAwayTitle => 'Teddy is asleep';
+
+  @override
+  String get sleepAwayLead => 'Snoozing sweetly in the bedroom.';
+
+  @override
+  String get sleepAwayWakeBreakfast => 'Wake up for breakfast';
+
+  @override
+  String get sleepAwayWakeLunch => 'Wake up for lunch';
+
+  @override
+  String get sleepAwayWakeDinner => 'Wake up for dinner';
+
+  @override
+  String get sleepAwayWakeSnack => 'Wake up for a snack';
+
+  @override
+  String get sleepAwayWakePlay => 'Wake up to play';
+
+  @override
+  String get sleepAwayWakeBath => 'Wake up for a bath';
+
+  @override
+  String get sleepAwayLetSleep => 'Let it sleep';
+
+  @override
+  String get sleepAwayNight => 'It’s night — better let teddy sleep.';
+
+  @override
+  String sleepAwayTired(int pct) {
+    return 'Not rested yet — Sleep $pct%';
+  }
+
+  @override
+  String get birthIntroTitle => 'Your little one is born!';
+
+  @override
+  String get birthIntroVideo => 'Birth video';
+
+  @override
+  String get birthIntroVideoSoon => 'coming soon';
+
+  @override
+  String get birthIntroSex => 'Sex';
+
+  @override
+  String get birthIntroTrait => 'First trait';
+
+  @override
+  String get birthIntroName => 'Give a name';
+
+  @override
+  String get notifyDenied =>
+      'Your phone blocked notifications. Turn them on in phone Settings → TeddyTales.';
+
+  @override
+  String get notifyAskTitle => 'Remind you about your cub?';
+
+  @override
+  String notifyAskLead(String name) {
+    return '$name will let you know when hungry, playful or sleepy. Only when needed and never during quiet hours.';
+  }
+
+  @override
+  String get notifyAskYes => 'Yes, remind me';
+
+  @override
+  String get notifyAskLater => 'Not now';
+
+  @override
+  String get notifyAskLaterHint =>
+      'You can turn them on in Settings → Notifications.';
+
+  @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountHint =>
+      'Your bear, coins and progress will be gone for good';
+
+  @override
+  String get deleteAccountTitle => 'Delete account?';
+
+  @override
+  String deleteAccountLead(String name) {
+    return '$name, coins, items and all progress will be deleted from the server for good. They cannot be restored.';
+  }
+
+  @override
+  String get deleteAccountConfirm => 'Delete forever';
+
+  @override
+  String get deleteAccountCancel => 'Keep';
+
+  @override
+  String get deleteAccountFailed =>
+      'Could not delete the account. Check your connection and try again.';
+
+  @override
+  String get signInAppleFailed =>
+      'Could not sign in with Apple. Check your connection and try again.';
+
+  @override
+  String get linkApple => 'Save your bear with Apple';
+
+  @override
+  String get linkAppleHint => 'Sign in on any iPhone, your bear stays safe';
+
+  @override
+  String get linkAppleDone => 'Done: your bear is saved to your Apple ID.';
+
+  @override
+  String get restorePurchases => 'Restore purchases';
+
+  @override
+  String get restorePurchasesHint =>
+      'Bring back what you bought in the App Store or Google Play';
+
+  @override
+  String get restorePurchasesStarted => 'Checking your purchases…';
+
+  @override
+  String get kitchenBottle => 'Bottle';
+
+  @override
+  String get kitchenBottleSoon =>
+      'Milk bottle is coming soon — waiting for the baby animation';
+
+  @override
+  String get bathActionDiaper => 'Diaper';
+
+  @override
+  String get bathDiaperSoon =>
+      'Diaper change is coming soon — waiting for the baby animation';
+}

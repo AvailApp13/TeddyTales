@@ -1,0 +1,4032 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_ru.dart';
+import 'app_localizations_zh.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'gen/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('ru'),
+    Locale('zh'),
+  ];
+
+  /// No description provided for @ageDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}'**
+  String ageDays(int count);
+
+  /// No description provided for @ageMonths.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} месяц} few{{count} месяца} other{{count} месяцев}}'**
+  String ageMonths(int count);
+
+  /// No description provided for @ageMonthsDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'{months, plural, one{{months} месяц} few{{months} месяца} other{{months} месяцев}} {days, plural, one{{days} день} few{{days} дня} other{{days} дней}}'**
+  String ageMonthsDays(int months, int days);
+
+  /// No description provided for @ageYears.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} год} few{{count} года} other{{count} лет}}'**
+  String ageYears(int count);
+
+  /// No description provided for @appTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'TeddyTales'**
+  String get appTitle;
+
+  /// No description provided for @bathActionToilet.
+  ///
+  /// In ru, this message translates to:
+  /// **'В туалет'**
+  String get bathActionToilet;
+
+  /// No description provided for @bathActionWash.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искупаться'**
+  String get bathActionWash;
+
+  /// No description provided for @bedroomActionSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уложить спать'**
+  String get bedroomActionSleep;
+
+  /// No description provided for @bedroomWakeTogether.
+  ///
+  /// In ru, this message translates to:
+  /// **'Давай проснёмся вместе'**
+  String get bedroomWakeTogether;
+
+  /// No description provided for @bedroomAlarmQuestion.
+  ///
+  /// In ru, this message translates to:
+  /// **'В какое время поставить будильник?'**
+  String get bedroomAlarmQuestion;
+
+  /// No description provided for @bedroomAlarmSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time}'**
+  String bedroomAlarmSet(String time);
+
+  /// No description provided for @bedroomAlarmHelp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда просыпаемся?'**
+  String get bedroomAlarmHelp;
+
+  /// No description provided for @bedroomActionWake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить'**
+  String get bedroomActionWake;
+
+  /// No description provided for @bedroomAlarmDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get bedroomAlarmDone;
+
+  /// No description provided for @bathWashSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чиним душ — скоро сможем купать малыша'**
+  String get bathWashSoon;
+
+  /// No description provided for @bathToiletSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Горшок ещё в работе — скоро научим'**
+  String get bathToiletSoon;
+
+  /// No description provided for @bearRigMissingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Положите {path}'**
+  String bearRigMissingHint(String path);
+
+  /// No description provided for @bearRigMissingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Риг ещё не подключён'**
+  String get bearRigMissingTitle;
+
+  /// No description provided for @birthCueAwakening.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малыш открывает глаза и осматривается.'**
+  String get birthCueAwakening;
+
+  /// No description provided for @birthCueCradle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёплая кроватка. Кто-то тихо дышит под одеялом…'**
+  String get birthCueCradle;
+
+  /// No description provided for @birthCueFinale.
+  ///
+  /// In ru, this message translates to:
+  /// **'Он успокоился. Здравствуй, малыш.'**
+  String get birthCueFinale;
+
+  /// No description provided for @birthCueFirstBreath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первый вдох…'**
+  String get birthCueFirstBreath;
+
+  /// No description provided for @birthCueFirstCry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первый плач — он зовёт тебя.'**
+  String get birthCueFirstCry;
+
+  /// No description provided for @birthCueStars.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звёздочки кружатся в мягком свете.'**
+  String get birthCueStars;
+
+  /// No description provided for @birthSceneNotReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сцена рождения ещё не собрана'**
+  String get birthSceneNotReady;
+
+  /// No description provided for @birthSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get birthSkip;
+
+  /// No description provided for @careFeedSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вкусная еда для малыша'**
+  String get careFeedSubtitle;
+
+  /// No description provided for @careFeedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покормить'**
+  String get careFeedTitle;
+
+  /// No description provided for @careFootnote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Погладить мишку можно прямо на главной — просто коснитесь его.'**
+  String get careFootnote;
+
+  /// No description provided for @careLockedUntilStage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откроется на стадии {stage}'**
+  String careLockedUntilStage(int stage);
+
+  /// No description provided for @carePlaySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Весёлые игры вместе'**
+  String get carePlaySubtitle;
+
+  /// No description provided for @carePlayTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Играть'**
+  String get carePlayTitle;
+
+  /// No description provided for @careSleepSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спокойной ночи, малыш'**
+  String get careSleepSubtitle;
+
+  /// No description provided for @careSleepTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уложить спать'**
+  String get careSleepTitle;
+
+  /// No description provided for @careTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что будем делать?'**
+  String get careTitle;
+
+  /// No description provided for @careWashSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пора в ванну!'**
+  String get careWashSubtitle;
+
+  /// No description provided for @careWashTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купать'**
+  String get careWashTitle;
+
+  /// No description provided for @catalogCheckoutTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформление'**
+  String get catalogCheckoutTitle;
+
+  /// No description provided for @catalogCountryChina.
+  ///
+  /// In ru, this message translates to:
+  /// **'Китай'**
+  String get catalogCountryChina;
+
+  /// No description provided for @catalogCountryGermany.
+  ///
+  /// In ru, this message translates to:
+  /// **'Германия'**
+  String get catalogCountryGermany;
+
+  /// No description provided for @catalogCountryKazakhstan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Казахстан'**
+  String get catalogCountryKazakhstan;
+
+  /// No description provided for @catalogCountryRussia.
+  ///
+  /// In ru, this message translates to:
+  /// **'Россия'**
+  String get catalogCountryRussia;
+
+  /// No description provided for @catalogCountryUsa.
+  ///
+  /// In ru, this message translates to:
+  /// **'США'**
+  String get catalogCountryUsa;
+
+  /// No description provided for @catalogDeliveryNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.'**
+  String get catalogDeliveryNote;
+
+  /// No description provided for @catalogFieldAddress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Адрес'**
+  String get catalogFieldAddress;
+
+  /// No description provided for @catalogFieldAddressHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Улица, дом, квартира'**
+  String get catalogFieldAddressHint;
+
+  /// No description provided for @catalogFieldCountry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Страна'**
+  String get catalogFieldCountry;
+
+  /// No description provided for @catalogFieldName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя и фамилия'**
+  String get catalogFieldName;
+
+  /// No description provided for @catalogFieldNameHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как в документах'**
+  String get catalogFieldNameHint;
+
+  /// No description provided for @catalogFieldPhone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон'**
+  String get catalogFieldPhone;
+
+  /// No description provided for @catalogFieldPostcode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Индекс'**
+  String get catalogFieldPostcode;
+
+  /// No description provided for @catalogFootnote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.'**
+  String catalogFootnote(String shoes, String price);
+
+  /// No description provided for @catalogGrownSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'и готов отправиться к тебе домой'**
+  String get catalogGrownSubtitle;
+
+  /// No description provided for @catalogGrownTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Твой малыш вырос'**
+  String get catalogGrownTitle;
+
+  /// No description provided for @catalogItemFortune.
+  ///
+  /// In ru, this message translates to:
+  /// **'Карманный мишка Фортуна'**
+  String get catalogItemFortune;
+
+  /// No description provided for @catalogItemHug.
+  ///
+  /// In ru, this message translates to:
+  /// **'Персиковый Обнимишка'**
+  String get catalogItemHug;
+
+  /// No description provided for @catalogItemShortFur.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка с короткой шерсткой'**
+  String get catalogItemShortFur;
+
+  /// No description provided for @catalogItemSpaceSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Набор Космонавт и Невеста'**
+  String get catalogItemSpaceSet;
+
+  /// No description provided for @catalogOrderButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформить заказ'**
+  String get catalogOrderButton;
+
+  /// No description provided for @catalogPayPalNote.
+  ///
+  /// In ru, this message translates to:
+  /// **' — и картой без аккаунта'**
+  String get catalogPayPalNote;
+
+  /// No description provided for @catalogPaySection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оплата · КП 12.4'**
+  String get catalogPaySection;
+
+  /// No description provided for @catalogPayStub.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оплата подключается на этапе интеграции'**
+  String get catalogPayStub;
+
+  /// No description provided for @catalogSizeCm.
+  ///
+  /// In ru, this message translates to:
+  /// **'{size} см'**
+  String catalogSizeCm(int size);
+
+  /// No description provided for @catalogSummaryItem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товар'**
+  String get catalogSummaryItem;
+
+  /// No description provided for @catalogSummaryPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена'**
+  String get catalogSummaryPrice;
+
+  /// No description provided for @catalogSummarySize.
+  ///
+  /// In ru, this message translates to:
+  /// **'Размер'**
+  String get catalogSummarySize;
+
+  /// No description provided for @catalogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заказать мишку'**
+  String get catalogTitle;
+
+  /// No description provided for @categoryAccessory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аксессуары'**
+  String get categoryAccessory;
+
+  /// No description provided for @categoryBottom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низ'**
+  String get categoryBottom;
+
+  /// No description provided for @categoryDecor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Декор'**
+  String get categoryDecor;
+
+  /// No description provided for @categoryFloor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get categoryFloor;
+
+  /// No description provided for @categoryFurniture.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мебель'**
+  String get categoryFurniture;
+
+  /// No description provided for @categoryHeadwear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Головные уборы'**
+  String get categoryHeadwear;
+
+  /// No description provided for @categoryOutfit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наряды'**
+  String get categoryOutfit;
+
+  /// No description provided for @categoryShoes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обувь'**
+  String get categoryShoes;
+
+  /// No description provided for @categoryTop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верх'**
+  String get categoryTop;
+
+  /// No description provided for @categoryToy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игрушки'**
+  String get categoryToy;
+
+  /// No description provided for @categoryWallpaper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои'**
+  String get categoryWallpaper;
+
+  /// No description provided for @commonBack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Назад'**
+  String get commonBack;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get commonCancel;
+
+  /// No description provided for @commonCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} монет'**
+  String commonCoins(int count);
+
+  /// No description provided for @diaryEventFavoriteToy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любимая игрушка'**
+  String get diaryEventFavoriteToy;
+
+  /// No description provided for @diaryEventFirstBath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первое купание'**
+  String get diaryEventFirstBath;
+
+  /// No description provided for @diaryEventFirstCrawl.
+  ///
+  /// In ru, this message translates to:
+  /// **'Научился ползать'**
+  String get diaryEventFirstCrawl;
+
+  /// No description provided for @diaryEventFirstTooth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первый зубик'**
+  String get diaryEventFirstTooth;
+
+  /// No description provided for @diaryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дневник'**
+  String get diaryTitle;
+
+  /// No description provided for @dishCookie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Печенье'**
+  String get dishCookie;
+
+  /// No description provided for @dishFruit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фрукты'**
+  String get dishFruit;
+
+  /// No description provided for @dishOmelette.
+  ///
+  /// In ru, this message translates to:
+  /// **'Омлет'**
+  String get dishOmelette;
+
+  /// No description provided for @dishPasta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Паста'**
+  String get dishPasta;
+
+  /// No description provided for @dishPie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пирог'**
+  String get dishPie;
+
+  /// No description provided for @dishPorridge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каша'**
+  String get dishPorridge;
+
+  /// No description provided for @dishSalad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Салат'**
+  String get dishSalad;
+
+  /// No description provided for @dishSandwich.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сэндвич'**
+  String get dishSandwich;
+
+  /// No description provided for @dishSoup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Суп'**
+  String get dishSoup;
+
+  /// No description provided for @dishYogurt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Йогурт'**
+  String get dishYogurt;
+
+  /// Подпись крестика под табло блюд (для озвучки).
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать блюда со стола'**
+  String get dishesClose;
+
+  /// Все готовые блюда съедены — вернутся при следующем голоде (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё съедено! Блюда вернутся, когда мишка проголодается.'**
+  String get dishesAllEaten;
+
+  /// Сколько шагов в рецепте — на табло под тарелкой рецепта.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
+  String cookSteps(int count);
+
+  /// Подпись крестика под табло рецептов и готовки (для озвучки).
+  ///
+  /// In ru, this message translates to:
+  /// **'Не готовить'**
+  String get cookClose;
+
+  /// Озвучка продукта под столом во время готовки.
+  ///
+  /// In ru, this message translates to:
+  /// **'Положить: {ingredient}'**
+  String cookIngredient(String ingredient);
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с ягодами и мёдом'**
+  String get dishDescPorridge;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с морковкой и горошком'**
+  String get dishDescSoup;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с сыром и ветчиной'**
+  String get dishDescSandwich;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'клубника, банан, виноград'**
+  String get dishDescFruit;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с гранолой и ягодами'**
+  String get dishDescYogurt;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'шоколадное и мишки'**
+  String get dishDescCookie;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'огурец, помидоры, кукуруза'**
+  String get dishDescSalad;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с томатным соусом'**
+  String get dishDescPasta;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с зелёным луком'**
+  String get dishDescOmelette;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с малиной и черникой'**
+  String get dishDescPie;
+
+  /// No description provided for @feedCookHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавляй продукты по порядку. Ошибёшься — просто попробуем ещё раз.'**
+  String get feedCookHint;
+
+  /// No description provided for @feedCookResult.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово! {recipe} · +{reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}}, еда +{gain}'**
+  String feedCookResult(String recipe, int reward, int gain);
+
+  /// No description provided for @feedEatResult.
+  ///
+  /// In ru, this message translates to:
+  /// **'{dish} · еда +{gain}, −{price, plural, one{{price} монета} few{{price} монеты} other{{price} монет}}'**
+  String feedEatResult(String dish, int gain, int price);
+
+  /// No description provided for @feedFavourite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любимое'**
+  String get feedFavourite;
+
+  /// No description provided for @feedFoodGain.
+  ///
+  /// In ru, this message translates to:
+  /// **'еда +{gain}'**
+  String feedFoodGain(int gain);
+
+  /// No description provided for @feedHintActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я сегодня носился как заводной — давай посытнее!'**
+  String get feedHintActive;
+
+  /// No description provided for @feedHintAffectionate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хочу что-нибудь сладкое… и чтобы ты рядом.'**
+  String get feedHintAffectionate;
+
+  /// No description provided for @feedHintCalm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мне бы чего-то тёплого и простого.'**
+  String get feedHintCalm;
+
+  /// No description provided for @feedHintCurious.
+  ///
+  /// In ru, this message translates to:
+  /// **'А приготовим что-нибудь новенькое?'**
+  String get feedHintCurious;
+
+  /// No description provided for @feedHintIndependent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я бы и сам справился. Ну, почти.'**
+  String get feedHintIndependent;
+
+  /// No description provided for @feedHintReserved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно просто фрукты?'**
+  String get feedHintReserved;
+
+  /// No description provided for @feedNotEnoughCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get feedNotEnoughCoins;
+
+  /// No description provided for @feedRecipeSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}'**
+  String feedRecipeSteps(int count);
+
+  /// No description provided for @feedStepProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шаг {step} из {total}. Награда: {reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}} и еда +{gain}.'**
+  String feedStepProgress(int step, int total, int reward, int gain);
+
+  /// No description provided for @feedTabCook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приготовить'**
+  String get feedTabCook;
+
+  /// No description provided for @feedTabReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готовые блюда'**
+  String get feedTabReady;
+
+  /// No description provided for @feedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чем покормим?'**
+  String get feedTitle;
+
+  /// No description provided for @feedWrongStep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не то. Сейчас нужно: {ingredient}. Попробуй ещё раз — штрафа нет.'**
+  String feedWrongStep(String ingredient);
+
+  /// No description provided for @game2048Hint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свайпайте: равные плитки сливаются. Цель — {target}. Счёт: {score}'**
+  String game2048Hint(int target, int score);
+
+  /// No description provided for @game2048StuckHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ходов не осталось — начните заново кнопкой ниже.'**
+  String get game2048StuckHint;
+
+  /// No description provided for @game2048Title.
+  ///
+  /// In ru, this message translates to:
+  /// **'2048 · уровень {level}'**
+  String game2048Title(int level);
+
+  /// No description provided for @game2048WonHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть {target}! Забирайте награду 🎉'**
+  String game2048WonHint(int target);
+
+  /// No description provided for @gamePairsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откройте две одинаковые карточки. Ходы: {moves}'**
+  String gamePairsHint(int moves);
+
+  /// No description provided for @gamePairsSolvedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'{moves, plural, one{Все пары найдены за {moves} ход 🎉} few{Все пары найдены за {moves} хода 🎉} other{Все пары найдены за {moves} ходов 🎉}}'**
+  String gamePairsSolvedHint(int moves);
+
+  /// No description provided for @gamePairsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Память · уровень {level}'**
+  String gamePairsTitle(int level);
+
+  /// No description provided for @gamePuzzleHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Двигайте плитки тапом — соберите фото.'**
+  String get gamePuzzleHint;
+
+  /// No description provided for @gamePuzzleSolvedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собрано! Забирайте награду 🎉'**
+  String get gamePuzzleSolvedHint;
+
+  /// No description provided for @gamePuzzleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пазл · уровень {level}'**
+  String gamePuzzleTitle(int level);
+
+  /// No description provided for @gameRestart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заново'**
+  String get gameRestart;
+
+  /// No description provided for @growthAlreadyAdult.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка уже взрослый'**
+  String get growthAlreadyAdult;
+
+  /// No description provided for @growthDurationAdult.
+  ///
+  /// In ru, this message translates to:
+  /// **'дальше без ограничений'**
+  String get growthDurationAdult;
+
+  /// No description provided for @growthDurationCrawling.
+  ///
+  /// In ru, this message translates to:
+  /// **'~2 дня'**
+  String get growthDurationCrawling;
+
+  /// No description provided for @growthDurationFirstSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'1–2 дня'**
+  String get growthDurationFirstSteps;
+
+  /// No description provided for @growthDurationGrowing.
+  ///
+  /// In ru, this message translates to:
+  /// **'до ~14 дня'**
+  String get growthDurationGrowing;
+
+  /// No description provided for @growthDurationNewborn.
+  ///
+  /// In ru, this message translates to:
+  /// **'1 день'**
+  String get growthDurationNewborn;
+
+  /// No description provided for @growthGrowUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повзрослеть'**
+  String get growthGrowUp;
+
+  /// No description provided for @growthMarkNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'сейчас'**
+  String get growthMarkNow;
+
+  /// No description provided for @growthMarkPassed.
+  ///
+  /// In ru, this message translates to:
+  /// **'пройдено'**
+  String get growthMarkPassed;
+
+  /// No description provided for @growthNewStage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая стадия: {stage}'**
+  String growthNewStage(String stage);
+
+  /// No description provided for @growthSizeNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас рост {cm} см, вес {g} г. При рождении — {cm0} см и {g0} г.'**
+  String growthSizeNow(String cm, String g, String cm0, String g0);
+
+  /// No description provided for @growthTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рост и развитие'**
+  String get growthTitle;
+
+  /// No description provided for @homeCareButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что будем делать?'**
+  String get homeCareButton;
+
+  /// No description provided for @homeDevPanelTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дев-панель рига'**
+  String get homeDevPanelTooltip;
+
+  /// No description provided for @homeScreenNotReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экран для «{name}» ещё не собран'**
+  String homeScreenNotReady(String name);
+
+  /// No description provided for @ingredientApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Яблоко'**
+  String get ingredientApple;
+
+  /// No description provided for @ingredientBanana.
+  ///
+  /// In ru, this message translates to:
+  /// **'Банан'**
+  String get ingredientBanana;
+
+  /// No description provided for @ingredientBread.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хлеб'**
+  String get ingredientBread;
+
+  /// No description provided for @ingredientButter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Масло'**
+  String get ingredientButter;
+
+  /// No description provided for @ingredientCabbage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Капуста'**
+  String get ingredientCabbage;
+
+  /// No description provided for @ingredientCandy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Конфета'**
+  String get ingredientCandy;
+
+  /// No description provided for @ingredientCarrot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Морковь'**
+  String get ingredientCarrot;
+
+  /// No description provided for @ingredientCheese.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сыр'**
+  String get ingredientCheese;
+
+  /// No description provided for @ingredientChocolate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шоколад'**
+  String get ingredientChocolate;
+
+  /// No description provided for @ingredientFish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рыба'**
+  String get ingredientFish;
+
+  /// No description provided for @ingredientFlour.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мука'**
+  String get ingredientFlour;
+
+  /// No description provided for @ingredientGreens.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зелень'**
+  String get ingredientGreens;
+
+  /// No description provided for @ingredientHoney.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мёд'**
+  String get ingredientHoney;
+
+  /// No description provided for @ingredientMeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мясо'**
+  String get ingredientMeat;
+
+  /// No description provided for @ingredientOnion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лук'**
+  String get ingredientOnion;
+
+  /// No description provided for @ingredientOrange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Апельсин'**
+  String get ingredientOrange;
+
+  /// No description provided for @ingredientPepper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перец'**
+  String get ingredientPepper;
+
+  /// No description provided for @ingredientPotato.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картофель'**
+  String get ingredientPotato;
+
+  /// No description provided for @ingredientSalt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Соль'**
+  String get ingredientSalt;
+
+  /// No description provided for @ingredientSpices.
+  ///
+  /// In ru, this message translates to:
+  /// **'Специи'**
+  String get ingredientSpices;
+
+  /// No description provided for @ingredientSugar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сахар'**
+  String get ingredientSugar;
+
+  /// No description provided for @ingredientTomato.
+  ///
+  /// In ru, this message translates to:
+  /// **'Помидор'**
+  String get ingredientTomato;
+
+  /// No description provided for @ingredientYogurt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Йогурт'**
+  String get ingredientYogurt;
+
+  /// No description provided for @itemAccBow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бантик'**
+  String get itemAccBow;
+
+  /// No description provided for @itemArmchair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло'**
+  String get itemArmchair;
+
+  /// No description provided for @itemBall.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мячик'**
+  String get itemBall;
+
+  /// No description provided for @itemBasket.
+  ///
+  /// In ru, this message translates to:
+  /// **'Корзина'**
+  String get itemBasket;
+
+  /// No description provided for @itemShelfHouse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полка-домик'**
+  String get itemShelfHouse;
+
+  /// No description provided for @itemShelfMoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полка-месяц'**
+  String get itemShelfMoon;
+
+  /// No description provided for @itemArmchairSage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло мятное'**
+  String get itemArmchairSage;
+
+  /// No description provided for @itemArmchairBean.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло-пуф'**
+  String get itemArmchairBean;
+
+  /// No description provided for @itemArmchairFlower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло-цветок'**
+  String get itemArmchairFlower;
+
+  /// No description provided for @itemArmchairWing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресло с ушками'**
+  String get itemArmchairWing;
+
+  /// No description provided for @itemSwing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подвесное кресло'**
+  String get itemSwing;
+
+  /// No description provided for @itemBasketStar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Корзина со звездой'**
+  String get itemBasketStar;
+
+  /// No description provided for @itemRugCloud.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковёр-облако'**
+  String get itemRugCloud;
+
+  /// No description provided for @itemRugHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковёр с сердцем'**
+  String get itemRugHeart;
+
+  /// No description provided for @itemPicHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картина с сердцем'**
+  String get itemPicHeart;
+
+  /// No description provided for @itemPlantIvy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плющ на подставке'**
+  String get itemPlantIvy;
+
+  /// No description provided for @itemPlantBear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цветок в кашпо-мишке'**
+  String get itemPlantBear;
+
+  /// No description provided for @itemFlowersDaisy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ромашки в банке'**
+  String get itemFlowersDaisy;
+
+  /// No description provided for @itemFlowersOrchid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Орхидея'**
+  String get itemFlowersOrchid;
+
+  /// No description provided for @itemFlowersEuc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эвкалипт в вазе'**
+  String get itemFlowersEuc;
+
+  /// No description provided for @itemTeddyCream.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка кремовый'**
+  String get itemTeddyCream;
+
+  /// No description provided for @itemBunny.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зайчик'**
+  String get itemBunny;
+
+  /// No description provided for @itemBunnyPink.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зайчик розовый'**
+  String get itemBunnyPink;
+
+  /// No description provided for @itemPyramid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пирамидка'**
+  String get itemPyramid;
+
+  /// No description provided for @itemDollhouse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кукольный домик'**
+  String get itemDollhouse;
+
+  /// No description provided for @itemHouseFelt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Домик из фетра'**
+  String get itemHouseFelt;
+
+  /// No description provided for @itemBed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кроватка'**
+  String get itemBed;
+
+  /// No description provided for @itemBotBlue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Штаны синие'**
+  String get itemBotBlue;
+
+  /// No description provided for @itemBotSkirt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Юбка розовая'**
+  String get itemBotSkirt;
+
+  /// No description provided for @itemBotYellow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шорты жёлтые'**
+  String get itemBotYellow;
+
+  /// No description provided for @itemCactus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кактус'**
+  String get itemCactus;
+
+  /// No description provided for @itemCar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Машинка'**
+  String get itemCar;
+
+  /// No description provided for @itemChair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стул'**
+  String get itemChair;
+
+  /// No description provided for @itemClock.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часы'**
+  String get itemClock;
+
+  /// No description provided for @itemCubes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кубики'**
+  String get itemCubes;
+
+  /// No description provided for @itemDresser.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комод'**
+  String get itemDresser;
+
+  /// No description provided for @itemDrum.
+  ///
+  /// In ru, this message translates to:
+  /// **'Барабан'**
+  String get itemDrum;
+
+  /// No description provided for @itemDuck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточка'**
+  String get itemDuck;
+
+  /// No description provided for @itemFloorCarpet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол ковролин'**
+  String get itemFloorCarpet;
+
+  /// No description provided for @itemFloorLight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол светлый'**
+  String get itemFloorLight;
+
+  /// No description provided for @itemFloorWood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол дерево'**
+  String get itemFloorWood;
+
+  /// No description provided for @itemGarland.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гирлянда'**
+  String get itemGarland;
+
+  /// No description provided for @itemHatCap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шапка'**
+  String get itemHatCap;
+
+  /// No description provided for @itemKite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Воздушный змей'**
+  String get itemKite;
+
+  /// No description provided for @itemLamp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Светильник'**
+  String get itemLamp;
+
+  /// No description provided for @itemOutBear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Костюм мишки'**
+  String get itemOutBear;
+
+  /// No description provided for @itemOutBee.
+  ///
+  /// In ru, this message translates to:
+  /// **'Костюм пчёлка'**
+  String get itemOutBee;
+
+  /// No description provided for @itemOutBerry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Костюм клубника'**
+  String get itemOutBerry;
+
+  /// No description provided for @itemOutGlasses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплект очкарик'**
+  String get itemOutGlasses;
+
+  /// No description provided for @itemOutSailor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплект матрос'**
+  String get itemOutSailor;
+
+  /// No description provided for @itemOutSport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплект спорт'**
+  String get itemOutSport;
+
+  /// No description provided for @itemOutWinter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплект зимний'**
+  String get itemOutWinter;
+
+  /// No description provided for @itemOutYellow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплект жёлтый'**
+  String get itemOutYellow;
+
+  /// No description provided for @itemPicBear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картина мишка'**
+  String get itemPicBear;
+
+  /// No description provided for @itemPicForest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картина лес'**
+  String get itemPicForest;
+
+  /// No description provided for @itemPicMoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картина луна'**
+  String get itemPicMoon;
+
+  /// No description provided for @itemPillowHeart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подушка сердце'**
+  String get itemPillowHeart;
+
+  /// No description provided for @itemPillowStar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подушка звезда'**
+  String get itemPillowStar;
+
+  /// No description provided for @itemPlant.
+  ///
+  /// In ru, this message translates to:
+  /// **'Растение'**
+  String get itemPlant;
+
+  /// No description provided for @itemPoster.
+  ///
+  /// In ru, this message translates to:
+  /// **'Постер'**
+  String get itemPoster;
+
+  /// No description provided for @itemPuzzle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пазл'**
+  String get itemPuzzle;
+
+  /// No description provided for @itemRocket.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ракета'**
+  String get itemRocket;
+
+  /// No description provided for @itemRug.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковёр'**
+  String get itemRug;
+
+  /// No description provided for @itemShelf.
+  ///
+  /// In ru, this message translates to:
+  /// **'Книжная полка'**
+  String get itemShelf;
+
+  /// No description provided for @itemTable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стол'**
+  String get itemTable;
+
+  /// No description provided for @itemTeddy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка'**
+  String get itemTeddy;
+
+  /// No description provided for @itemTopBlue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Толстовка голубая'**
+  String get itemTopBlue;
+
+  /// No description provided for @itemTopRose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свитер розовый'**
+  String get itemTopRose;
+
+  /// No description provided for @itemTopSage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кофта зелёная'**
+  String get itemTopSage;
+
+  /// No description provided for @itemTrain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Паровозик'**
+  String get itemTrain;
+
+  /// No description provided for @itemWallRose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои розовые'**
+  String get itemWallRose;
+
+  /// No description provided for @itemWallSage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои зелёные'**
+  String get itemWallSage;
+
+  /// No description provided for @itemWallSky.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои небо'**
+  String get itemWallSky;
+
+  /// No description provided for @itemWardrobe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шкаф'**
+  String get itemWardrobe;
+
+  /// No description provided for @learnAdultLevelsNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уровень пройден — монеты в кошелёк, следующий открывается. Сложность растёт с номером уровня.'**
+  String get learnAdultLevelsNote;
+
+  /// No description provided for @learnAdultLogicSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'2048 в фирменных цветах'**
+  String get learnAdultLogicSubtitle;
+
+  /// No description provided for @learnAdultLogicTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Головоломки'**
+  String get learnAdultLogicTitle;
+
+  /// No description provided for @learnAdultMemorySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найдите пары'**
+  String get learnAdultMemorySubtitle;
+
+  /// No description provided for @learnAdultMemoryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Память'**
+  String get learnAdultMemoryTitle;
+
+  /// No description provided for @learnAdultPuzzleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Соберите фото мишки'**
+  String get learnAdultPuzzleSubtitle;
+
+  /// No description provided for @learnAdultPuzzleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пазлы'**
+  String get learnAdultPuzzleTitle;
+
+  /// No description provided for @learnAgeAdultSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пазлы с мишками, 2048, память'**
+  String get learnAgeAdultSubtitle;
+
+  /// No description provided for @learnAgeAdultTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Взрослый'**
+  String get learnAgeAdultTitle;
+
+  /// No description provided for @learnAgeChildSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвета и формы, счёт, окружающий мир'**
+  String get learnAgeChildSubtitle;
+
+  /// No description provided for @learnAgeChildTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ребёнок до {age}'**
+  String learnAgeChildTitle(int age);
+
+  /// No description provided for @learnAgeGateSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'От возраста зависит набор игр. Поменять можно в любой момент.'**
+  String get learnAgeGateSubtitle;
+
+  /// No description provided for @learnAgeGateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кто будет играть?'**
+  String get learnAgeGateTitle;
+
+  /// No description provided for @learnCatColorsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвета и формы'**
+  String get learnCatColorsTitle;
+
+  /// No description provided for @learnCatCountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Счёт и простая логика'**
+  String get learnCatCountTitle;
+
+  /// No description provided for @learnCatLocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откроется на стадии «{stage}»'**
+  String learnCatLocked(String stage);
+
+  /// No description provided for @learnCatWorldTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Окружающий мир'**
+  String get learnCatWorldTitle;
+
+  /// No description provided for @learnCorrectToast.
+  ///
+  /// In ru, this message translates to:
+  /// **'{coins, plural, one{Верно! +{coins} монета} few{Верно! +{coins} монеты} other{Верно! +{coins} монет}}'**
+  String learnCorrectToast(int coins);
+
+  /// No description provided for @learnGamesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игры'**
+  String get learnGamesTitle;
+
+  /// No description provided for @learnLevelDoneToast.
+  ///
+  /// In ru, this message translates to:
+  /// **'{coins, plural, one{Уровень пройден! +{coins} монета} few{Уровень пройден! +{coins} монеты} other{Уровень пройден! +{coins} монет}}'**
+  String learnLevelDoneToast(int coins);
+
+  /// No description provided for @learnLevelsCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} уровень} few{{count} уровня} other{{count} уровней}}'**
+  String learnLevelsCount(int count);
+
+  /// No description provided for @learnQuizHintNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верный ответ — анимация радости и награда.'**
+  String get learnQuizHintNote;
+
+  /// No description provided for @learnQuizTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{category} · уровень {level}'**
+  String learnQuizTitle(String category, int level);
+
+  /// No description provided for @learnQuizWrongNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не угадали. Попробуйте ещё раз — штрафа нет.'**
+  String get learnQuizWrongNote;
+
+  /// No description provided for @learnTaskColorsCircle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где круг?'**
+  String get learnTaskColorsCircle;
+
+  /// No description provided for @learnTaskColorsGreen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где зелёный?'**
+  String get learnTaskColorsGreen;
+
+  /// No description provided for @learnTaskColorsRed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где красный?'**
+  String get learnTaskColorsRed;
+
+  /// No description provided for @learnTaskCountApples.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сколько яблок? 🍎🍎🍎'**
+  String get learnTaskCountApples;
+
+  /// No description provided for @learnTaskCountBigger.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что больше?'**
+  String get learnTaskCountBigger;
+
+  /// No description provided for @learnTaskCountNext.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что дальше? 1, 2, 3…'**
+  String get learnTaskCountNext;
+
+  /// No description provided for @learnTaskProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание {current} из {total}'**
+  String learnTaskProgress(int current, int total);
+
+  /// No description provided for @learnTaskWorldApples.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где растут яблоки?'**
+  String get learnTaskWorldApples;
+
+  /// No description provided for @learnTaskWorldDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что светит днём?'**
+  String get learnTaskWorldDay;
+
+  /// No description provided for @learnTaskWorldWater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кто живёт в воде?'**
+  String get learnTaskWorldWater;
+
+  /// No description provided for @learnTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обучение'**
+  String get learnTitle;
+
+  /// No description provided for @moodDirty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чумазый'**
+  String get moodDirty;
+
+  /// No description provided for @moodHappy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Радостный'**
+  String get moodHappy;
+
+  /// No description provided for @moodHungry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Голодный'**
+  String get moodHungry;
+
+  /// No description provided for @moodNormal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спокойный'**
+  String get moodNormal;
+
+  /// No description provided for @moodSad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Грустный'**
+  String get moodSad;
+
+  /// No description provided for @moodSleepy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сонный'**
+  String get moodSleepy;
+
+  /// No description provided for @nameChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теперь малыша зовут {name}'**
+  String nameChanged(String name);
+
+  /// No description provided for @nameFirstLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.'**
+  String get nameFirstLead;
+
+  /// No description provided for @nameFirstSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Назвать'**
+  String get nameFirstSave;
+
+  /// No description provided for @nameFirstLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get nameFirstLater;
+
+  /// No description provided for @nameDialogHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя питомца'**
+  String get nameDialogHint;
+
+  /// No description provided for @nameDialogNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'От {min} до {max} знаков. Буквы, пробел и дефис.'**
+  String nameDialogNote(int min, int max);
+
+  /// No description provided for @nameDialogSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get nameDialogSave;
+
+  /// No description provided for @nameDialogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как зовут малыша?'**
+  String get nameDialogTitle;
+
+  /// No description provided for @nameErrorBlocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Такое имя не подойдёт малышу'**
+  String get nameErrorBlocked;
+
+  /// No description provided for @nameErrorCharacters.
+  ///
+  /// In ru, this message translates to:
+  /// **'Только буквы, пробел и дефис'**
+  String get nameErrorCharacters;
+
+  /// No description provided for @nameErrorEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Впишите имя'**
+  String get nameErrorEmpty;
+
+  /// No description provided for @nameErrorLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не длиннее {max} знаков'**
+  String nameErrorLong(int max);
+
+  /// No description provided for @nameErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось сохранить — попробуйте ещё раз'**
+  String get nameErrorNetwork;
+
+  /// No description provided for @nameErrorShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не короче {min} знаков'**
+  String nameErrorShort(int min);
+
+  /// No description provided for @navLockReason.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откроется на стадии «{stage}»'**
+  String navLockReason(String stage);
+
+  /// No description provided for @navSectionCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишки'**
+  String get navSectionCatalog;
+
+  /// No description provided for @navSectionHome.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главная'**
+  String get navSectionHome;
+
+  /// No description provided for @navSectionLearning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обучение'**
+  String get navSectionLearning;
+
+  /// No description provided for @navSectionProfile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль'**
+  String get navSectionProfile;
+
+  /// No description provided for @navSectionRoom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обставить'**
+  String get navSectionRoom;
+
+  /// No description provided for @navSectionShop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Магазин'**
+  String get navSectionShop;
+
+  /// No description provided for @petDefaultName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мой малыш'**
+  String get petDefaultName;
+
+  /// No description provided for @profileAgeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возраст'**
+  String get profileAgeLabel;
+
+  /// No description provided for @profileBirthFur.
+  ///
+  /// In ru, this message translates to:
+  /// **'{hero} · мех {fur}'**
+  String profileBirthFur(String hero, String fur);
+
+  /// No description provided for @profileHeightLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рост'**
+  String get profileHeightLabel;
+
+  /// No description provided for @profileHeightValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{cm} см'**
+  String profileHeightValue(String cm);
+
+  /// No description provided for @profileHeightStub.
+  ///
+  /// In ru, this message translates to:
+  /// **'15 см'**
+  String get profileHeightStub;
+
+  /// No description provided for @profileLinkDiary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дневник'**
+  String get profileLinkDiary;
+
+  /// No description provided for @profileLinkDiarySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'события и фотоальбом'**
+  String get profileLinkDiarySubtitle;
+
+  /// No description provided for @profileLinkGrowth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рост и развитие'**
+  String get profileLinkGrowth;
+
+  /// No description provided for @profileLinkGrowthSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'пять стадий и переходы'**
+  String get profileLinkGrowthSubtitle;
+
+  /// No description provided for @profileLinkSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get profileLinkSettings;
+
+  /// No description provided for @profileLinkSettingsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'язык и уведомления'**
+  String get profileLinkSettingsSubtitle;
+
+  /// No description provided for @profileRename.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить имя'**
+  String get profileRename;
+
+  /// No description provided for @profileSectionBirth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Карточка рождения'**
+  String get profileSectionBirth;
+
+  /// No description provided for @profileSectionHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'История стадий'**
+  String get profileSectionHistory;
+
+  /// No description provided for @profileSectionLinks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разделы'**
+  String get profileSectionLinks;
+
+  /// No description provided for @profileSectionTrait.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характер'**
+  String get profileSectionTrait;
+
+  /// No description provided for @profileSexBoy.
+  ///
+  /// In ru, this message translates to:
+  /// **'мальчик'**
+  String get profileSexBoy;
+
+  /// No description provided for @profileSexGirl.
+  ///
+  /// In ru, this message translates to:
+  /// **'девочка'**
+  String get profileSexGirl;
+
+  /// No description provided for @profileSexLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get profileSexLabel;
+
+  /// No description provided for @profileStageNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'сейчас'**
+  String get profileStageNow;
+
+  /// No description provided for @profileStagePassed.
+  ///
+  /// In ru, this message translates to:
+  /// **'пройдено'**
+  String get profileStagePassed;
+
+  /// No description provided for @profileStubBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'заглушка'**
+  String get profileStubBadge;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль'**
+  String get profileTitle;
+
+  /// No description provided for @profileTraitHowLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как считается'**
+  String get profileTraitHowLabel;
+
+  /// No description provided for @profileTraitHowValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'из действий за 3 дня'**
+  String get profileTraitHowValue;
+
+  /// No description provided for @profileTraitNowLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас'**
+  String get profileTraitNowLabel;
+
+  /// No description provided for @profileWeightLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес'**
+  String get profileWeightLabel;
+
+  /// No description provided for @profileWeightValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{g} г'**
+  String profileWeightValue(String g);
+
+  /// No description provided for @profileWeightStub.
+  ///
+  /// In ru, this message translates to:
+  /// **'180 г'**
+  String get profileWeightStub;
+
+  /// No description provided for @profileZodiacLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Знак зодиака'**
+  String get profileZodiacLabel;
+
+  /// No description provided for @recipeCookie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Печенье'**
+  String get recipeCookie;
+
+  /// No description provided for @recipeFruitSalad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фруктовый салат'**
+  String get recipeFruitSalad;
+
+  /// No description provided for @recipeMeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мясное блюдо'**
+  String get recipeMeat;
+
+  /// No description provided for @recipeSandwich.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сэндвич'**
+  String get recipeSandwich;
+
+  /// No description provided for @recipeVeggie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Овощное блюдо'**
+  String get recipeVeggie;
+
+  /// No description provided for @roomItemBought.
+  ///
+  /// In ru, this message translates to:
+  /// **'Куплено: {name}'**
+  String roomItemBought(String name);
+
+  /// No description provided for @roomItemPlaced.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} поставлено'**
+  String roomItemPlaced(String name);
+
+  /// No description provided for @roomItemRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} убрано'**
+  String roomItemRemoved(String name);
+
+  /// No description provided for @roomKindBath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ванная'**
+  String get roomKindBath;
+
+  /// No description provided for @roomKindKitchen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кухня'**
+  String get roomKindKitchen;
+
+  /// No description provided for @roomKindNursery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Детская'**
+  String get roomKindNursery;
+
+  /// No description provided for @roomNotEnoughCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get roomNotEnoughCoins;
+
+  /// No description provided for @roomOwnedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Куплено'**
+  String get roomOwnedLabel;
+
+  /// No description provided for @roomSelectedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрано'**
+  String get roomSelectedLabel;
+
+  /// No description provided for @roomSheetOwned.
+  ///
+  /// In ru, this message translates to:
+  /// **'уже есть'**
+  String get roomSheetOwned;
+
+  /// No description provided for @roomSheetRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из комнаты'**
+  String get roomSheetRemove;
+
+  /// No description provided for @roomSheetReplace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заменить на'**
+  String get roomSheetReplace;
+
+  /// No description provided for @roomSlotEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свободное место'**
+  String get roomSlotEmpty;
+
+  /// No description provided for @roomSlotPut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить'**
+  String get roomSlotPut;
+
+  /// No description provided for @roomTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Моя комната'**
+  String get roomTitle;
+
+  /// No description provided for @settingsNotifEvent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Событие'**
+  String get settingsNotifEvent;
+
+  /// No description provided for @settingsNotifGift.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок'**
+  String get settingsNotifGift;
+
+  /// No description provided for @settingsNotifHungry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Голоден'**
+  String get settingsNotifHungry;
+
+  /// No description provided for @settingsNotifPlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хочет играть'**
+  String get settingsNotifPlay;
+
+  /// No description provided for @settingsNotifShopNews.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новинки магазина'**
+  String get settingsNotifShopNews;
+
+  /// No description provided for @settingsNotifSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пора спать'**
+  String get settingsNotifSleep;
+
+  /// No description provided for @settingsNotifStage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая стадия'**
+  String get settingsNotifStage;
+
+  /// No description provided for @settingsNotifTask.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание'**
+  String get settingsNotifTask;
+
+  /// No description provided for @settingsQuietHours.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тихие часы 22:00 — 8:00'**
+  String get settingsQuietHours;
+
+  /// No description provided for @legalPrivacy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Политика конфиденциальности'**
+  String get legalPrivacy;
+
+  /// No description provided for @legalTerms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условия использования'**
+  String get legalTerms;
+
+  /// No description provided for @settingsSectionAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт'**
+  String get settingsSectionAccount;
+
+  /// No description provided for @settingsSectionLanguage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Язык'**
+  String get settingsSectionLanguage;
+
+  /// No description provided for @settingsSectionSound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звук'**
+  String get settingsSectionSound;
+
+  /// No description provided for @settingsSounds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Звуки в игре'**
+  String get settingsSounds;
+
+  /// No description provided for @settingsSectionLegal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Правовые документы'**
+  String get settingsSectionLegal;
+
+  /// No description provided for @settingsSectionNotifications.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get settingsSectionNotifications;
+
+  /// No description provided for @settingsSignOut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get settingsSignOut;
+
+  /// No description provided for @settingsSignOutConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс останется на сервере и вернётся при следующем входе.'**
+  String get settingsSignOutConfirmBody;
+
+  /// No description provided for @settingsSignOutConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из аккаунта?'**
+  String get settingsSignOutConfirmTitle;
+
+  /// No description provided for @settingsSignOutHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернёт к выбору способа входа'**
+  String get settingsSignOutHint;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия'**
+  String get settingsVersion;
+
+  /// No description provided for @shopGroupLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пригодится, когда подрастёт'**
+  String get shopGroupLater;
+
+  /// No description provided for @shopGroupNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малышу сейчас'**
+  String get shopGroupNow;
+
+  /// No description provided for @shopNotEnoughCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get shopNotEnoughCoins;
+
+  /// No description provided for @furnishPickItem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери вещь'**
+  String get furnishPickItem;
+
+  /// No description provided for @furnishPickSlot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теперь выбери место'**
+  String get furnishPickSlot;
+
+  /// No description provided for @furnishDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get furnishDone;
+
+  /// No description provided for @furnishBuyMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купить ещё'**
+  String get furnishBuyMore;
+
+  /// No description provided for @furnishPlaced.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} на месте'**
+  String furnishPlaced(String name);
+
+  /// No description provided for @furnishRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} убрали'**
+  String furnishRemoved(String name);
+
+  /// No description provided for @furnishNoSlot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для этой вещи здесь нет места'**
+  String get furnishNoSlot;
+
+  /// No description provided for @shopZoom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассмотреть'**
+  String get shopZoom;
+
+  /// No description provided for @shopOwnedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Куплено'**
+  String get shopOwnedLabel;
+
+  /// No description provided for @shopTabClothes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Одежда'**
+  String get shopTabClothes;
+
+  /// No description provided for @shopTabDecor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Декор'**
+  String get shopTabDecor;
+
+  /// No description provided for @shopTabFurniture.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мебель'**
+  String get shopTabFurniture;
+
+  /// No description provided for @shopTabToys.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игрушки'**
+  String get shopTabToys;
+
+  /// No description provided for @shopTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Магазин'**
+  String get shopTitle;
+
+  /// No description provided for @signInAlipay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Alipay'**
+  String get signInAlipay;
+
+  /// No description provided for @signInApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Apple'**
+  String get signInApple;
+
+  /// No description provided for @signInGoogle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Google'**
+  String get signInGoogle;
+
+  /// No description provided for @signInLegalPrefix.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжая, вы принимаете '**
+  String get signInLegalPrefix;
+
+  /// No description provided for @signInLegalTermsLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'условия использования'**
+  String get signInLegalTermsLink;
+
+  /// No description provided for @signInLegalAnd.
+  ///
+  /// In ru, this message translates to:
+  /// **' и '**
+  String get signInLegalAnd;
+
+  /// No description provided for @signInLegalPrivacyLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'политику конфиденциальности'**
+  String get signInLegalPrivacyLink;
+
+  /// No description provided for @signInPrompt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите способ входа'**
+  String get signInPrompt;
+
+  /// No description provided for @signInQq.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через QQ'**
+  String get signInQq;
+
+  /// No description provided for @signInSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить и посмотреть приложение'**
+  String get signInSkip;
+
+  /// No description provided for @signInSoonBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход через {method} появится позже. Пока зарегистрируйтесь или войдите по почте.'**
+  String signInSoonBody(String method);
+
+  /// No description provided for @signInSoonTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данная функция ещё в разработке'**
+  String get signInSoonTitle;
+
+  /// No description provided for @signInTagline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плюшевый малыш, который растёт вместе с тобой'**
+  String get signInTagline;
+
+  /// No description provided for @signInWeChat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через WeChat'**
+  String get signInWeChat;
+
+  /// No description provided for @skinJoy.
+  ///
+  /// In ru, this message translates to:
+  /// **'JOY'**
+  String get skinJoy;
+
+  /// No description provided for @skinSlow.
+  ///
+  /// In ru, this message translates to:
+  /// **'SLOW'**
+  String get skinSlow;
+
+  /// No description provided for @stageAdult.
+  ///
+  /// In ru, this message translates to:
+  /// **'Взрослый'**
+  String get stageAdult;
+
+  /// No description provided for @stageCrawling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ползающий малыш'**
+  String get stageCrawling;
+
+  /// No description provided for @stageFirstSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первые шаги'**
+  String get stageFirstSteps;
+
+  /// No description provided for @stageGrowing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подрастающий'**
+  String get stageGrowing;
+
+  /// No description provided for @stageNewborn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новорождённый'**
+  String get stageNewborn;
+
+  /// No description provided for @statsFood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Еда'**
+  String get statsFood;
+
+  /// No description provided for @statsHygiene.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гигиена'**
+  String get statsHygiene;
+
+  /// No description provided for @statsLove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любовь'**
+  String get statsLove;
+
+  /// No description provided for @statsShow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать уход'**
+  String get statsShow;
+
+  /// No description provided for @statsHide.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть уход'**
+  String get statsHide;
+
+  /// No description provided for @statsPlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игра'**
+  String get statsPlay;
+
+  /// No description provided for @statsSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сон'**
+  String get statsSleep;
+
+  /// No description provided for @traitActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активный'**
+  String get traitActive;
+
+  /// No description provided for @traitAffectionate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ласковый'**
+  String get traitAffectionate;
+
+  /// No description provided for @traitCalm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спокойный'**
+  String get traitCalm;
+
+  /// No description provided for @traitCurious.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любознательный'**
+  String get traitCurious;
+
+  /// No description provided for @traitIndependent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Самостоятельный'**
+  String get traitIndependent;
+
+  /// No description provided for @traitReserved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Замкнутый'**
+  String get traitReserved;
+
+  /// No description provided for @zodiacAquarius.
+  ///
+  /// In ru, this message translates to:
+  /// **'Водолей'**
+  String get zodiacAquarius;
+
+  /// No description provided for @zodiacAries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Овен'**
+  String get zodiacAries;
+
+  /// No description provided for @zodiacCancer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рак'**
+  String get zodiacCancer;
+
+  /// No description provided for @zodiacCapricorn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Козерог'**
+  String get zodiacCapricorn;
+
+  /// No description provided for @zodiacGemini.
+  ///
+  /// In ru, this message translates to:
+  /// **'Близнецы'**
+  String get zodiacGemini;
+
+  /// No description provided for @zodiacInfluenceAquarius.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выдумщик и вольнодум: удивляет и находит свои пути.'**
+  String get zodiacInfluenceAquarius;
+
+  /// No description provided for @zodiacInfluenceAries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смелый и порывистый: с первых дней норовит всё попробовать сам.'**
+  String get zodiacInfluenceAries;
+
+  /// No description provided for @zodiacInfluenceCancer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нежный домосед: расцветает от заботы и долгих объятий.'**
+  String get zodiacInfluenceCancer;
+
+  /// No description provided for @zodiacInfluenceCapricorn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Терпеливый и упорный: маленькими шагами добирается до большого.'**
+  String get zodiacInfluenceCapricorn;
+
+  /// No description provided for @zodiacInfluenceGemini.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любопытный и общительный: тянется ко всему новому обеими лапами.'**
+  String get zodiacInfluenceGemini;
+
+  /// No description provided for @zodiacInfluenceLeo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёплый и артистичный: обожает внимание и щедро отвечает лаской.'**
+  String get zodiacInfluenceLeo;
+
+  /// No description provided for @zodiacInfluenceLibra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дружелюбный миротворец: ценит красоту, компанию и мягкий тон.'**
+  String get zodiacInfluenceLibra;
+
+  /// No description provided for @zodiacInfluencePisces.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мечтательный и чуткий: тонко чувствует твоё настроение.'**
+  String get zodiacInfluencePisces;
+
+  /// No description provided for @zodiacInfluenceSagittarius.
+  ///
+  /// In ru, this message translates to:
+  /// **'Весёлый искатель приключений: игры и прогулки — его стихия.'**
+  String get zodiacInfluenceSagittarius;
+
+  /// No description provided for @zodiacInfluenceScorpio.
+  ///
+  /// In ru, this message translates to:
+  /// **'Глубокий и преданный: привязывается всерьёз и надолго.'**
+  String get zodiacInfluenceScorpio;
+
+  /// No description provided for @zodiacInfluenceTaurus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спокойный и основательный: любит уют, вкусную еду и свой распорядок.'**
+  String get zodiacInfluenceTaurus;
+
+  /// No description provided for @zodiacInfluenceVirgo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внимательный и аккуратный: замечает мелочи и любит порядок.'**
+  String get zodiacInfluenceVirgo;
+
+  /// No description provided for @zodiacLeo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лев'**
+  String get zodiacLeo;
+
+  /// No description provided for @zodiacLibra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Весы'**
+  String get zodiacLibra;
+
+  /// No description provided for @zodiacPisces.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рыбы'**
+  String get zodiacPisces;
+
+  /// No description provided for @zodiacSagittarius.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стрелец'**
+  String get zodiacSagittarius;
+
+  /// No description provided for @zodiacScorpio.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скорпион'**
+  String get zodiacScorpio;
+
+  /// No description provided for @zodiacTaurus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телец'**
+  String get zodiacTaurus;
+
+  /// No description provided for @zodiacVirgo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дева'**
+  String get zodiacVirgo;
+
+  /// No description provided for @shopGroupAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get shopGroupAll;
+
+  /// No description provided for @shopGroupBeds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кроватки'**
+  String get shopGroupBeds;
+
+  /// No description provided for @shopGroupChairs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кресла'**
+  String get shopGroupChairs;
+
+  /// No description provided for @shopGroupDressers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комоды'**
+  String get shopGroupDressers;
+
+  /// No description provided for @shopGroupTables.
+  ///
+  /// In ru, this message translates to:
+  /// **'Столики'**
+  String get shopGroupTables;
+
+  /// No description provided for @shopGroupBaskets.
+  ///
+  /// In ru, this message translates to:
+  /// **'Корзины для игрушек'**
+  String get shopGroupBaskets;
+
+  /// No description provided for @shopGroupShelves.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настенные полки'**
+  String get shopGroupShelves;
+
+  /// No description provided for @shopGroupLamps.
+  ///
+  /// In ru, this message translates to:
+  /// **'Светильники'**
+  String get shopGroupLamps;
+
+  /// No description provided for @shopGroupRugs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ковры'**
+  String get shopGroupRugs;
+
+  /// No description provided for @shopGroupPictures.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картины'**
+  String get shopGroupPictures;
+
+  /// No description provided for @shopGroupPlants.
+  ///
+  /// In ru, this message translates to:
+  /// **'Растения'**
+  String get shopGroupPlants;
+
+  /// No description provided for @shopGroupFlowers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цветы'**
+  String get shopGroupFlowers;
+
+  /// No description provided for @shopGroupPillows.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подушки'**
+  String get shopGroupPillows;
+
+  /// No description provided for @shopGroupWalls.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обои'**
+  String get shopGroupWalls;
+
+  /// No description provided for @shopGroupFloors.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полы'**
+  String get shopGroupFloors;
+
+  /// No description provided for @shopGroupPlush.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мягкие игрушки'**
+  String get shopGroupPlush;
+
+  /// No description provided for @shopGroupHouses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Домики'**
+  String get shopGroupHouses;
+
+  /// No description provided for @shopGroupToys.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игрушки'**
+  String get shopGroupToys;
+
+  /// No description provided for @shopGroupOutfits.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплекты'**
+  String get shopGroupOutfits;
+
+  /// No description provided for @shopGroupTops.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верх'**
+  String get shopGroupTops;
+
+  /// No description provided for @shopGroupBottoms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низ'**
+  String get shopGroupBottoms;
+
+  /// No description provided for @shopGroupHats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Головные уборы'**
+  String get shopGroupHats;
+
+  /// No description provided for @shopGroupShoes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обувь'**
+  String get shopGroupShoes;
+
+  /// No description provided for @shopGroupExtras.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аксессуары'**
+  String get shopGroupExtras;
+
+  /// No description provided for @shopGroupSeats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стулья'**
+  String get shopGroupSeats;
+
+  /// No description provided for @shopGroupWardrobes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шкафы'**
+  String get shopGroupWardrobes;
+
+  /// No description provided for @shopGroupClocks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часы'**
+  String get shopGroupClocks;
+
+  /// No description provided for @shopGroupGarlands.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гирлянды'**
+  String get shopGroupGarlands;
+
+  /// No description provided for @wakeAlarmLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проснёмся вместе с {name}'**
+  String wakeAlarmLabel(String name);
+
+  /// No description provided for @wakeAlarmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} уже не спит и ждёт тебя'**
+  String wakeAlarmBody(String name);
+
+  /// No description provided for @wakeAlarmStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проснулись'**
+  String get wakeAlarmStop;
+
+  /// No description provided for @wakeAlarmClock.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time} стоит в «Часах» телефона'**
+  String wakeAlarmClock(String time);
+
+  /// No description provided for @wakeAlarmClockOld.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прежний, на {time}, остался в «Часах» — выключите его там'**
+  String wakeAlarmClockOld(String time);
+
+  /// No description provided for @wakeAlarmOpenClock.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть часы'**
+  String get wakeAlarmOpenClock;
+
+  /// No description provided for @wakeAlarmSystem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник на {time} поставлен. Зазвонит и в беззвучном режиме'**
+  String wakeAlarmSystem(String time);
+
+  /// No description provided for @wakeAlarmNotification.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудим в {time} уведомлением со звуком. В беззвучном режиме будет только вибрация'**
+  String wakeAlarmNotification(String time);
+
+  /// No description provided for @wakeAlarmPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'На телефоне будильник на {time} встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит'**
+  String wakeAlarmPreview(String time);
+
+  /// No description provided for @wakeAlarmDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона'**
+  String get wakeAlarmDenied;
+
+  /// No description provided for @wakeAlarmFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будильник поставить не удалось. Попробуйте ещё раз'**
+  String get wakeAlarmFailed;
+
+  /// No description provided for @signInEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация по почте'**
+  String get signInEmail;
+
+  /// No description provided for @emailTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почта'**
+  String get emailTitle;
+
+  /// No description provided for @emailTabSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
+  String get emailTabSignUp;
+
+  /// No description provided for @emailTabSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход'**
+  String get emailTabSignIn;
+
+  /// No description provided for @emailField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Электронная почта'**
+  String get emailField;
+
+  /// No description provided for @emailPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль'**
+  String get emailPassword;
+
+  /// No description provided for @emailPasswordHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не короче {min} знаков'**
+  String emailPasswordHint(int min);
+
+  /// No description provided for @emailSubmitSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зарегистрироваться'**
+  String get emailSubmitSignUp;
+
+  /// No description provided for @emailSubmitSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти'**
+  String get emailSubmitSignIn;
+
+  /// No description provided for @emailLeadSignUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.'**
+  String get emailLeadSignUp;
+
+  /// No description provided for @emailLeadSignIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.'**
+  String get emailLeadSignIn;
+
+  /// No description provided for @emailErrorInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте адрес почты'**
+  String get emailErrorInvalid;
+
+  /// No description provided for @emailErrorPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль не короче {min} знаков'**
+  String emailErrorPassword(int min);
+
+  /// No description provided for @emailErrorExists.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта почта уже зарегистрирована — войдите'**
+  String get emailErrorExists;
+
+  /// No description provided for @emailErrorCredentials.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверная почта или пароль'**
+  String get emailErrorCredentials;
+
+  /// No description provided for @emailErrorNotConfirmed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почта не подтверждена — введите код из письма'**
+  String get emailErrorNotConfirmed;
+
+  /// No description provided for @emailErrorDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация по почте пока выключена'**
+  String get emailErrorDisabled;
+
+  /// No description provided for @emailErrorRateLimit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком много писем подряд — попробуйте позже'**
+  String get emailErrorRateLimit;
+
+  /// No description provided for @emailErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет связи с сервером — попробуйте ещё раз'**
+  String get emailErrorNetwork;
+
+  /// No description provided for @emailErrorUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось — попробуйте ещё раз'**
+  String get emailErrorUnknown;
+
+  /// No description provided for @profileBirthdayLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'День рождения'**
+  String get profileBirthdayLabel;
+
+  /// No description provided for @profileSectionAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Личный кабинет'**
+  String get profileSectionAccount;
+
+  /// No description provided for @profileAccountLogin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход'**
+  String get profileAccountLogin;
+
+  /// No description provided for @profileAccountGuest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без регистрации'**
+  String get profileAccountGuest;
+
+  /// No description provided for @profileAccountUnconfirmed.
+  ///
+  /// In ru, this message translates to:
+  /// **'{email} · не подтверждена'**
+  String profileAccountUnconfirmed(String email);
+
+  /// No description provided for @profileAccountRegistered.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зарегистрирован'**
+  String get profileAccountRegistered;
+
+  /// No description provided for @profileAccountWallet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кошелёк'**
+  String get profileAccountWallet;
+
+  /// No description provided for @emailCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите код из письма'**
+  String get emailCodeTitle;
+
+  /// No description provided for @emailCodeBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы отправили код из {length} цифр на {email}. Если письма нет, загляните в «Спам».'**
+  String emailCodeBody(String email, int length);
+
+  /// No description provided for @emailCodeField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код'**
+  String get emailCodeField;
+
+  /// No description provided for @emailCodeSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get emailCodeSubmit;
+
+  /// No description provided for @emailCodeResend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить код ещё раз'**
+  String get emailCodeResend;
+
+  /// No description provided for @emailCodeResendIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить ещё раз через {seconds} с'**
+  String emailCodeResendIn(int seconds);
+
+  /// No description provided for @emailCodeSent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый код отправлен'**
+  String get emailCodeSent;
+
+  /// No description provided for @emailCodeChangeEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить почту'**
+  String get emailCodeChangeEmail;
+
+  /// No description provided for @emailEnterCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести код из письма'**
+  String get emailEnterCode;
+
+  /// No description provided for @emailErrorCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код неверный или устарел — запросите новый'**
+  String get emailErrorCode;
+
+  /// No description provided for @buyConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердите покупку'**
+  String get buyConfirmTitle;
+
+  /// No description provided for @buyConfirmBalance.
+  ///
+  /// In ru, this message translates to:
+  /// **'На счету {coins} · останется {left}'**
+  String buyConfirmBalance(int coins, int left);
+
+  /// No description provided for @buyConfirmAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купить'**
+  String get buyConfirmAction;
+
+  /// No description provided for @buyConfirmCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get buyConfirmCancel;
+
+  /// No description provided for @buyNotEnoughTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get buyNotEnoughTitle;
+
+  /// No description provided for @buyNotEnough.
+  ///
+  /// In ru, this message translates to:
+  /// **'{missing, plural, one{Не хватает {missing} монеты} other{Не хватает {missing} монет}}'**
+  String buyNotEnough(int missing);
+
+  /// No description provided for @buyNotEnoughOk.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понятно'**
+  String get buyNotEnoughOk;
+
+  /// No description provided for @welcomeBackGrandma.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!'**
+  String welcomeBackGrandma(String name);
+
+  /// No description provided for @dailyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get dailyTitle;
+
+  /// No description provided for @dailyGiftClaimed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок забран — завтра будет следующий'**
+  String get dailyGiftClaimed;
+
+  /// No description provided for @dailyGiftFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось забрать подарок. Проверьте связь'**
+  String get dailyGiftFailed;
+
+  /// No description provided for @dailyTasksTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задания дня'**
+  String get dailyTasksTitle;
+
+  /// No description provided for @dailyWeeklyDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание недели выполнено!'**
+  String get dailyWeeklyDone;
+
+  /// No description provided for @dailyOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарки и задания появятся, когда будет связь с сервером'**
+  String get dailyOffline;
+
+  /// No description provided for @dailyTaskPet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Погладь мишку'**
+  String get dailyTaskPet;
+
+  /// No description provided for @dailyTaskPlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиграй с мишкой'**
+  String get dailyTaskPlay;
+
+  /// No description provided for @dailyTaskWash.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искупай мишку'**
+  String get dailyTaskWash;
+
+  /// No description provided for @dailyTaskFeed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Накорми готовым блюдом'**
+  String get dailyTaskFeed;
+
+  /// No description provided for @dailyTaskCook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приготовь блюдо'**
+  String get dailyTaskCook;
+
+  /// No description provided for @dailyTaskLearn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пройди урок'**
+  String get dailyTaskLearn;
+
+  /// No description provided for @dailyTaskMealOnTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покорми вовремя: завтрак, обед или ужин'**
+  String get dailyTaskMealOnTime;
+
+  /// No description provided for @dailyTaskBedtime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уложи спать вовремя (20:00–23:00)'**
+  String get dailyTaskBedtime;
+
+  /// No description provided for @profileLinkDaily.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок и задания дня'**
+  String get profileLinkDaily;
+
+  /// No description provided for @profileLinkDailySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'календарь на 7 дней и задания'**
+  String get profileLinkDailySubtitle;
+
+  /// No description provided for @dailyGiftDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'День {n}'**
+  String dailyGiftDay(int n);
+
+  /// No description provided for @dailyGiftClaim.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забрать +{coins}'**
+  String dailyGiftClaim(int coins);
+
+  /// No description provided for @dailyWeekly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задание недели: все задания дня в {target} днях — {done} из {target}, +{coins}'**
+  String dailyWeekly(int target, int done, int coins);
+
+  /// No description provided for @stageUpCelebrate.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} подрос! Теперь — «{stage}». Подарок: монетки'**
+  String stageUpCelebrate(String name, String stage);
+
+  /// No description provided for @giftEnvelopeTap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажми на конверт, чтобы открыть'**
+  String get giftEnvelopeTap;
+
+  /// No description provided for @giftBoxTap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажми на коробку — там сюрприз!'**
+  String get giftBoxTap;
+
+  /// No description provided for @giftBoxDay7.
+  ///
+  /// In ru, this message translates to:
+  /// **'ДЕНЬ 7 · БОЛЬШОЙ ПОДАРОК'**
+  String get giftBoxDay7;
+
+  /// No description provided for @giftCollect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забрать'**
+  String get giftCollect;
+
+  /// No description provided for @giftCoinsCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'+{coins} монет!'**
+  String giftCoinsCaption(int coins);
+
+  /// No description provided for @shareAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поделиться'**
+  String get shareAction;
+
+  /// No description provided for @shareClose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть'**
+  String get shareClose;
+
+  /// No description provided for @shareMeet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Знакомьтесь: {name}'**
+  String shareMeet(String name);
+
+  /// No description provided for @shareGrown.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} подрос!'**
+  String shareGrown(String name);
+
+  /// No description provided for @shareBirthday.
+  ///
+  /// In ru, this message translates to:
+  /// **'День рождения {date}'**
+  String shareBirthday(String date);
+
+  /// No description provided for @shareText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мой мишка {name} в TeddyTales'**
+  String shareText(String name);
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось поделиться. Попробуй ещё раз.'**
+  String get shareFailed;
+
+  /// No description provided for @inviteLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друг ставит TeddyTales и вводит твой код — вам обоим по {coins} монет.'**
+  String inviteLead(int coins);
+
+  /// No description provided for @inviteYourCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Твой код'**
+  String get inviteYourCode;
+
+  /// No description provided for @inviteCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код скопирован'**
+  String get inviteCopied;
+
+  /// No description provided for @inviteShareText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}'**
+  String inviteShareText(String code, int coins, String link);
+
+  /// No description provided for @inviteHaveCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть код друга?'**
+  String get inviteHaveCode;
+
+  /// No description provided for @inviteRedeem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести'**
+  String get inviteRedeem;
+
+  /// No description provided for @inviteDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'+{coins} монет — тебе и другу!'**
+  String inviteDone(int coins);
+
+  /// No description provided for @inviteNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Такого кода нет. Проверь буквы.'**
+  String get inviteNotFound;
+
+  /// No description provided for @inviteOwn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это твой собственный код.'**
+  String get inviteOwn;
+
+  /// No description provided for @inviteUsed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код друга уже введён.'**
+  String get inviteUsed;
+
+  /// No description provided for @inviteLate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код друга вводят в первую неделю.'**
+  String get inviteLate;
+
+  /// No description provided for @inviteFull.
+  ///
+  /// In ru, this message translates to:
+  /// **'У друга закончились приглашения.'**
+  String get inviteFull;
+
+  /// No description provided for @inviteOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет связи с сервером. Попробуй позже.'**
+  String get inviteOffline;
+
+  /// No description provided for @dailyStreakBroken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера пропущен день — серия прервалась.'**
+  String get dailyStreakBroken;
+
+  /// No description provided for @dailyStreakRestore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть за {price}'**
+  String dailyStreakRestore(int price);
+
+  /// No description provided for @dailyStreakRestored.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серия вернулась!'**
+  String get dailyStreakRestored;
+
+  /// No description provided for @dailyStreakNoCoins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает монет'**
+  String get dailyStreakNoCoins;
+
+  /// No description provided for @sleepCountdownLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Засыпает'**
+  String get sleepCountdownLabel;
+
+  /// No description provided for @inviteStatsFriends.
+  ///
+  /// In ru, this message translates to:
+  /// **'друзей пришло'**
+  String get inviteStatsFriends;
+
+  /// No description provided for @inviteStatsEarned.
+  ///
+  /// In ru, this message translates to:
+  /// **'монет получено'**
+  String get inviteStatsEarned;
+
+  /// No description provided for @inviteNextBonus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё {left} — и бонус +{bonus}'**
+  String inviteNextBonus(int left, int bonus);
+
+  /// No description provided for @inviteLadderDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все бонусы за друзей получены!'**
+  String get inviteLadderDone;
+
+  /// No description provided for @friendCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тебя пригласил друг?'**
+  String get friendCodeTitle;
+
+  /// No description provided for @friendCodeFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нашли код друга {code}. Вам обоим — по {coins} монет.'**
+  String friendCodeFound(String code, int coins);
+
+  /// No description provided for @friendCodeAsk.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введи код друга — вам обоим по {coins} монет.'**
+  String friendCodeAsk(int coins);
+
+  /// No description provided for @friendCodeClaim.
+  ///
+  /// In ru, this message translates to:
+  /// **'Получить +{coins}'**
+  String friendCodeClaim(int coins);
+
+  /// No description provided for @friendCodeSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get friendCodeSkip;
+
+  /// No description provided for @rewardFromFriend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок от друга — и другу тоже!'**
+  String get rewardFromFriend;
+
+  /// No description provided for @rewardInviter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друг пришёл по твоему коду!'**
+  String get rewardInviter;
+
+  /// No description provided for @sleepAwayTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка спит'**
+  String get sleepAwayTitle;
+
+  /// No description provided for @sleepAwayLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сладко посапывает в спальне.'**
+  String get sleepAwayLead;
+
+  /// No description provided for @sleepAwayWakeBreakfast.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать завтракать'**
+  String get sleepAwayWakeBreakfast;
+
+  /// No description provided for @sleepAwayWakeLunch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать обедать'**
+  String get sleepAwayWakeLunch;
+
+  /// No description provided for @sleepAwayWakeDinner.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать ужинать'**
+  String get sleepAwayWakeDinner;
+
+  /// No description provided for @sleepAwayWakeSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать перекусить'**
+  String get sleepAwayWakeSnack;
+
+  /// No description provided for @sleepAwayWakePlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать играть'**
+  String get sleepAwayWakePlay;
+
+  /// No description provided for @sleepAwayWakeBath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разбудить и позвать купаться'**
+  String get sleepAwayWakeBath;
+
+  /// No description provided for @sleepAwayLetSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пусть спит'**
+  String get sleepAwayLetSleep;
+
+  /// No description provided for @sleepAwayNight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас ночь — мишке лучше поспать.'**
+  String get sleepAwayNight;
+
+  /// No description provided for @sleepAwayTired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё не выспался — Сон {pct} %'**
+  String sleepAwayTired(int pct);
+
+  /// No description provided for @birthIntroTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Родился малыш!'**
+  String get birthIntroTitle;
+
+  /// No description provided for @birthIntroVideo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Видео рождения'**
+  String get birthIntroVideo;
+
+  /// No description provided for @birthIntroVideoSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'скоро здесь'**
+  String get birthIntroVideoSoon;
+
+  /// No description provided for @birthIntroSex.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get birthIntroSex;
+
+  /// No description provided for @birthIntroTrait.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первая черта'**
+  String get birthIntroTrait;
+
+  /// No description provided for @birthIntroName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дать имя'**
+  String get birthIntroName;
+
+  /// No description provided for @notifyDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон не разрешил уведомления. Включите их в настройках телефона → TeddyTales.'**
+  String get notifyDenied;
+
+  /// No description provided for @notifyAskTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать о малыше?'**
+  String get notifyAskTitle;
+
+  /// No description provided for @notifyAskLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} даст знать, когда проголодается, захочет играть или пора спать. Не чаще нужного и не в тихие часы.'**
+  String notifyAskLead(String name);
+
+  /// No description provided for @notifyAskYes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да, напоминать'**
+  String get notifyAskYes;
+
+  /// No description provided for @notifyAskLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не сейчас'**
+  String get notifyAskLater;
+
+  /// No description provided for @notifyAskLaterHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить можно в настройках → Уведомления.'**
+  String get notifyAskLaterHint;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мишка, монеты и прогресс удалятся навсегда'**
+  String get deleteAccountHint;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name}, монеты, вещи и весь прогресс удалятся с сервера навсегда. Вернуть их будет нельзя.'**
+  String deleteAccountLead(String name);
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить навсегда'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оставить'**
+  String get deleteAccountCancel;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @signInAppleFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось войти через Apple. Проверьте интернет и попробуйте ещё раз.'**
+  String get signInAppleFailed;
+
+  /// No description provided for @linkApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить мишку через Apple'**
+  String get linkApple;
+
+  /// No description provided for @linkAppleHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход с любого iPhone, мишка не потеряется'**
+  String get linkAppleHint;
+
+  /// No description provided for @linkAppleDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово: мишка сохранён в вашем Apple ID.'**
+  String get linkAppleDone;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановить покупки'**
+  String get restorePurchases;
+
+  /// No description provided for @restorePurchasesHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть купленное в App Store или Google Play'**
+  String get restorePurchasesHint;
+
+  /// No description provided for @restorePurchasesStarted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверяем покупки…'**
+  String get restorePurchasesStarted;
+
+  /// No description provided for @kitchenBottle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бутылочка'**
+  String get kitchenBottle;
+
+  /// No description provided for @kitchenBottleSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бутылочка с молоком — скоро: ждём анимацию малыша'**
+  String get kitchenBottleSoon;
+
+  /// No description provided for @bathActionDiaper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подгузник'**
+  String get bathActionDiaper;
+
+  /// No description provided for @bathDiaperSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смена подгузника — скоро: ждём анимацию малыша'**
+  String get bathDiaperSoon;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'ru', 'zh'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'ru':
+      return AppLocalizationsRu();
+    case 'zh':
+      return AppLocalizationsZh();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

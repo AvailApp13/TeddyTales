@@ -1,0 +1,1359 @@
+{
+  "@@locale": "ru",
+  "@ageDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageDays": "{count, plural, one{{count} день} few{{count} дня} other{{count} дней}}",
+  "@ageMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageMonths": "{count, plural, one{{count} месяц} few{{count} месяца} other{{count} месяцев}}",
+  "@ageMonthsDays": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "ageMonthsDays": "{months, plural, one{{months} месяц} few{{months} месяца} other{{months} месяцев}} {days, plural, one{{days} день} few{{days} дня} other{{days} дней}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageYears": "{count, plural, one{{count} год} few{{count} года} other{{count} лет}}",
+  "appTitle": "TeddyTales",
+  "bathActionToilet": "В туалет",
+  "bathActionWash": "Искупаться",
+  "bedroomActionSleep": "Уложить спать",
+  "bedroomWakeTogether": "Давай проснёмся вместе",
+  "bedroomAlarmQuestion": "В какое время поставить будильник?",
+  "@bedroomAlarmSet": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "bedroomAlarmSet": "Будильник на {time}",
+  "bedroomAlarmHelp": "Когда просыпаемся?",
+  "bedroomActionWake": "Разбудить",
+  "bedroomAlarmDone": "Готово",
+  "bathWashSoon": "Чиним душ — скоро сможем купать малыша",
+  "bathToiletSoon": "Горшок ещё в работе — скоро научим",
+  "@bearRigMissingHint": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "bearRigMissingHint": "Положите {path}",
+  "bearRigMissingTitle": "Риг ещё не подключён",
+  "birthCueAwakening": "Малыш открывает глаза и осматривается.",
+  "birthCueCradle": "Тёплая кроватка. Кто-то тихо дышит под одеялом…",
+  "birthCueFinale": "Он успокоился. Здравствуй, малыш.",
+  "birthCueFirstBreath": "Первый вдох…",
+  "birthCueFirstCry": "Первый плач — он зовёт тебя.",
+  "birthCueStars": "Звёздочки кружатся в мягком свете.",
+  "birthSceneNotReady": "Сцена рождения ещё не собрана",
+  "birthSkip": "Пропустить",
+  "careFeedSubtitle": "Вкусная еда для малыша",
+  "careFeedTitle": "Покормить",
+  "careFootnote": "Погладить мишку можно прямо на главной — просто коснитесь его.",
+  "@careLockedUntilStage": {
+    "placeholders": {
+      "stage": {
+        "type": "int"
+      }
+    }
+  },
+  "careLockedUntilStage": "Откроется на стадии {stage}",
+  "carePlaySubtitle": "Весёлые игры вместе",
+  "carePlayTitle": "Играть",
+  "careSleepSubtitle": "Спокойной ночи, малыш",
+  "careSleepTitle": "Уложить спать",
+  "careTitle": "Что будем делать?",
+  "careWashSubtitle": "Пора в ванну!",
+  "careWashTitle": "Купать",
+  "catalogCheckoutTitle": "Оформление",
+  "catalogCountryChina": "Китай",
+  "catalogCountryGermany": "Германия",
+  "catalogCountryKazakhstan": "Казахстан",
+  "catalogCountryRussia": "Россия",
+  "catalogCountryUsa": "США",
+  "catalogDeliveryNote": "Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.",
+  "catalogFieldAddress": "Адрес",
+  "catalogFieldAddressHint": "Улица, дом, квартира",
+  "catalogFieldCountry": "Страна",
+  "catalogFieldName": "Имя и фамилия",
+  "catalogFieldNameHint": "Как в документах",
+  "catalogFieldPhone": "Телефон",
+  "catalogFieldPostcode": "Индекс",
+  "@catalogFootnote": {
+    "placeholders": {
+      "shoes": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogFootnote": "Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.",
+  "catalogGrownSubtitle": "и готов отправиться к тебе домой",
+  "catalogGrownTitle": "Твой малыш вырос",
+  "catalogItemFortune": "Карманный мишка Фортуна",
+  "catalogItemHug": "Персиковый Обнимишка",
+  "catalogItemShortFur": "Мишка с короткой шерсткой",
+  "catalogItemSpaceSet": "Набор Космонавт и Невеста",
+  "catalogOrderButton": "Оформить заказ",
+  "catalogPayPalNote": " — и картой без аккаунта",
+  "catalogPaySection": "Оплата · КП 12.4",
+  "catalogPayStub": "Оплата подключается на этапе интеграции",
+  "@catalogSizeCm": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogSizeCm": "{size} см",
+  "catalogSummaryItem": "Товар",
+  "catalogSummaryPrice": "Цена",
+  "catalogSummarySize": "Размер",
+  "catalogTitle": "Заказать мишку",
+  "categoryAccessory": "Аксессуары",
+  "categoryBottom": "Низ",
+  "categoryDecor": "Декор",
+  "categoryFloor": "Пол",
+  "categoryFurniture": "Мебель",
+  "categoryHeadwear": "Головные уборы",
+  "categoryOutfit": "Наряды",
+  "categoryShoes": "Обувь",
+  "categoryTop": "Верх",
+  "categoryToy": "Игрушки",
+  "categoryWallpaper": "Обои",
+  "commonBack": "Назад",
+  "commonCancel": "Отмена",
+  "@commonCoins": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonCoins": "{count} монет",
+  "diaryEventFavoriteToy": "Любимая игрушка",
+  "diaryEventFirstBath": "Первое купание",
+  "diaryEventFirstCrawl": "Научился ползать",
+  "diaryEventFirstTooth": "Первый зубик",
+  "diaryTitle": "Дневник",
+  "dishCookie": "Печенье",
+  "dishFruit": "Фрукты",
+  "dishOmelette": "Омлет",
+  "dishPasta": "Паста",
+  "dishPie": "Пирог",
+  "dishPorridge": "Каша",
+  "dishSalad": "Салат",
+  "dishSandwich": "Сэндвич",
+  "dishSoup": "Суп",
+  "dishYogurt": "Йогурт",
+  "dishesClose": "Убрать блюда со стола",
+  "@dishesClose": {
+    "description": "Подпись крестика под табло блюд (для озвучки)."
+  },
+  "dishesAllEaten": "Всё съедено! Блюда вернутся, когда мишка проголодается.",
+  "@dishesAllEaten": {
+    "description": "Все готовые блюда съедены — вернутся при следующем голоде (заказчик 24.09)."
+  },
+  "cookSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
+  "@cookSteps": {
+    "description": "Сколько шагов в рецепте — на табло под тарелкой рецепта.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cookClose": "Не готовить",
+  "@cookClose": {
+    "description": "Подпись крестика под табло рецептов и готовки (для озвучки)."
+  },
+  "cookIngredient": "Положить: {ingredient}",
+  "@cookIngredient": {
+    "description": "Озвучка продукта под столом во время готовки.",
+    "placeholders": {
+      "ingredient": {
+        "type": "String"
+      }
+    }
+  },
+  "dishDescPorridge": "с ягодами и мёдом",
+  "@dishDescPorridge": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescSoup": "с морковкой и горошком",
+  "@dishDescSoup": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescSandwich": "с сыром и ветчиной",
+  "@dishDescSandwich": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescFruit": "клубника, банан, виноград",
+  "@dishDescFruit": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescYogurt": "с гранолой и ягодами",
+  "@dishDescYogurt": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescCookie": "шоколадное и мишки",
+  "@dishDescCookie": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescSalad": "огурец, помидоры, кукуруза",
+  "@dishDescSalad": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescPasta": "с томатным соусом",
+  "@dishDescPasta": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescOmelette": "с зелёным луком",
+  "@dishDescOmelette": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescPie": "с малиной и черникой",
+  "@dishDescPie": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "feedCookHint": "Добавляй продукты по порядку. Ошибёшься — просто попробуем ещё раз.",
+  "@feedCookResult": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      },
+      "reward": {
+        "type": "int"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
+  "feedCookResult": "Готово! {recipe} · +{reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}}, еда +{gain}",
+  "@feedEatResult": {
+    "placeholders": {
+      "dish": {
+        "type": "String"
+      },
+      "gain": {
+        "type": "int"
+      },
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "feedEatResult": "{dish} · еда +{gain}, −{price, plural, one{{price} монета} few{{price} монеты} other{{price} монет}}",
+  "feedFavourite": "Любимое",
+  "@feedFoodGain": {
+    "placeholders": {
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
+  "feedFoodGain": "еда +{gain}",
+  "feedHintActive": "Я сегодня носился как заводной — давай посытнее!",
+  "feedHintAffectionate": "Хочу что-нибудь сладкое… и чтобы ты рядом.",
+  "feedHintCalm": "Мне бы чего-то тёплого и простого.",
+  "feedHintCurious": "А приготовим что-нибудь новенькое?",
+  "feedHintIndependent": "Я бы и сам справился. Ну, почти.",
+  "feedHintReserved": "Можно просто фрукты?",
+  "feedNotEnoughCoins": "Не хватает монет",
+  "@feedRecipeSteps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feedRecipeSteps": "{count, plural, one{{count} шаг} few{{count} шага} other{{count} шагов}}",
+  "@feedStepProgress": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "reward": {
+        "type": "int"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
+  "feedStepProgress": "Шаг {step} из {total}. Награда: {reward, plural, one{{reward} монета} few{{reward} монеты} other{{reward} монет}} и еда +{gain}.",
+  "feedTabCook": "Приготовить",
+  "feedTabReady": "Готовые блюда",
+  "feedTitle": "Чем покормим?",
+  "@feedWrongStep": {
+    "placeholders": {
+      "ingredient": {
+        "type": "String"
+      }
+    }
+  },
+  "feedWrongStep": "Не то. Сейчас нужно: {ingredient}. Попробуй ещё раз — штрафа нет.",
+  "@game2048Hint": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "game2048Hint": "Свайпайте: равные плитки сливаются. Цель — {target}. Счёт: {score}",
+  "game2048StuckHint": "Ходов не осталось — начните заново кнопкой ниже.",
+  "@game2048Title": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "game2048Title": "2048 · уровень {level}",
+  "@game2048WonHint": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "game2048WonHint": "Есть {target}! Забирайте награду 🎉",
+  "@gamePairsHint": {
+    "placeholders": {
+      "moves": {
+        "type": "int"
+      }
+    }
+  },
+  "gamePairsHint": "Откройте две одинаковые карточки. Ходы: {moves}",
+  "@gamePairsSolvedHint": {
+    "placeholders": {
+      "moves": {
+        "type": "int"
+      }
+    }
+  },
+  "gamePairsSolvedHint": "{moves, plural, one{Все пары найдены за {moves} ход 🎉} few{Все пары найдены за {moves} хода 🎉} other{Все пары найдены за {moves} ходов 🎉}}",
+  "@gamePairsTitle": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "gamePairsTitle": "Память · уровень {level}",
+  "gamePuzzleHint": "Двигайте плитки тапом — соберите фото.",
+  "gamePuzzleSolvedHint": "Собрано! Забирайте награду 🎉",
+  "@gamePuzzleTitle": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "gamePuzzleTitle": "Пазл · уровень {level}",
+  "gameRestart": "Заново",
+  "growthAlreadyAdult": "Мишка уже взрослый",
+  "growthDurationAdult": "дальше без ограничений",
+  "growthDurationCrawling": "~2 дня",
+  "growthDurationFirstSteps": "1–2 дня",
+  "growthDurationGrowing": "до ~14 дня",
+  "growthDurationNewborn": "1 день",
+  "growthGrowUp": "Повзрослеть",
+  "growthMarkNow": "сейчас",
+  "growthMarkPassed": "пройдено",
+  "@growthNewStage": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "growthNewStage": "Новая стадия: {stage}",
+  "growthSizeNow": "Сейчас рост {cm} см, вес {g} г. При рождении — {cm0} см и {g0} г.",
+  "@growthSizeNow": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      },
+      "g": {
+        "type": "String"
+      },
+      "cm0": {
+        "type": "String"
+      },
+      "g0": {
+        "type": "String"
+      }
+    }
+  },
+  "growthTitle": "Рост и развитие",
+  "homeCareButton": "Что будем делать?",
+  "homeDevPanelTooltip": "Дев-панель рига",
+  "@homeScreenNotReady": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeScreenNotReady": "Экран для «{name}» ещё не собран",
+  "ingredientApple": "Яблоко",
+  "ingredientBanana": "Банан",
+  "ingredientBread": "Хлеб",
+  "ingredientButter": "Масло",
+  "ingredientCabbage": "Капуста",
+  "ingredientCandy": "Конфета",
+  "ingredientCarrot": "Морковь",
+  "ingredientCheese": "Сыр",
+  "ingredientChocolate": "Шоколад",
+  "ingredientFish": "Рыба",
+  "ingredientFlour": "Мука",
+  "ingredientGreens": "Зелень",
+  "ingredientHoney": "Мёд",
+  "ingredientMeat": "Мясо",
+  "ingredientOnion": "Лук",
+  "ingredientOrange": "Апельсин",
+  "ingredientPepper": "Перец",
+  "ingredientPotato": "Картофель",
+  "ingredientSalt": "Соль",
+  "ingredientSpices": "Специи",
+  "ingredientSugar": "Сахар",
+  "ingredientTomato": "Помидор",
+  "ingredientYogurt": "Йогурт",
+  "itemAccBow": "Бантик",
+  "itemArmchair": "Кресло",
+  "itemBall": "Мячик",
+  "itemBasket": "Корзина",
+  "itemShelfHouse": "Полка-домик",
+  "itemShelfMoon": "Полка-месяц",
+  "itemArmchairSage": "Кресло мятное",
+  "itemArmchairBean": "Кресло-пуф",
+  "itemArmchairFlower": "Кресло-цветок",
+  "itemArmchairWing": "Кресло с ушками",
+  "itemSwing": "Подвесное кресло",
+  "itemBasketStar": "Корзина со звездой",
+  "itemRugCloud": "Ковёр-облако",
+  "itemRugHeart": "Ковёр с сердцем",
+  "itemPicHeart": "Картина с сердцем",
+  "itemPlantIvy": "Плющ на подставке",
+  "itemPlantBear": "Цветок в кашпо-мишке",
+  "itemFlowersDaisy": "Ромашки в банке",
+  "itemFlowersOrchid": "Орхидея",
+  "itemFlowersEuc": "Эвкалипт в вазе",
+  "itemTeddyCream": "Мишка кремовый",
+  "itemBunny": "Зайчик",
+  "itemBunnyPink": "Зайчик розовый",
+  "itemPyramid": "Пирамидка",
+  "itemDollhouse": "Кукольный домик",
+  "itemHouseFelt": "Домик из фетра",
+  "itemBed": "Кроватка",
+  "itemBotBlue": "Штаны синие",
+  "itemBotSkirt": "Юбка розовая",
+  "itemBotYellow": "Шорты жёлтые",
+  "itemCactus": "Кактус",
+  "itemCar": "Машинка",
+  "itemChair": "Стул",
+  "itemClock": "Часы",
+  "itemCubes": "Кубики",
+  "itemDresser": "Комод",
+  "itemDrum": "Барабан",
+  "itemDuck": "Уточка",
+  "itemFloorCarpet": "Пол ковролин",
+  "itemFloorLight": "Пол светлый",
+  "itemFloorWood": "Пол дерево",
+  "itemGarland": "Гирлянда",
+  "itemHatCap": "Шапка",
+  "itemKite": "Воздушный змей",
+  "itemLamp": "Светильник",
+  "itemOutBear": "Костюм мишки",
+  "itemOutBee": "Костюм пчёлка",
+  "itemOutBerry": "Костюм клубника",
+  "itemOutGlasses": "Комплект очкарик",
+  "itemOutSailor": "Комплект матрос",
+  "itemOutSport": "Комплект спорт",
+  "itemOutWinter": "Комплект зимний",
+  "itemOutYellow": "Комплект жёлтый",
+  "itemPicBear": "Картина мишка",
+  "itemPicForest": "Картина лес",
+  "itemPicMoon": "Картина луна",
+  "itemPillowHeart": "Подушка сердце",
+  "itemPillowStar": "Подушка звезда",
+  "itemPlant": "Растение",
+  "itemPoster": "Постер",
+  "itemPuzzle": "Пазл",
+  "itemRocket": "Ракета",
+  "itemRug": "Ковёр",
+  "itemShelf": "Книжная полка",
+  "itemTable": "Стол",
+  "itemTeddy": "Мишка",
+  "itemTopBlue": "Толстовка голубая",
+  "itemTopRose": "Свитер розовый",
+  "itemTopSage": "Кофта зелёная",
+  "itemTrain": "Паровозик",
+  "itemWallRose": "Обои розовые",
+  "itemWallSage": "Обои зелёные",
+  "itemWallSky": "Обои небо",
+  "itemWardrobe": "Шкаф",
+  "learnAdultLevelsNote": "Уровень пройден — монеты в кошелёк, следующий открывается. Сложность растёт с номером уровня.",
+  "learnAdultLogicSubtitle": "2048 в фирменных цветах",
+  "learnAdultLogicTitle": "Головоломки",
+  "learnAdultMemorySubtitle": "Найдите пары",
+  "learnAdultMemoryTitle": "Память",
+  "learnAdultPuzzleSubtitle": "Соберите фото мишки",
+  "learnAdultPuzzleTitle": "Пазлы",
+  "learnAgeAdultSubtitle": "Пазлы с мишками, 2048, память",
+  "learnAgeAdultTitle": "Взрослый",
+  "learnAgeChildSubtitle": "Цвета и формы, счёт, окружающий мир",
+  "@learnAgeChildTitle": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "learnAgeChildTitle": "Ребёнок до {age}",
+  "learnAgeGateSubtitle": "От возраста зависит набор игр. Поменять можно в любой момент.",
+  "learnAgeGateTitle": "Кто будет играть?",
+  "learnCatColorsTitle": "Цвета и формы",
+  "learnCatCountTitle": "Счёт и простая логика",
+  "@learnCatLocked": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "learnCatLocked": "Откроется на стадии «{stage}»",
+  "learnCatWorldTitle": "Окружающий мир",
+  "@learnCorrectToast": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "learnCorrectToast": "{coins, plural, one{Верно! +{coins} монета} few{Верно! +{coins} монеты} other{Верно! +{coins} монет}}",
+  "learnGamesTitle": "Игры",
+  "@learnLevelDoneToast": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "learnLevelDoneToast": "{coins, plural, one{Уровень пройден! +{coins} монета} few{Уровень пройден! +{coins} монеты} other{Уровень пройден! +{coins} монет}}",
+  "@learnLevelsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learnLevelsCount": "{count, plural, one{{count} уровень} few{{count} уровня} other{{count} уровней}}",
+  "learnQuizHintNote": "Верный ответ — анимация радости и награда.",
+  "@learnQuizTitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "learnQuizTitle": "{category} · уровень {level}",
+  "learnQuizWrongNote": "Не угадали. Попробуйте ещё раз — штрафа нет.",
+  "learnTaskColorsCircle": "Где круг?",
+  "learnTaskColorsGreen": "Где зелёный?",
+  "learnTaskColorsRed": "Где красный?",
+  "learnTaskCountApples": "Сколько яблок? 🍎🍎🍎",
+  "learnTaskCountBigger": "Что больше?",
+  "learnTaskCountNext": "Что дальше? 1, 2, 3…",
+  "learnTaskProgress": "Задание {current} из {total}",
+  "@learnTaskProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "learnTaskWorldApples": "Где растут яблоки?",
+  "learnTaskWorldDay": "Что светит днём?",
+  "learnTaskWorldWater": "Кто живёт в воде?",
+  "learnTitle": "Обучение",
+  "moodDirty": "Чумазый",
+  "moodHappy": "Радостный",
+  "moodHungry": "Голодный",
+  "moodNormal": "Спокойный",
+  "moodSad": "Грустный",
+  "moodSleepy": "Сонный",
+  "nameChanged": "Теперь малыша зовут {name}",
+  "@nameChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameFirstLead": "Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.",
+  "nameFirstSave": "Назвать",
+  "nameFirstLater": "Позже",
+  "nameDialogHint": "Имя питомца",
+  "nameDialogNote": "От {min} до {max} знаков. Буквы, пробел и дефис.",
+  "@nameDialogNote": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameDialogSave": "Сохранить",
+  "nameDialogTitle": "Как зовут малыша?",
+  "nameErrorBlocked": "Такое имя не подойдёт малышу",
+  "nameErrorCharacters": "Только буквы, пробел и дефис",
+  "nameErrorEmpty": "Впишите имя",
+  "nameErrorLong": "Не длиннее {max} знаков",
+  "@nameErrorLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameErrorNetwork": "Не получилось сохранить — попробуйте ещё раз",
+  "nameErrorShort": "Не короче {min} знаков",
+  "@nameErrorShort": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "@navLockReason": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "navLockReason": "Откроется на стадии «{stage}»",
+  "navSectionCatalog": "Мишки",
+  "navSectionHome": "Главная",
+  "navSectionLearning": "Обучение",
+  "navSectionProfile": "Профиль",
+  "navSectionRoom": "Обставить",
+  "navSectionShop": "Магазин",
+  "petDefaultName": "Мой малыш",
+  "profileAgeLabel": "Возраст",
+  "@profileBirthFur": {
+    "placeholders": {
+      "hero": {
+        "type": "String"
+      },
+      "fur": {
+        "type": "String"
+      }
+    }
+  },
+  "profileBirthFur": "{hero} · мех {fur}",
+  "profileHeightLabel": "Рост",
+  "profileHeightValue": "{cm} см",
+  "@profileHeightValue": {
+    "placeholders": {
+      "cm": {
+        "type": "String"
+      }
+    }
+  },
+  "profileHeightStub": "15 см",
+  "profileLinkDiary": "Дневник",
+  "profileLinkDiarySubtitle": "события и фотоальбом",
+  "profileLinkGrowth": "Рост и развитие",
+  "profileLinkGrowthSubtitle": "пять стадий и переходы",
+  "profileLinkSettings": "Настройки",
+  "profileLinkSettingsSubtitle": "язык и уведомления",
+  "profileRename": "Изменить имя",
+  "profileSectionBirth": "Карточка рождения",
+  "profileSectionHistory": "История стадий",
+  "profileSectionLinks": "Разделы",
+  "profileSectionTrait": "Характер",
+  "profileSexBoy": "мальчик",
+  "profileSexGirl": "девочка",
+  "profileSexLabel": "Пол",
+  "profileStageNow": "сейчас",
+  "profileStagePassed": "пройдено",
+  "profileStubBadge": "заглушка",
+  "profileTitle": "Профиль",
+  "profileTraitHowLabel": "Как считается",
+  "profileTraitHowValue": "из действий за 3 дня",
+  "profileTraitNowLabel": "Сейчас",
+  "profileWeightLabel": "Вес",
+  "profileWeightValue": "{g} г",
+  "@profileWeightValue": {
+    "placeholders": {
+      "g": {
+        "type": "String"
+      }
+    }
+  },
+  "profileWeightStub": "180 г",
+  "profileZodiacLabel": "Знак зодиака",
+  "recipeCookie": "Печенье",
+  "recipeFruitSalad": "Фруктовый салат",
+  "recipeMeat": "Мясное блюдо",
+  "recipeSandwich": "Сэндвич",
+  "recipeVeggie": "Овощное блюдо",
+  "@roomItemBought": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roomItemBought": "Куплено: {name}",
+  "@roomItemPlaced": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roomItemPlaced": "{name} поставлено",
+  "@roomItemRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roomItemRemoved": "{name} убрано",
+  "roomKindBath": "Ванная",
+  "roomKindKitchen": "Кухня",
+  "roomKindNursery": "Детская",
+  "roomNotEnoughCoins": "Не хватает монет",
+  "roomOwnedLabel": "Куплено",
+  "roomSelectedLabel": "Выбрано",
+  "roomSheetOwned": "уже есть",
+  "roomSheetRemove": "Убрать из комнаты",
+  "roomSheetReplace": "Заменить на",
+  "roomSlotEmpty": "Свободное место",
+  "roomSlotPut": "Поставить",
+  "roomTitle": "Моя комната",
+  "settingsNotifEvent": "Событие",
+  "settingsNotifGift": "Подарок",
+  "settingsNotifHungry": "Голоден",
+  "settingsNotifPlay": "Хочет играть",
+  "settingsNotifShopNews": "Новинки магазина",
+  "settingsNotifSleep": "Пора спать",
+  "settingsNotifStage": "Новая стадия",
+  "settingsNotifTask": "Задание",
+  "settingsQuietHours": "Тихие часы 22:00 — 8:00",
+  "legalPrivacy": "Политика конфиденциальности",
+  "legalTerms": "Условия использования",
+  "settingsSectionAccount": "Аккаунт",
+  "settingsSectionLanguage": "Язык",
+  "settingsSectionSound": "Звук",
+  "settingsSounds": "Звуки в игре",
+  "settingsSectionLegal": "Правовые документы",
+  "settingsSectionNotifications": "Уведомления",
+  "settingsSignOut": "Выйти",
+  "settingsSignOutConfirmBody": "Прогресс останется на сервере и вернётся при следующем входе.",
+  "settingsSignOutConfirmTitle": "Выйти из аккаунта?",
+  "settingsSignOutHint": "Вернёт к выбору способа входа",
+  "settingsTitle": "Настройки",
+  "settingsVersion": "Версия",
+  "shopGroupLater": "Пригодится, когда подрастёт",
+  "shopGroupNow": "Малышу сейчас",
+  "shopNotEnoughCoins": "Не хватает монет",
+  "furnishPickItem": "Выбери вещь",
+  "furnishPickSlot": "Теперь выбери место",
+  "furnishDone": "Готово",
+  "furnishBuyMore": "Купить ещё",
+  "furnishPlaced": "{name} на месте",
+  "furnishRemoved": "{name} убрали",
+  "furnishNoSlot": "Для этой вещи здесь нет места",
+  "@furnishPlaced": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@furnishRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopZoom": "Рассмотреть",
+  "shopOwnedLabel": "Куплено",
+  "shopTabClothes": "Одежда",
+  "shopTabDecor": "Декор",
+  "shopTabFurniture": "Мебель",
+  "shopTabToys": "Игрушки",
+  "shopTitle": "Магазин",
+  "signInAlipay": "Войти через Alipay",
+  "signInApple": "Войти через Apple",
+  "signInGoogle": "Войти через Google",
+  "signInLegalPrefix": "Продолжая, вы принимаете ",
+  "signInLegalTermsLink": "условия использования",
+  "signInLegalAnd": " и ",
+  "signInLegalPrivacyLink": "политику конфиденциальности",
+  "signInPrompt": "Выберите способ входа",
+  "signInQq": "Войти через QQ",
+  "signInSkip": "Пропустить и посмотреть приложение",
+  "signInSoonBody": "Вход через {method} появится позже. Пока зарегистрируйтесь или войдите по почте.",
+  "@signInSoonBody": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "signInSoonTitle": "Данная функция ещё в разработке",
+  "signInTagline": "Плюшевый малыш, который растёт вместе с тобой",
+  "signInWeChat": "Войти через WeChat",
+  "skinJoy": "JOY",
+  "skinSlow": "SLOW",
+  "stageAdult": "Взрослый",
+  "stageCrawling": "Ползающий малыш",
+  "stageFirstSteps": "Первые шаги",
+  "stageGrowing": "Подрастающий",
+  "stageNewborn": "Новорождённый",
+  "statsFood": "Еда",
+  "statsHygiene": "Гигиена",
+  "statsLove": "Любовь",
+  "statsShow": "Показать уход",
+  "statsHide": "Свернуть уход",
+  "statsPlay": "Игра",
+  "statsSleep": "Сон",
+  "traitActive": "Активный",
+  "traitAffectionate": "Ласковый",
+  "traitCalm": "Спокойный",
+  "traitCurious": "Любознательный",
+  "traitIndependent": "Самостоятельный",
+  "traitReserved": "Замкнутый",
+  "zodiacAquarius": "Водолей",
+  "zodiacAries": "Овен",
+  "zodiacCancer": "Рак",
+  "zodiacCapricorn": "Козерог",
+  "zodiacGemini": "Близнецы",
+  "zodiacInfluenceAquarius": "Выдумщик и вольнодум: удивляет и находит свои пути.",
+  "zodiacInfluenceAries": "Смелый и порывистый: с первых дней норовит всё попробовать сам.",
+  "zodiacInfluenceCancer": "Нежный домосед: расцветает от заботы и долгих объятий.",
+  "zodiacInfluenceCapricorn": "Терпеливый и упорный: маленькими шагами добирается до большого.",
+  "zodiacInfluenceGemini": "Любопытный и общительный: тянется ко всему новому обеими лапами.",
+  "zodiacInfluenceLeo": "Тёплый и артистичный: обожает внимание и щедро отвечает лаской.",
+  "zodiacInfluenceLibra": "Дружелюбный миротворец: ценит красоту, компанию и мягкий тон.",
+  "zodiacInfluencePisces": "Мечтательный и чуткий: тонко чувствует твоё настроение.",
+  "zodiacInfluenceSagittarius": "Весёлый искатель приключений: игры и прогулки — его стихия.",
+  "zodiacInfluenceScorpio": "Глубокий и преданный: привязывается всерьёз и надолго.",
+  "zodiacInfluenceTaurus": "Спокойный и основательный: любит уют, вкусную еду и свой распорядок.",
+  "zodiacInfluenceVirgo": "Внимательный и аккуратный: замечает мелочи и любит порядок.",
+  "zodiacLeo": "Лев",
+  "zodiacLibra": "Весы",
+  "zodiacPisces": "Рыбы",
+  "zodiacSagittarius": "Стрелец",
+  "zodiacScorpio": "Скорпион",
+  "zodiacTaurus": "Телец",
+  "zodiacVirgo": "Дева",
+  "shopGroupAll": "Все",
+  "shopGroupBeds": "Кроватки",
+  "shopGroupChairs": "Кресла",
+  "shopGroupDressers": "Комоды",
+  "shopGroupTables": "Столики",
+  "shopGroupBaskets": "Корзины для игрушек",
+  "shopGroupShelves": "Настенные полки",
+  "shopGroupLamps": "Светильники",
+  "shopGroupRugs": "Ковры",
+  "shopGroupPictures": "Картины",
+  "shopGroupPlants": "Растения",
+  "shopGroupFlowers": "Цветы",
+  "shopGroupPillows": "Подушки",
+  "shopGroupWalls": "Обои",
+  "shopGroupFloors": "Полы",
+  "shopGroupPlush": "Мягкие игрушки",
+  "shopGroupHouses": "Домики",
+  "shopGroupToys": "Игрушки",
+  "shopGroupOutfits": "Комплекты",
+  "shopGroupTops": "Верх",
+  "shopGroupBottoms": "Низ",
+  "shopGroupHats": "Головные уборы",
+  "shopGroupShoes": "Обувь",
+  "shopGroupExtras": "Аксессуары",
+  "shopGroupSeats": "Стулья",
+  "shopGroupWardrobes": "Шкафы",
+  "shopGroupClocks": "Часы",
+  "shopGroupGarlands": "Гирлянды",
+  "@wakeAlarmLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmLabel": "Проснёмся вместе с {name}",
+  "@wakeAlarmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmBody": "{name} уже не спит и ждёт тебя",
+  "wakeAlarmStop": "Проснулись",
+  "@wakeAlarmClock": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmClock": "Будильник на {time} стоит в «Часах» телефона",
+  "@wakeAlarmClockOld": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmClockOld": "Прежний, на {time}, остался в «Часах» — выключите его там",
+  "wakeAlarmOpenClock": "Открыть часы",
+  "@wakeAlarmSystem": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmSystem": "Будильник на {time} поставлен. Зазвонит и в беззвучном режиме",
+  "@wakeAlarmNotification": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmNotification": "Разбудим в {time} уведомлением со звуком. В беззвучном режиме будет только вибрация",
+  "@wakeAlarmPreview": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "wakeAlarmPreview": "На телефоне будильник на {time} встанет в «Часы» Android или зазвонит как системный на iPhone. В этой версии для просмотра он не звонит",
+  "wakeAlarmDenied": "Без разрешения будильник не поставить. Включите уведомления для Teddy Tales в настройках телефона",
+  "wakeAlarmFailed": "Будильник поставить не удалось. Попробуйте ещё раз",
+  "signInEmail": "Регистрация по почте",
+  "emailTitle": "Почта",
+  "emailTabSignUp": "Регистрация",
+  "emailTabSignIn": "Вход",
+  "emailField": "Электронная почта",
+  "emailPassword": "Пароль",
+  "emailPasswordHint": "Не короче {min} знаков",
+  "@emailPasswordHint": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "emailSubmitSignUp": "Зарегистрироваться",
+  "emailSubmitSignIn": "Войти",
+  "emailLeadSignUp": "Малыш появится на свет в день регистрации — от этого дня считаются его возраст и знак зодиака.",
+  "emailLeadSignIn": "Войдите — мишка, кошелёк и покупки вернутся на любом телефоне.",
+  "emailErrorInvalid": "Проверьте адрес почты",
+  "emailErrorPassword": "Пароль не короче {min} знаков",
+  "@emailErrorPassword": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "emailErrorExists": "Эта почта уже зарегистрирована — войдите",
+  "emailErrorCredentials": "Неверная почта или пароль",
+  "emailErrorNotConfirmed": "Почта не подтверждена — введите код из письма",
+  "emailErrorDisabled": "Регистрация по почте пока выключена",
+  "emailErrorRateLimit": "Слишком много писем подряд — попробуйте позже",
+  "emailErrorNetwork": "Нет связи с сервером — попробуйте ещё раз",
+  "emailErrorUnknown": "Не получилось — попробуйте ещё раз",
+  "profileBirthdayLabel": "День рождения",
+  "profileSectionAccount": "Личный кабинет",
+  "profileAccountLogin": "Вход",
+  "profileAccountGuest": "Без регистрации",
+  "profileAccountUnconfirmed": "{email} · не подтверждена",
+  "@profileAccountUnconfirmed": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "profileAccountRegistered": "Зарегистрирован",
+  "profileAccountWallet": "Кошелёк",
+  "emailCodeTitle": "Введите код из письма",
+  "emailCodeBody": "Мы отправили код из {length} цифр на {email}. Если письма нет, загляните в «Спам».",
+  "@emailCodeBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      },
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "emailCodeField": "Код",
+  "emailCodeSubmit": "Подтвердить",
+  "emailCodeResend": "Отправить код ещё раз",
+  "emailCodeResendIn": "Отправить ещё раз через {seconds} с",
+  "@emailCodeResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "emailCodeSent": "Новый код отправлен",
+  "emailCodeChangeEmail": "Изменить почту",
+  "emailEnterCode": "Ввести код из письма",
+  "emailErrorCode": "Код неверный или устарел — запросите новый",
+  "buyConfirmTitle": "Подтвердите покупку",
+  "buyConfirmBalance": "На счету {coins} · останется {left}",
+  "@buyConfirmBalance": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "buyConfirmAction": "Купить",
+  "buyConfirmCancel": "Отмена",
+  "buyNotEnoughTitle": "Не хватает монет",
+  "buyNotEnough": "{missing, plural, one{Не хватает {missing} монеты} other{Не хватает {missing} монет}}",
+  "@buyNotEnough": {
+    "placeholders": {
+      "missing": {
+        "type": "int"
+      }
+    }
+  },
+  "buyNotEnoughOk": "Понятно",
+  "welcomeBackGrandma": "{name} гостил у бабушки, пока тебя не было: сыт, умыт и очень соскучился. Бабушка передала монетки в подарок!",
+  "@welcomeBackGrandma": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyTitle": "Сегодня",
+  "dailyGiftClaimed": "Подарок забран — завтра будет следующий",
+  "dailyGiftFailed": "Не получилось забрать подарок. Проверьте связь",
+  "dailyTasksTitle": "Задания дня",
+  "dailyWeeklyDone": "Задание недели выполнено!",
+  "dailyOffline": "Подарки и задания появятся, когда будет связь с сервером",
+  "dailyTaskPet": "Погладь мишку",
+  "dailyTaskPlay": "Поиграй с мишкой",
+  "dailyTaskWash": "Искупай мишку",
+  "dailyTaskFeed": "Накорми готовым блюдом",
+  "dailyTaskCook": "Приготовь блюдо",
+  "dailyTaskLearn": "Пройди урок",
+  "dailyTaskMealOnTime": "Покорми вовремя: завтрак, обед или ужин",
+  "dailyTaskBedtime": "Уложи спать вовремя (20:00–23:00)",
+  "profileLinkDaily": "Подарок и задания дня",
+  "profileLinkDailySubtitle": "календарь на 7 дней и задания",
+  "dailyGiftDay": "День {n}",
+  "@dailyGiftDay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyGiftClaim": "Забрать +{coins}",
+  "@dailyGiftClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyWeekly": "Задание недели: все задания дня в {target} днях — {done} из {target}, +{coins}",
+  "@dailyWeekly": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "stageUpCelebrate": "{name} подрос! Теперь — «{stage}». Подарок: монетки",
+  "@stageUpCelebrate": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "giftEnvelopeTap": "Нажми на конверт, чтобы открыть",
+  "giftBoxTap": "Нажми на коробку — там сюрприз!",
+  "giftBoxDay7": "ДЕНЬ 7 · БОЛЬШОЙ ПОДАРОК",
+  "giftCollect": "Забрать",
+  "giftCoinsCaption": "+{coins} монет!",
+  "@giftCoinsCaption": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "shareAction": "Поделиться",
+  "shareClose": "Закрыть",
+  "shareMeet": "Знакомьтесь: {name}",
+  "@shareMeet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareGrown": "{name} подрос!",
+  "@shareGrown": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareBirthday": "День рождения {date}",
+  "@shareBirthday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shareText": "Мой мишка {name} в TeddyTales",
+  "@shareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailed": "Не получилось поделиться. Попробуй ещё раз.",
+  "inviteLead": "Друг ставит TeddyTales и вводит твой код — вам обоим по {coins} монет.",
+  "@inviteLead": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteYourCode": "Твой код",
+  "inviteCopied": "Код скопирован",
+  "inviteShareText": "Заведи мишку в TeddyTales! Введи мой код {code} в профиле — нам обоим по {coins} монет. {link}",
+  "@inviteShareText": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "coins": {
+        "type": "int"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteHaveCode": "Есть код друга?",
+  "inviteRedeem": "Ввести",
+  "inviteDone": "+{coins} монет — тебе и другу!",
+  "@inviteDone": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteNotFound": "Такого кода нет. Проверь буквы.",
+  "inviteOwn": "Это твой собственный код.",
+  "inviteUsed": "Код друга уже введён.",
+  "inviteLate": "Код друга вводят в первую неделю.",
+  "inviteFull": "У друга закончились приглашения.",
+  "inviteOffline": "Нет связи с сервером. Попробуй позже.",
+  "dailyStreakBroken": "Вчера пропущен день — серия прервалась.",
+  "dailyStreakRestore": "Вернуть за {price}",
+  "@dailyStreakRestore": {
+    "placeholders": {
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyStreakRestored": "Серия вернулась!",
+  "dailyStreakNoCoins": "Не хватает монет",
+  "sleepCountdownLabel": "Засыпает",
+  "inviteStatsFriends": "друзей пришло",
+  "inviteStatsEarned": "монет получено",
+  "inviteNextBonus": "Ещё {left} — и бонус +{bonus}",
+  "@inviteNextBonus": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      },
+      "bonus": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteLadderDone": "Все бонусы за друзей получены!",
+  "friendCodeTitle": "Тебя пригласил друг?",
+  "friendCodeFound": "Нашли код друга {code}. Вам обоим — по {coins} монет.",
+  "@friendCodeFound": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeAsk": "Введи код друга — вам обоим по {coins} монет.",
+  "@friendCodeAsk": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeClaim": "Получить +{coins}",
+  "@friendCodeClaim": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "friendCodeSkip": "Пропустить",
+  "rewardFromFriend": "Подарок от друга — и другу тоже!",
+  "rewardInviter": "Друг пришёл по твоему коду!",
+  "sleepAwayTitle": "Мишка спит",
+  "sleepAwayLead": "Сладко посапывает в спальне.",
+  "sleepAwayWakeBreakfast": "Разбудить и позвать завтракать",
+  "sleepAwayWakeLunch": "Разбудить и позвать обедать",
+  "sleepAwayWakeDinner": "Разбудить и позвать ужинать",
+  "sleepAwayWakeSnack": "Разбудить и позвать перекусить",
+  "sleepAwayWakePlay": "Разбудить и позвать играть",
+  "sleepAwayWakeBath": "Разбудить и позвать купаться",
+  "sleepAwayLetSleep": "Пусть спит",
+  "sleepAwayNight": "Сейчас ночь — мишке лучше поспать.",
+  "sleepAwayTired": "Ещё не выспался — Сон {pct} %",
+  "@sleepAwayTired": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "birthIntroTitle": "Родился малыш!",
+  "birthIntroVideo": "Видео рождения",
+  "birthIntroVideoSoon": "скоро здесь",
+  "birthIntroSex": "Пол",
+  "birthIntroTrait": "Первая черта",
+  "birthIntroName": "Дать имя",
+  "notifyDenied": "Телефон не разрешил уведомления. Включите их в настройках телефона → TeddyTales.",
+  "notifyAskTitle": "Напоминать о малыше?",
+  "notifyAskLead": "{name} даст знать, когда проголодается, захочет играть или пора спать. Не чаще нужного и не в тихие часы.",
+  "@notifyAskLead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifyAskYes": "Да, напоминать",
+  "notifyAskLater": "Не сейчас",
+  "notifyAskLaterHint": "Включить можно в настройках → Уведомления.",
+  "deleteAccount": "Удалить аккаунт",
+  "deleteAccountHint": "Мишка, монеты и прогресс удалятся навсегда",
+  "deleteAccountTitle": "Удалить аккаунт?",
+  "deleteAccountLead": "{name}, монеты, вещи и весь прогресс удалятся с сервера навсегда. Вернуть их будет нельзя.",
+  "@deleteAccountLead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirm": "Удалить навсегда",
+  "deleteAccountCancel": "Оставить",
+  "deleteAccountFailed": "Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.",
+  "signInAppleFailed": "Не получилось войти через Apple. Проверьте интернет и попробуйте ещё раз.",
+  "linkApple": "Сохранить мишку через Apple",
+  "linkAppleHint": "Вход с любого iPhone, мишка не потеряется",
+  "linkAppleDone": "Готово: мишка сохранён в вашем Apple ID.",
+  "restorePurchases": "Восстановить покупки",
+  "restorePurchasesHint": "Вернуть купленное в App Store или Google Play",
+  "restorePurchasesStarted": "Проверяем покупки…",
+  "kitchenBottle": "Бутылочка",
+  "kitchenBottleSoon": "Бутылочка с молоком — скоро: ждём анимацию малыша",
+  "bathActionDiaper": "Подгузник",
+  "bathDiaperSoon": "Смена подгузника — скоро: ждём анимацию малыша"
+}

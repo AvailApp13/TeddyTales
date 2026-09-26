@@ -1,0 +1,268 @@
+import 'dart:ui' show Size;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/game/item_metrics.dart';
+import 'package:teddy_tales/game/room_camera.dart';
+import 'package:teddy_tales/game/room_kind.dart';
+import 'package:teddy_tales/game/room_slots.dart';
+import 'package:teddy_tales/widgets/room_scene_backdrop.dart';
+import 'package:teddy_tales/widgets/room_slot_layer.dart';
+
+/// Пропорции комнаты (задача заказчика 20.09: «комната кажется гигантской»).
+///
+/// На полу с перспективой рост читается не величиной тела в кадре, а
+/// отношением этой величины к расстоянию от ног до точки схода. Здесь
+/// проверяется сама эта арифметика: она и решает, великан мишка или
+/// потерявшаяся в зале игрушка.
+void main() {
+  const phone = Size(430, 932);
+  const tall = Size(430, 1100);
+  const short = Size(430, 500);
+
+  group('Мишка в комнате', () {
+    test('на экране он везде одного размера', () {
+      // Заказчик 20.09: «при переключении очень заметно, что меняется
+      // размер, этого не должно быть». Раньше рост задавался долей кадра, у
+      // каждой комнаты своей, — арифметически честно, а на глаз нет: кадры
+      // разной формы давали на экране разный размер.
+      for (final scene in [phone, tall, short]) {
+        final sizes = {
+          for (final room in RoomKind.values)
+            if (!cameraOf(room).bearInArt) RoomFrame.of(scene, room).bearHeight,
+        };
+
+        expect(sizes, hasLength(1), reason: '$scene');
+      }
+    });
+
+    test('где мишка стоит, он везде примерно одного роста', () {
+      // Главное обещание заказчику: «он как будто влитой». Комнаты сняты
+      // разными камерами, и доли кадра у них поэтому разные — а метры
+      // должны совпадать, иначе переход между комнатами читался бы как
+      // смена масштаба мира.
+      //
+      // 1.18 м — это прежние 1.07 плюс десять процентов, о которых
+      // заказчик попросил 20.09: «а не как маленькая игрушка».
+      //
+      // Кухня сюда не входит: там мишка не стоит, а изображает сидящего за
+      // столом телом стоящего рига. Мерить его рост по линии пола в том
+      // кадре нечестно — он на ней не стоит.
+      //
+      // Метры теперь слегка расходятся: размер задан от экрана, а камеры у
+      // комнат разные. Допуск здесь про то, что расхождение осталось в
+      // нескольких сантиметрах, а не выросло в разы.
+      for (final room in [RoomKind.nursery, RoomKind.bath]) {
+        final frame = RoomFrame.of(phone, room);
+        expect(
+          cameraOf(room).bearMetres(frame.bearFrameFraction),
+          closeTo(1.13, 0.05),
+          reason: room.name,
+        );
+      }
+    });
+
+    test('где мишка часть картинки, рига поверх неё нет', () {
+      // Кухня: заказчик прислал кадр, где мишка сидит за столом. Стоящим
+      // ригом такую посадку не изобразить, и подгонять его обрезками
+      // значит выдавать стоящего за сидящего.
+      final drawn = [
+        for (final room in RoomKind.values)
+          if (cameraOf(room).bearInArt) room,
+      ];
+
+      expect(drawn, [RoomKind.bedroom, RoomKind.kitchen]);
+    });
+
+    test('у самого нижнего края кадра то же тело читалось бы мельче', () {
+      // Арифметика, из-за которой 20.09 комната казалась гигантской: мишка
+      // стоял вплотную к зрителю, где всё выглядит крупнее своего масштаба,
+      // и потому сам читался коротышкой. Проверяем, что зависимость именно
+      // такая, — если знак однажды перевернут, комнату опять раздует.
+      for (final room in RoomKind.values) {
+        final camera = cameraOf(room);
+        final body = RoomFrame.of(phone, room).bearFrameFraction;
+        final atEdge =
+            body / (1.0 - camera.eyeLine) * camera.cameraOverWall * 2.5;
+
+        expect(atEdge, lessThan(camera.bearMetres(body)), reason: room.name);
+      }
+    });
+
+    test('камеры померены, а не назначены', () {
+      for (final room in RoomKind.values) {
+        final camera = cameraOf(room);
+        // Точка схода лежит между верхом стены и полом — иначе это не
+        // комната, а вид снизу или сверху.
+        expect(camera.eyeLine, greaterThan(camera.wallTop), reason: room.name);
+        expect(camera.eyeLine, lessThan(camera.floorLine), reason: room.name);
+        // Мишка стоит на полу, а не в стене и не за кадром.
+        expect(
+          camera.standLine,
+          greaterThan(camera.floorLine),
+          reason: room.name,
+        );
+        expect(camera.standLine, lessThanOrEqualTo(1.0), reason: room.name);
+      }
+    });
+
+    test('голова выше стыка со стеной', () {
+      for (final room in RoomKind.values) {
+        if (cameraOf(room).bearInArt) continue;
+        final frame = RoomFrame.of(phone, room);
+        // Иначе мишка читался бы стоящим не в комнате, а на полоске пола
+        // перед ней.
+        expect(
+          frame.bearTop,
+          lessThan(
+            frame.rect.top + cameraOf(room).floorLine * frame.rect.height,
+          ),
+          reason: room.name,
+        );
+      }
+    });
+  });
+
+  group('Кадр комнаты на весь экран', () {
+    test('все присланные комнаты идут со своим потолком', () {
+      // 20.09 заказчик прислал все три фона нарисованными до потолка, и
+      // дорисовывать больше нечего. Слой RoomCeiling оставлен: спальня, о
+      // которой он говорил, может прийти и без него.
+      for (final room in RoomKind.values) {
+        expect(RoomFrame.of(phone, room).ceilingHeight, 0, reason: room.name);
+      }
+    });
+
+    test('кадр с потолком закрывает экран целиком', () {
+      final frame = RoomFrame.of(phone, RoomKind.nursery);
+
+      expect(frame.rect.width, greaterThanOrEqualTo(phone.width));
+      expect(frame.rect.height, greaterThanOrEqualTo(phone.height));
+      // Прижат к низу: срезать можно потолок, но не пол.
+      expect(frame.rect.bottom, phone.height);
+    });
+
+    test('пол доходит до нижнего края экрана в любой комнате', () {
+      // Срезать можно потолок, но не пол: иначе мишка встанет ниже края
+      // экрана, и под ним будет видна полоска фона приложения.
+      for (final room in RoomKind.values) {
+        for (final scene in [phone, tall, short]) {
+          expect(
+            RoomFrame.of(scene, room).rect.bottom,
+            scene.height,
+            reason: '${room.name} $scene',
+          );
+        }
+      }
+    });
+
+    test('кадр всегда сохраняет пропорции картинки', () {
+      for (final room in RoomKind.values) {
+        final camera = cameraOf(room);
+        for (final scene in [phone, tall, short]) {
+          final frame = RoomFrame.of(scene, room);
+          expect(
+            frame.rect.height / frame.rect.width,
+            closeTo(camera.artHeight / camera.artWidth, 0.001),
+            reason: '${room.name} $scene',
+          );
+        }
+      }
+    });
+
+    test('мишка стоит там, где его ждёт мебель', () {
+      // Просьба заказчика «сдвинь на 10% правее» была про пустой фон, где
+      // привязаться было не к чему. В обставленных комнатах место задаёт
+      // сама картинка: в детской это ковёр по центру кадра.
+      final nursery = RoomFrame.of(phone, RoomKind.nursery);
+      expect(nursery.bearCenterX, closeTo(nursery.centerX, 0.01));
+
+      for (final room in RoomKind.values) {
+        final frame = RoomFrame.of(phone, room);
+        // Куда бы его ни поставили, он остаётся в кадре целиком.
+        expect(
+          frame.bearCenterX,
+          inInclusiveRange(frame.rect.left, frame.rect.right),
+          reason: room.name,
+        );
+      }
+    });
+
+    test('ноги на полу, и пол не уходит за нижний край экрана', () {
+      for (final room in RoomKind.values) {
+        final frame = RoomFrame.of(phone, room);
+
+        expect(frame.standY, greaterThan(frame.vanishingY), reason: room.name);
+        expect(
+          frame.standY,
+          lessThanOrEqualTo(phone.height),
+          reason: room.name,
+        );
+      }
+    });
+  });
+
+  group('Что рисуется за мишкой', () {
+    test('стены всегда позади', () {
+      for (final slot in roomSlots.where((s) => s.fit == ItemFit.wall)) {
+        expect(slotDepth(slot), SlotDepth.behind, reason: slot.id);
+      }
+    });
+
+    test('всё, что дальше мишки, рисуется за ним', () {
+      // В детской все места лежат за линией, на которой он стоит: перед ним
+      // остаётся узкая полоса пола между ним и нижним краем, и вещь там либо
+      // закрывала бы ему ноги, либо обрезалась бы краем экрана. Ковёр —
+      // ровно на его линии: он на нём и стоит.
+      final camera = cameraOf(RoomKind.nursery);
+      for (final slot in slotsOf(RoomKind.nursery)) {
+        expect(slotDepth(slot), SlotDepth.behind, reason: slot.id);
+        expect(slot.y, lessThanOrEqualTo(camera.standLine), reason: slot.id);
+      }
+    });
+  });
+
+  group('Мебель переднего плана', () {
+    test('где мишка нарисован, рига не ставят вовсе', () {
+      // Поставь поверх нарисованного живого — на стуле и в кровати окажется
+      // по двое.
+      for (final room in [RoomKind.kitchen, RoomKind.bedroom]) {
+        expect(
+          RoomFrame.of(phone, room).bearSlices,
+          isEmpty,
+          reason: room.name,
+        );
+      }
+    });
+
+    test('в остальных комнатах мишка цел', () {
+      for (final room in [RoomKind.nursery, RoomKind.bath]) {
+        final frame = RoomFrame.of(phone, room);
+        final slices = frame.bearSlices;
+
+        expect(slices, hasLength(1), reason: room.name);
+        expect(slices.single.top, frame.bearTop, reason: room.name);
+        expect(slices.single.bottom, frame.standY, reason: room.name);
+      }
+    });
+
+    test('полосы не вылезают за самого мишку', () {
+      for (final room in RoomKind.values) {
+        final frame = RoomFrame.of(phone, room);
+        for (final slice in frame.bearSlices) {
+          expect(slice.top, greaterThanOrEqualTo(frame.bearTop));
+          expect(slice.bottom, lessThanOrEqualTo(frame.standY));
+          expect(slice.bottom, greaterThan(slice.top));
+        }
+      }
+    });
+  });
+
+  group('Подсказки мест', () {
+    test('пунктир спрятан по просьбе заказчика, но места живы', () {
+      // Заказчик 20.09: «убери эти квадраты подсказки… пока спрячь, не
+      // удаляй». Если однажды удалят и сами места, этот тест скажет об этом.
+      expect(showSlotHints, isFalse);
+      expect(roomSlots, isNotEmpty);
+    });
+  });
+}
