@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
@@ -7,6 +9,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'backend/apple_sign_in.dart';
 import 'backend/bootstrap.dart';
+import 'backend/store_purchases.dart';
+import 'backend/supabase_store.dart';
 import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
@@ -309,7 +313,31 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         !auth.hasApple) {
       _game.onLinkApple = auth.signInWithApple;
     }
+    _startStore();
     WidgetsBinding.instance.addObserver(_lifecycle);
+  }
+
+  /// Покупки за деньги (КП 11.3). Только с сервером и в приложении из
+  /// магазина; пока товаров на сервере нет — «Восстановить покупки» не
+  /// появляется. ⚠ Ждёт списка премиальных предметов и цен.
+  StorePurchases? _purchases;
+
+  void _startStore() {
+    final store = widget.boot.store;
+    if (kIsWeb || !widget.boot.isOnline || store is! SupabaseStore) return;
+    final purchases = StorePurchases(
+      verify: store.verifyStorePurchase,
+      catalog: store.storeProducts,
+      onGranted: (grant) =>
+          _game.applyStoreGrant(item: grant.item, balance: grant.balance),
+    );
+    _purchases = purchases;
+    purchases.products.addListener(() {
+      _game.onRestorePurchases = purchases.products.value.isEmpty
+          ? null
+          : purchases.restore;
+    });
+    unawaited(purchases.start());
   }
 
   bool _demoRedeemed = false;
@@ -394,6 +422,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   void dispose() {
     WidgetsBinding.instance.removeObserver(_lifecycle);
     _sync.dispose();
+    _purchases?.dispose();
     _game.dispose();
     _bear.dispose();
     super.dispose();

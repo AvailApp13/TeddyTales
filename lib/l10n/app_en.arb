@@ -760,5 +760,8 @@
   "signInAppleFailed": "Could not sign in with Apple. Check your connection and try again.",
   "linkApple": "Save your bear with Apple",
   "linkAppleHint": "Sign in on any iPhone, your bear stays safe",
-  "linkAppleDone": "Done: your bear is saved to your Apple ID."
+  "linkAppleDone": "Done: your bear is saved to your Apple ID.",
+  "restorePurchases": "Restore purchases",
+  "restorePurchasesHint": "Bring back what you bought in the App Store or Google Play",
+  "restorePurchasesStarted": "Checking your purchases…"
 }

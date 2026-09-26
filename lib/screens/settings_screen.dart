@@ -216,6 +216,37 @@ class SettingsScreen extends StatelessWidget {
                                   onTap: () =>
                                       confirmSignOut(context, onSignOut),
                                 ),
+                                if (game.onRestorePurchases
+                                    case final restore?) ...[
+                                  const Divider(height: 1),
+                                  ListTile(
+                                    key: const ValueKey('restore-purchases'),
+                                    title: Text(
+                                      l10n.restorePurchases,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    subtitle: Text(l10n.restorePurchasesHint),
+                                    trailing: const Icon(
+                                      Icons.restore_rounded,
+                                      size: 20,
+                                    ),
+                                    onTap: () {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.restorePurchasesStarted,
+                                          ),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                      restore();
+                                    },
+                                  ),
+                                ],
                                 if (game.onLinkApple != null) ...[
                                   const Divider(height: 1),
                                   ListTile(

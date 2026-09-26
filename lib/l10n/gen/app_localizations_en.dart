@@ -2232,4 +2232,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkAppleDone => 'Done: your bear is saved to your Apple ID.';
+
+  @override
+  String get restorePurchases => 'Restore purchases';
+
+  @override
+  String get restorePurchasesHint =>
+      'Bring back what you bought in the App Store or Google Play';
+
+  @override
+  String get restorePurchasesStarted => 'Checking your purchases…';
 }

@@ -2127,4 +2127,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get linkAppleDone => '完成：小熊已保存到你的 Apple ID。';
+
+  @override
+  String get restorePurchases => '恢复购买';
+
+  @override
+  String get restorePurchasesHint => '找回在 App Store 或 Google Play 购买的物品';
+
+  @override
+  String get restorePurchasesStarted => '正在检查购买记录…';
 }

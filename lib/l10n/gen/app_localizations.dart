@@ -3951,6 +3951,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Готово: мишка сохранён в вашем Apple ID.'**
   String get linkAppleDone;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановить покупки'**
+  String get restorePurchases;
+
+  /// No description provided for @restorePurchasesHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть купленное в App Store или Google Play'**
+  String get restorePurchasesHint;
+
+  /// No description provided for @restorePurchasesStarted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверяем покупки…'**
+  String get restorePurchasesStarted;
 }
 
 class _AppLocalizationsDelegate

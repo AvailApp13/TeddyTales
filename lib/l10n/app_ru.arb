@@ -1348,5 +1348,8 @@
   "signInAppleFailed": "Не получилось войти через Apple. Проверьте интернет и попробуйте ещё раз.",
   "linkApple": "Сохранить мишку через Apple",
   "linkAppleHint": "Вход с любого iPhone, мишка не потеряется",
-  "linkAppleDone": "Готово: мишка сохранён в вашем Apple ID."
+  "linkAppleDone": "Готово: мишка сохранён в вашем Apple ID.",
+  "restorePurchases": "Восстановить покупки",
+  "restorePurchasesHint": "Вернуть купленное в App Store или Google Play",
+  "restorePurchasesStarted": "Проверяем покупки…"
 }

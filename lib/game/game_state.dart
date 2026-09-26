@@ -463,6 +463,20 @@ class GameState extends ChangeNotifier {
   /// нет: Apple не настроена, нет сервера или Apple уже привязана.
   Future<bool> Function()? onLinkApple;
 
+  /// «Восстановить покупки» (КП 11.3). `null` — за деньги ничего не
+  /// продаётся (список товаров на сервере пуст), пункта нет.
+  Future<void> Function()? onRestorePurchases;
+
+  /// Сервер выдал покупку из магазина: предмет — в вещи, баланс — с
+  /// сервера.
+  void applyStoreGrant({String? item, int? balance}) {
+    if (item != null) _owned.add(item);
+    if (balance != null) {
+      _profile = _profile.copyWith(coins: balance);
+    }
+    notifyListeners();
+  }
+
   /// Спросить у телефона разрешение на уведомления. Ставит хозяин
   /// приложения; `null` — уведомлений на этой платформе нет (веб, тесты).
   Future<bool> Function()? onAskNotifications;

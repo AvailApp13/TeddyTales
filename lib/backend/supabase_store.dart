@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'apple_sign_in.dart';
+import 'store_purchases.dart';
 
 import '../bear/bear_action.dart';
 import 'email_auth.dart';
@@ -108,6 +109,32 @@ class SupabaseStore implements ProgressStore, AccountAuth {
     return response.session != null
         ? SignUpOutcome.signedIn
         : SignUpOutcome.confirmEmail;
+  }
+
+  /// Что продаётся за деньги (КП 11.3, миграция 0026). Пусто — ничего.
+  Future<Map<String, StoreProduct>> storeProducts() async {
+    final raw = await _client.rpc<dynamic>('store_products');
+    if (raw is! Map) return const {};
+    return {
+      for (final e in raw.entries)
+        if (e.value is Map)
+          '${e.key}': StoreProduct.fromJson(
+            Map<String, dynamic>.from(e.value as Map),
+          ),
+    };
+  }
+
+  /// Чек магазина → функция verify-purchase → выданная покупка.
+  Future<StoreGrant> verifyStorePurchase(StoreReceipt receipt) async {
+    final response = await _client.functions.invoke(
+      'verify-purchase',
+      body: receipt.toJson(),
+    );
+    final data = response.data;
+    if (response.status != 200 || data is! Map) {
+      throw ProgressStoreException('Чек не проверен: ${response.status}');
+    }
+    return StoreGrant.fromJson(Map<String, dynamic>.from(data));
   }
 
   @override

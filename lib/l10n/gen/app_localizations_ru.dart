@@ -2241,4 +2241,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get linkAppleDone => 'Готово: мишка сохранён в вашем Apple ID.';
+
+  @override
+  String get restorePurchases => 'Восстановить покупки';
+
+  @override
+  String get restorePurchasesHint =>
+      'Вернуть купленное в App Store или Google Play';
+
+  @override
+  String get restorePurchasesStarted => 'Проверяем покупки…';
 }
