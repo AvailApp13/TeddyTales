@@ -691,7 +691,9 @@
       },
       "hood_back": {
         "group": "hood_back",
-        "groupId": "0-471023"
+        "groupId": "0-471023",
+        "asset": "0-471024",
+        "instance": "0-471026"
       }
     },
     "layersV2Transform": {
