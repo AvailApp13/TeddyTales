@@ -77,6 +77,11 @@ CHAIN = [
     ('brow_r',  'face',   (568, 379),   (568, 369)),
     ('ulid_l',  'face',   (457, 392),   (457, 382)),
     ('ulid_r',  'face',   (568, 392),   (568, 382)),
+    # колени (26.09, топот в «Обиде»): голень от колена под шортами до
+    # пятки; ступня держится за голень. Корневая кость внутри бедра — её
+    # можно поднять целиком, спереди это читается как согнутое колено.
+    ('shin_l',  'leg_l',  (430, 872),   (430, 952)),
+    ('shin_r',  'leg_r',  (607, 872),   (607, 952)),
 ]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
@@ -265,9 +270,11 @@ def _weights_for(layer, x, y, B):
         t = along((x, y), B['arm_r1']['start'], B['arm_r2']['end'])
         return blend3(t, 'chest', 'arm_r1', 'arm_r2', a=0.02, b=0.18, c=0.5, d=0.75)
     if layer == 'shorts_img':
-        leg = 'leg_l' if x < 518 else 'leg_r'
-        k = smooth(815, 880, y)
-        return {'hips': 1 - k, leg: k} if k < 1 else {leg: 1.0}
+        side = 'l' if x < 518 else 'r'
+        k = smooth(815, 880, y)          # таз → бедро
+        s = smooth(840, 908, y)          # бедро → голень: низ штанины за коленом
+        w = {'hips': 1 - k, f'leg_{side}': k * (1 - s), f'shin_{side}': k * s}
+        return {b: v for b, v in w.items() if v > 1e-4}
     raise KeyError(layer)
 
 
@@ -663,25 +670,67 @@ def emo_sleepy():
 
 
 def emo_upset():
-    """Обиделся, 2,5 с: моргнул — брови сдвинуты, глаза исподлобья,
-    уголки рта вниз, щёки надуты; фыркнул и отвернулся, сжался, уши
-    прижаты."""
-    e = Emo(150)
-    e.face('upset', [(14, 126)]).blinks([12, 124])
-    e.pair('cheek', Emo.SY, [(18, 0.05), (120, 0.04)])
-    e.track('face', Emo.Y, [(24, -6, BACK), (120, -5)])
-    e.track('head', Emo.R, [(24, -0.04, BACK), (120, -0.035)])
-    e.track('hips', Emo.Y, [(16, 4), (120, 3.5)])
-    e.track('breath', Emo.SY, [(8, 0.03), (24, -0.03), (120, -0.02)])
-    e.track('arm_l1', Emo.R, [(16, -0.04), (120, -0.035)])
-    e.track('arm_r1', Emo.R, [(16, 0.04), (120, 0.035)])
-    e.track('ear_l1', Emo.R, [(16, 0.12), (120, 0.1)])
-    e.track('ear_r1', Emo.R, [(16, -0.12), (120, -0.1)])
-    e.track('ear_l1', Emo.SX, [(16, -0.1), (120, -0.08)])
-    e.track('ear_r1', Emo.SX, [(16, -0.1), (120, -0.08)])
-    e.track('ear_l2', Emo.R, [(20, 0.1), (120, 0.08)])
-    e.track('ear_r2', Emo.R, [(20, -0.1), (120, -0.08)])
-    e.track('hood2', Emo.R, [(26, 0.06), (44, -0.03), (120, 0.02)])
+    """Обиделся, 3 с: моргнул — брови сдвинуты, взгляд исподлобья, уголки
+    вниз, щёки надуты; топнул левой, правой, левой, правой (колено
+    поднимается, вес переходит на другую ногу, удар — всё тело
+    вздрагивает); фыркнул и отвернулся, уши прижаты."""
+    e = Emo(180)
+    e.face('upset', [(12, 152)]).blinks([10, 150])
+    stomps = [(24, 'l'), (48, 'r'), (72, 'l'), (96, 'r')]
+
+    def merged(base, bumps):
+        """base [(кадр, уровень)] — держится; bumps [(кадр, прибавка[, кривая])]
+        поверх уровня в этот кадр → ключи."""
+        pts = [(0, 0.0)] + [(p[0], p[1]) for p in base]
+
+        def level(fr):
+            for (f0, v0), (f1, v1) in zip(pts, pts[1:]):
+                if f0 <= fr <= f1:
+                    return v0 + (v1 - v0) * (fr - f0) / (f1 - f0)
+            return pts[-1][1]
+        keys = {p[0]: (p[1], p[2] if len(p) > 2 else EI) for p in base}
+        for p in bumps:
+            keys[p[0]] = (level(p[0]) + p[1], p[2] if len(p) > 2 else EI)
+        return [(fr, v, ez) for fr, (v, ez) in sorted(keys.items())]
+
+    hips_x, hips_y, head_r, face_x, ears, arms = [], [], [], [], [], []
+    legs = {}
+    for at, side in stomps:
+        out = 1 if side == 'l' else -1        # наружу: у левой — влево
+        # голень: подъём (спереди — колено к нам), носок наружу, удар
+        legs.setdefault((f'shin_{side}', Emo.X), []).extend(
+            [(at, 0), (at + 9, -32, EO), (at + 12, -32), (at + 16, 2.0, EIN), (at + 20, 0)])
+        legs.setdefault((f'shin_{side}', Emo.R), []).extend(
+            [(at, 0), (at + 9, 0.05 * out, EO), (at + 12, 0.05 * out), (at + 16, 0.0, EIN)])
+        legs.setdefault((f'shin_{side}', Emo.SY), []).extend(
+            [(at, 0), (at + 9, 0.08, EO), (at + 16, 0.0, EIN)])
+        legs.setdefault((f'leg_{side}', Emo.R), []).extend(
+            [(at, 0), (at + 9, 0.07 * out, EO), (at + 16, 0.0, EIN)])
+        # вес — на другую ногу; при подъёме чуть вверх, удар — осел
+        hips_x += [(at + 6, -3 * out, EO), (at + 22, 0.0)]
+        hips_y += [(at + 9, -2.0, EO), (at + 17, 3.5, EIN), (at + 23, 0.0)]
+        head_r += [(at + 18, 0.022 * out, EO), (at + 27, 0.0)]
+        face_x += [(at + 17, -2.0, EIN), (at + 22, 0.6), (at + 28, 0.0)]
+        ears += [(at + 19, 0.05, EO), (at + 27, 0.0)]
+        arms += [(at + 17, 0.03, EIN), (at + 24, 0.0)]
+    for (name, key), pts in legs.items():
+        e.track(name, key, pts)
+    e.track('hips', Emo.X, hips_x)
+    e.track('hips', Emo.Y, merged([(16, 3), (120, 3), (140, 3.5)], hips_y))
+    e.track('head', Emo.R, merged([(20, -0.012), (124, -0.012), (134, -0.045, BACK), (160, -0.04)], head_r))
+    e.track('face', Emo.X, face_x)
+    e.track('face', Emo.Y, [(124, 0), (134, -6, BACK), (160, -5.5)])
+    e.pair('cheek', Emo.SY, [(18, 0.05), (160, 0.04)])
+    e.track('breath', Emo.SY, [(8, 0.03), (22, -0.02), (118, -0.02), (126, 0.035), (136, -0.03), (160, -0.02)])
+    e.track('arm_l1', Emo.R, merged([(16, -0.04), (160, -0.035)], [(f, -v, *z) for f, v, *z in arms]))
+    e.track('arm_r1', Emo.R, merged([(16, 0.04), (160, 0.035)], arms))
+    e.track('ear_l1', Emo.R, merged([(16, 0.12), (160, 0.1)], ears))
+    e.track('ear_r1', Emo.R, merged([(16, -0.12), (160, -0.1)], [(f, -v, *z) for f, v, *z in ears]))
+    e.track('ear_l1', Emo.SX, [(16, -0.1), (160, -0.08)])
+    e.track('ear_r1', Emo.SX, [(16, -0.1), (160, -0.08)])
+    e.track('ear_l2', Emo.R, [(20, 0.1), (160, 0.08)])
+    e.track('ear_r2', Emo.R, [(20, -0.1), (160, -0.08)])
+    e.track('hood2', Emo.R, [(26, 0.06), (44, -0.03), (70, 0.03), (94, -0.02), (136, 0.04), (160, 0.02)])
     return e.build()
 
 
@@ -722,7 +771,7 @@ def main(project):
     followers = {  # контейнер → новая кость
         'head': 'face', 'hood_lining': 'head',
         'forearm_left': 'arm_l2', 'forearm_right': 'arm_r2',
-        'leg_left': 'leg_l', 'leg_right': 'leg_r',
+        'leg_left': 'shin_l', 'leg_right': 'shin_r',
     }
     follow_world = {n: W[byname[n]] for n in followers}
 
