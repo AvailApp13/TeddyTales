@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
+import '../bear/rive_bear_trial.dart';
 import '../alarm/wake_alarm.dart';
 import '../game/app_section.dart';
 import '../game/game_calendar.dart';
@@ -128,6 +129,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// разбудят, не покормят, не займутся им или не выспится сам; уход из
   /// спальни его не будит.
   bool get _asleep => widget.game.asleep;
+
+  /// ⚠ Проверка файла аниматора в игровой (заказчик 26.09): выражения
+  /// лица мишки из `bear_boy_v2.riv`.
+  final BearFaceCue _faceCue = BearFaceCue();
 
   /// Облачко-реплика мишки над кольцами (КП 3.4, 13.3). Заказчик 26.09:
   /// пока скрыто во всех комнатах, вернём позже — включить здесь.
@@ -286,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen>
         break;
       case BearAction.play:
         controller.playWithBear();
+        _faceCue.show(BearFace.laugh);
       case BearAction.pet:
         controller.petBear();
       case BearAction.wake:
@@ -729,6 +735,7 @@ class _HomeScreenState extends State<HomeScreen>
     _dishArc.dispose();
     _recipeArc.dispose();
     _fx.dispose();
+    _faceCue.dispose();
     super.dispose();
   }
 
@@ -1019,6 +1026,7 @@ class _HomeScreenState extends State<HomeScreen>
                   onToilet: _toilet,
                   onBottle: _bottle,
                   onDiaper: _diaper,
+                  faceCue: _faceCue,
                   onOpenCare: () => _open(
                     CareScreen(
                       controller: widget.controller,
@@ -1211,6 +1219,7 @@ class _RoomScene extends StatelessWidget {
     required this.onToilet,
     required this.onBottle,
     required this.onDiaper,
+    required this.faceCue,
   });
 
   final BearController controller;
@@ -1289,6 +1298,9 @@ class _RoomScene extends StatelessWidget {
   /// горшка. ⚠ Ждут анимации — пока честное «скоро», как у душа.
   final VoidCallback onBottle;
   final VoidCallback onDiaper;
+
+  /// Выражения лица мишки-проверки в игровой.
+  final BearFaceCue faceCue;
 
   /// Открыть список действий ухода (КП 6.4). На макете это отдельный экран
   /// «Что будем делать?», но кнопки, ведущей туда, в макете не видно —
@@ -1446,6 +1458,17 @@ class _RoomScene extends StatelessWidget {
                 ),
               ),
             ),
+        // ⚠ Проверка файла аниматора (заказчик 26.09: «ставь в игровую на
+        // проверку»): мишка из bear_boy_v2.riv — живой покой, касание —
+        // улыбка, «Игра» — смех. Не финальный: действий ухода в файле нет.
+        if (room == RoomKind.nursery && !asleep && !furnishing)
+          Positioned(
+            left: frame.bearCenterX - frame.bearHeight * 0.6,
+            top: frame.bearTop,
+            width: frame.bearHeight * 1.2,
+            height: frame.bearHeight,
+            child: RiveBearTrial(cue: faceCue, onTap: controller.petBear),
+          ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
         // остальное прозрачно для касаний: погладить мишку по-прежнему
         // можно где угодно.
