@@ -81,7 +81,10 @@ for e in ('ear_left', 'ear_right'):
     out[..., 3] = np.maximum(out[..., 3], np.where(under, 255, a))
     added[e] = int(R.sum())
     print(e, 'продолжение контура за ухом:', added[e], 'px, выход кривой наружу до', round(float(np.polyval(c, s).max()), 1), 'px')
-out[..., :3] = np.where(out[..., 3:4] > 0, out[..., :3], 0)
+# цвет в прозрачные пиксели — от ближайшего непрозрачного (Rive смешивает соседние пиксели текстуры)
+_a = (out[..., 3] >= 16) & (out[..., :3].sum(-1) >= 240)   # почти прозрачные и тёмные пиксели края — не источник
+_, (_iy, _ix) = ndimage.distance_transform_edt(~_a, return_indices=True)
+out[..., :3] = np.where((out[..., 3] < 16)[..., None], out[_iy, _ix, :3], out[..., :3])
 Image.fromarray(out.clip(0, 255).astype(np.uint8), 'RGBA').save(f'{D}/hood_back.png', optimize=True)
 ys, xs = np.where(out[..., 3] > 0)
 meta['layers']['hood_back'] = {'bbox': [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1], 'px': int((out[..., 3] > 0).sum()),

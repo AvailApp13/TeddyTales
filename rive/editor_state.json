@@ -648,22 +648,22 @@
         "groupId": "0-99"
       },
       "hood": {
-        "asset": "0-471031",
-        "instance": "0-471032",
+        "asset": "0-516466",
+        "instance": "0-516467",
         "group": "outfit_head",
         "groupId": "0-226"
       },
       "ear_left": {
         "group": "ear_left",
         "groupId": "0-104",
-        "asset": "0-471027",
-        "instance": "0-471028"
+        "asset": "0-516462",
+        "instance": "0-516463"
       },
       "ear_right": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-471029",
-        "instance": "0-471030"
+        "asset": "0-516464",
+        "instance": "0-516465"
       },
       "ear_left_cup": {
         "group": "ear_left",
@@ -692,8 +692,8 @@
       "hood_back": {
         "group": "hood_back",
         "groupId": "0-471023",
-        "asset": "0-471024",
-        "instance": "0-471026"
+        "asset": "0-516460",
+        "instance": "0-516461"
       }
     },
     "layersV2Transform": {
@@ -887,7 +887,7 @@
         "vertices": 1928
       },
       "hood": {
-        "meshId": "0-471033",
+        "meshId": "0-516468",
         "bones": [
           "root",
           "root_body"
@@ -895,30 +895,30 @@
         "vertices": 3271
       },
       "hood_back": {
-        "meshId": "0-477583",
+        "meshId": "0-523018",
         "bones": [
           "root",
           "root_body"
         ],
-        "vertices": 4718
+        "vertices": 4714
       },
       "ear_left": {
-        "meshId": "0-487027",
+        "meshId": "0-532454",
         "bones": [
           "root",
           "root_body",
           "root_ear_left"
         ],
-        "vertices": 1395
+        "vertices": 1367
       },
       "ear_right": {
-        "meshId": "0-489826",
+        "meshId": "0-535197",
         "bones": [
           "root",
           "root_body",
           "root_ear_right"
         ],
-        "vertices": 1575
+        "vertices": 1390
       }
     },
     "faceParts": {

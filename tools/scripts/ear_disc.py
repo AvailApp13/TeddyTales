@@ -31,13 +31,23 @@ covered = ndimage.binary_erosion(hood >= 250, iterations=1)
 FRINGE_A = 0.35 * 255
 fringe = (hood >= FRINGE_A) & ~covered
 H, W = hood.shape
+
+
+def bleed(img):
+    """Цвет в прозрачные пиксели — от ближайшего непрозрачного. Rive при отрисовке сетки
+    смешивает соседние пиксели текстуры: чёрный цвет прозрачных пикселей у края давал тёмные
+    штрихи («коготь» у нижнего конца стыка уха)."""
+    a = (img[..., 3] >= 16) & (img[..., :3].sum(-1) >= 240)   # почти прозрачные и тёмные пиксели края — не источник
+    _, (iy, ix) = ndimage.distance_transform_edt(~a, return_indices=True)
+    out = img.copy(); fill = img[..., 3] < 16
+    out[..., :3] = np.where(fill[..., None], img[iy, ix, :3], img[..., :3])
+    return out
 yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
 for e in ('ear_left', 'ear_right'):
     L = np.asarray(Image.open(f'{D}/{e}.png').convert('RGBA')).astype(np.float32)
     cx, cy, R = meta['ear_pivots'][e]['circle']; R += MARGIN
     r = np.hypot(xx - cx, yy - cy)
     disc = r <= R + 1
-    L[..., 3] = np.where(covered & ~disc, 0, L[..., 3])                  # запас за кругом под капюшоном — убрать
     T_in = disc & (covered | fringe)
     T_out = fringe & ~disc & (L[..., 3] > 0)     # угол уха под кромкой у концов стыка — тоже чистый мех
     T = T_in | T_out
@@ -66,11 +76,11 @@ for e in ('ear_left', 'ear_right'):
     out[..., :3] = np.where(T[..., None], np.where(had, L[..., :3] * (1 - t) + new * t, new), L[..., :3])
     edge = np.clip((R + 1 - r) / 2.5, 0, 1) * 255                      # мягкий край круга
     out[..., 3] = np.where(T_in, np.maximum(L[..., 3], edge), L[..., 3])
-    out[..., :3] = np.where(out[..., 3:4] > 0, out[..., :3], 0)
+    out = bleed(out)
     fz = T & fringe
     new_c = (old_c - out[..., :3] * (out[..., 3:4] / 255) * (1 - a)) / np.maximum(a, 1e-3)
     HOOD[..., :3] = np.where(fz[..., None], new_c.clip(0, 255), HOOD[..., :3])
     print(e, 'кромка капюшона: тень перенесена на', int(fz.sum()), 'px')
     Image.fromarray(out.clip(0, 255).astype(np.uint8), 'RGBA').save(f'{D}/{e}.png', optimize=True)
     print(e, 'круг', (cx, cy, round(R, 1)), 'заполнено под капюшоном', int(T.sum()), 'из них отражением', int(got.sum()))
-Image.fromarray(HOOD.clip(0, 255).astype(np.uint8), 'RGBA').save(f'{D}/hood.png', optimize=True)
+Image.fromarray(bleed(HOOD).clip(0, 255).astype(np.uint8), 'RGBA').save(f'{D}/hood.png', optimize=True)
