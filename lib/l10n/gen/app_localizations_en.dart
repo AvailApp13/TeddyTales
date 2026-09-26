@@ -2154,4 +2154,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String sleepAwayTired(int pct) {
     return 'Not rested yet — Sleep $pct%';
   }
+
+  @override
+  String get birthIntroTitle => 'Your little one is born!';
+
+  @override
+  String get birthIntroVideo => 'Birth video';
+
+  @override
+  String get birthIntroVideoSoon => 'coming soon';
+
+  @override
+  String get birthIntroSex => 'Sex';
+
+  @override
+  String get birthIntroTrait => 'First trait';
+
+  @override
+  String get birthIntroName => 'Give a name';
 }

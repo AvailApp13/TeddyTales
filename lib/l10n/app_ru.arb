@@ -1311,5 +1311,11 @@
         "type": "int"
       }
     }
-  }
+  },
+  "birthIntroTitle": "Родился малыш!",
+  "birthIntroVideo": "Видео рождения",
+  "birthIntroVideoSoon": "скоро здесь",
+  "birthIntroSex": "Пол",
+  "birthIntroTrait": "Первая черта",
+  "birthIntroName": "Дать имя"
 }

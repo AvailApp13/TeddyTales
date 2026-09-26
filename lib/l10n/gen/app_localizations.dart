@@ -3813,6 +3813,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ещё не выспался — Сон {pct} %'**
   String sleepAwayTired(int pct);
+
+  /// No description provided for @birthIntroTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Родился малыш!'**
+  String get birthIntroTitle;
+
+  /// No description provided for @birthIntroVideo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Видео рождения'**
+  String get birthIntroVideo;
+
+  /// No description provided for @birthIntroVideoSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'скоро здесь'**
+  String get birthIntroVideoSoon;
+
+  /// No description provided for @birthIntroSex.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get birthIntroSex;
+
+  /// No description provided for @birthIntroTrait.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первая черта'**
+  String get birthIntroTrait;
+
+  /// No description provided for @birthIntroName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дать имя'**
+  String get birthIntroName;
 }
 
 class _AppLocalizationsDelegate

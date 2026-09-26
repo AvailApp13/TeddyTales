@@ -20,6 +20,7 @@ import 'notifications/smart_texts.dart' show notificationName;
 import 'alarm/wake_alarm.dart';
 import 'audio/sounds.dart';
 import 'game/test_stubs.dart';
+import 'widgets/birth_intro.dart';
 import 'widgets/friend_code_dialog.dart';
 import 'widgets/rename_pet_dialog.dart';
 import 'screens/dev_screen.dart';
@@ -468,6 +469,10 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final context = _navigator.currentContext;
       if (context == null) return;
+      // «Родился малыш!» — видео рождения и карточка (КП 2.1, 2.2), потом
+      // имя. Видео ждёт согласования с Ириной — пока заглушка.
+      await showBirthIntro(context, game: _game, trait: _bear.state.trait);
+      if (!context.mounted) return;
       await showRenamePetDialog(
         context: context,
         current: '',

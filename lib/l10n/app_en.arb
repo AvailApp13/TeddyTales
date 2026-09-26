@@ -737,5 +737,11 @@
   "sleepAwayWakeBath": "Wake up for a bath",
   "sleepAwayLetSleep": "Let it sleep",
   "sleepAwayNight": "It’s night — better let teddy sleep.",
-  "sleepAwayTired": "Not rested yet — Sleep {pct}%"
+  "sleepAwayTired": "Not rested yet — Sleep {pct}%",
+  "birthIntroTitle": "Your little one is born!",
+  "birthIntroVideo": "Birth video",
+  "birthIntroVideoSoon": "coming soon",
+  "birthIntroSex": "Sex",
+  "birthIntroTrait": "First trait",
+  "birthIntroName": "Give a name"
 }

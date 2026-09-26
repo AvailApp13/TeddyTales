@@ -2054,4 +2054,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String sleepAwayTired(int pct) {
     return '还没睡够——睡眠 $pct%';
   }
+
+  @override
+  String get birthIntroTitle => '小宝宝出生了！';
+
+  @override
+  String get birthIntroVideo => '出生视频';
+
+  @override
+  String get birthIntroVideoSoon => '即将上线';
+
+  @override
+  String get birthIntroSex => '性别';
+
+  @override
+  String get birthIntroTrait => '第一个性格';
+
+  @override
+  String get birthIntroName => '起名字';
 }

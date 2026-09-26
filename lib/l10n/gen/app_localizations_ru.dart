@@ -2165,4 +2165,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String sleepAwayTired(int pct) {
     return 'Ещё не выспался — Сон $pct %';
   }
+
+  @override
+  String get birthIntroTitle => 'Родился малыш!';
+
+  @override
+  String get birthIntroVideo => 'Видео рождения';
+
+  @override
+  String get birthIntroVideoSoon => 'скоро здесь';
+
+  @override
+  String get birthIntroSex => 'Пол';
+
+  @override
+  String get birthIntroTrait => 'Первая черта';
+
+  @override
+  String get birthIntroName => 'Дать имя';
 }

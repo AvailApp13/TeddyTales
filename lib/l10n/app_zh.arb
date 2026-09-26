@@ -737,5 +737,11 @@
   "sleepAwayWakeBath": "叫醒它洗澡",
   "sleepAwayLetSleep": "让它继续睡",
   "sleepAwayNight": "现在是夜里，最好让小熊睡觉。",
-  "sleepAwayTired": "还没睡够——睡眠 {pct}%"
+  "sleepAwayTired": "还没睡够——睡眠 {pct}%",
+  "birthIntroTitle": "小宝宝出生了！",
+  "birthIntroVideo": "出生视频",
+  "birthIntroVideoSoon": "即将上线",
+  "birthIntroSex": "性别",
+  "birthIntroTrait": "第一个性格",
+  "birthIntroName": "起名字"
 }
