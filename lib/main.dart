@@ -463,6 +463,22 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// её анимация.
   void _askNameOnFirstRun() {
     if (_askedName || !_signedIn) return;
+    // Веб-песочница без сервера (живое приложение в панели заказчика): после
+    // «Пропустить» один раз показать «Родился малыш!» с примерными данными,
+    // чтобы первый запуск было видно. Имя там не спрашиваем — его проверяет
+    // и сохраняет только сервер.
+    if (kIsWeb && !widget.boot.isOnline && !kDemoBirth) {
+      _askedName = true;
+      _game.onboarding.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final context = _navigator.currentContext;
+        if (context != null) {
+          await showBirthIntro(context, game: _game, trait: _bear.state.trait);
+        }
+        _game.onboarding.value = false;
+      });
+      return;
+    }
     if (!widget.boot.isOnline || widget.boot.snapshot.named) return;
     _askedName = true;
     // Остальные окна ждут конца первого запуска (см. GameState.onboarding).
