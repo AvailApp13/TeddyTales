@@ -3927,6 +3927,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.'**
   String get deleteAccountFailed;
+
+  /// No description provided for @signInAppleFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось войти через Apple. Проверьте интернет и попробуйте ещё раз.'**
+  String get signInAppleFailed;
+
+  /// No description provided for @linkApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить мишку через Apple'**
+  String get linkApple;
+
+  /// No description provided for @linkAppleHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход с любого iPhone, мишка не потеряется'**
+  String get linkAppleHint;
+
+  /// No description provided for @linkAppleDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово: мишка сохранён в вашем Apple ID.'**
+  String get linkAppleDone;
 }
 
 class _AppLocalizationsDelegate

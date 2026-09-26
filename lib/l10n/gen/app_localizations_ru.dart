@@ -2228,4 +2228,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get deleteAccountFailed =>
       'Не получилось удалить аккаунт. Проверьте интернет и попробуйте ещё раз.';
+
+  @override
+  String get signInAppleFailed =>
+      'Не получилось войти через Apple. Проверьте интернет и попробуйте ещё раз.';
+
+  @override
+  String get linkApple => 'Сохранить мишку через Apple';
+
+  @override
+  String get linkAppleHint => 'Вход с любого iPhone, мишка не потеряется';
+
+  @override
+  String get linkAppleDone => 'Готово: мишка сохранён в вашем Apple ID.';
 }

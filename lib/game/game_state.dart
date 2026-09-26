@@ -459,6 +459,10 @@ class GameState extends ChangeNotifier {
   /// возвращается на стартовую страницу. `null` — без сервера пункта нет.
   Future<bool> Function()? onDeleteAccount;
 
+  /// Привязать Apple к гостевому кабинету (КП 1.3, 14.2). `null` — пункта
+  /// нет: Apple не настроена, нет сервера или Apple уже привязана.
+  Future<bool> Function()? onLinkApple;
+
   /// Спросить у телефона разрешение на уведомления. Ставит хозяин
   /// приложения; `null` — уведомлений на этой платформе нет (веб, тесты).
   Future<bool> Function()? onAskNotifications;

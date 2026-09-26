@@ -756,5 +756,9 @@
   "deleteAccountLead": "{name}, coins, items and all progress will be deleted from the server for good. They cannot be restored.",
   "deleteAccountConfirm": "Delete forever",
   "deleteAccountCancel": "Keep",
-  "deleteAccountFailed": "Could not delete the account. Check your connection and try again."
+  "deleteAccountFailed": "Could not delete the account. Check your connection and try again.",
+  "signInAppleFailed": "Could not sign in with Apple. Check your connection and try again.",
+  "linkApple": "Save your bear with Apple",
+  "linkAppleHint": "Sign in on any iPhone, your bear stays safe",
+  "linkAppleDone": "Done: your bear is saved to your Apple ID."
 }

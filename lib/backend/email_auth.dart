@@ -106,6 +106,14 @@ abstract interface class AccountAuth {
 
   /// Выйти на этом устройстве.
   Future<void> signOut();
+
+  /// Войти через Apple (КП 1.3). Гость — Apple привязывается к его же
+  /// кабинету, мишка остаётся. `false` — человек закрыл окно Apple.
+  /// Бросает [EmailAuthException] ([EmailAuthError.network] — сбой).
+  Future<bool> signInWithApple();
+
+  /// Вошёл ли человек через Apple (или привязал её).
+  bool get hasApple;
 }
 
 /// Код ошибки Supabase Auth → наша причина.

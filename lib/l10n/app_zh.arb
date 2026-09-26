@@ -756,5 +756,9 @@
   "deleteAccountLead": "{name}、金币、物品和全部进度将从服务器永久删除，无法恢复。",
   "deleteAccountConfirm": "永久删除",
   "deleteAccountCancel": "保留",
-  "deleteAccountFailed": "无法删除账号。请检查网络后重试。"
+  "deleteAccountFailed": "无法删除账号。请检查网络后重试。",
+  "signInAppleFailed": "无法通过 Apple 登录。请检查网络后重试。",
+  "linkApple": "用 Apple 保存小熊",
+  "linkAppleHint": "在任何 iPhone 上登录，小熊不会丢失",
+  "linkAppleDone": "完成：小熊已保存到你的 Apple ID。"
 }

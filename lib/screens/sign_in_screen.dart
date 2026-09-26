@@ -23,7 +23,12 @@ import 'sign_in_layout.dart';
 /// Уведомление намеренно похоже на системное: тестировщик должен не гадать,
 /// сработало ли нажатие, а видеть ответ приложения.
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, required this.onSignedIn, this.onEmail});
+  const SignInScreen({
+    super.key,
+    required this.onSignedIn,
+    this.onEmail,
+    this.onApple,
+  });
 
   /// Пустить без регистрации: «Пропустить» и способы, которые ещё не
   /// подключены (Apple, Google — ждут App Store и Google Play).
@@ -31,6 +36,10 @@ class SignInScreen extends StatefulWidget {
 
   /// Открыть регистрацию и вход по почте. `null` — кнопки почты нет.
   final void Function(BuildContext context)? onEmail;
+
+  /// Войти через Apple (КП 1.3). `null` — Apple ещё не настроена
+  /// (`kAppleSignIn`), кнопка показывает «в разработке».
+  final void Function(BuildContext context)? onApple;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -114,6 +123,11 @@ class _SignInScreenState extends State<SignInScreen>
     final email = widget.onEmail;
     if (method == _SignInMethod.email && email != null) {
       email(context);
+      return;
+    }
+    final apple = widget.onApple;
+    if (method == _SignInMethod.apple && apple != null) {
+      apple(context);
       return;
     }
     // Apple и Google ждут App Store и Google Play. Заказчик 24.09: «при

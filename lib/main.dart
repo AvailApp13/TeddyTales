@@ -5,6 +5,7 @@ import 'package:rive/rive.dart' show RiveNative;
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'backend/apple_sign_in.dart';
 import 'backend/bootstrap.dart';
 import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
 import 'backend/progress_sync.dart';
@@ -298,6 +299,16 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       _game.onAskNotifications = notifications.requestPermission;
     }
     if (widget.boot.isOnline) _game.onDeleteAccount = _deleteAccount;
+    // Гость привязывает Apple, чтобы не потерять мишку (КП 1.3). Пока
+    // Apple не настроена (`kAppleSignIn`), пункта нет.
+    final auth = widget.boot.auth;
+    if (appleSignInReady &&
+        auth != null &&
+        widget.boot.isOnline &&
+        widget.boot.snapshot.account.isAnonymous &&
+        !auth.hasApple) {
+      _game.onLinkApple = auth.signInWithApple;
+    }
     WidgetsBinding.instance.addObserver(_lifecycle);
   }
 
@@ -420,6 +431,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
           guest();
         }
       },
+      onApple: appleSignInReady && widget.boot.auth != null
+          ? _signInWithApple
+          : null,
       onEmail: (context) => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => EmailAuthScreen(
@@ -431,11 +445,22 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     );
   }
 
-  /// Выход из аккаунта (КП 14.2).
-  ///
-  /// Напоминания снимаем обязательно. Они запланированы на часы вперёд и
-  /// говорят от лица питомца — «малыш проголодался» человеку, который из
-  /// аккаунта вышел, выглядит как чужое уведомление на своём телефоне.
+  /// «Войти через Apple» на стартовой странице (КП 1.3).
+  Future<void> _signInWithApple(BuildContext context) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final failed = context.l10n.signInAppleFailed;
+    try {
+      if (await widget.boot.auth!.signInWithApple()) {
+        widget.onSignedIn?.call();
+      }
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] Apple: $error');
+      messenger?.showSnackBar(
+        SnackBar(content: Text(failed), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
   /// «Удалить аккаунт» в настройках: сервер стирает учётную запись со
   /// всем прогрессом, дальше — как выход, на стартовую страницу.
   Future<bool> _deleteAccount() async {
@@ -449,6 +474,11 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     return true;
   }
 
+  /// Выход из аккаунта (КП 14.2).
+  ///
+  /// Напоминания снимаем обязательно. Они запланированы на часы вперёд и
+  /// говорят от лица питомца — «малыш проголодался» человеку, который из
+  /// аккаунта вышел, выглядит как чужое уведомление на своём телефоне.
   void _signOut() {
     widget.notifications?.cancelAll();
     // Будильник «проснёмся вместе» тоже от лица питомца — снимаем. Из

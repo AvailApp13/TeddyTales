@@ -2115,4 +2115,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteAccountFailed => '无法删除账号。请检查网络后重试。';
+
+  @override
+  String get signInAppleFailed => '无法通过 Apple 登录。请检查网络后重试。';
+
+  @override
+  String get linkApple => '用 Apple 保存小熊';
+
+  @override
+  String get linkAppleHint => '在任何 iPhone 上登录，小熊不会丢失';
+
+  @override
+  String get linkAppleDone => '完成：小熊已保存到你的 Apple ID。';
 }

@@ -201585,3 +201585,32 @@ Authentication → **Emails** → **SMTP Settings** — **своя почта о
 5. **Allow manual linking** — привязка Apple к уже созданному кабинету, позже.
 6. **Apple** — Client IDs `com.teddytales.app`, когда восстановится Apple ID.
 
+
+## Вход через Apple — код готов, включается флагом (26.09)
+
+> **⚠ Ждёт настройки в Apple Developer и Supabase.** Заказчик 26.09: «код
+> подготовить сейчас». Пока флаг выключен, всё как раньше: кнопка Apple
+> на стартовой странице говорит «в разработке».
+
+Что уже в коде (`lib/backend/apple_sign_in.dart`, `SupabaseStore.signInWithApple`):
+
+- Стартовая страница → Apple → системное окно Apple → вход в кабинет.
+- Гость (нажимал «Пропустить») → Настройки → «Сохранить мишку через
+  Apple»: Apple привязывается к его же кабинету, мишка, монеты и вещи
+  остаются (`linkIdentityWithIdToken`).
+
+Порядок включения — строго так, иначе упадёт подпись в Codemagic:
+
+1. developer.apple.com → Certificates, Identifiers & Profiles →
+   Identifiers → `com.teddytales.app` → включить **Sign in with Apple** →
+   Save.
+2. Supabase → Authentication → Sign In / Providers → **Apple** → Enable,
+   Client IDs: `com.teddytales.app`. Там же включить **Allow manual
+   linking**.
+3. Положить `docs/apple-sign-in.entitlements` как
+   `ios/Runner/Runner.entitlements` и прописать в
+   `ios/Runner.xcodeproj/project.pbxproj` у трёх конфигураций Runner
+   строку `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;` (сделаю
+   сам по команде «Apple включён»).
+4. В `codemagic.yaml` к `flutter build ipa` добавить
+   `--dart-define=APPLE_SIGN_IN=true`.

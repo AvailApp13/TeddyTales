@@ -2219,4 +2219,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteAccountFailed =>
       'Could not delete the account. Check your connection and try again.';
+
+  @override
+  String get signInAppleFailed =>
+      'Could not sign in with Apple. Check your connection and try again.';
+
+  @override
+  String get linkApple => 'Save your bear with Apple';
+
+  @override
+  String get linkAppleHint => 'Sign in on any iPhone, your bear stays safe';
+
+  @override
+  String get linkAppleDone => 'Done: your bear is saved to your Apple ID.';
 }

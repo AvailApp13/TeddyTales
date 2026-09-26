@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'apple_sign_in.dart';
+
 import '../bear/bear_action.dart';
 import 'email_auth.dart';
 import '../game/referral_info.dart';
@@ -107,6 +109,49 @@ class SupabaseStore implements ProgressStore, AccountAuth {
         ? SignUpOutcome.signedIn
         : SignUpOutcome.confirmEmail;
   }
+
+  @override
+  Future<bool> signInWithApple() async {
+    final AppleCredential? credential;
+    try {
+      credential = await requestAppleCredential();
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+    if (credential == null) return false;
+    try {
+      final user = _client.auth.currentUser;
+      if (user != null && user.isAnonymous) {
+        // Гость привязывает Apple к своему же кабинету: тот же id — тот
+        // же мишка, монеты и вещи.
+        await _client.auth.linkIdentityWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: credential.idToken,
+          nonce: credential.rawNonce,
+        );
+      } else {
+        await _client.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: credential.idToken,
+          nonce: credential.rawNonce,
+        );
+        _petId = null;
+      }
+      return true;
+    } on AuthException catch (error) {
+      throw EmailAuthException(
+        emailErrorFromCode(error.code, statusCode: error.statusCode),
+        cause: error,
+      );
+    } on Object catch (error) {
+      throw EmailAuthException(EmailAuthError.network, cause: error);
+    }
+  }
+
+  @override
+  bool get hasApple =>
+      _client.auth.currentUser?.identities?.any((i) => i.provider == 'apple') ??
+      false;
 
   @override
   Future<void> signInWithEmail(String email, String password) async {

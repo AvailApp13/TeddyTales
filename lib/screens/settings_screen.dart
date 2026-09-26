@@ -52,6 +52,26 @@ class SettingsScreen extends StatelessWidget {
   /// Пользователь выбрал другой язык. Применяет его вызывающий.
   final ValueChanged<BearLanguage> onLanguageChanged;
 
+  Future<void> _linkApple(BuildContext context) async {
+    final link = game.onLinkApple;
+    if (link == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    String? message;
+    try {
+      if (await link()) {
+        game.onLinkApple = null;
+        message = l10n.linkAppleDone;
+      }
+    } on Object {
+      message = l10n.signInAppleFailed;
+    }
+    if (message == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,6 +216,24 @@ class SettingsScreen extends StatelessWidget {
                                   onTap: () =>
                                       confirmSignOut(context, onSignOut),
                                 ),
+                                if (game.onLinkApple != null) ...[
+                                  const Divider(height: 1),
+                                  ListTile(
+                                    key: const ValueKey('link-apple'),
+                                    title: Text(
+                                      l10n.linkApple,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    subtitle: Text(l10n.linkAppleHint),
+                                    trailing: const Icon(
+                                      Icons.apple_rounded,
+                                      size: 22,
+                                    ),
+                                    onTap: () => _linkApple(context),
+                                  ),
+                                ],
                                 if (game.onDeleteAccount != null) ...[
                                   const Divider(height: 1),
                                   ListTile(

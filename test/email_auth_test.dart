@@ -47,6 +47,15 @@ class _FakeAuth implements AccountAuth {
 
   @override
   Future<void> signOut() async => calls.add('out');
+
+  @override
+  Future<bool> signInWithApple() async {
+    calls.add('apple');
+    return true;
+  }
+
+  @override
+  bool get hasApple => false;
 }
 
 Widget _app(Widget home) => MaterialApp(
