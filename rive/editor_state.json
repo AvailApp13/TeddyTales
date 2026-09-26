@@ -662,8 +662,8 @@
       "ear_right": {
         "group": "ear_right",
         "groupId": "0-119",
-        "asset": "0-343526",
-        "instance": "0-343527"
+        "asset": "0-471029",
+        "instance": "0-471030"
       },
       "ear_left_cup": {
         "group": "ear_left",
@@ -859,15 +859,6 @@
           "root_ear_right"
         ],
         "vertices": 3271
-      },
-      "ear_right": {
-        "meshId": "0-353023",
-        "bones": [
-          "root",
-          "root_body",
-          "root_ear_right"
-        ],
-        "vertices": 1425
       },
       "ear_left_cup": {
         "meshId": "0-355882",
