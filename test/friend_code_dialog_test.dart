@@ -86,10 +86,17 @@ void main() {
     expect(find.textContaining('ZP65BM'), findsOneWidget);
     expect(find.byKey(const ValueKey('friend-code-field')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('friend-code-claim')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 900));
     expect(redeemed, 'ZP65BM');
     expect(find.text('Тебя пригласил друг?'), findsNothing);
-    expect(find.text('+100 монет — тебе и другу!'), findsOneWidget);
+    // Праздник монет на экране.
+    expect(find.byKey(const ValueKey('coin-reward')), findsOneWidget);
+    expect(find.text('+100'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('coin-reward')), findsNothing);
   });
 
   testWidgets('кода нет — поле и «Пропустить»', (tester) async {

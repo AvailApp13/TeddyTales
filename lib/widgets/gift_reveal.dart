@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -968,4 +969,296 @@ class _BurstPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BurstPainter old) => old.t != t;
+}
+
+// --- Начисление монет --------------------------------------------------------
+
+/// Праздник начисления монет (заказчик 26.09): «не уведомление снизу, а
+/// прям на экране — взрыв, +100 и сколько стало всего». В стиле подарка
+/// дня: затемнение, золотые лучи, вспышка, крупная монета с «+N»,
+/// конфетти, монеты летят в кошелёк, общий счёт досчитывает до нового.
+///
+/// [total] — сколько стало после начисления; `null` — строки счёта нет.
+/// Закрывается касанием или сама через пару секунд.
+Future<void> showCoinReward(
+  BuildContext context, {
+  required int amount,
+  int? total,
+  String? title,
+}) => showGeneralDialog<void>(
+  context: context,
+  barrierDismissible: false,
+  barrierColor: Colors.transparent,
+  transitionDuration: const Duration(milliseconds: 180),
+  pageBuilder: (context, _, _) =>
+      CoinReward(amount: amount, total: total, title: title),
+  transitionBuilder: (context, animation, _, child) =>
+      FadeTransition(opacity: animation, child: child),
+);
+
+class CoinReward extends StatefulWidget {
+  const CoinReward({super.key, required this.amount, this.total, this.title});
+
+  final int amount;
+  final int? total;
+  final String? title;
+
+  /// Сколько идёт праздник до того, как закроется сам.
+  static const Duration stay = Duration(milliseconds: 4200);
+
+  @override
+  State<CoinReward> createState() => _CoinRewardState();
+}
+
+class _CoinRewardState extends State<CoinReward> with TickerProviderStateMixin {
+  late final AnimationController _open = AnimationController(
+    vsync: this,
+    duration: GiftReveal.open,
+  );
+  late final AnimationController _rays = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 12),
+  )..repeat();
+  final List<_Confetto> _confetti = [];
+  Timer? _close;
+  bool _closed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final dice = math.Random();
+    _confetti.addAll(List.generate(80, (_) => _Confetto.random(dice)));
+    HapticFeedback.mediumImpact();
+    Sounds.play(Sfx.bubblePop);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        _open.value = 1;
+      } else {
+        _open.forward();
+        Future<void>.delayed(const Duration(milliseconds: 1100), () {
+          if (mounted) Sounds.play(Sfx.coinsEarn);
+        });
+      }
+    });
+    _close = Timer(CoinReward.stay, _dismiss);
+  }
+
+  void _dismiss() {
+    if (_closed || !mounted) return;
+    _closed = true;
+    Navigator.of(context).pop();
+  }
+
+  @override
+  void dispose() {
+    _close?.cancel();
+    _open.dispose();
+    _rays.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final topPad = MediaQuery.paddingOf(context).top;
+    final wallet = Offset(52, topPad + 30);
+    final total = widget.total;
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+        key: const ValueKey('coin-reward'),
+        behavior: HitTestBehavior.opaque,
+        onTap: _dismiss,
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_open, _rays]),
+          builder: (context, _) {
+            final t = _open.value;
+            final center = Offset(size.width / 2, size.height * 0.42);
+            // Монета: выпрыгивает с пружинкой.
+            final pop = Curves.easeOutBack.transform(_seg(t, 0, 0.28));
+            // Вспышка: белый круг расходится и гаснет.
+            final flash = _seg(t, 0.02, 0.3);
+            // Общий счёт: появляется и досчитывает.
+            final showTotal = _seg(t, 0.42, 0.55);
+            final count = Curves.easeOut.transform(_seg(t, 0.5, 0.92));
+            final shown = total == null
+                ? 0
+                : (total - widget.amount + widget.amount * count).round();
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: const Color(
+                      0xFF1E0F12,
+                    ).withValues(alpha: 0.84 * _seg(t, 0, 0.12).clamp(0.3, 1)),
+                  ),
+                ),
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _RaysPainter(
+                      center: center,
+                      turn: _rays.value,
+                      strength: Curves.easeOut.transform(_seg(t, 0, 0.3)),
+                    ),
+                  ),
+                ),
+                if (flash > 0 && flash < 1)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _FlashPainter(center: center, t: flash),
+                    ),
+                  ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _BurstPainter(
+                        t: t,
+                        from: center,
+                        wallet: wallet,
+                        coins: 16,
+                        confetti: _confetti,
+                        size: size,
+                      ),
+                    ),
+                  ),
+                ),
+                // Монета и «+N».
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: center.dy - 90,
+                  child: Opacity(
+                    opacity: _seg(t, 0, 0.08),
+                    child: Transform.scale(
+                      scale: 0.3 + 0.7 * pop,
+                      child: Column(
+                        children: [
+                          const _CoinIcon(size: 96),
+                          const SizedBox(height: 6),
+                          Text(
+                            '+${widget.amount}',
+                            style: const TextStyle(
+                              color: _gold,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x88000000),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (widget.title case final title?)
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    top: center.dy + 92,
+                    child: Opacity(
+                      opacity: _seg(t, 0.15, 0.3),
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFFFE9B0),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Сколько всего стало — капсула как у кошелька.
+                if (total != null)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: center.dy + 150,
+                    child: Opacity(
+                      opacity: showTotal,
+                      child: Transform.translate(
+                        offset: Offset(0, 12 * (1 - showTotal)),
+                        child: Center(
+                          child: Container(
+                            key: const ValueKey('coin-reward-total'),
+                            padding: const EdgeInsets.fromLTRB(8, 6, 16, 6),
+                            decoration: BoxDecoration(
+                              color: _cream,
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x55000000),
+                                  blurRadius: 14,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const _CoinIcon(size: 28),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '$shown',
+                                  style: const TextStyle(
+                                    color: Color(0xFF4A3B2A),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Вспышка: белое кольцо расходится от центра и гаснет.
+class _FlashPainter extends CustomPainter {
+  _FlashPainter({required this.center, required this.t});
+
+  final Offset center;
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = 30 + 220 * Curves.easeOut.transform(t);
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 18 * (1 - t)
+        ..color = Colors.white.withValues(alpha: 0.7 * (1 - t)),
+    );
+    canvas.drawCircle(
+      center,
+      r * 0.6,
+      Paint()
+        ..color = const Color(0xFFFFF3C4).withValues(alpha: 0.35 * (1 - t)),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_FlashPainter old) => old.t != t;
 }

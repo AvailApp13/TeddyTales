@@ -724,5 +724,7 @@
   "friendCodeFound": "We found your friend’s code {code}. You both get {coins} coins.",
   "friendCodeAsk": "Enter your friend’s code — you both get {coins} coins.",
   "friendCodeClaim": "Get +{coins}",
-  "friendCodeSkip": "Skip"
+  "friendCodeSkip": "Skip",
+  "rewardFromFriend": "A gift from your friend — and for them too!",
+  "rewardInviter": "A friend joined with your code!"
 }

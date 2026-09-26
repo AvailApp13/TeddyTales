@@ -2013,4 +2013,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get friendCodeSkip => '跳过';
+
+  @override
+  String get rewardFromFriend => '好友送的礼物——好友也有一份！';
+
+  @override
+  String get rewardInviter => '好友用你的邀请码加入了！';
 }

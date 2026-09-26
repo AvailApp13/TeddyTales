@@ -2113,4 +2113,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendCodeSkip => 'Skip';
+
+  @override
+  String get rewardFromFriend => 'A gift from your friend — and for them too!';
+
+  @override
+  String get rewardInviter => 'A friend joined with your code!';
 }

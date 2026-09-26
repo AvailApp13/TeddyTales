@@ -2124,4 +2124,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get friendCodeSkip => 'Пропустить';
+
+  @override
+  String get rewardFromFriend => 'Подарок от друга — и другу тоже!';
+
+  @override
+  String get rewardInviter => 'Друг пришёл по твоему коду!';
 }

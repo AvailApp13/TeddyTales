@@ -123,7 +123,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(redeemed, 'E576DR');
-    expect(find.text('+100 монет — тебе и другу!'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(find.byKey(const ValueKey('coin-reward')), findsOneWidget);
+    expect(find.byKey(const ValueKey('coin-reward-total')), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const ValueKey('coin-reward')), findsNothing);
     expect(find.byKey(const ValueKey('invite-field')), findsNothing);
   });
 

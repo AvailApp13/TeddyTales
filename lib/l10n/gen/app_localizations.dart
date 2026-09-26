@@ -3735,6 +3735,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пропустить'**
   String get friendCodeSkip;
+
+  /// No description provided for @rewardFromFriend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подарок от друга — и другу тоже!'**
+  String get rewardFromFriend;
+
+  /// No description provided for @rewardInviter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друг пришёл по твоему коду!'**
+  String get rewardInviter;
 }
 
 class _AppLocalizationsDelegate

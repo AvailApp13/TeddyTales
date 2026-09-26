@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/material.dart';
 
@@ -31,6 +32,7 @@ import '../widgets/care_stats_panel.dart';
 import '../widgets/dish_carousel.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/share_card.dart';
+import '../widgets/gift_reveal.dart' show showCoinReward;
 import '../widgets/sleep_countdown.dart';
 import '../game/referral_info.dart';
 import '../widgets/feed_burst.dart';
@@ -553,8 +555,14 @@ class _HomeScreenState extends State<HomeScreen>
     // Долго не заходил — мишка гостил у бабушки (миграция 0016): одна
     // тёплая строка при входе вместо молчаливо подросших шкал.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _maybeShowDaily();
-      if (mounted) unawaited(_maybeRedeemLink());
+      if (!mounted) return;
+      unawaited(() async {
+        // Сначала праздник пригласившего (друг пришёл по коду), потом
+        // окно «Сегодня» — не друг поверх друга.
+        await _maybeInviterReward();
+        if (mounted) _maybeShowDaily();
+        if (mounted) await _maybeRedeemLink();
+      }());
     });
     if (widget.game.welcomeBack) {
       widget.game.welcomeBack = false;
@@ -614,8 +622,42 @@ class _HomeScreenState extends State<HomeScreen>
     }
     final result = await widget.game.redeemReferral(code);
     if (mounted && result == RedeemResult.ok) {
-      _soon(context.l10n.inviteDone(info.coins));
+      await showCoinReward(
+        context,
+        amount: info.coins,
+        total: widget.game.coins,
+        title: context.l10n.rewardFromFriend,
+      );
     }
+  }
+
+  /// По коду пригласившего пришёл друг (заказчик 26.09): при входе —
+  /// праздник монет, а не тихая прибавка в кошельке. Что уже показано,
+  /// помнит телефон; сервер отдаёт, сколько всего принесли приглашения.
+  static bool _inviterChecked = false;
+
+  Future<void> _maybeInviterReward() async {
+    if (_inviterChecked) return;
+    _inviterChecked = true;
+    final info = await widget.game.referral();
+    if (info == null || !mounted) return;
+    int? seen;
+    final key = 'referral_earned_seen_${info.code}';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      seen = prefs.getInt(key);
+      await prefs.setInt(key, info.earned);
+    } on Object {
+      return;
+    }
+    final gained = info.earned - (seen ?? 0);
+    if (gained <= 0 || !mounted) return;
+    await showCoinReward(
+      context,
+      amount: gained,
+      total: widget.game.coins,
+      title: context.l10n.rewardInviter,
+    );
   }
 
   /// Подарок дня не забран — окно «Сегодня» открывается само, один раз за

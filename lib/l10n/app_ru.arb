@@ -1291,5 +1291,7 @@
       }
     }
   },
-  "friendCodeSkip": "Пропустить"
+  "friendCodeSkip": "Пропустить",
+  "rewardFromFriend": "Подарок от друга — и другу тоже!",
+  "rewardInviter": "Друг пришёл по твоему коду!"
 }

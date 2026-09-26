@@ -5,6 +5,7 @@ import '../game/game_state.dart';
 import '../game/referral_info.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'gift_reveal.dart' show showCoinReward;
 import 'share_card.dart' show redeemMessage;
 
 /// «Тебя пригласил друг?» — после имени мишки при первом запуске
@@ -34,11 +35,20 @@ Future<void> showFriendCodeDialog(BuildContext context, GameState game) async {
   }
   if (!context.mounted) return;
 
-  await showDialog<void>(
+  final ok = await showDialog<bool>(
     context: context,
     builder: (context) =>
         _FriendCodeDialog(game: game, info: info, found: found),
   );
+  // Монеты пришли — праздник на экране (заказчик 26.09).
+  if (ok == true && context.mounted) {
+    await showCoinReward(
+      context,
+      amount: info.coins,
+      total: game.coins,
+      title: context.l10n.rewardFromFriend,
+    );
+  }
 }
 
 class _FriendCodeDialog extends StatefulWidget {
@@ -80,9 +90,11 @@ class _FriendCodeDialogState extends State<_FriendCodeDialog> {
     final result = await widget.game.redeemReferral(code);
     if (!mounted) return;
     final message = redeemMessage(l10n, result, widget.info.coins);
-    if (result == RedeemResult.ok ||
-        result == RedeemResult.alreadyUsed ||
-        result == RedeemResult.tooLate) {
+    if (result == RedeemResult.ok) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    if (result == RedeemResult.alreadyUsed || result == RedeemResult.tooLate) {
       final messenger = ScaffoldMessenger.maybeOf(context);
       Navigator.of(context).pop();
       messenger?.showSnackBar(

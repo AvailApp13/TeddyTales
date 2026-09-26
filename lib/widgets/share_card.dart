@@ -14,6 +14,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
+import 'gift_reveal.dart' show showCoinReward;
 import '../theme/app_colors.dart';
 
 /// «Поделиться» (сверх ТЗ, заказчик 25.09): одно окно на карточку мишки и
@@ -143,7 +144,18 @@ class _ShareDialogState extends State<_ShareDialog> {
     final result = await widget.game.redeemReferral(code);
     if (!mounted) return;
     setState(() => _redeeming = false);
-    _say(redeemMessage(l10n, result, info.coins));
+    if (result == RedeemResult.ok) {
+      // Праздник на экране, а не строка снизу (заказчик 26.09).
+      await showCoinReward(
+        context,
+        amount: info.coins,
+        total: widget.game.coins,
+        title: l10n.rewardFromFriend,
+      );
+      if (!mounted) return;
+    } else {
+      _say(redeemMessage(l10n, result, info.coins));
+    }
     if (result != RedeemResult.offline && result != RedeemResult.notFound) {
       _friend.clear();
       await _load();
@@ -159,52 +171,82 @@ class _ShareDialogState extends State<_ShareDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Углы скругляет окно, а не карточка: в картинке углы прямые,
-            // иначе мессенджеры закрашивают прозрачные уголки чёрным.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: FittedBox(
-                child: RepaintBoundary(
-                  key: _card,
-                  child: PetShareCard(
-                    game: widget.game,
-                    stage: widget.stage,
-                    grown: widget.grown,
-                    calendar: widget.calendar,
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Превью карточки уменьшено, чтобы окно помещалось без
+                // прокрутки (заказчик 26.09); в мессенджер уходит полный размер.
+                // Углы скругляет окно, а не карточка: в картинке углы прямые,
+                // иначе мессенджеры закрашивают прозрачные уголки чёрным.
+                Center(
+                  child: SizedBox(
+                    height: (MediaQuery.sizeOf(context).height * 0.3).clamp(
+                      170.0,
+                      300.0,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: FittedBox(
+                        child: RepaintBoundary(
+                          key: _card,
+                          child: PetShareCard(
+                            game: widget.game,
+                            stage: widget.stage,
+                            grown: widget.grown,
+                            calendar: widget.calendar,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
+                ),
+                if (info != null && info.code.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _InviteBlock(
+                    info: info,
+                    friend: _friend,
+                    busy: _redeeming,
+                    onCopied: () => _say(l10n.inviteCopied),
+                    onRedeem: () => _redeem(info),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  key: const ValueKey('share-send'),
+                  onPressed: _busy ? null : _share,
+                  icon: const Icon(Icons.ios_share, size: 18),
+                  label: Text(l10n.shareAction),
+                ),
+              ],
+            ),
+          ),
+          // Крестик справа вверху (заказчик 26.09).
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Material(
+              color: AppColors.surface.withValues(alpha: 0.92),
+              shape: const CircleBorder(),
+              elevation: 1,
+              child: IconButton(
+                key: const ValueKey('share-close'),
+                tooltip: l10n.shareClose,
+                visualDensity: VisualDensity.compact,
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
-            if (info != null && info.code.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _InviteBlock(
-                info: info,
-                friend: _friend,
-                busy: _redeeming,
-                onCopied: () => _say(l10n.inviteCopied),
-                onRedeem: () => _redeem(info),
-              ),
-            ],
-            const SizedBox(height: 14),
-            FilledButton.icon(
-              key: const ValueKey('share-send'),
-              onPressed: _busy ? null : _share,
-              icon: const Icon(Icons.ios_share, size: 18),
-              label: Text(l10n.shareAction),
-            ),
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.shareClose),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -231,7 +273,7 @@ class _InviteBlock extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 6, 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.outline),
@@ -257,7 +299,7 @@ class _InviteBlock extends StatelessWidget {
                       key: const ValueKey('invite-code'),
                       style: const TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 3,
                       ),
@@ -289,13 +331,13 @@ class _InviteBlock extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: InviteStats(info: info),
           ),
           if (info.canRedeem) ...[
-            const Divider(height: 20, color: AppColors.outline),
+            const Divider(height: 14, color: AppColors.outline),
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Row(
@@ -510,7 +552,7 @@ class InviteStats extends StatelessWidget {
           ],
         ),
         if (info.milestones.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               for (final m in info.milestones)
@@ -558,10 +600,10 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -575,7 +617,7 @@ class _Stat extends StatelessWidget {
                   value,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 20,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                     height: 1.1,
                   ),
@@ -616,8 +658,8 @@ class _Step extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 34,
-          height: 34,
+          width: 28,
+          height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: reached ? AppColors.sage : AppColors.surface,

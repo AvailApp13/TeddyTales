@@ -724,5 +724,7 @@
   "friendCodeFound": "找到了好友的邀请码 {code}。你们各得 {coins} 金币。",
   "friendCodeAsk": "输入好友的邀请码，你们各得 {coins} 金币。",
   "friendCodeClaim": "领取 +{coins}",
-  "friendCodeSkip": "跳过"
+  "friendCodeSkip": "跳过",
+  "rewardFromFriend": "好友送的礼物——好友也有一份！",
+  "rewardInviter": "好友用你的邀请码加入了！"
 }
