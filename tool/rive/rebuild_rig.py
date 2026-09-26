@@ -41,6 +41,11 @@ CHAIN = [
     ('hood1',   'head',   None,         (517, 185)),
     ('hood2',   'hood1',  None,         (517, 42)),
     ('breath',  'belly',  (517, 700),   (517, 600)),
+    # лицо смещается внутри капюшона — поворот головы, взгляд вверх-вниз
+    ('face',    'head',   (512, 430),   (512, 370)),
+    # боковины капюшона от висков вниз к плечам
+    ('hood_sl', 'head',   (338, 330),   (318, 530)),
+    ('hood_sr', 'head',   (696, 330),   (716, 530)),
     ('ear_l1',  'head',   (420, 322),   (388, 290)),
     ('ear_l2',  'ear_l1', None,         (340, 238)),
     ('ear_r1',  'head',   (605, 322),   (637, 290)),
@@ -127,11 +132,18 @@ def along(p, a, b):
 
 def weights_for(layer, x, y, B):
     if layer in ('face_img',):
-        return {'head': 1.0}
+        d = math.hypot((x - 512) / 118, (y - 425) / 108)
+        k = 1 - smooth(0.8, 1.22, d)
+        return {'face': k, 'head': 1 - k} if k < 1 else {'face': 1.0}
     if layer in ('hood_img', 'hood_back_img'):
         # конус вверх: голова → капюшон1 → капюшон2; низ, лежащий на плечах, —
         # за грудью, чтобы не отрывался от кофты при наклоне головы.
-        w = chain_weights(y, [('head', 330), ('hood1', 185), ('hood2', -1e9)], blend=40)
+        w = chain_weights(y, [('head', 318), ('hood1', 185), ('hood2', -1e9)], blend=58)
+        side = smooth(125, 195, abs(x - 517)) * smooth(300, 370, y)
+        if side > 0:
+            bone = 'hood_sl' if x < 517 else 'hood_sr'
+            w = {b: v * (1 - side) for b, v in w.items()}
+            w[bone] = w.get(bone, 0) + side
         drape = smooth(470, 545, y) * smooth(90, 170, abs(x - 517))
         if drape > 0:
             w = {b: v * (1 - drape) for b, v in w.items()}
@@ -139,10 +151,10 @@ def weights_for(layer, x, y, B):
         return w
     if layer.startswith('ear_l'):
         t = along((x, y), B['ear_l1']['start'], B['ear_l2']['end'])
-        return blend3(t, 'head', 'ear_l1', 'ear_l2', a=0.12, b=0.4, c=0.55, d=0.85)
+        return blend3(t, 'head', 'ear_l1', 'ear_l2', a=0.22, b=0.5, c=0.58, d=0.88)
     if layer.startswith('ear_r'):
         t = along((x, y), B['ear_r1']['start'], B['ear_r2']['end'])
-        return blend3(t, 'head', 'ear_r1', 'ear_r2', a=0.12, b=0.4, c=0.55, d=0.85)
+        return blend3(t, 'head', 'ear_r1', 'ear_r2', a=0.22, b=0.5, c=0.58, d=0.88)
     if layer == 'shirt_img':
         w = chain_weights(-y, [('hips', -742), ('belly', -652), ('chest', -1e9)], blend=26)
         # дыхание: грудь-живот в середине кофты
@@ -194,15 +206,33 @@ def pack(w, order):
 
 # --- Дыхание ------------------------------------------------------------------
 FPS = 60
-DUR = 864          # как прежний idle_life: 14,4 с
-PERIOD = 216       # вдох-выдох 3,6 с, четыре за петлю
-SWAY = 432         # покачивание головы 7,2 с, два за петлю
+DUR = 720          # петля 12 с
+PERIOD = 180       # вдох-выдох 3,0 с (было 3,6), четыре за петлю
+SWAY = 360         # покачивание головы 6 с, два за петлю
 
 
 def wave(t, lag=0.0, period=PERIOD):
     """-1 в конце выдоха, +1 на вершине вдоха; запаздывание lag в кадрах."""
     ph = 2 * math.pi * ((t - lag) % period) / period
     return -math.cos(ph)
+
+
+def pulse(t, a, b, ramp):
+    """0 → 1 за ramp кадров от a, держит, 1 → 0 к b."""
+    return smooth(a, a + ramp, t) * (1 - smooth(b - ramp, b, t))
+
+
+def twitch(t, at, dur=16):
+    """Быстрое вздрагивание уха: 0 → 1 → лёгкий перелёт → 0."""
+    if t < at or t > at + dur * 2:
+        return 0.0
+    u = (t - at) / dur
+    return math.sin(math.pi * min(u, 1.0)) if u <= 1 else -0.25 * math.sin(math.pi * (u - 1))
+
+
+# Осмотрелся: (начало, конец, сдвиг лица по горизонтали, по вертикали, наклон)
+LOOKS = [(150, 260, -1, 0, -1), (430, 540, 1, 0, 1), (600, 660, 0, 1, 0)]
+EAR_TWITCH = [('l', 120), ('r', 380), ('l', 560), ('r', 566)]
 
 
 def breathing(B, rest):
@@ -212,30 +242,46 @@ def breathing(B, rest):
     def add(bone, key, fn):
         ch[(bone, key)] = [(t, fn(t)) for t in range(0, DUR + 1, 4)]
 
-    R, SX, SY, Y = 15, 16, 17, 91
-    add('hips', Y, lambda t: rest['hips']['y'] - 2.2 * wave(t))           # вдох — чуть выше
-    add('belly', R, lambda t: rest['belly']['rotation'] - 0.006 * wave(t, 4))
-    add('breath', SY, lambda t: 1 + 0.028 * (wave(t) + 1) / 2)              # грудь шире
-    add('breath', SX, lambda t: 1 + 0.018 * (wave(t, 3) + 1) / 2)
-    add('chest', R, lambda t: rest['chest']['rotation'] + 0.010 * wave(t, 6))
-    add('neck', R, lambda t: rest['neck']['rotation'] - 0.008 * wave(t, 10))
-    add('head', R, lambda t: rest['head']['rotation'] + 0.016 * wave(t, 14)
-        + 0.013 * math.sin(2 * math.pi * t / SWAY))
-    # капюшон и уши догоняют и слегка перелетают
-    add('hood1', R, lambda t: rest['hood1']['rotation'] - 0.02 * wave(t, 22)
-        - 0.012 * math.sin(2 * math.pi * (t - 30) / SWAY))
-    add('hood2', R, lambda t: rest['hood2']['rotation'] - 0.05 * wave(t, 34)
-        - 0.02 * math.sin(2 * math.pi * (t - 45) / SWAY) + 0.01 * wave(t * 2, 60))
-    # уши на вдохе клонятся к капюшону (не открывают щель у его основания)
-    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.03 * wave(t, 26))
-    add('ear_l2', R, lambda t: rest['ear_l2']['rotation'] + 0.055 * wave(t, 38))
-    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.03 * wave(t, 26))
-    add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.055 * wave(t, 38))
-    # плечи поднимаются на вдохе, лапы чуть отходят
-    add('arm_l1', R, lambda t: rest['arm_l1']['rotation'] + 0.014 * wave(t, 8))
-    add('arm_l2', R, lambda t: rest['arm_l2']['rotation'] + 0.02 * wave(t, 20))
-    add('arm_r1', R, lambda t: rest['arm_r1']['rotation'] - 0.014 * wave(t, 8))
-    add('arm_r2', R, lambda t: rest['arm_r2']['rotation'] - 0.02 * wave(t, 20))
+    def look(t):
+        return [sum(v[i] * pulse(t, a, b, 40) for a, b, *v in LOOKS) for i in range(3)]
+
+    def ear(t, side):
+        return sum(twitch(t, at) for s_, at in EAR_TWITCH if s_ == side)
+
+    R, SX, SY, X, Y = 15, 16, 17, 90, 91
+    # корпус: заметный вдох, на выдохе присел
+    add('hips', Y, lambda t: rest['hips']['y'] - 5.0 * wave(t))
+    add('belly', R, lambda t: rest['belly']['rotation'] - 0.012 * wave(t, 4))
+    add('breath', SY, lambda t: 1 + 0.065 * (wave(t) + 1) / 2)              # грудь шире
+    add('breath', SX, lambda t: 1 + 0.04 * (wave(t, 3) + 1) / 2)
+    add('chest', R, lambda t: rest['chest']['rotation'] + 0.02 * wave(t, 6))
+    add('neck', R, lambda t: rest['neck']['rotation'] - 0.014 * wave(t, 10))
+    # голова: вдох + медленное покачивание + наклон, когда осматривается
+    add('head', R, lambda t: rest['head']['rotation'] + 0.03 * wave(t, 14)
+        + 0.016 * math.sin(2 * math.pi * t / SWAY) + 0.07 * look(t)[2])
+    # лицо внутри капюшона: поворот влево-вправо, взгляд вверх
+    add('face', Y, lambda t: rest['face']['y'] + 13 * look(t)[0])
+    add('face', X, lambda t: rest['face']['x'] + 7 * look(t)[1] + 1.2 * wave(t, 12))
+    # капюшон: кончик и боковины догоняют и перелетают
+    add('hood1', R, lambda t: rest['hood1']['rotation'] - 0.018 * wave(t, 22)
+        - 0.015 * math.sin(2 * math.pi * (t - 30) / SWAY) - 0.015 * look(t)[2])
+    add('hood2', R, lambda t: rest['hood2']['rotation'] - 0.08 * wave(t, 34)
+        - 0.025 * math.sin(2 * math.pi * (t - 45) / SWAY) + 0.015 * wave(t * 2, 60)
+        - 0.05 * look(t - 12)[2])
+    add('hood_sl', R, lambda t: rest['hood_sl']['rotation'] + 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
+    add('hood_sr', R, lambda t: rest['hood_sr']['rotation'] - 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
+    # уши: по диагонали к капюшону и складываются к основанию; иногда вздрагивают
+    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.06 * wave(t, 26) + 0.14 * ear(t, 'l'))
+    add('ear_l2', R, lambda t: rest['ear_l2']['rotation'] + 0.09 * wave(t, 38) + 0.18 * ear(t - 3, 'l'))
+    add('ear_l1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.16 * ear(t, 'l'))
+    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wave(t, 26) - 0.14 * ear(t, 'r'))
+    add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.09 * wave(t, 38) - 0.18 * ear(t - 3, 'r'))
+    add('ear_r1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.16 * ear(t, 'r'))
+    # плечи поднимаются на вдохе, лапы отходят
+    add('arm_l1', R, lambda t: rest['arm_l1']['rotation'] + 0.024 * wave(t, 8))
+    add('arm_l2', R, lambda t: rest['arm_l2']['rotation'] + 0.03 * wave(t, 20))
+    add('arm_r1', R, lambda t: rest['arm_r1']['rotation'] - 0.024 * wave(t, 8))
+    add('arm_r2', R, lambda t: rest['arm_r2']['rotation'] - 0.03 * wave(t, 20))
     return ch
 
 
@@ -256,7 +302,7 @@ def main(project):
 
     # 1. Жёсткие контейнеры: их мир в покое (до правок).
     followers = {  # контейнер → новая кость
-        'head': 'head', 'hood_lining': 'head',
+        'head': 'face', 'hood_lining': 'head',
         'forearm_left': 'arm_l2', 'forearm_right': 'arm_r2',
         'leg_left': 'leg_l', 'leg_right': 'leg_r',
     }
@@ -340,6 +386,17 @@ def main(project):
 
     # 7. idle_life: дыхание поверх прежнего моргания.
     idle = next(a for a in root.iter('LinearAnimation') if a.attrib.get('name') == 'idle_life')
+    old_dur = int(idle.attrib['duration'])
+    idle.set('duration', str(DUR))
+    for kp in idle.iter('KeyedProperty'):
+        seen = set()
+        for k in list(kp):
+            fr = round(int(k.attrib.get('frame', '0')) * DUR / old_dur)
+            if fr in seen:
+                kp.remove(k)
+                continue
+            seen.add(fr)
+            k.set('frame', str(fr))
     rest = {name: dict(b['local']) for name, b in B.items()}
     for (bname, key), frames in breathing(B, rest).items():
         ko = ET.SubElement(idle, 'KeyedObject', {'objectId': B[bname]['id']})
