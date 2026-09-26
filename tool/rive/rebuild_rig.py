@@ -43,6 +43,12 @@ CHAIN = [
     ('breath',  'belly',  (517, 700),   (517, 600)),
     # лицо смещается внутри капюшона — поворот головы, взгляд вверх-вниз
     ('face',    'head',   (512, 430),   (512, 370)),
+    # мимика: мех вокруг глаз, щёки, рот (дети кости лица)
+    ('eye_l',   'face',   (456, 418),   (456, 388)),
+    ('eye_r',   'face',   (568, 418),   (568, 388)),
+    ('cheek_l', 'face',   (442, 470),   (442, 440)),
+    ('cheek_r', 'face',   (584, 470),   (584, 440)),
+    ('mouth',   'face',   (512, 500),   (512, 470)),
     # боковины капюшона от висков вниз к плечам
     ('hood_sl', 'head',   (338, 330),   (318, 530)),
     ('hood_sr', 'head',   (696, 330),   (716, 530)),
@@ -130,11 +136,47 @@ def along(p, a, b):
     return ((p[0] - ax) * dx + (p[1] - ay) * dy) / (dx * dx + dy * dy)
 
 
+# Где верх уха касается конуса капюшона (по контурам слоёв). Вокруг этих
+# точек и капюшон, и ухо держатся за голову, иначе стык расходится
+# (заказчик 26.09 обвёл на скриншотах).
+EAR_HOOD_CONTACTS = [(394, 204), (619, 205)]
+
+
+def pin(w, x, y, r0=30, r1=75, bone='head'):
+    d = min(math.hypot(x - px, y - py) for px, py in EAR_HOOD_CONTACTS)
+    k = 1 - smooth(r0, r1, d)
+    if k <= 0:
+        return w
+    w = {b: v * (1 - k) for b, v in w.items()}
+    w[bone] = w.get(bone, 0) + k
+    return w
+
+
 def weights_for(layer, x, y, B):
+    return pin(_weights_for(layer, x, y, B), x, y) if layer.startswith(('hood_img', 'hood_back', 'ear_')) \
+        else _weights_for(layer, x, y, B)
+
+
+def _weights_for(layer, x, y, B):
     if layer in ('face_img',):
         d = math.hypot((x - 512) / 118, (y - 425) / 108)
         k = 1 - smooth(0.8, 1.22, d)
-        return {'face': k, 'head': 1 - k} if k < 1 else {'face': 1.0}
+        w = {'face': k, 'head': 1 - k} if k < 1 else {'face': 1.0}
+        zones = [('eye_l', 456, 416, 42, 34), ('eye_r', 568, 416, 42, 34),
+                 ('cheek_l', 440, 470, 50, 38), ('cheek_r', 584, 470, 50, 38),
+                 ('mouth', 512, 502, 40, 24)]
+        gs = {}
+        for bone, cx, cy, rx, ry in zones:
+            g = 1 - smooth(0.45, 1.0, math.hypot((x - cx) / rx, (y - cy) / ry))
+            if g > 0:
+                gs[bone] = g
+        if gs:
+            tot = sum(gs.values())
+            share = w.get('face', 0) * min(1.0, tot)
+            w['face'] = w.get('face', 0) - share
+            for bone, g in gs.items():
+                w[bone] = share * g / tot
+        return {b: v for b, v in w.items() if v > 1e-4}
     if layer in ('hood_img', 'hood_back_img'):
         # конус вверх: голова → капюшон1 → капюшон2; низ, лежащий на плечах, —
         # за грудью, чтобы не отрывался от кофты при наклоне головы.
@@ -285,6 +327,100 @@ def breathing(B, rest):
     return ch
 
 
+# --- Мимика -------------------------------------------------------------------
+BEAD_L, BEAD_R = '0:112404', '0:277344'   # бусины глаз
+BEAD_REST = {BEAD_L: 0.63041645, BEAD_R: 0.63351262}
+FX_LOVE = '0:107294'                      # глаза-дуги + румянец
+# моргания в idle_life (кадр, когда бусины сплющены сильнее всего; 12 с)
+BLINKS = [63, 223, 255, 455, 588]
+
+EI = '0.42 0 0.58 1'
+EO = '0 0 0.58 1'
+EIN = '0.42 0 1 1'
+BACK = '0.34 1.56 0.64 1'
+
+
+def blink_face(rest):
+    """Мех вокруг глаз прищуривается и щёки чуть поднимаются вместе с
+    морганием — веко «мягкое», а не только сплющенная бусина."""
+    ch = {}
+    SX, X = 16, 90   # у костей лица ось x смотрит вверх: scaleX — по высоте
+
+    def bump(t, amp):
+        return sum(amp * max(0.0, 1 - abs(t - b) / 9) ** 2 for b in BLINKS)
+
+    for eye in ('eye_l', 'eye_r'):
+        ch[(eye, SX)] = [(t, 1 - bump(t, 0.1)) for t in range(0, DUR + 1, 2)]
+    for cheek in ('cheek_l', 'cheek_r'):
+        ch[(cheek, X)] = [(t, rest[cheek]['x'] + bump(t, 1.6)) for t in range(0, DUR + 1, 2)]
+    return ch
+
+
+def smile(rest):
+    """Улыбка всем телом, 1,8 с: замах → щёки вверх, рот шире, глаза
+    прищуриваются, под это проявляются глаза-дуги с румянцем; голова
+    наклоняется с пружинкой, кончик капюшона догоняет, уши приподнимаются.
+    Возврат такой же мягкий. {(bone или id, key): [(кадр, значение, кривая)]}"""
+    R, SX, SY, X, Y, OP = 15, 16, 17, 90, 91, 18
+    r = rest
+    ch = {
+        (BEAD_L, SY): [(0, BEAD_REST[BEAD_L], EIN), (10, 0.3, EO), (16, 0.02, None),
+                       (90, 0.02, EO), (100, BEAD_REST[BEAD_L], None)],
+        (BEAD_R, SY): [(0, BEAD_REST[BEAD_R], EIN), (10, 0.3, EO), (16, 0.02, None),
+                       (90, 0.02, EO), (100, BEAD_REST[BEAD_R], None)],
+        (BEAD_L, OP): [(0, 1, None), (16, 0, None), (90, 1, None)],
+        (BEAD_R, OP): [(0, 1, None), (16, 0, None), (90, 1, None)],
+        (FX_LOVE, OP): [(0, 0, None), (11, 0, EI), (22, 1, None), (84, 1, EI), (96, 0, None)],
+        ('eye_l', SX): [(0, 1, EI), (6, 1.04, EI), (20, 0.84, EI), (88, 0.87, EI), (102, 1, None)],
+        ('eye_r', SX): [(0, 1, EI), (6, 1.04, EI), (20, 0.84, EI), (88, 0.87, EI), (102, 1, None)],
+        ('cheek_l', X): [(0, r['cheek_l']['x'], EI), (6, r['cheek_l']['x'] - 1, BACK),
+                         (24, r['cheek_l']['x'] + 6, EI), (60, r['cheek_l']['x'] + 5, EI),
+                         (88, r['cheek_l']['x'] + 6, EI), (104, r['cheek_l']['x'], None)],
+        ('cheek_r', X): [(0, r['cheek_r']['x'], EI), (6, r['cheek_r']['x'] - 1, BACK),
+                         (24, r['cheek_r']['x'] + 6, EI), (60, r['cheek_r']['x'] + 5, EI),
+                         (88, r['cheek_r']['x'] + 6, EI), (104, r['cheek_r']['x'], None)],
+        ('cheek_l', SY): [(0, 1, EI), (24, 1.06, EI), (88, 1.05, EI), (104, 1, None)],
+        ('cheek_r', SY): [(0, 1, EI), (24, 1.06, EI), (88, 1.05, EI), (104, 1, None)],
+        ('mouth', SY): [(0, 1, EI), (22, 1.1, EI), (88, 1.09, EI), (104, 1, None)],
+        ('mouth', X): [(0, r['mouth']['x'], EI), (22, r['mouth']['x'] + 2.5, EI),
+                       (88, r['mouth']['x'] + 2, EI), (104, r['mouth']['x'], None)],
+        ('head', R): [(0, r['head']['rotation'], EI), (8, r['head']['rotation'] - 0.015, BACK),
+                      (28, r['head']['rotation'] + 0.07, EI), (70, r['head']['rotation'] + 0.055, EI),
+                      (104, r['head']['rotation'], None)],
+        ('face', Y): [(0, r['face']['y'], EI), (28, r['face']['y'] + 4, EI), (80, r['face']['y'] + 3, EI),
+                      (104, r['face']['y'], None)],
+        ('face', X): [(0, r['face']['x'], EI), (28, r['face']['x'] + 3, EI), (80, r['face']['x'] + 2, EI),
+                      (104, r['face']['x'], None)],
+        ('hood2', R): [(0, r['hood2']['rotation'], EI), (16, r['hood2']['rotation'], EI),
+                       (36, r['hood2']['rotation'] - 0.09, EI), (60, r['hood2']['rotation'] + 0.035, EI),
+                       (82, r['hood2']['rotation'] - 0.02, EI), (106, r['hood2']['rotation'], None)],
+        ('hood1', R): [(0, r['hood1']['rotation'], EI), (30, r['hood1']['rotation'] - 0.03, EI),
+                       (64, r['hood1']['rotation'] + 0.01, EI), (104, r['hood1']['rotation'], None)],
+        ('ear_l1', R): [(0, r['ear_l1']['rotation'], EI), (18, r['ear_l1']['rotation'] - 0.1, EO),
+                        (40, r['ear_l1']['rotation'] + 0.03, EI), (70, r['ear_l1']['rotation'] - 0.02, EI),
+                        (104, r['ear_l1']['rotation'], None)],
+        ('ear_r1', R): [(0, r['ear_r1']['rotation'], EI), (20, r['ear_r1']['rotation'] + 0.1, EO),
+                        (42, r['ear_r1']['rotation'] - 0.03, EI), (72, r['ear_r1']['rotation'] + 0.02, EI),
+                        (104, r['ear_r1']['rotation'], None)],
+        ('ear_l2', R): [(0, r['ear_l2']['rotation'], EI), (24, r['ear_l2']['rotation'] - 0.12, EO),
+                        (48, r['ear_l2']['rotation'] + 0.05, EI), (104, r['ear_l2']['rotation'], None)],
+        ('ear_r2', R): [(0, r['ear_r2']['rotation'], EI), (26, r['ear_r2']['rotation'] + 0.12, EO),
+                        (50, r['ear_r2']['rotation'] - 0.05, EI), (104, r['ear_r2']['rotation'], None)],
+    }
+    return 108, ch
+
+
+def cubic_key(parent, frame, value, ease):
+    if ease is None:
+        ET.SubElement(parent, 'KeyFrameDouble', {'value': fmt(value), 'frame': str(frame),
+                                                 'interpolationType': 'hold'})
+        return
+    k = ET.SubElement(parent, 'KeyFrameDouble', {'value': fmt(value), 'frame': str(frame),
+                                                 'interpolationType': 'cubic'})
+    x1, y1, x2, y2 = ease.split()
+    ET.SubElement(k, 'CubicEaseInterpolator', {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
+
+
 # --- Сборка -------------------------------------------------------------------
 def main(project):
     path = f'{project}/scene.rml'
@@ -398,12 +534,26 @@ def main(project):
             seen.add(fr)
             k.set('frame', str(fr))
     rest = {name: dict(b['local']) for name, b in B.items()}
-    for (bname, key), frames in breathing(B, rest).items():
+    for (bname, key), frames in {**breathing(B, rest), **blink_face(rest)}.items():
         ko = ET.SubElement(idle, 'KeyedObject', {'objectId': B[bname]['id']})
         kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': str(key)})
         for fr, val in frames:
             ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(val), 'frame': str(fr),
                                                  'interpolationType': 'linear'})
+
+    # 8. emo_smile — заново на новых костях.
+    emo = next((a for a in root.iter('LinearAnimation') if a.attrib.get('name') == 'emo_smile'), None)
+    if emo is not None:
+        for ko in list(emo.findall('KeyedObject')):
+            emo.remove(ko)
+        dur, ch = smile(rest)
+        emo.set('duration', str(dur))
+        for (target, key), frames in ch.items():
+            oid = B[target]['id'] if target in B else target
+            ko = ET.SubElement(emo, 'KeyedObject', {'objectId': oid})
+            kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': str(key)})
+            for fr, val, ease in frames:
+                cubic_key(kp, fr, val, ease)
 
     ET.indent(tree, space='    ')
     tree.write(path, encoding='unicode')
