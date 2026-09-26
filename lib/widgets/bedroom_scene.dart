@@ -108,8 +108,9 @@ class BedroomScene extends StatefulWidget {
   static const Duration lampBreath = Duration(milliseconds: 5500);
 
   /// Сколько мишка засыпает после «Уложить спать»: сумма шагов `_doze`.
-  /// К этому моменту глаза закрыты — и можно показывать сон.
-  static const Duration fallAsleep = Duration(milliseconds: 7500);
+  /// К этому моменту глаза закрыты — и можно показывать сон. Заказчик
+  /// 26.09: было 7,5 с — долго, всё то же за 4.
+  static const Duration fallAsleep = Duration(milliseconds: 4000);
 
   /// Все картинки сцены.
   static const List<String> assets = [
@@ -201,7 +202,7 @@ class _BedroomSceneState extends State<BedroomScene>
   /// вздрагивает: спохватился.
   late final AnimationController _nodDrive = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 4200),
+    duration: const Duration(milliseconds: 2200),
     reverseDuration: const Duration(milliseconds: 420),
   );
 
@@ -350,12 +351,12 @@ class _BedroomSceneState extends State<BedroomScene>
   /// глаза закрыты, и облако мыслей над головой ждёт именно этого.
   void _doze() {
     _plan.addAll([
-      _go(lid: 1, move: _ms(600), hold: _ms(350)),
-      _go(lid: 0, move: _ms(640), hold: _ms(900)),
-      _go(gaze: _Gaze.down, lid: 0.15, move: _ms(380), hold: _ms(500)),
-      _go(lid: 1, move: _ms(900), hold: _ms(500), nod: true),
-      _go(lid: 0.55, move: _ms(900), hold: _ms(700)),
-      _go(lid: 1, move: _ms(1100)),
+      _go(lid: 1, move: _ms(320), hold: _ms(190)),
+      _go(lid: 0, move: _ms(340), hold: _ms(480)),
+      _go(gaze: _Gaze.down, lid: 0.15, move: _ms(200), hold: _ms(270)),
+      _go(lid: 1, move: _ms(480), hold: _ms(270), nod: true),
+      _go(lid: 0.55, move: _ms(480), hold: _ms(370)),
+      _go(lid: 1, move: _ms(600)),
     ]);
     _step();
   }

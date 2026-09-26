@@ -25,12 +25,13 @@ void main() {
     await tester.pumpWidget(wrap(true));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const ValueKey('sleep-countdown')), findsOneWidget);
-    expect(find.text('8'), findsOneWidget);
+    // Засыпает за 4 секунды (заказчик 26.09; было 7,5).
+    expect(find.text('4'), findsOneWidget);
     expect(find.text('Засыпает'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('7'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 5));
+    expect(find.text('3'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1500));
     expect(find.text('2'), findsOneWidget);
 
     // Уснул: кружок растворяется, дальше «zzz» и облако.
