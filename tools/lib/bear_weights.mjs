@@ -78,9 +78,23 @@ export function loadWeights() {
   // целиком идёт с костью уха. Ось кости — в голове (D26): ухо заметно сдвигается, а
   // основание, пришитое под капюшоном, стоит и тянется — капюшон неподвижен, щели нет
   const EAR_BAND = (process.env.EAR_BAND ?? '3,40').split(',').map(Number);
-  const earW = (bone) => (x, y) => {
-    const w = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y)); const h = hoodW(x, y);
+  // уголки уха у концов стыка, где край уха выходит к фону, — целиком с ухом: полоса держит
+  // только середину стыка. Иначе уголок стоял, а ухо уходило — зубец у нижнего конца стыка
+  // на промежуточных углах (5–15°). Скрытая часть уха — полный круг меха (ear_disc.py): из-под
+  // капюшона на уголке выходит мех, а не обрез
+  // Только у нижнего конца: у верхнего (у острия) при «повисли» ухо уходит от капюшона — там
+  // уголок должен стоять, иначе край уха выходит из-под капюшона прямым срезом
+  const EAR_CORNER = (process.env.EAR_CORNER ?? '8,36').split(',').map(Number);
+  const LOW_R = [60, 110];   // px кадра от нижнего конца стыка: зона уголка
+  const earW = (bone) => {
+    const side = bone.replace(/^root_ear_/, '').split('_')[0]; const low = meta.ear_pivots?.[`ear_${side}`]?.contact?.[1];
+    return (x, y) => {
+    const band = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y));
+    const nearLow = low ? 1 - smooth(LOW_R[0], LOW_R[1], Math.hypot(x - low[0], y - low[1])) : 0;
+    const corner = F.bg ? nearLow * (1 - smooth(EAR_CORNER[0], EAR_CORNER[1], dist('bg', x, y))) : 0;
+    const w = Math.max(band, corner); const h = hoodW(x, y);
     return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
+    };
   };
   // живот: вес — близость к центру живота; силуэт (бока, низ) дышит вместе с ним
   const [BX, BY] = F.belly;
