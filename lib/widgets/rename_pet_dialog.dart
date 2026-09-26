@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../game/pet_name.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'glass_panel.dart';
 
 /// Как зовут малыша (КП 2.3).
 ///
@@ -31,9 +32,12 @@ Future<String?> showRenamePetDialog({
   /// «Отмена», и объясняет, что имя можно поменять.
   bool firstRun = false,
 }) {
-  return showDialog<String>(
+  // Заказчик 26.09: окно из матового стекла в стиле главного экрана.
+  return showGlassPanel<String>(
     context: context,
-    barrierDismissible: false,
+    center: const Offset(0.5, 0.4),
+    width: 330,
+    dismissible: false,
     builder: (context) =>
         _RenameDialog(current: current, onSubmit: onSubmit, firstRun: firstRun),
   );
@@ -126,73 +130,98 @@ class _RenameDialogState extends State<_RenameDialog> {
     // пока человек ещё ничего не напечатал, значит ругаться авансом.
     final showError = error != null && _controller.text.trim().isNotEmpty;
 
-    return AlertDialog(
-      title: Text(l10n.nameDialogTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.firstRun) ...[
-            Text(
-              l10n.nameFirstLead,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(height: 1.4),
-            ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            enabled: !_sending,
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.words,
-            // Ограничение вводом, а не только проверкой: подсчёт знаков
-            // человеку виден, и лишнее просто не печатается. Предел с
-            // запасом — нормализация всё равно срежет пробелы по краям.
-            inputFormatters: [
-              LengthLimitingTextInputFormatter(petNameMaxLength + 2),
-            ],
-            decoration: InputDecoration(
-              hintText: l10n.nameDialogHint,
-              errorText: showError ? error : null,
-              counterText:
-                  '${normalizePetName(_controller.text).runes.length}'
-                  '/$petNameMaxLength',
-            ),
-            onChanged: _onChanged,
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            l10n.nameDialogNote(petNameMinLength, petNameMaxLength),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: _sending ? null : () => Navigator.of(context).pop(),
-          child: Text(
-            widget.firstRun ? l10n.nameFirstLater : l10n.commonCancel,
-          ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassTitle(
+          l10n.nameDialogTitle,
+          close: false,
+          leading: const _PawBadge(),
         ),
-        FilledButton(
-          onPressed: _localError != null || _sending ? null : _submit,
-          child: _sending
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  widget.firstRun ? l10n.nameFirstSave : l10n.nameDialogSave,
-                ),
+        const SizedBox(height: 10),
+        if (widget.firstRun) ...[
+          Text(
+            l10n.nameFirstLead,
+            style: glassText(14, 600, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+        ],
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          enabled: !_sending,
+          textInputAction: TextInputAction.done,
+          textCapitalization: TextCapitalization.words,
+          // Ограничение вводом, а не только проверкой: подсчёт знаков
+          // человеку виден, и лишнее просто не печатается. Предел с
+          // запасом — нормализация всё равно срежет пробелы по краям.
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(petNameMaxLength + 2),
+          ],
+          style: glassText(18, 800, color: AppColors.textPrimary),
+          decoration: glassField(
+            hint: l10n.nameDialogHint,
+            error: showError ? error : null,
+            counter:
+                '${normalizePetName(_controller.text).runes.length}'
+                '/$petNameMaxLength',
+          ),
+          onChanged: _onChanged,
+          onSubmitted: (_) => _submit(),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          l10n.nameDialogNote(petNameMinLength, petNameMaxLength),
+          style: glassText(12, 600, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: GlassButton(
+                key: const ValueKey('name-later'),
+                label: widget.firstRun
+                    ? l10n.nameFirstLater
+                    : l10n.commonCancel,
+                onPressed: _sending ? null : () => Navigator.of(context).pop(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GlassButton(
+                key: const ValueKey('name-save'),
+                primary: true,
+                label: _sending
+                    ? '…'
+                    : widget.firstRun
+                    ? l10n.nameFirstSave
+                    : l10n.nameDialogSave,
+                onPressed: _localError != null || _sending ? null : _submit,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+/// Лапка в белом кружке у заголовка — как кнопка профиля в шапке.
+class _PawBadge extends StatelessWidget {
+  const _PawBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.tan, width: 3),
+      ),
+      child: const Icon(Icons.pets, size: 17, color: AppColors.tan),
     );
   }
 }

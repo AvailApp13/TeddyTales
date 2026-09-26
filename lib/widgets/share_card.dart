@@ -15,6 +15,7 @@ import '../l10n/sections_l10n.dart';
 import '../l10n/size_l10n.dart';
 import '../l10n/zodiac_l10n.dart';
 import 'gift_reveal.dart' show showCoinReward;
+import 'glass_panel.dart';
 import '../theme/app_colors.dart';
 
 /// «Поделиться» (сверх ТЗ, заказчик 25.09): одно окно на карточку мишки и
@@ -31,8 +32,11 @@ Future<void> showShareCard(
   bool grown = false,
   GameCalendar calendar = const GameCalendar(),
 }) {
-  return showDialog<void>(
+  // Заказчик 26.09: окно из матового стекла в стиле главного экрана.
+  return showGlassPanel<void>(
     context: context,
+    center: const Offset(0.5, 0.5),
+    width: 360,
     builder: (context) => _ShareDialog(
       game: game,
       stage: stage,
@@ -166,15 +170,13 @@ class _ShareDialogState extends State<_ShareDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final info = _info;
-    return Dialog(
-      backgroundColor: AppColors.background,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      clipBehavior: Clip.antiAlias,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+      ),
       child: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,35 +218,21 @@ class _ShareDialogState extends State<_ShareDialog> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                FilledButton.icon(
+                GlassButton(
                   key: const ValueKey('share-send'),
+                  primary: true,
                   onPressed: _busy ? null : _share,
-                  icon: const Icon(Icons.ios_share, size: 18),
-                  label: Text(l10n.shareAction),
+                  icon: Icons.ios_share_rounded,
+                  label: l10n.shareAction,
                 ),
               ],
             ),
           ),
           // Крестик справа вверху (заказчик 26.09).
-          Positioned(
-            top: 6,
-            right: 6,
-            child: Material(
-              color: AppColors.surface.withValues(alpha: 0.92),
-              shape: const CircleBorder(),
-              elevation: 1,
-              child: IconButton(
-                key: const ValueKey('share-close'),
-                tooltip: l10n.shareClose,
-                visualDensity: VisualDensity.compact,
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(
-                  Icons.close_rounded,
-                  size: 20,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
+          const Positioned(
+            top: 0,
+            right: 0,
+            child: GlassCloseButton(key: ValueKey('share-close')),
           ),
         ],
       ),
@@ -274,11 +262,7 @@ class _InviteBlock extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 4, 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.outline),
-        borderRadius: BorderRadius.circular(18),
-      ),
+      decoration: glassTile(radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -602,7 +586,7 @@ class _Stat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: AppColors.surfaceMuted.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

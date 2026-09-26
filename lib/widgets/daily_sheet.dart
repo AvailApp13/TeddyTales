@@ -4,8 +4,9 @@ import '../backend/pet_snapshot.dart' show DailyInfo, DailyTask;
 import '../game/game_state.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 import 'gift_reveal.dart';
+import 'glass_panel.dart';
+import 'scene_label.dart';
 
 /// «Сегодня»: подарок дня, задания дня и задание недели (заказчик 25.09,
 /// миграция 0017; КП 11.1 — монеты за вход и достижения, КП 13.1 —
@@ -14,14 +15,14 @@ import 'gift_reveal.dart';
 /// Открывается сам при входе, если подарок ещё не забран, и из профиля.
 /// Всё считает сервер: календарь, задания, награды. Экран только
 /// показывает и отправляет «Забрать».
+///
+/// Заказчик 26.09: не лист снизу, а окно из матового стекла посреди
+/// комнаты, в стиле главного экрана.
 Future<void> showDailySheet(BuildContext context, GameState game) =>
-    showModalBottomSheet<void>(
+    showGlassPanel<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      center: const Offset(0.5, 0.55),
+      width: 360,
       builder: (_) => DailySheet(game: game),
     );
 
@@ -95,47 +96,29 @@ class _DailySheetState extends State<DailySheet> {
       listenable: widget.game,
       builder: (context, _) {
         final daily = widget.game.daily;
-        return SafeArea(
-          top: false,
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+          ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimens.pagePadding,
-              12,
-              AppDimens.pagePadding,
-              AppDimens.pagePadding,
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.outline,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
+                GlassTitle(
                   l10n.dailyTitle,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  leading: const _Badge(icon: Icons.card_giftcard_rounded),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 if (daily.isEmpty)
                   Text(
                     l10n.dailyOffline,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: glassText(14, 600, color: AppColors.textSecondary),
                   )
                 else ...[
                   _GiftCalendar(daily: daily),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   if (daily.canRestore && daily.giftAvailable) ...[
                     _StreakRestore(
                       price: daily.restorePrice,
@@ -144,27 +127,46 @@ class _DailySheetState extends State<DailySheet> {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  FilledButton(
+                  GlassButton(
                     key: const ValueKey('daily-claim'),
+                    primary: true,
+                    icon: daily.giftAvailable
+                        ? Icons.card_giftcard_rounded
+                        : Icons.check_rounded,
                     onPressed: daily.giftAvailable && !_claiming
                         ? _claim
                         : null,
-                    child: Text(
-                      daily.giftAvailable
-                          ? l10n.dailyGiftClaim(_rewardOf(daily))
-                          : l10n.dailyGiftClaimed,
-                    ),
+                    label: daily.giftAvailable
+                        ? l10n.dailyGiftClaim(_rewardOf(daily))
+                        : l10n.dailyGiftClaimed,
                   ),
-                  const SizedBox(height: 22),
-                  Text(
-                    l10n.dailyTasksTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SceneLabel(
+                      text: l10n.dailyTasksTitle,
+                      size: 12.5,
+                      weight: 800,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 4,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  for (final task in daily.tasks) _TaskRow(task: task),
-                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: glassTile(),
+                    child: Column(
+                      children: [
+                        for (final task in daily.tasks) _TaskRow(task: task),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     daily.weeklyClaimed
                         ? l10n.dailyWeeklyDone
@@ -174,10 +176,7 @@ class _DailySheetState extends State<DailySheet> {
                             daily.weeklyReward,
                           ),
                     key: const ValueKey('daily-weekly'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
+                    style: glassText(12.5, 650, color: AppColors.textPrimary),
                   ),
                 ],
               ],
@@ -216,35 +215,31 @@ class _GiftCalendar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Container(
                 key: ValueKey('daily-gift-$day'),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: glassTile(
+                  radius: 14,
                   color: day < today || (!daily.giftAvailable && day == today)
-                      ? AppColors.sageSoft
-                      : AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: day == today ? AppColors.sage : AppColors.outline,
-                    width: day == today ? 2 : 1,
-                  ),
+                      ? AppColors.sage.withValues(alpha: 0.55)
+                      : null,
+                  border: day == today ? AppColors.sageDark : null,
                 ),
                 child: Column(
                   children: [
                     Text(
                       l10n.dailyGiftDay(day),
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: glassText(10, 650, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       day <= daily.giftRewards.length
                           ? '${daily.giftRewards[day - 1]}'
                           : '',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                      style: glassText(
+                        day == 7 ? 16 : 15,
+                        900,
+                        color: day == 7
+                            ? const Color(0xFFC0392B)
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -279,26 +274,23 @@ class _TaskRow extends StatelessWidget {
           Expanded(
             child: Text(
               dailyTaskTitle(l10n, task.id),
-              style: TextStyle(
-                color: AppColors.textPrimary,
+              style: glassText(14, 650, color: AppColors.textPrimary).copyWith(
                 decoration: task.done ? TextDecoration.lineThrough : null,
               ),
             ),
           ),
           Text(
             '${task.progress}/${task.target}',
-            style: const TextStyle(
+            style: glassText(
+              13,
+              650,
               color: AppColors.textSecondary,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
+            ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
           ),
           const SizedBox(width: 10),
           Text(
             '+${task.reward}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppColors.sageDark,
-            ),
+            style: glassText(14, 850, color: AppColors.sageDark),
           ),
         ],
       ),
@@ -336,36 +328,46 @@ class _StreakRestore extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.blush),
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: glassTile(border: AppColors.blushStrong),
       child: Row(
         children: [
           Expanded(
             child: Text(
               l10n.dailyStreakBroken,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textPrimary,
-              ),
+              style: glassText(13, 650, color: AppColors.textPrimary),
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton.icon(
+          GlassButton(
             key: const ValueKey('daily-restore'),
             onPressed: busy ? null : onRestore,
-            icon: const Icon(
-              Icons.monetization_on,
-              size: 18,
-              color: AppColors.coin,
-            ),
-            label: Text(l10n.dailyStreakRestore(price)),
+            icon: Icons.monetization_on,
+            label: l10n.dailyStreakRestore(price),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Кружок-значок у заголовка: белый, как кольца ухода.
+class _Badge extends StatelessWidget {
+  const _Badge({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.blushStrong, width: 3),
+      ),
+      child: Icon(icon, size: 18, color: const Color(0xFFD42A33)),
     );
   }
 }

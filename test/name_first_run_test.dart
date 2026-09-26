@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/game/pet_name.dart';
 import 'package:teddy_tales/l10n/l10n.dart';
+import 'package:teddy_tales/widgets/glass_panel.dart';
 import 'package:teddy_tales/widgets/rename_pet_dialog.dart';
 
 /// Шаг «Как зовут малыша?» на первом запуске (КП 2.3).
@@ -46,7 +47,9 @@ void main() {
     expect(find.text('Позже'), findsOneWidget);
     expect(find.text('Отмена'), findsNothing);
 
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
+    final button = tester.widget<GlassButton>(
+      find.byKey(const ValueKey('name-save')),
+    );
     expect(button.onPressed, isNull, reason: 'пустое имя не отправить');
   });
 
@@ -66,7 +69,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sent, ['Тишка']);
-    expect(find.byType(AlertDialog), findsNothing, reason: 'окно закрылось');
+    expect(find.byType(GlassPanel), findsNothing, reason: 'окно закрылось');
   });
 
   testWidgets('отказ сервера держит окно открытым', (tester) async {
@@ -77,7 +80,7 @@ void main() {
     await tester.tap(find.text('Назвать'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(GlassPanel), findsOneWidget);
     expect(find.text('Такое имя не подойдёт малышу'), findsOneWidget);
   });
 }

@@ -6,6 +6,7 @@ import '../game/referral_info.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import 'gift_reveal.dart' show showCoinReward;
+import 'glass_panel.dart';
 import 'share_card.dart' show redeemMessage;
 
 /// «Тебя пригласил друг?» — после имени мишки при первом запуске
@@ -35,8 +36,10 @@ Future<void> showFriendCodeDialog(BuildContext context, GameState game) async {
   }
   if (!context.mounted) return;
 
-  final ok = await showDialog<bool>(
+  final ok = await showGlassPanel<bool>(
     context: context,
+    center: const Offset(0.5, 0.42),
+    width: 330,
     builder: (context) =>
         _FriendCodeDialog(game: game, info: info, found: found),
   );
@@ -113,71 +116,85 @@ class _FriendCodeDialogState extends State<_FriendCodeDialog> {
     final l10n = context.l10n;
     final found = widget.found;
     final coins = widget.info.coins;
-    return AlertDialog(
-      backgroundColor: AppColors.background,
-      icon: const Icon(
-        Icons.card_giftcard_rounded,
-        size: 36,
-        color: Color(0xFFD42A33),
-      ),
-      title: Text(l10n.friendCodeTitle, textAlign: TextAlign.center),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            found != null
-                ? l10n.friendCodeFound(found, coins)
-                : l10n.friendCodeAsk(coins),
-            textAlign: TextAlign.center,
-          ),
-          if (found == null) ...[
-            const SizedBox(height: 12),
-            TextField(
-              key: const ValueKey('friend-code-field'),
-              controller: _code,
-              textAlign: TextAlign.center,
-              textCapitalization: TextCapitalization.characters,
-              maxLength: 6,
-              inputFormatters: [
-                TextInputFormatter.withFunction(
-                  (_, value) => value.copyWith(text: value.text.toUpperCase()),
-                ),
-              ],
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 3,
-              ),
-              decoration: InputDecoration(
-                hintText: 'ZP65BM',
-                counterText: '',
-                border: const OutlineInputBorder(),
-                errorText: _error,
-              ),
-              onSubmitted: (_) => _redeem(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassTitle(
+          l10n.friendCodeTitle,
+          close: false,
+          leading: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.blushStrong, width: 3),
             ),
-          ] else if (_error != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFB3261E)),
+            child: const Icon(
+              Icons.card_giftcard_rounded,
+              size: 18,
+              color: Color(0xFFD42A33),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          found != null
+              ? l10n.friendCodeFound(found, coins)
+              : l10n.friendCodeAsk(coins),
+          style: glassText(14.5, 650, color: AppColors.textPrimary),
+        ),
+        if (found == null) ...[
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('friend-code-field'),
+            controller: _code,
+            textAlign: TextAlign.center,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 6,
+            inputFormatters: [
+              TextInputFormatter.withFunction(
+                (_, value) => value.copyWith(text: value.text.toUpperCase()),
+              ),
+            ],
+            style: glassText(
+              22,
+              900,
+              color: AppColors.textPrimary,
+            ).copyWith(letterSpacing: 4),
+            decoration: glassField(hint: 'ZP65BM', error: _error, counter: ''),
+            onSubmitted: (_) => _redeem(),
+          ),
+        ] else if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: glassText(13, 700, color: const Color(0xFFB3261E)),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: GlassButton(
+                key: const ValueKey('friend-code-skip'),
+                label: l10n.friendCodeSkip,
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GlassButton(
+                key: const ValueKey('friend-code-claim'),
+                primary: true,
+                icon: Icons.monetization_on,
+                label: l10n.friendCodeClaim(coins),
+                onPressed: _busy ? null : _redeem,
+              ),
             ),
           ],
-        ],
-      ),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: [
-        TextButton(
-          key: const ValueKey('friend-code-skip'),
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: Text(l10n.friendCodeSkip),
-        ),
-        FilledButton(
-          key: const ValueKey('friend-code-claim'),
-          onPressed: _busy ? null : _redeem,
-          child: Text(l10n.friendCodeClaim(coins)),
         ),
       ],
     );

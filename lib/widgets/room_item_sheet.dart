@@ -6,9 +6,10 @@ import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import 'glass_panel.dart';
 import 'item_picture.dart';
 import 'purchase_confirm.dart';
-import '../theme/app_theme.dart';
+import 'scene_label.dart';
 
 /// Что можно сделать с местом в комнате.
 ///
@@ -24,14 +25,11 @@ Future<void> showSlotSheet({
   required GameState game,
   required RoomSlot slot,
 }) {
-  return showModalBottomSheet<void>(
+  // Заказчик 26.09: окно из матового стекла посреди комнаты.
+  return showGlassPanel<void>(
     context: context,
-    backgroundColor: AppColors.surface,
-    showDragHandle: true,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-    ),
+    center: const Offset(0.5, 0.6),
+    width: 340,
     builder: (context) => _SlotSheet(game: game, slot: slot),
   );
 }
@@ -86,7 +84,6 @@ class _SlotSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
     final standing = game.itemInSlot(slot.id);
     final stage = game.bear.state.stage;
 
@@ -112,86 +109,67 @@ class _SlotSheet extends StatelessWidget {
           return a.price.compareTo(b.price);
         });
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimens.pagePadding,
-          0,
-          AppDimens.pagePadding,
-          AppDimens.pagePadding,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    standing == null
-                        ? l10n.roomSlotEmpty
-                        : shopItemName(l10n, standing),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                _Purse(coins: game.coins),
-              ],
+            Expanded(
+              child: Text(
+                standing == null
+                    ? l10n.roomSlotEmpty
+                    : shopItemName(l10n, standing),
+                style: glassText(18, 850, color: AppColors.textPrimary),
+              ),
             ),
-            if (standing != null) ...[
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _clear(context, standing),
-                  icon: const Icon(Icons.delete_outline, size: 19),
-                  label: Text(l10n.roomSheetRemove),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.outline),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                  ),
-                ),
-              ),
-            ],
-            if (options.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Text(
-                (standing == null ? l10n.roomSlotPut : l10n.roomSheetReplace)
-                    .toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Высота ограничена: в мебели и декоре вещей столько, что лист
-              // занял бы весь экран и перестал быть листом.
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: options.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final item = options[index];
-                    return _OptionTile(
-                      item: item,
-                      owned: game.isOwned(item.id),
-                      affordable: game.coins >= item.price,
-                      onTap: () => _put(context, item),
-                    );
-                  },
-                ),
-              ),
-            ],
+            _Purse(coins: game.coins),
+            const SizedBox(width: 8),
+            const GlassCloseButton(),
           ],
         ),
-      ),
+        if (standing != null) ...[
+          const SizedBox(height: 14),
+          GlassButton(
+            key: const ValueKey('slot-remove'),
+            icon: Icons.delete_outline_rounded,
+            label: l10n.roomSheetRemove,
+            onPressed: () => _clear(context, standing),
+          ),
+        ],
+        if (options.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SceneLabel(
+              text: standing == null ? l10n.roomSlotPut : l10n.roomSheetReplace,
+              size: 12.5,
+              weight: 800,
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Высота ограничена: в мебели и декоре вещей столько, что лист
+          // занял бы весь экран и перестал быть листом.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 300),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: options.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final item = options[index];
+                return _OptionTile(
+                  item: item,
+                  owned: game.isOwned(item.id),
+                  affordable: game.coins >= item.price,
+                  onTap: () => _put(context, item),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -212,26 +190,22 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
     // Денег не хватает — строка гаснет, но остаётся видимой: это витрина,
     // и недоступное сейчас должно быть видно, иначе незачем копить.
     final enabled = owned || affordable;
 
     return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        borderRadius: BorderRadius.circular(16),
         child: Opacity(
           opacity: enabled ? 1 : 0.5,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.outline),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: glassTile(),
             child: Row(
               children: [
                 ItemPicture(item: item, size: 28),
@@ -239,18 +213,13 @@ class _OptionTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     shopItemName(l10n, item.id),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: glassText(14, 700, color: AppColors.textPrimary),
                   ),
                 ),
                 if (owned)
                   Text(
                     l10n.roomSheetOwned,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.sageDark,
-                    ),
+                    style: glassText(13, 800, color: AppColors.sageDark),
                   )
                 else
                   _Price(price: item.price),
@@ -298,10 +267,7 @@ class _Purse extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(AppDimens.radiusPill),
-      ),
+      decoration: glassTile(radius: 999),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

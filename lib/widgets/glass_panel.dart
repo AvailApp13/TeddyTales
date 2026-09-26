@@ -28,12 +28,18 @@ Future<T?> showGlassPanel<T>({
     pageBuilder: (context, _, _) {
       final size = MediaQuery.sizeOf(context);
       final w = width.clamp(0.0, size.width - 32);
-      return SafeArea(
-        child: CustomSingleChildLayout(
-          delegate: _PanelLayout(center: center),
-          child: SizedBox(
-            width: w,
-            child: GlassPanel(child: Builder(builder: builder)),
+      // Клавиатура поднимает панель над собой, а не прячет её.
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: SafeArea(
+          child: CustomSingleChildLayout(
+            delegate: _PanelLayout(center: center),
+            child: SizedBox(
+              width: w,
+              child: GlassPanel(child: Builder(builder: builder)),
+            ),
           ),
         ),
       );
@@ -146,7 +152,7 @@ class GlassPanel extends StatelessWidget {
 }
 
 /// Шрифт сцены: округлый Nunito с весом по оси.
-TextStyle sceneText(double size, double weight, {Color color = Colors.white}) =>
+TextStyle glassText(double size, double weight, {Color color = Colors.white}) =>
     TextStyle(
       fontFamily: 'Nunito',
       fontSize: size,
@@ -224,7 +230,7 @@ class GlassButton extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: sceneText(15, primary ? 800 : 700),
+                    style: glassText(15, primary ? 800 : 700),
                   ),
                 ),
               ],
@@ -235,3 +241,96 @@ class GlassButton extends StatelessWidget {
     );
   }
 }
+
+/// Крестик в углу стеклянного окна: белый кружок, как кнопки сцены.
+class GlassCloseButton extends StatelessWidget {
+  const GlassCloseButton({super.key, this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).closeButtonLabel,
+      child: GestureDetector(
+        onTap: onPressed ?? () => Navigator.of(context).maybePop(),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textPrimary.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.close_rounded,
+            size: 20,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Заголовок стеклянного окна: крупно, округлым шрифтом, крестик справа.
+class GlassTitle extends StatelessWidget {
+  const GlassTitle(this.text, {super.key, this.leading, this.close = true});
+
+  final String text;
+  final Widget? leading;
+  final bool close;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (leading != null) ...[leading!, const SizedBox(width: 10)],
+        Expanded(
+          child: Text(
+            text,
+            style: glassText(19, 850, color: AppColors.textPrimary),
+          ),
+        ),
+        if (close) const GlassCloseButton(),
+      ],
+    );
+  }
+}
+
+/// Плитка внутри стекла: светлее самого стекла, мягкая кайма.
+BoxDecoration glassTile({Color? color, Color? border, double radius = 16}) =>
+    BoxDecoration(
+      color: color ?? Colors.white.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: border ?? Colors.white.withValues(alpha: 0.8),
+        width: border == null ? 1 : 2,
+      ),
+    );
+
+/// Поле ввода на стекле: светлая капсула, округлый шрифт.
+InputDecoration glassField({String? hint, String? error, String? counter}) =>
+    InputDecoration(
+      hintText: hint,
+      errorText: error,
+      counterText: counter,
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.72),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: AppColors.sageDark, width: 2),
+      ),
+    );

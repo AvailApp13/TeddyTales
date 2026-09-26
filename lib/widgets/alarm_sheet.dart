@@ -67,7 +67,7 @@ class _AlarmPanelState extends State<_AlarmPanel> {
             Expanded(
               child: Text(
                 l10n.bedroomAlarmHelp,
-                style: sceneText(17, 800, color: AppColors.textPrimary),
+                style: glassText(17, 800, color: AppColors.textPrimary),
               ),
             ),
           ],
@@ -107,7 +107,7 @@ class _AlarmPanelState extends State<_AlarmPanel> {
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text(
                       ':',
-                      style: sceneText(30, 900, color: AppColors.textPrimary),
+                      style: glassText(30, 900, color: AppColors.textPrimary),
                     ),
                   ),
                   _Wheel(
@@ -183,7 +183,7 @@ class _Wheel extends StatelessWidget {
         itemBuilder: (context, i) => Center(
           child: Text(
             label(i % count),
-            style: sceneText(30, 800, color: AppColors.textPrimary),
+            style: glassText(30, 800, color: AppColors.textPrimary),
           ),
         ),
       ),
