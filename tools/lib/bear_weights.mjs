@@ -12,17 +12,16 @@
  *  hood      : нижний край (на толстовке и плечах) — root, кромка у лица, стенки и
  *              остриё — с головой (root_body); обод между ними тянется
  *              пропорционально. Из-под капюшона при наклоне ничего не открывается.
- *              Ткань у ушей — на костях ушей (D26).
+ *              hood_back (задняя часть под ушами, D27) — те же веса.
  *  shorts    : пояс — root, штанины — кости ног (левая/правая по оси).
  *  shirt     : дыхание животом (D21): живот — кость root_belly (её масштаб от центра
  *              живота), вес спадает к груди и плечам. На вдохе живот только
  *              расширяется (масштаб ≥ 1): бока и низ толстовки уходят наружу — на
  *              фон и на шорты, которые лежат за толстовкой, дыр не бывает.
  *  paw_*, face: целиком на кости (рука / голова) — без растяжения (D15).
- *  ear_*     : целиком на кости root_ear_* (D26); ось кости — в голове (ear_pivots.swing),
- *              поворот сдвигает ухо вдоль края капюшона, край капюшона у уха идёт за ним
- *              (hood, HOOD_EAR). Нарисованные положения ear_*_cup / ear_*_droop (D24)
- *              отключены — их веса прежние (earW, полоса у капюшона).
+ *  ear_*     : у капюшона — как капюшон, в 40 px от него целиком на кости root_ear_* с осью
+ *              в голове (ear_pivots.swing, D26/D27): ухо сдвигается, основание тянется,
+ *              капюшон стоит. Нарисованные положения ear_*_cup / ear_*_droop (D24) отключены.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -74,27 +73,14 @@ export function loadWeights() {
     const h = Math.max(walls, rim);
     return { root: 1 - h, root_body: h };
   };
-  // ухо (D20, D24): основание у капюшона берёт веса капюшона в этой точке (нижний конец
-  // стыка лежит у плеча, где капюшон частично на root), уже в 60 px от капюшона ухо
-  // целиком идёт с костью уха — поворот и масштаб кости двигают ухо целиком при
-  // переходе к нарисованным положениям (ear_states.py)
-  const EAR_BAND = (process.env.EAR_BAND ?? '3,60').split(',').map(Number);
+  // ухо (D20, D27): основание у капюшона берёт веса капюшона в этой точке (нижний конец
+  // стыка лежит у плеча, где капюшон частично на root), уже в 40 px от капюшона ухо
+  // целиком идёт с костью уха. Ось кости — в голове (D26): ухо заметно сдвигается, а
+  // основание, пришитое под капюшоном, стоит и тянется — капюшон неподвижен, щели нет
+  const EAR_BAND = (process.env.EAR_BAND ?? '3,40').split(',').map(Number);
   const earW = (bone) => (x, y) => {
     const w = smooth(EAR_BAND[0], EAR_BAND[1], dist('hood', x, y)); const h = hoodW(x, y);
     return { root: (1 - w) * h.root, root_body: (1 - w) * h.root_body, [bone]: w };
-  };
-  // капюшон у уха идёт за ухом (D26): до HOOD_EAR[0] px от видимой части уха ткань целиком
-  // (доля HOOD_EAR[2]) на кости уха, к HOOD_EAR[1] px спадает до капюшона. Ухо сдвигается
-  // вдоль края капюшона, край идёт следом: щель не открывается и скрытый запас уха не выходит
-  // (доля 0.7 — тёмные штрихи у концов стыка; спад за 45 px — складка капюшона у нижнего конца)
-  const HOOD_EAR = (process.env.HOOD_EAR ?? '6,80,1').split(',').map(Number);
-  const hoodEarW = (x, y) => {
-    const h = hoodW(x, y); const out = { ...h };
-    for (const sd of ['left', 'right']) {
-      const e = HOOD_EAR[2] * (1 - smooth(HOOD_EAR[0], HOOD_EAR[1], dist(`ear_${sd}_vis`, x, y)));
-      if (e > 0) { out.root *= 1 - e; out.root_body *= 1 - e; out[`root_ear_${sd}`] = e; }
-    }
-    return out;
   };
   // живот: вес — близость к центру живота; силуэт (бока, низ) дышит вместе с ним
   const [BX, BY] = F.belly;
@@ -111,10 +97,10 @@ export function loadWeights() {
     paw_left: { bones: ['root', 'root_arm_left'], w: () => ({ root_arm_left: 1 }) },
     paw_right: { bones: ['root', 'root_arm_right'], w: () => ({ root_arm_right: 1 }) },
     face: { bones: ['root', 'root_body'], w: () => ({ root_body: 1 }) },
-    hood: { bones: ['root', 'root_body', 'root_ear_left', 'root_ear_right'], w: hoodEarW },
-    // ухо целиком на своей кости (D26): у стыка его держит край капюшона, который идёт следом
-    ear_left: { bones: ['root', 'root_body', 'root_ear_left'], w: () => ({ root_ear_left: 1 }) },
-    ear_right: { bones: ['root', 'root_body', 'root_ear_right'], w: () => ({ root_ear_right: 1 }) },
+    hood: { bones: ['root', 'root_body'], w: hoodW },
+    hood_back: { bones: ['root', 'root_body'], w: hoodW },   // задняя часть капюшона под ушами — как капюшон (D27)
+    ear_left: { bones: ['root', 'root_body', 'root_ear_left'], w: earW('root_ear_left') },
+    ear_right: { bones: ['root', 'root_body', 'root_ear_right'], w: earW('root_ear_right') },
     // нарисованные положения ушей (D24) — те же веса, каждое на своей кости
     ...Object.fromEntries(Object.keys(meta.ear_states ?? {}).flatMap((st) => ['left', 'right'].map((sd) =>
       [`ear_${sd}_${st}`, { bones: ['root', 'root_body', `root_ear_${sd}_${st}`], w: earW(`root_ear_${sd}_${st}`) }]))),

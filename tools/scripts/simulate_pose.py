@@ -31,7 +31,7 @@ BONE = {'root_belly': 'belly', 'root_ear_left': 'ear_left', 'root_ear_right': 'e
         'root_leg_left': 'leg_left', 'root_leg_right': 'leg_right'}           # кость рига -> поза
 RIGID = {'face': 'head', 'hood_lining': 'head', 'paw_left': 'arm_left', 'paw_right': 'arm_right',
          'foot_left': 'leg_left', 'foot_right': 'leg_right'}
-SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'shorts', 'ear_left', 'ear_right')
+SKINNED = ('shirt', 'sleeve_left', 'sleeve_right', 'hood', 'hood_back', 'shorts', 'ear_left', 'ear_right')
 MESH_STEP = 6
 
 

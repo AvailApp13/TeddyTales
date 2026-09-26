@@ -37,8 +37,10 @@ for e in ('ear_left', 'ear_right'):
     cx, cy, R = meta['ear_pivots'][e]['circle']; R += MARGIN
     r = np.hypot(xx - cx, yy - cy)
     disc = r <= R + 1
-    T = disc & (covered | fringe)
     L[..., 3] = np.where(covered & ~disc, 0, L[..., 3])                  # запас за кругом под капюшоном — убрать
+    T_in = disc & (covered | fringe)
+    T_out = fringe & ~disc & (L[..., 3] > 0)     # угол уха под кромкой у концов стыка — тоже чистый мех
+    T = T_in | T_out
     # источник меха: видимая, плотная часть уха вне капюшона
     src_ok = (L[..., 3] >= 250) & (hood < 20)
     sx = np.clip(np.round(2 * cx - xx), 0, W - 1).astype(int); sy = np.clip(np.round(2 * cy - yy), 0, H - 1).astype(int)
@@ -48,8 +50,8 @@ for e in ('ear_left', 'ear_right'):
     # (маска — всё неизвестное вокруг круга: иначе в мех затекает чёрный фон прозрачных пикселей)
     known = src_ok | got
     rgb = np.where(got[..., None], mir, L[..., :3]).clip(0, 255).astype(np.uint8)
-    if (T & ~got).any():
-        mask = (~known & ndimage.binary_dilation(disc, iterations=12)).astype(np.uint8) * 255
+    if (T & ~got).any() or T_out.any():
+        mask = (~known & ndimage.binary_dilation(disc | T_out, iterations=12)).astype(np.uint8) * 255
         rgb = cv2.inpaint(rgb, mask, 9, cv2.INPAINT_TELEA)
     new = rgb.astype(np.float32)
     # переход от прежних пикселей уха к новому меху — в глубине под капюшоном
@@ -63,7 +65,7 @@ for e in ('ear_left', 'ear_right'):
     out = L.copy()
     out[..., :3] = np.where(T[..., None], np.where(had, L[..., :3] * (1 - t) + new * t, new), L[..., :3])
     edge = np.clip((R + 1 - r) / 2.5, 0, 1) * 255                      # мягкий край круга
-    out[..., 3] = np.where(T, np.maximum(L[..., 3], edge), L[..., 3])
+    out[..., 3] = np.where(T_in, np.maximum(L[..., 3], edge), L[..., 3])
     out[..., :3] = np.where(out[..., 3:4] > 0, out[..., :3], 0)
     fz = T & fringe
     new_c = (old_c - out[..., :3] * (out[..., 3:4] / 255) * (1 - a)) / np.maximum(a, 1e-3)

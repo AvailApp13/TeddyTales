@@ -16,6 +16,7 @@
   "sleeve_left",
   "sleeve_right",
   "hood_lining",
+  "hood_back",
   "ear_left",
   "ear_right",
   "face",
@@ -139,6 +140,20 @@
    ],
    "px": 187658,
    "hidden": true
+  },
+  "hood_back": {
+   "bbox": [
+    320,
+    304,
+    1029,
+    1128
+   ],
+   "px": 170552,
+   "hidden": true,
+   "behind_ears": {
+    "ear_left": 3576,
+    "ear_right": 1589
+   }
   }
  },
  "extensions": {
