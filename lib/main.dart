@@ -297,9 +297,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       _demoDay();
     }
     // Разрешение на уведомления спрашивает телефон (КП 13.1). Нет
-    // сервиса — нет и вопроса «Напоминать о малыше?».
+    // сервиса или это веб — нет и вопроса «Напоминать о малыше?».
     final notifications = widget.notifications;
-    if (notifications != null) {
+    if (notifications != null && !kIsWeb) {
       _game.onAskNotifications = notifications.requestPermission;
     }
     if (widget.boot.isOnline) _game.onDeleteAccount = _deleteAccount;
