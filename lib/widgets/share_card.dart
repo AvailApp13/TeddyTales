@@ -343,6 +343,14 @@ class _InviteBlock extends StatelessWidget {
                         counterText: '',
                         isDense: true,
                         border: const OutlineInputBorder(),
+                        // Рамка зелёная всегда, а не только под пальцем
+                        // (заказчик 26.09): сразу видно, куда вводить код.
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
                       ),
                       onSubmitted: (_) => onRedeem(),
                     ),
