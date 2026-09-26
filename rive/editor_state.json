@@ -885,6 +885,40 @@
           "root_ear_right_droop"
         ],
         "vertices": 1928
+      },
+      "hood": {
+        "meshId": "0-471033",
+        "bones": [
+          "root",
+          "root_body"
+        ],
+        "vertices": 3271
+      },
+      "hood_back": {
+        "meshId": "0-477583",
+        "bones": [
+          "root",
+          "root_body"
+        ],
+        "vertices": 4718
+      },
+      "ear_left": {
+        "meshId": "0-487027",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_left"
+        ],
+        "vertices": 1395
+      },
+      "ear_right": {
+        "meshId": "0-489826",
+        "bones": [
+          "root",
+          "root_body",
+          "root_ear_right"
+        ],
+        "vertices": 1575
       }
     },
     "faceParts": {
