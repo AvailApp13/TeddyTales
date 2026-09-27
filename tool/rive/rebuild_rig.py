@@ -97,10 +97,11 @@ CHAIN = [
     # трещиной; дальше кость упирается (SIDE_CAP), подмышка раскрывается
     ('side_l',  'chest',  (368, 556),   (340, 700)),
     ('side_r',  'chest',  (656, 556),   (684, 700)),
-    # рот раскрывается масштабом этой кости (mouth.py): горизонтальная,
-    # в покое сжата до щёлочки (mouth.CLOSED)
-    ('mouth_open', 'face', mouth.CENTER, (mouth.CENTER[0] + 20, mouth.CENTER[1])),
-]
+    # рот раскрывается масштабом этих костей (mouth.py): горизонтальные,
+    # в покое сжаты до щёлочки (mouth.CAVITIES); open — смех и улыбка,
+    # yawn — зевок, chew — жевание
+] + [(f'mouth_{n}', 'face', mouth.center(n), (mouth.center(n)[0] + 20, mouth.CENTER_Y))
+     for n in mouth.CAVITIES]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
 # точке. Покой (`idle_life`) двигает саму кость, эмоции — только `e_*`,
@@ -267,8 +268,8 @@ def weights_for(layer, x, y, B):
 
 
 def _weights_for(layer, x, y, B):
-    if layer == 'mouth_open_img':
-        return {'mouth_open': 1.0}
+    if layer.startswith('mouth_') and layer.endswith('_img'):
+        return {layer[:-4]: 1.0}
     if layer in ('face_img', 'lid_patch_img') or layer.startswith('face_'):
         d = math.hypot((x - 512) / 118, (y - 425) / 108)
         k = 1 - smooth(0.8, 1.22, d)
@@ -618,17 +619,19 @@ class Emo:
             self.face(name, sp)
         return self
 
-    def mouth_open(self, pts):
+    def mouth_open(self, pts, kind='open'):
         """Рот раскрывает кость (`mouth.py`), без смены картинок: pts
         [(кадр, ширина, высота[, кривая])], 0 — ротик покоя, 1 — полость
-        смеха целиком. Щёлочка проявляется, пока совсем тонкая."""
-        sx0, sy0 = mouth.CLOSED
+        целиком; kind — какая полость (open — смех, yawn, chew). Щёлочка
+        проявляется, пока совсем тонкая."""
+        sx0, sy0 = mouth.closed(kind)
+        bone = f'mouth_{kind}'
 
         def ez(p):
             return p[3] if len(p) > 3 else EI
-        self.track('mouth_open', self.SX, [(p[0], (sx0 + (1 - sx0) * p[1]) / sx0 - 1, ez(p)) for p in pts])
-        self.track('mouth_open', self.SY, [(p[0], (sy0 + (1 - sy0) * p[2]) / sy0 - 1, ez(p)) for p in pts])
-        self.ch[(E_IDS['mouth_img'], self.OP)] = (
+        self.track(bone, self.SX, [(p[0], (sx0 + (1 - sx0) * p[1]) / sx0 - 1, ez(p)) for p in pts])
+        self.track(bone, self.SY, [(p[0], (sy0 + (1 - sy0) * p[2]) / sy0 - 1, ez(p)) for p in pts])
+        self.ch[(E_IDS[f'{bone}_img'], self.OP)] = (
             [(0, 0.0, EI)] + [(p[0], min(1.0, p[2] / 0.1), ez(p)) for p in pts] + [(self.dur - 2, 0.0, None)])
         return self
 
@@ -700,8 +703,8 @@ def emo_smile():
     открытый и добрый, без прищура. Голова мягко наклоняется, тело
     приподнимается, уши и кончик капюшона догоняют."""
     e = Emo(150)
-    e.mouth_open([(6, 0.05, 0.0), (34, 0.8, 0.36, EO), (110, 0.77, 0.32), (134, 0.2, 0.0)])
-    e.pair('mouth', Emo.X, [(10, 0), (34, 8, EO), (110, 7.5), (136, 0.5)])
+    e.mouth_open([(6, 0.05, 0.0), (34, 0.95, 0.5, EO), (110, 0.92, 0.46), (134, 0.25, 0.0)])
+    e.pair('mouth', Emo.X, [(10, 0), (34, 9, EO), (110, 8.5), (136, 0.5)])
     e.pair('mouth', Emo.Y, [(34, -2), (110, -1.8), (136, 0)], mirror=True)
     e.track('chin', Emo.X, [(34, -1), (110, -0.8), (136, 0)])
     e.track('muzzle', Emo.X, [(34, 0.8), (110, 0.7), (136, 0)])
@@ -829,29 +832,51 @@ def emo_sad():
 
 
 def emo_chew():
-    """Жуёт, 2,8 с: довольно прищурился, щёки набиты — жуёт: подбородок
-    плавно ходит вверх-вниз и чуть вбок, рот по ступеням приоткрывается
-    и смыкается (заказчик 26.09: нужна плавность), щёки надуваются по
-    очереди, голова кивает в такт."""
-    e = Emo(168)
-    c = [18, 42, 66, 90, 114]
-    e.face('chew', [(10, 150)]).blinks([8, 148])
-    # жевок — 24 кадра: сомкнут → щёлочка → приоткрыт → открыт (пик
-    # подбородка вниз, a+12) → обратно, ступень — 3 кадра
-    seq = [(10, None)]
-    for a in c:
-        seq += [(a + 3, 'chew_m1'), (a + 6, 'chew_m2'), (a + 9, 'chew_m3'),
-                (a + 15, 'chew_m2'), (a + 18, 'chew_m1'), (a + 21, None)]
-    e.mouths(seq, 150)
-    e.track('chin', Emo.X, pulses(c, 12, 12, 1.0, -2.0, EI, EI) + [(146, 0)])
-    e.track('chin', Emo.Y, pulses(c, 12, 12, 0.8, -0.8, EI, EI) + [(146, 0)])
-    e.track('cheek_l', Emo.SY, pulses(c[0::2], 12, 12, 0.06, 0.015, EI, EI) + [(146, 0)])
-    e.track('cheek_r', Emo.SY, pulses(c[1::2], 12, 12, 0.06, 0.015, EI, EI) + [(146, 0)])
-    e.track('head', Emo.R, [(12, 0.02)] + pulses(c, 12, 12, 0.03, 0.018, EI, EI) + [(146, 0.015)])
-    e.track('face', Emo.X, pulses(c, 12, 12, 0.8, -0.4, EI, EI) + [(146, 0)])
-    e.track('ear_l1', Emo.R, pulses([a + 4 for a in c], 12, 12, -0.03, 0.0, EI, EI))
-    e.track('ear_r1', Emo.R, pulses([a + 4 for a in c], 12, 12, 0.03, 0.0, EI, EI))
-    e.track('hood2', Emo.R, pulses([a + 6 for a in c], 12, 12, -0.03, 0.01, EI, EI))
+    """Жуёт, 3,2 с (заказчик 27.09: без подмен, мягко, «как настоящее»).
+    Лицо покоя, всё костями: довольно прищурился, щёки набиты; четыре
+    жевка по 0,6 с — рот костью приоткрывается и почти смыкается
+    (`Emo.mouth_open`, полость жевания), подбородок ходит вниз-вверх и
+    по кругу вбок (жернова), щёки надуваются по очереди, нос чуть
+    поднимается на смыкании, голова кивает в такт, уши догоняют."""
+    e = Emo(192)
+    c = [20, 56, 92, 128]                      # жевок: открыт через 15 кадров, сомкнут через 36
+    mo = [(8, 0.5, 0.0)]
+    for i, a in enumerate(c):
+        mo += [(a + 15, 1.0, 1.0 - 0.06 * i), (a + 36, 0.8, 0.12)]
+    mo += [(176, 0.3, 0.0)]
+    e.mouth_open(mo, kind='chew')
+
+    def chews(open_v, shut_v, lag=0):
+        pts = []
+        for a in c:
+            pts += [(a + lag + 15, open_v), (a + lag + 36, shut_v)]
+        return pts
+    e.track('chin', Emo.X, [(12, 0)] + chews(-3.5, 0.8) + [(178, 0)])
+    side = []
+    for i, a in enumerate(c):                  # подбородок по кругу: вбок на открытии, обратно к смыканию
+        k = 1 if i % 2 == 0 else -1
+        side += [(a + 8, 0.9 * k), (a + 22, 0.9 * k), (a + 34, 0.0)]
+    e.track('chin', Emo.Y, side + [(178, 0)])
+    e.track('muzzle', Emo.X, [(12, 0)] + chews(-0.3, 0.9) + [(178, 0)])
+    # довольный прищур и набитые щёки
+    e.eyes([(6, 0.0), (28, 0.3, EO), (160, 0.28), (184, 0.0)])
+    e.pair('lid', Emo.X, [(28, 8, EO), (160, 7.5), (184, 0)])
+    e.pair('cheek', Emo.X, [(28, 2.5, EO), (160, 2.2), (184, 0)])
+    puff_l, puff_r = [(20, 0.1)], [(20, 0.1)]
+    for i, a in enumerate(c):
+        big, small = (puff_l, puff_r) if i % 2 == 0 else (puff_r, puff_l)
+        big += [(a + 20, 0.18), (a + 36, 0.12)]
+        small += [(a + 20, 0.1), (a + 36, 0.12)]
+    e.track('cheek_l', Emo.SY, puff_l + [(176, 0)])
+    e.track('cheek_r', Emo.SY, puff_r + [(176, 0)])
+    e.pair('mouth', Emo.X, [(20, 3, EO), (160, 3), (184, 0)])
+    # голова кивает в такт, тело дышит, уши и капюшон догоняют
+    e.track('head', Emo.R, [(14, 0.02)] + chews(0.03, 0.018) + [(176, 0.01)])
+    e.track('face', Emo.X, [(12, 0)] + chews(-0.8, 0.6) + [(178, 0)])
+    e.track('breath', Emo.SY, [(20, 0.015)] + chews(0.02, 0.01, -4) + [(180, 0)])
+    e.track('ear_l1', Emo.R, [(16, 0)] + chews(-0.03, 0.0, 4))
+    e.track('ear_r1', Emo.R, [(16, 0)] + chews(0.03, 0.0, 4))
+    e.track('hood2', Emo.R, [(16, 0)] + chews(-0.03, 0.01, 6))
     return e.build()
 
 
@@ -872,21 +897,45 @@ def emo_lick():
 
 
 def emo_yawn():
-    """Зевок, 3,5 с: глубокий вдох — глаза зажмурились, рот широко
-    раскрыт, мордочка вытягивается, голова назад, лапы в стороны;
-    выдох — рот закрылся, глаза ещё сомкнуты, открыл, встряхнул головой."""
-    e = Emo(210)
-    e.face('yawn', [(38, 140)]).face('asleep', [(140, 152)]).blinks([36, 150])
-    e.track('chin', Emo.X, [(38, -1.5), (60, -3.5), (125, -3), (140, 0)])
-    e.track('chin', Emo.SX, [(60, 0.05), (125, 0.045), (140, 0)])
-    e.track('breath', Emo.SY, [(60, 0.09), (120, 0.08), (160, -0.02)])
-    e.track('chest', Emo.R, [(60, -0.035), (125, -0.03), (160, 0.005)])
-    e.track('head', Emo.R, [(60, -0.05), (125, -0.045), (150, 0), (162, 0.015), (176, -0.012)])
-    e.track('face', Emo.X, [(60, 5), (125, 4.5), (150, 0)])
-    e.track('hips', Emo.Y, [(60, -5), (120, -4), (160, 2)])
-    e.track('ear_l1', Emo.R, [(60, 0.1), (125, 0.08), (165, -0.02)])
-    e.track('ear_r1', Emo.R, [(60, -0.1), (125, -0.08), (165, 0.02)])
-    e.track('hood2', Emo.R, [(70, -0.07), (130, 0.04), (170, -0.015)])
+    """Зевок, 3,6 с (заказчик 27.09: без подмен, мягко — «растяжками,
+    ригом»). Лицо покоя, всё костями: глубокий вдох — глаза зажмуриваются
+    (веки из меха сходятся), рот медленно раскрывается костью в высокое
+    «о» (`Emo.mouth_open`, полость зевка), подбородок опускается,
+    мордочка вытягивается, щёки сужаются, брови вверх, голова запрокинута,
+    грудь полная. На вершине рот чуть дрожит; выдох — рот медленно
+    смыкается, глаза ещё закрыты, открыл, встряхнул головой, уши
+    хлопнули. Руки не поднимает."""
+    e = Emo(216)
+    e.mouth_open([(10, 0.1, 0.0), (40, 0.6, 0.35), (74, 1.0, 1.0, EO), (104, 0.96, 0.93),
+                  (120, 1.0, 0.98), (148, 0.6, 0.3), (166, 0.3, 0.0)], kind='yawn')
+    # полость опускается вместе с челюстью — верх рта не наползает на нос
+    e.track('mouth_yawn', Emo.X, [(10, 0), (74, -6, EO), (120, -5.6), (160, 0)])
+    # глаза зажмурились: бусины сплющены, нижние и верхние веки сходятся
+    e.eyes([(6, 0.0), (44, 0.72, EO), (150, 0.7), (180, 0.0)], lid='both')
+    e.pair('lid', Emo.X, [(44, 9, EO), (150, 8.5), (180, 0)])
+    e.pair('ulid', Emo.X, [(44, -5, EO), (150, -4.5), (180, 0)])
+    e.pair('eye', Emo.SX, [(44, -0.1), (150, -0.09), (180, 0)])
+    e.pair('brow', Emo.X, [(50, 3, EO), (140, 2.5), (176, 0)])
+    # челюсть вниз, мордочка тянется, щёки уже
+    e.track('chin', Emo.X, [(20, -1), (74, -5, EO), (120, -4.6), (160, 0)])
+    e.track('chin', Emo.SX, [(74, 0.06), (120, 0.055), (160, 0)])
+    e.track('muzzle', Emo.SX, [(74, 0.08, EO), (120, 0.075), (160, 0)])
+    e.pair('cheek', Emo.SY, [(74, -0.04), (120, -0.035), (160, 0)])
+    e.pair('cheek', Emo.X, [(74, -1.5), (120, -1.3), (160, 0)])
+    e.pair('mouth', Emo.Y, [(74, 1.5), (120, 1.4), (160, 0)], mirror=True)
+    # тело: глубокий вдох, потянулся вверх, голова назад; выдох — осел
+    e.track('breath', Emo.SY, [(20, 0.03), (74, 0.09, EO), (120, 0.08), (166, -0.02), (190, 0)])
+    e.track('chest', Emo.R, [(74, -0.035), (125, -0.03), (166, 0.005)])
+    e.track('hips', Emo.Y, [(74, -5, EO), (120, -4), (166, 2), (190, 0)])
+    e.track('face', Emo.X, [(74, 5, EO), (125, 4.5), (160, 0)])
+    # встряхнул головой после зевка
+    e.track('head', Emo.R, [(74, -0.05, EO), (125, -0.045), (158, 0), (170, 0.018), (182, -0.014),
+                            (194, 0.006), (204, 0)])
+    e.track('ear_l1', Emo.R, [(74, 0.1), (125, 0.08), (172, -0.05), (184, 0.04), (196, -0.01)])
+    e.track('ear_r1', Emo.R, [(74, -0.1), (125, -0.08), (172, 0.05), (184, -0.04), (196, 0.01)])
+    e.track('ear_l2', Emo.R, [(80, 0.06), (130, 0.05), (176, -0.05), (188, 0.03)])
+    e.track('ear_r2', Emo.R, [(80, -0.06), (130, -0.05), (176, 0.05), (188, -0.03)])
+    e.track('hood2', Emo.R, [(80, -0.07), (130, 0.04), (176, -0.04), (190, 0.02)])
     return e.build()
 
 
@@ -1058,8 +1107,9 @@ def main(project):
                                   'name': f'e_{name}', 'id': ident(200 + i)})
         E_IDS[name] = ident(200 + i)
         attrs = {k: fmt(v) for k, v in own.items()}
-        if name == 'mouth_open':      # в покое рот сомкнут: кость сжата
-            attrs.update(scaleX=fmt(mouth.CLOSED[0]), scaleY=fmt(mouth.CLOSED[1]))
+        if name.startswith('mouth_') and name[6:] in mouth.CAVITIES:   # в покое рот сомкнут
+            sx, sy = mouth.closed(name[6:])
+            attrs.update(scaleX=fmt(sx), scaleY=fmt(sy))
         attrs.update(length=fmt(b['length']), name=f'b_{name}', id=b['id'])
         el = ET.Element(tag, attrs)
         helper.append(el)
@@ -1110,7 +1160,8 @@ def main(project):
     for n, fid in faces.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'face_{n}'] = fid
     # 4в'. Полость рта над лицом, под выражениями (mouth.py).
-    E_IDS['mouth_img'] = mouth.build(project, root, ab, byname, lambda: ident(next(ids)))
+    for n, mid in mouth.build(project, root, ab, byname, lambda: ident(next(ids))).items():
+        E_IDS[f'mouth_{n}_img'] = mid
     # 4г. Расправленная кофта у подмышек поверх кофты (crease.py).
     for side, cid in crease.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'flat_{side}'] = cid
