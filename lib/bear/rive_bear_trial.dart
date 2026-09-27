@@ -259,6 +259,47 @@ class BearFaceCue extends ChangeNotifier {
   }
 }
 
+/// Лапы на столе (кухня, заказчик 27.09): где сейчас кисти рига и как
+/// стоит корпус. Художник мишки пишет сюда каждый кадр, слой лап над
+/// скатертью ([KitchenBear]) по этим данным кладёт картинки «манжета +
+/// лапа» (`tool/cut_table_paws.py`) ровно туда, где кончаются рукава рига.
+class TablePaws extends ChangeNotifier {
+  /// Кисть в покое (кости `b_hand_l/r`, `hand_l/r` в `tool/rive/rebuild_rig.py`):
+  /// начало кости и её направление, px артборда 1024.
+  static const Offset restLeft = Offset(290, 662);
+  static const Offset restRight = Offset(734, 662);
+  static final double _angleLeft = math.atan2(703 - 662, 258 - 290);
+  static final double _angleRight = math.atan2(703 - 662, 766 - 734);
+
+  /// Из покоя кисти в её текущее положение, px артборда. Масштаб кости
+  /// (рука укорочена) убран: картинка лапы не сплющивается.
+  Matrix4 left = Matrix4.identity();
+  Matrix4 right = Matrix4.identity();
+
+  /// Поворот и подскок корпуса в координатах коробки мишка — тот же, что
+  /// у самого мишки.
+  Matrix4 body = Matrix4.identity();
+
+  bool _ready = false;
+
+  /// Кисти уже известны — до первого кадра рисовать нечего.
+  bool get ready => _ready;
+
+  static Matrix4 _delta(Mat2D m, Offset rest, double restAngle) {
+    final angle = math.atan2(m[1], m[0]);
+    return Matrix4.translationValues(m[4], m[5], 0)
+      ..rotateZ(angle - restAngle)
+      ..translateByDouble(-rest.dx, -rest.dy, 0, 1);
+  }
+
+  void _update(Mat2D l, Mat2D r) {
+    left = _delta(l, restLeft, _angleLeft);
+    right = _delta(r, restRight, _angleRight);
+    _ready = true;
+    notifyListeners();
+  }
+}
+
 class RiveBearTrial extends StatefulWidget {
   const RiveBearTrial({
     super.key,
@@ -267,8 +308,13 @@ class RiveBearTrial extends StatefulWidget {
     this.mood = BearMood.normal,
     this.seated = false,
     this.reachBottom,
+    this.paws,
     this.onTap,
   });
+
+  /// Лапы на столе (кухня): сюда каждый кадр пишется, где кисти рига и
+  /// как стоит корпус — лапы рисуются отдельным слоем поверх скатерти.
+  final TablePaws? paws;
 
   /// Ниже этой линии (в координатах артборда 1024) мишку не видно — на
   /// кухне там скатерть: ласка и щекотка оттуда не начинаются.
@@ -300,7 +346,9 @@ class RiveBearTrial extends StatefulWidget {
 class _RiveBearTrialState extends State<RiveBearTrial>
     with SingleTickerProviderStateMixin {
   File? _file;
-  late final _TrialPainter _painter = _TrialPainter()..seated = widget.seated;
+  late final _TrialPainter _painter = _TrialPainter()
+    ..seated = widget.seated
+    ..paws = widget.paws;
 
   /// Реакция корпуса на эмоцию — длиной с саму эмоцию.
   late final AnimationController _body = AnimationController(vsync: this);
@@ -483,11 +531,23 @@ class _RiveBearTrialState extends State<RiveBearTrial>
           _size = box.biggest;
           return AnimatedBuilder(
             animation: _body,
-            builder: (context, child) => Transform(
-              alignment: const Alignment(0, 0.92),
-              transform: _bodyTransform(box.maxHeight),
-              child: child,
-            ),
+            builder: (context, child) {
+              final body = _bodyTransform(box.maxHeight);
+              final paws = widget.paws;
+              if (paws != null) {
+                // тот же поворот корпуса, что у Transform ниже: опора —
+                // точка (0; 0,92) коробки
+                final o = const Alignment(0, 0.92).alongSize(box.biggest);
+                paws.body = Matrix4.translationValues(o.dx, o.dy, 0)
+                  ..multiply(body)
+                  ..multiply(Matrix4.translationValues(-o.dx, -o.dy, 0));
+              }
+              return Transform(
+                alignment: const Alignment(0, 0.92),
+                transform: body,
+                child: child,
+              );
+            },
             child: RiveFileWidget(
               file: file,
               painter: _painter,
@@ -529,8 +589,10 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     final stretch = pose.stretch * k - squat;
     final sy = 1 + stretch;
     final sx = 1 - stretch * 0.6;
+    // за столом не подпрыгивает: лапы лежат на столе (заказчик 27.09)
+    final lift = widget.seated ? 0.0 : pose.lift;
     return Matrix4.identity()
-      ..translateByDouble(0, -pose.lift * k * height, 0, 1)
+      ..translateByDouble(0, -lift * k * height, 0, 1)
       ..rotateZ(pose.tilt * k * math.pi / 180)
       ..scaleByDouble(sx, sy, 1, 1);
   }
@@ -579,8 +641,47 @@ final class _TrialPainter extends BasicArtboardPainter {
   Component? _eHips;
   double _hipsRestY = 0;
 
-  /// Сидит за столом — корпус не подпрыгивает.
+  /// Сидит за столом — корпус не подпрыгивает, руки лежат на столе.
   bool seated = false;
+
+  /// Куда писать положение кистей для слоя лап на столе.
+  TablePaws? paws;
+
+  // Руки на столе (кухня, заказчик 27.09): плечо чуть внутрь, нижняя
+  // половина руки укорочена вдвое — рука идёт вперёд, к зрителю, и кисть
+  // оказывается у кромки стола ближе к середине. Смещения добавляются к
+  // тому, что поставили клипы, и снимаются перед следующим кадром:
+  // покачивания рук из клипов остаются.
+  static const double _seatTurn = 0.12;
+  static const double _seatShorten = 0.5;
+  Component? _eArmL1;
+  Component? _eArmR1;
+  Component? _eArmL2;
+  Component? _eArmR2;
+  Component? _handL;
+  Component? _handR;
+  bool _seatOn = false;
+
+  void _seatOff() {
+    if (!_seatOn) return;
+    _seatOn = false;
+    _eArmL1?.rotation += _seatTurn;
+    _eArmR1?.rotation -= _seatTurn;
+    for (final e in [_eArmL2, _eArmR2]) {
+      if (e != null) e.scaleX /= _seatShorten;
+    }
+  }
+
+  void _seatApply() {
+    if (!seated || _seatOn) return;
+    _seatOn = true;
+    _eArmL1?.rotation -= _seatTurn;
+    _eArmR1?.rotation += _seatTurn;
+    for (final e in [_eArmL2, _eArmR2]) {
+      if (e != null) e.scaleX *= _seatShorten;
+    }
+  }
+
   bool _petting = false;
   bool _releasing = false;
   bool _outOn = false;
@@ -1157,6 +1258,13 @@ final class _TrialPainter extends BasicArtboardPainter {
     _eHead = artboard.component('e_head');
     _eHips = artboard.component('e_hips');
     _hipsRestY = _eHips?.y ?? 0;
+    _seatOn = false;
+    _eArmL1 = artboard.component('e_arm_l1');
+    _eArmR1 = artboard.component('e_arm_r1');
+    _eArmL2 = artboard.component('e_arm_l2');
+    _eArmR2 = artboard.component('e_arm_r2');
+    _handL = artboard.component('b_hand_l');
+    _handR = artboard.component('b_hand_r');
     _mouthSignal.clear();
     for (final op in _mouthOp.values) {
       op.dispose();
@@ -1177,6 +1285,8 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   @override
   bool advance(double elapsedSeconds) {
+    // Руки на столе: снять прошлые смещения, пока клипы не записали новые.
+    _seatOff();
     // Разбивку покоя запускаем до петли: сброс в покой при запуске
     // (`play` → `petCancel`) петля в этом же кадре перекроет.
     _advanceBonus(elapsedSeconds);
@@ -1229,7 +1339,14 @@ final class _TrialPainter extends BasicArtboardPainter {
     _resolveMouths();
     final hips = _eHips;
     if (seated && hips != null) hips.y = _hipsRestY;
+    _seatApply();
     super.advance(0);
+    final paws = this.paws;
+    final l = _handL;
+    final r = _handR;
+    if (paws != null && l != null && r != null) {
+      paws._update(l.worldTransform, r.worldTransform);
+    }
     return true;
   }
 
