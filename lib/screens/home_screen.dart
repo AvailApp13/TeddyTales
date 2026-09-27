@@ -1470,7 +1470,11 @@ class _RoomScene extends StatelessWidget {
             height: frame.bearHeight,
             // Без приветственной эмоции при входе (заказчик 26.09): мишка
             // просто стоит и дышит.
-            child: RiveBearTrial(cue: faceCue, onTap: controller.petBear),
+            child: RiveBearTrial(
+              cue: faceCue,
+              trait: controller.state.trait,
+              onTap: controller.petBear,
+            ),
           ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
         // остальное прозрачно для касаний: погладить мишку по-прежнему

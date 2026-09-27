@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart' hide Animation;
 import 'package:rive/rive.dart';
 
+import 'bear_rig_spec.dart';
+
 /// ⚠ ПРОВЕРКА ФАЙЛА АНИМАТОРА — не финальный мишка (заказчик 26.09:
 /// «ставь в игровую на проверку»).
 ///
@@ -71,7 +73,22 @@ enum BearFace {
   bonusListen(0, 0),
   bonusStep(0, 0),
   bonusShake(0, 0),
-  bonusSigh(0, 0);
+  bonusSigh(0, 0),
+
+  /// Характер (ТЗ `idle_trait_*`, 27.09): кнопка включает характер для
+  /// проверки вместо настоящего (сервер, `BearTraitTracker`); держится до
+  /// другой кнопки характера.
+  traitActive(0, 0),
+  traitCurious(0, 0),
+  traitAffectionate(0, 0),
+  traitCalm(0, 0),
+  traitIndependent(0, 0),
+  traitReserved(0, 0),
+
+  /// Реакции характера (ТЗ `reaction_trait_*_touch` / `*_treat`): на
+  /// касание — это и тап по мишке (заказчик 27.09); на угощение.
+  touch(0, 0),
+  treat(0, 0);
 
   const BearFace(this.frame, this.hold);
 
@@ -109,6 +126,25 @@ enum BearFace {
     bonusStep => 'idle_bonus_4',
     bonusShake => 'idle_bonus_5',
     bonusSigh => 'idle_bonus_6',
+    traitActive ||
+    traitCurious ||
+    traitAffectionate ||
+    traitCalm ||
+    traitIndependent ||
+    traitReserved ||
+    touch ||
+    treat => null,
+  };
+
+  /// Характер, если это кнопка характера.
+  BearTrait? get trait => switch (this) {
+    traitActive => BearTrait.active,
+    traitCurious => BearTrait.curious,
+    traitAffectionate => BearTrait.affectionate,
+    traitCalm => BearTrait.calm,
+    traitIndependent => BearTrait.independent,
+    traitReserved => BearTrait.reserved,
+    _ => null,
   };
 
   /// Разбивка покоя — её мишка сам запускает в тишине.
@@ -133,12 +169,6 @@ enum BearFace {
     moodNormal => 'mood_normal',
     _ => null,
   };
-
-  /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
-  static final List<BearFace> taps = [
-    for (final face in values)
-      if (face.mood == null && !face.bonus) face,
-  ];
 
   /// Подпись на проверочной панели ([EmotionTestPanel]).
   String get label => switch (this) {
@@ -167,6 +197,14 @@ enum BearFace {
     bonusStep => 'Переступил',
     bonusShake => 'Встряхнулся',
     bonusSigh => 'Вздохнул',
+    traitActive => 'Активный',
+    traitCurious => 'Любознательный',
+    traitAffectionate => 'Ласковый',
+    traitCalm => 'Спокойный',
+    traitIndependent => 'Самостоятельный',
+    traitReserved => 'Замкнутый',
+    touch => 'Касание',
+    treat => 'Угощение',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -217,9 +255,19 @@ class BearFaceCue extends ChangeNotifier {
 }
 
 class RiveBearTrial extends StatefulWidget {
-  const RiveBearTrial({super.key, required this.cue, this.onTap});
+  const RiveBearTrial({
+    super.key,
+    required this.cue,
+    this.trait = BearTrait.active,
+    this.onTap,
+  });
 
   final BearFaceCue cue;
+
+  /// Характер мишки (КП 7.1–7.4): покой, реакции, разбивки. ⚠ ждёт
+  /// согласования: по ТЗ характер виден только на стадиях 4–5; пока
+  /// Rive-мишка один на все стадии — показываем всегда (заказчик 27.09).
+  final BearTrait trait;
 
   /// Касание мишки (КП 3.1).
   final VoidCallback? onTap;
@@ -239,6 +287,17 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   /// Эмоция целиком: лицо из файла и поза корпуса.
   void _react(BearFace face) {
+    final trait = face.trait;
+    if (trait != null) {
+      _painter.setTrait(trait);
+      _bodyFace = null;
+      return;
+    }
+    if (face == BearFace.touch || face == BearFace.treat) {
+      _painter.playReaction(treat: face == BearFace.treat);
+      _bodyFace = null;
+      return;
+    }
     final mood = face.mood;
     if (mood != null) {
       _painter.setMood(mood);
@@ -258,9 +317,6 @@ class _RiveBearTrialState extends State<RiveBearTrial>
       ..duration = Duration(milliseconds: (face.hold * 1000).round())
       ..forward(from: 0);
   }
-
-  /// Какое по счёту касание — выражения идут по кругу.
-  int _taps = 0;
 
   // --- Поглаживание пальцем (ТЗ act_pet, заказчик 27.09) ---------------
   // Провели пальцем по голове — мишку гладят: лицо блаженное, голова
@@ -339,6 +395,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
   void initState() {
     super.initState();
     widget.cue.addListener(_onCue);
+    _painter.setTrait(widget.trait, real: true);
     File.asset(kTrialBearAsset, riveFactory: Factory.rive)
         .then((file) {
           if (!mounted) {
@@ -364,6 +421,9 @@ class _RiveBearTrialState extends State<RiveBearTrial>
       oldWidget.cue.removeListener(_onCue);
       widget.cue.addListener(_onCue);
     }
+    if (oldWidget.trait != widget.trait) {
+      _painter.setTrait(widget.trait, real: true);
+    }
   }
 
   @override
@@ -382,8 +442,10 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     return GestureDetector(
       key: const ValueKey('rive-bear-trial'),
       behavior: HitTestBehavior.opaque,
+      // Тап — реакция характера на касание (ТЗ `reaction_trait_*_touch`;
+      // заказчик 27.09: «тап переключи на реакцию»).
       onTap: () {
-        _react(BearFace.taps[_taps++ % BearFace.taps.length]);
+        _react(BearFace.touch);
         widget.onTap?.call();
       },
       onPanStart: _panStart,
@@ -672,7 +734,80 @@ final class _TrialPainter extends BasicArtboardPainter {
   double _moodW = 1;
   double _moodT = 0;
 
+  // --- Характер (ТЗ idle_trait_*, reaction_trait_*; заказчик 27.09) ---------
+  // Настроение важнее характера: при обычном настроении вместо
+  // `mood_normal` играет петля характера `idle_trait_*` (тот же набор
+  // каналов — перетекает как настроения); при особом настроении играет
+  // настроение, а характер остаётся в темпе дыхания ([_traitSpeed]) и в
+  // разбивках покоя ([_bonusRange], [_bonusLike]).
+  static const Map<BearTrait, double> _traitSpeed = {
+    BearTrait.active: 1.2,
+    BearTrait.curious: 1.05,
+    BearTrait.calm: 0.85,
+    BearTrait.reserved: 0.95,
+  };
+
+  /// Пауза между разбивками покоя, секунды: от и до.
+  static const Map<BearTrait, (double, double)> _bonusRange = {
+    BearTrait.active: (10, 20),
+    BearTrait.curious: (12, 25),
+    BearTrait.affectionate: (15, 30),
+    BearTrait.calm: (25, 40),
+    BearTrait.independent: (20, 35),
+    BearTrait.reserved: (25, 45),
+  };
+
+  /// Любимые разбивки характера — выпадают втрое чаще.
+  static const Map<BearTrait, List<BearFace>> _bonusLike = {
+    BearTrait.active: [BearFace.bonusStretch, BearFace.bonusStep],
+    BearTrait.curious: [BearFace.bonusListen],
+    BearTrait.affectionate: [BearFace.bonusSigh],
+    BearTrait.calm: [BearFace.bonusSigh],
+    BearTrait.independent: [BearFace.bonusShake],
+    BearTrait.reserved: [BearFace.bonusEar],
+  };
+
+  BearTrait _trait = BearTrait.active;
+  bool _traitForced = false;
+
+  /// Выбранное настроение (`mood_*`); играет [_mood] — оно же или петля
+  /// характера.
+  String _moodPick = 'mood_normal';
+
+  /// [real] — характер мишки из состояния; кнопка проверки его подменяет.
+  void setTrait(BearTrait trait, {bool real = false}) {
+    if (real && _traitForced) return;
+    if (!real) _traitForced = true;
+    _trait = trait;
+    _loopTo(_loopName());
+  }
+
+  String _loopName() {
+    if (_moodPick != 'mood_normal') return _moodPick;
+    final name = 'idle_trait_${_trait.name}';
+    return _moods.containsKey(name) ? name : 'mood_normal';
+  }
+
+  /// Реакция характера на касание или угощение.
+  void playReaction({required bool treat}) {
+    final name = 'reaction_trait_${_trait.name}_${treat ? 'treat' : 'touch'}';
+    final clip = _clips[name];
+    if (clip == null) return;
+    petCancel();
+    _rest(_clip);
+    clip.time = 0;
+    _clip = clip;
+    _face = null;
+    _t = 0;
+    scheduleRepaint();
+  }
+
   void setMood(String name) {
+    _moodPick = name;
+    _loopTo(_loopName());
+  }
+
+  void _loopTo(String name) {
     if (name == _mood) return;
     // перетекание из текущей смеси: прежним считаем то, что сейчас сильнее
     _moodPrev = _moodW >= 0.5 ? _mood : _moodPrev;
@@ -684,7 +819,7 @@ final class _TrialPainter extends BasicArtboardPainter {
   double _idleSpeed() {
     final a = _moodSpeed[_moodPrev] ?? 1.0;
     final b = _moodSpeed[_mood] ?? 1.0;
-    return a + (b - a) * _moodW;
+    return (a + (b - a) * _moodW) * (_traitSpeed[_trait] ?? 1.0);
   }
 
   void _advanceMood(double dt) {
@@ -723,15 +858,18 @@ final class _TrialPainter extends BasicArtboardPainter {
       _bonusWait = null;
       return;
     }
-    final wait = (_bonusWait ??= 15 + _random.nextDouble() * 15) - dt;
+    final (lo, hi) = _bonusRange[_trait] ?? (15.0, 30.0);
+    final wait = (_bonusWait ??= lo + _random.nextDouble() * (hi - lo)) - dt;
     _bonusWait = wait;
     if (wait > 0) return;
     _bonusWait = null;
+    final like = _bonusLike[_trait] ?? const <BearFace>[];
     final pool = [
       for (final face
-          in BearFace.bonusByMood[_mood] ??
+          in BearFace.bonusByMood[_moodPick] ??
               BearFace.values.where((f) => f.bonus))
-        if (face != _lastBonus && _clips.containsKey(face.clip)) face,
+        if (face != _lastBonus && _clips.containsKey(face.clip))
+          for (var i = 0; i < (like.contains(face) ? 3 : 1); i++) face,
     ];
     if (pool.isEmpty) return;
     final face = pool[_random.nextInt(pool.length)];
@@ -780,9 +918,13 @@ final class _TrialPainter extends BasicArtboardPainter {
       clip.dispose();
     }
     _clips.clear();
-    for (final face in BearFace.values) {
-      final name = face.clip;
-      if (name == null || _clips.containsKey(name)) continue;
+    for (final name in [
+      for (final face in BearFace.values) ?face.clip,
+      for (final trait in BearTrait.values)
+        for (final kind in const ['touch', 'treat'])
+          'reaction_trait_${trait.name}_$kind',
+    ]) {
+      if (_clips.containsKey(name)) continue;
       final animation = artboard.animationNamed(name);
       if (animation != null) _clips[name] = animation;
     }
@@ -796,17 +938,24 @@ final class _TrialPainter extends BasicArtboardPainter {
       clip.dispose();
     }
     _moods.clear();
-    for (final name in const [
+    for (final name in [
       'mood_normal',
       'mood_happy',
       'mood_sad',
       'mood_hungry',
       'mood_sleepy',
       'mood_dirty',
+      for (final trait in BearTrait.values) 'idle_trait_${trait.name}',
     ]) {
       final animation = artboard.animationNamed(name);
       if (animation != null) _moods[name] = animation;
     }
+    // петли характера загрузились только сейчас — выбрать заново
+    _mood = 'mood_normal';
+    _moodPrev = 'mood_normal';
+    _moodW = 1;
+    _loopTo(_loopName());
+    _moodW = 1;
     _eHead = artboard.component('e_head');
     notifyListeners();
   }
@@ -873,8 +1022,8 @@ final class _TrialPainter extends BasicArtboardPainter {
 /// ⚠ ПРОВЕРОЧНАЯ ПАНЕЛЬ — снять перед публикацией (заказчик 26.09: «кнопки
 /// 1, 2, 3… с правой стороны, подпиши каждую эмоцию — так проще вносить
 /// корректировки»). Номер и название: нажали — мишка играет эту эмоцию.
-/// Кнопок стало 25 — две колонки: эмоции 1–13 справа от мишки
-/// ([emotions]), покой и разбивки 14–25 слева ([idle]).
+/// Две колонки: эмоции 1–13 справа от мишки ([emotions]); покой,
+/// разбивки, характер и его реакции 14–33 слева ([idle]).
 class EmotionTestPanel extends StatefulWidget {
   const EmotionTestPanel.emotions({super.key, required this.cue})
     : idle = false;
@@ -883,7 +1032,7 @@ class EmotionTestPanel extends StatefulWidget {
 
   final BearFaceCue cue;
 
-  /// Колонка покоя (настроения и разбивки) — иначе эмоций.
+  /// Колонка покоя (настроения, разбивки, характер) — иначе эмоций.
   final bool idle;
 
   @override
@@ -926,7 +1075,7 @@ class _EmotionTestPanelState extends State<EmotionTestPanel> {
           : CrossAxisAlignment.end,
       children: [
         for (final (i, face) in BearFace.values.indexed)
-          if ((face.mood != null || face.bonus) == idle)
+          if ((face.index >= BearFace.moodHappy.index) == idle)
             Padding(
               padding: const EdgeInsets.only(bottom: 3),
               child: _EmotionButton(
