@@ -15,6 +15,10 @@
    анимаций убраны ключи старых костей.
 """
 import math
+import os
+
+import numpy as np
+from PIL import Image
 import sys
 import xml.etree.ElementTree as ET
 
@@ -265,43 +269,84 @@ def _seg_dist(p, line):
 # кофты в той же точке и ходят вместе с ней, а выше, на 22 px, плавно
 # переходят к своим — это растяжка, а не разрыв. Линия — нижний край
 # капюшона в покое (по кадру): в середине y 553, к бокам 535.
-COLLAR_LAYERS = ('hood_img', 'hood_back_img', 'face_img', 'face_')
-COLLAR_RAMP = (34, 4)          # растяжка: выше линии, ниже линии, px
+COLLAR_RAMP = (34, 4)          # растяжка мордочки над воротником: выше линии, ниже линии, px
 
 
 def collar_y(x):
+    """Горловина — нижний край капюшона в покое: в середине y 553, к бокам
+    поднимается до 535 (x ± 177), дальше уходит вниз к плечу."""
     dx = abs(x - 517)
     if dx <= 177:
         return 553 - 18 * (dx / 177) ** 2
     return 535 + (dx - 177)
 
 
-def collar_mode(x):
-    """0 — середина: капюшон и мордочка держатся за воротник; 1 — бока:
-    капюшон свой, ходит за головой целиком. По бокам голова уводит край
-    капюшона на 10–25 px (у «Любви» наклон 7,7°): если держать его за
-    плечо, край загибается крючком, а если тянуть за ним кофту — проседает
-    плечо. Поэтому бока свободны, а ткань, которая открывается под ними,
-    прорисована с запасом (`underpaint.py`)."""
-    return smooth(115, 160, abs(x - 517))
-
-
 def collar_share(x, y):
-    """Доля весов кофты у капюшона и мордочки (середина)."""
+    """Доля весов кофты у мордочки над воротником (только середина)."""
     dx = abs(x - 517)
     yc = collar_y(x)
     up = COLLAR_RAMP[0] + 30 * min(1.0, dx / 177) ** 2
-    return smooth(yc - up, yc + COLLAR_RAMP[1], y) * (1 - collar_mode(x))
+    return smooth(yc - up, yc + COLLAR_RAMP[1], y) * (1 - smooth(115, 160, dx))
+
+
+def hood_neck(x, y):
+    """Капюшон пришит к кофте по горловине (заказчик 27.09: «излом», «как
+    у человека: голова — шея подтягивается»). Доля весов кофты у точки
+    капюшона: 1 на горловине и ниже, 0 у виска и выше, между ними —
+    плавная растяжка, как шея: посередине короткая (45 px над
+    воротником), по бокам длинная (до 175 px — от плеча почти до виска).
+    Одно поле на весь низ капюшона — без границы «пришито / свободно»,
+    на которой ломался контур. Поверх этого боковины и конус ходят за
+    головой, а вся кромка стоит на кофте и дышит с ней."""
+    dx = abs(x - 517)
+    yc = collar_y(x)
+    ramp = 45 + 130 * smooth(50, 177, dx)
+    return 1 - smooth(0, ramp, yc - y)
+
+
+# Текстура → мир у всех слоёв тела одна (подобрано по сеткам, ошибка 0):
+# мир = TEX_K · пиксель + TEX_T. Карта расстояний до контура мордочки
+# (в пикселях мира) — заполняет main(), для `face_dist`.
+TEX_K, TEX_T = 0.6298, (85.9289, -149.3001)
+FACE_DIST = None
+
+
+def face_dist(x, y):
+    """Расстояние от точки мира до контура мордочки, px (0 внутри)."""
+    if FACE_DIST is None:
+        return 1e9
+    u = int(round((x - TEX_T[0]) / TEX_K))
+    v = int(round((y - TEX_T[1]) / TEX_K))
+    h, w = FACE_DIST.shape
+    if 0 <= u < w and 0 <= v < h:
+        return float(FACE_DIST[v, u]) * TEX_K
+    return 1e9
 
 
 def weights_for(layer, x, y, B):
     w = _pinned(layer, x, y, B)
-    if layer.startswith(COLLAR_LAYERS) and not layer.startswith('face_mouth'):
+    if layer.startswith(_HOOD):
+        k = hood_neck(x, y)
+        # кромка капюшона вокруг лица обнимает мордочку и ходит с ней
+        # (иначе между лицом и кромкой просвет): в 8 px от контура лица —
+        # веса лица в этой точке, к 45 px — свои
+        rim = 1 - smooth(8, 45, face_dist(x, y))
+        if rim > 0:
+            fw = _weights_for('face_img', x, y, B)
+            fk = collar_share(x, y)
+            if fk > 0:
+                sh = _weights_for('shirt_img', x, y, B)
+                fw = {b: fw.get(b, 0) * (1 - fk) + sh.get(b, 0) * fk for b in set(fw) | set(sh)}
+            w = {b: w.get(b, 0) * (1 - rim) + fw.get(b, 0) * rim for b in set(w) | set(fw)}
+            k *= 1 - rim
+    elif layer.startswith('face_') and not layer.startswith('face_mouth'):
         k = collar_share(x, y)
-        if k > 0:
-            shirt = _weights_for('shirt_img', x, y, B)
-            w = {b: w.get(b, 0) * (1 - k) + shirt.get(b, 0) * k for b in set(w) | set(shirt)}
-            w = {b: v for b, v in w.items() if v > 1e-4}
+    else:
+        k = 0.0
+    if k > 0:
+        shirt = _weights_for('shirt_img', x, y, B)
+        w = {b: w.get(b, 0) * (1 - k) + shirt.get(b, 0) * k for b in set(w) | set(shirt)}
+        w = {b: v for b, v in w.items() if v > 1e-4}
     for line, members, reps in SEAMS:
         if not layer.startswith(members):
             continue
@@ -2186,6 +2231,10 @@ EMOTION_ANIMS = {
 }
 
 
+def assets_by_id(root):
+    return {a.attrib['id']: a for a in root.iter('ImageAsset')}
+
+
 def check_mouths(root):
     """Два рта — никогда: в каждом кадре каждого клипа ротик покоя и любой
     другой рот не видны оба больше чем наполовину. Иначе — ошибка сборки."""
@@ -2384,6 +2433,12 @@ def main(project):
         E_IDS[f'flat_{side}'] = cid
 
     # 5. Сетки: новые сухожилия и веса.
+    #    Карта расстояний до контура мордочки — для кромки капюшона.
+    import cv2
+    global FACE_DIST
+    fa = np.asarray(Image.open(os.path.join(project, assets_by_id(root)[byname['face_img'].attrib['assetId']]
+                                            .attrib['file'])).convert('RGBA'))[..., 3]
+    FACE_DIST = cv2.distanceTransform((fa < 128).astype(np.uint8), cv2.DIST_L2, 5)
     for img in ab.iter('Image'):
         mesh = img.find('Mesh')
         if mesh is None:
