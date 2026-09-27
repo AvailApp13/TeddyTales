@@ -69,9 +69,9 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
     _context = next;
     _phrase = BearPhrases.random(next);
     final chars = _phrase!.text(widget.language).length;
-    // всплытие ~0,25 с, потом ~45 мс на букву
+    // всплытие ~0,25 с, потом ~60 мс на букву — темп речи, а не вспышка
     _type
-      ..duration = Duration(milliseconds: 250 + 45 * chars)
+      ..duration = Duration(milliseconds: 250 + 60 * chars)
       ..forward(from: 0);
   }
 
