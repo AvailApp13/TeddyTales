@@ -153,7 +153,7 @@ class BearLife extends ChangeNotifier {
   late BearMood _mood;
   late DateTime _since;
   bool _asleep = false;
-  bool _inNursery = false;
+  bool _present = false;
   Timer? _follow;
 
   /// Состояние покоя с гистерезисом.
@@ -174,10 +174,16 @@ class BearLife extends ChangeNotifier {
     _tick();
   }
 
-  bool get inNursery => _inNursery;
-  set inNursery(bool value) {
-    if (value == _inNursery) return;
-    _inNursery = value;
+  /// Мишка на экране — игровая или кухня (заказчик 27.09: мишка перенесён
+  /// на кухню). Реакции на события — только когда он на экране.
+  bool get present => _present;
+
+  /// На кухне поел — там кухня сама играет «Жуёт» и реакцию; здесь
+  /// «покормили» не дублируется.
+  bool inKitchen = false;
+  set present(bool value) {
+    if (value == _present) return;
+    _present = value;
     if (value) _react(BearLifeEvent.entered);
   }
 
@@ -189,7 +195,7 @@ class BearLife extends ChangeNotifier {
     final next = controller.state.stats;
     _stats = next;
     // события по показателям — только при вас, чтобы не копились
-    if (_inNursery && !_asleep) {
+    if (_present && !_asleep) {
       for (final (was, now, event) in [
         (prev.food, next.food, BearLifeEvent.hungry),
         (prev.sleep, next.sleep, BearLifeEvent.sleepy),
@@ -200,7 +206,9 @@ class BearLife extends ChangeNotifier {
           _react(BearLifeEvent.relieved);
         }
       }
-      if (next.food - prev.food >= 10) _react(BearLifeEvent.fed);
+      if (next.food - prev.food >= 10 && !inKitchen) {
+        _react(BearLifeEvent.fed);
+      }
     }
     _tick();
   }
@@ -220,7 +228,7 @@ class BearLife extends ChangeNotifier {
 
   /// Однократная реакция на событие — по состоянию и событию.
   void _react(BearLifeEvent event) {
-    if (!_inNursery || _asleep) return;
+    if (!_present || _asleep) return;
     lastEvent = event;
     final face = switch (event) {
       BearLifeEvent.hungry => BearFace.upset,
@@ -252,7 +260,7 @@ class BearLife extends ChangeNotifier {
     };
     if (second != null) {
       _follow = Timer(const Duration(milliseconds: 3800), () {
-        if (_inNursery && !_asleep) cue.show(second);
+        if (_present && !_asleep) cue.show(second);
       });
     }
   }

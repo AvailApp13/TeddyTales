@@ -44,6 +44,7 @@ import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
+import '../widgets/kitchen_bear.dart';
 import '../widgets/stats_test_panel.dart';
 import '../bear/bear_life.dart';
 import '../widgets/room_item_sheet.dart';
@@ -156,7 +157,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showRoom(RoomKind room) {
     if (room == _room) return;
-    _life.inNursery = room == RoomKind.nursery;
+    _life
+      ..present = room == RoomKind.nursery || room == RoomKind.kitchen
+      ..inKitchen = room == RoomKind.kitchen;
     setState(() {
       _room = room;
       // Ушли с кухни — блюда и готовка со стола убираются.
@@ -602,7 +605,8 @@ class _HomeScreenState extends State<HomeScreen>
     _life
       ..addListener(_onLife)
       ..asleep = widget.game.asleep
-      ..inNursery = _room == RoomKind.nursery;
+      ..present = _room == RoomKind.nursery || _room == RoomKind.kitchen
+      ..inKitchen = _room == RoomKind.kitchen;
     _lifeTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _life.tick(),
@@ -1183,20 +1187,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-/// Сцена комнаты: питомец и пузырь с репликой.
-/// Покой кухни из настроения мишки. Заглушка `kTestKitchenIdle` на время
-/// испытаний позволяет снять любое настроение без изменения показателей.
-KitchenIdle _kitchenIdle(BearMood mood) {
-  final forced = KitchenIdle.values.where((i) => i.name == kTestKitchenIdle);
-  if (forced.isNotEmpty) return forced.first;
-  return switch (mood) {
-    BearMood.happy => KitchenIdle.happy,
-    BearMood.sad => KitchenIdle.sad,
-    BearMood.hungry => KitchenIdle.hungry,
-    _ => KitchenIdle.normal,
-  };
-}
-
 /// Характер для кухни. Заглушка `kTestKitchenTrait` — снять любую
 /// реакцию на угощение без смены характера.
 BearTrait _kitchenTrait(BearTrait trait) {
@@ -1397,12 +1387,17 @@ class _RoomScene extends StatelessWidget {
                 opacity: asleep ? 0 : 1,
                 duration: const Duration(milliseconds: 650),
                 curve: Curves.easeOut,
-                child: KitchenScene(
+                // С 27.09 на кухне тот же анимированный мишка, что в
+                // игровой (заказчик: «переноси мишку на кухню»; ножки под
+                // столом убраны — наши скрыты скатертью).
+                child: KitchenBear(
+                  cue: faceCue,
+                  mood: mood,
+                  trait: _kitchenTrait(controller.state.trait),
                   meal: meal,
-                  idle: _kitchenIdle(controller.state.mood),
                   pet: pets,
                   refuse: refusals,
-                  trait: _kitchenTrait(controller.state.trait),
+                  onTap: controller.petBear,
                 ),
               ),
             ),

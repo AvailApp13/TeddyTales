@@ -265,8 +265,14 @@ class RiveBearTrial extends StatefulWidget {
     required this.cue,
     this.trait = BearTrait.active,
     this.mood = BearMood.normal,
+    this.seated = false,
     this.onTap,
   });
+
+  /// Сидит за столом (кухня): вертикальные подскоки корпуса гасятся —
+  /// пружинка «активного», прыжок «радости», подскоки реакций. Голова,
+  /// уши, лицо, дыхание и покачивания в стороны — как в игровой.
+  final bool seated;
 
   final BearFaceCue cue;
 
@@ -289,7 +295,7 @@ class RiveBearTrial extends StatefulWidget {
 class _RiveBearTrialState extends State<RiveBearTrial>
     with SingleTickerProviderStateMixin {
   File? _file;
-  late final _TrialPainter _painter = _TrialPainter();
+  late final _TrialPainter _painter = _TrialPainter()..seated = widget.seated;
 
   /// Реакция корпуса на эмоцию — длиной с саму эмоцию.
   late final AnimationController _body = AnimationController(vsync: this);
@@ -563,6 +569,11 @@ final class _TrialPainter extends BasicArtboardPainter {
   Animation? _petPass;
   Animation? _petOut;
   Component? _eHead;
+  Component? _eHips;
+  double _hipsRestY = 0;
+
+  /// Сидит за столом — корпус не подпрыгивает.
+  bool seated = false;
   bool _petting = false;
   bool _releasing = false;
   bool _outOn = false;
@@ -1137,6 +1148,8 @@ final class _TrialPainter extends BasicArtboardPainter {
     _loopTo(_loopName());
     _moodW = 1;
     _eHead = artboard.component('e_head');
+    _eHips = artboard.component('e_hips');
+    _hipsRestY = _eHips?.y ?? 0;
     _mouthSignal.clear();
     for (final op in _mouthOp.values) {
       op.dispose();
@@ -1207,6 +1220,8 @@ final class _TrialPainter extends BasicArtboardPainter {
     }
     _advancePet(elapsedSeconds);
     _resolveMouths();
+    final hips = _eHips;
+    if (seated && hips != null) hips.y = _hipsRestY;
     super.advance(0);
     return true;
   }
