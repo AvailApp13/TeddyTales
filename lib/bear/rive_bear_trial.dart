@@ -61,7 +61,17 @@ enum BearFace {
   moodHungry(0, 0),
   moodSleepy(0, 0),
   moodDirty(0, 0),
-  moodNormal(0, 0);
+  moodNormal(0, 0),
+
+  /// Разнообразие покоя (ТЗ `idle_bonus_1…6`, 27.09): мишка сам раз в
+  /// 15–30 с, пока его не трогают, делает что-то одно
+  /// ([_TrialPainter._advanceBonus]); кнопки 20–25 — для проверки.
+  bonusStretch(0, 0),
+  bonusEar(0, 0),
+  bonusListen(0, 0),
+  bonusStep(0, 0),
+  bonusShake(0, 0),
+  bonusSigh(0, 0);
 
   const BearFace(this.frame, this.hold);
 
@@ -93,6 +103,24 @@ enum BearFace {
     moodSleepy ||
     moodDirty ||
     moodNormal => null,
+    bonusStretch => 'idle_bonus_1',
+    bonusEar => 'idle_bonus_2',
+    bonusListen => 'idle_bonus_3',
+    bonusStep => 'idle_bonus_4',
+    bonusShake => 'idle_bonus_5',
+    bonusSigh => 'idle_bonus_6',
+  };
+
+  /// Разбивка покоя — её мишка сам запускает в тишине.
+  bool get bonus => name.startsWith('bonus');
+
+  /// Какие разбивки подходят настроению (грустный не потягивается, сонный
+  /// не прислушивается). Нет в таблице — подходят все.
+  static const Map<String, List<BearFace>> bonusByMood = {
+    'mood_sad': [bonusEar, bonusListen, bonusStep],
+    'mood_hungry': [bonusListen, bonusStep, bonusShake],
+    'mood_sleepy': [bonusStretch, bonusShake],
+    'mood_dirty': [bonusEar, bonusShake],
   };
 
   /// Петля настроения в файле, если это кнопка настроения.
@@ -109,7 +137,7 @@ enum BearFace {
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
   static final List<BearFace> taps = [
     for (final face in values)
-      if (face.mood == null) face,
+      if (face.mood == null && !face.bonus) face,
   ];
 
   /// Подпись на проверочной панели ([EmotionTestPanel]).
@@ -133,6 +161,12 @@ enum BearFace {
     moodSleepy => 'Покой: сон',
     moodDirty => 'Покой: грязнуля',
     moodNormal => 'Покой: обычный',
+    bonusStretch => 'Потянулся',
+    bonusEar => 'Ушко о плечо',
+    bonusListen => 'Прислушался',
+    bonusStep => 'Переступил',
+    bonusShake => 'Встряхнулся',
+    bonusSigh => 'Вздохнул',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -674,6 +708,37 @@ final class _TrialPainter extends BasicArtboardPainter {
     }
   }
 
+  // --- Разнообразие покоя (ТЗ idle_bonus_1…6; заказчик 27.09) --------------
+  // Пока мишку не трогают и эмоция не идёт, отсчитывается случайная пауза
+  // 15–30 с, потом — одна разбивка, подходящая настроению, не та же, что в
+  // прошлый раз. Любое касание или эмоция начинают отсчёт заново.
+  final math.Random _random = math.Random();
+  double? _bonusWait;
+  BearFace? _lastBonus;
+
+  void _advanceBonus(double dt) {
+    final busy =
+        _clip != null || _face != null || _petting || _outOn || _script != null;
+    if (busy) {
+      _bonusWait = null;
+      return;
+    }
+    final wait = (_bonusWait ??= 15 + _random.nextDouble() * 15) - dt;
+    _bonusWait = wait;
+    if (wait > 0) return;
+    _bonusWait = null;
+    final pool = [
+      for (final face
+          in BearFace.bonusByMood[_mood] ??
+              BearFace.values.where((f) => f.bonus))
+        if (face != _lastBonus && _clips.containsKey(face.clip)) face,
+    ];
+    if (pool.isEmpty) return;
+    final face = pool[_random.nextInt(pool.length)];
+    _lastBonus = face;
+    play(face);
+  }
+
   void play(BearFace face) {
     petCancel();
     // Прежняя эмоция ещё идёт — вернуть её в покой, иначе её лицо и поза
@@ -783,6 +848,7 @@ final class _TrialPainter extends BasicArtboardPainter {
       }
     }
     _advancePet(elapsedSeconds);
+    _advanceBonus(elapsedSeconds);
     super.advance(0);
     return true;
   }
@@ -807,10 +873,18 @@ final class _TrialPainter extends BasicArtboardPainter {
 /// ⚠ ПРОВЕРОЧНАЯ ПАНЕЛЬ — снять перед публикацией (заказчик 26.09: «кнопки
 /// 1, 2, 3… с правой стороны, подпиши каждую эмоцию — так проще вносить
 /// корректировки»). Номер и название: нажали — мишка играет эту эмоцию.
+/// Кнопок стало 25 — две колонки: эмоции 1–13 справа от мишки
+/// ([emotions]), покой и разбивки 14–25 слева ([idle]).
 class EmotionTestPanel extends StatefulWidget {
-  const EmotionTestPanel({super.key, required this.cue});
+  const EmotionTestPanel.emotions({super.key, required this.cue})
+    : idle = false;
+
+  const EmotionTestPanel.idle({super.key, required this.cue}) : idle = true;
 
   final BearFaceCue cue;
+
+  /// Колонка покоя (настроения и разбивки) — иначе эмоций.
+  final bool idle;
 
   @override
   State<EmotionTestPanel> createState() => _EmotionTestPanelState();
@@ -843,21 +917,25 @@ class _EmotionTestPanelState extends State<EmotionTestPanel> {
   @override
   Widget build(BuildContext context) {
     final current = widget.cue.face;
+    final idle = widget.idle;
     return Column(
-      key: const ValueKey('emotion-test-panel'),
+      key: ValueKey(idle ? 'emotion-test-panel-idle' : 'emotion-test-panel'),
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: idle
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.end,
       children: [
         for (final (i, face) in BearFace.values.indexed)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 3),
-            child: _EmotionButton(
-              number: i + 1,
-              face: face,
-              selected: face == current,
-              onTap: () => widget.cue.show(face),
+          if ((face.mood != null || face.bonus) == idle)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: _EmotionButton(
+                number: i + 1,
+                face: face,
+                selected: face == current,
+                onTap: () => widget.cue.show(face),
+              ),
             ),
-          ),
       ],
     );
   }
