@@ -574,6 +574,14 @@ RAISE_FULL = 0.6   # при подъёме плеча на столько (ра�
 SIDE_CAP = 0.08    # бок кофты идёт за рукой до такого подъёма (рад, ~4,5°)
 
 
+# Два рта — никогда (заказчик 27.09, трижды: «под раскрытым ртом ротик
+# покоя», «рот над ртом»). Новый рот проявляется ровно настолько, насколько
+# гаснет ротик покоя: у обоих один порог MOUTH_SWAP по высоте рта, сумма
+# прозрачностей всегда 1. Сборку останавливает check_mouths() — если в
+# каком-то кадре любого клипа оба рта видны больше чем наполовину.
+MOUTH_SWAP = 0.06
+
+
 class Emo:
     """Сборщик одной эмоции: ключи — смещения от покоя кости эмоции."""
     R, SX, SY, X, Y, OP = 15, 16, 17, 90, 91, 18
@@ -644,7 +652,8 @@ class Emo:
         self.track(bone, self.SX, [(p[0], (sx0 + (1 - sx0) * p[1]) / sx0 - 1, ez(p)) for p in pts])
         self.track(bone, self.SY, [(p[0], (sy0 + (1 - sy0) * p[2]) / sy0 - 1, ez(p)) for p in pts])
         self.ch[(E_IDS[f'{bone}_img'], self.OP)] = (
-            [(0, 0.0, EI)] + [(p[0], min(1.0, p[2] / 0.1), ez(p)) for p in pts] + [(self.dur - 2, 0.0, None)])
+            [(0, 0.0, EI)] + [(p[0], min(1.0, max(0.0, p[2]) / MOUTH_SWAP), ez(p)) for p in pts]
+            + [(self.dur - 2, 0.0, None)])
         self.mouth_h[kind] = [(p[0], p[2]) for p in pts]
         return self
 
@@ -662,7 +671,7 @@ class Emo:
             return 0.0
         frames = sorted({f for pts in self.mouth_h.values() for f, _ in pts} | {0, end})
         self.ch[(E_IDS['mouth_rest_img'], self.OP)] = [
-            (fr, max(0.0, 1 - max(h_at(p, fr) for p in self.mouth_h.values()) / 0.15), EI if fr < end else None)
+            (fr, max(0.0, 1 - max(h_at(p, fr) for p in self.mouth_h.values()) / MOUTH_SWAP), EI if fr < end else None)
             for fr in frames]
 
     def arms(self, pts, follow=0.25, lag=3):
@@ -1407,7 +1416,7 @@ def _mood_mouth(spec, kind, w, h):
     sx0, sy0 = mouth.closed(kind)
     spec[(f'mouth_{kind}', Emo.SX)] = lambda t: (sx0 + (1 - sx0) * w(t)) / sx0 - 1
     spec[(f'mouth_{kind}', Emo.SY)] = lambda t: (sy0 + (1 - sy0) * h(t)) / sy0 - 1
-    spec[(f'mouth_{kind}_img', Emo.OP)] = lambda t: min(1.0, max(0.0, h(t)) / 0.1)
+    spec[(f'mouth_{kind}_img', Emo.OP)] = lambda t: min(1.0, max(0.0, h(t)) / MOUTH_SWAP)
     spec.setdefault('_mouth_h', []).append(h)
     if kind in mouth.JAW:
         _, top, bot = mouth.rows(kind)
@@ -1571,7 +1580,7 @@ def build_moods():
     specs = {n: fn() for n, fn in MOODS.items()}
     for sp in specs.values():                  # ротик покоя гаснет под ртом настроения
         hs = sp.pop('_mouth_h', [])
-        sp[('mouth_rest_img', Emo.OP)] = (lambda hs: lambda t: -min(1.0, max([0.0] + [h(t) for h in hs]) / 0.15))(hs)
+        sp[('mouth_rest_img', Emo.OP)] = (lambda hs: lambda t: -min(1.0, max([0.0] + [h(t) for h in hs]) / MOUTH_SWAP))(hs)
     keys = sorted({k for sp in specs.values() for k in sp})
     specs['mood_normal'] = {}
     out = {}
@@ -1597,6 +1606,50 @@ EMOTION_ANIMS = {
     'pet_face': pet_face, 'pet_pass': pet_pass, 'pet_out': pet_out,
     'act_pet_b': act_pet_b, 'pet_startle': pet_startle,
 }
+
+
+def check_mouths(root):
+    """Два рта — никогда: в каждом кадре каждого клипа ротик покоя и любой
+    другой рот не видны оба больше чем наполовину. Иначе — ошибка сборки."""
+    rest_id = E_IDS['mouth_rest_img']
+    mouth_ids = {v for k, v in E_IDS.items() if k.startswith('mouth_') and k.endswith('_img')
+                 and k != 'mouth_rest_img'}
+
+    def curve(kp):
+        ks = [(int(k.get('frame', '0')), float(k.get('value')), k.get('interpolationType')) for k in kp]
+        return sorted(ks)
+
+    def at(ks, fr, default):
+        if not ks:
+            return default
+        if fr <= ks[0][0]:
+            return ks[0][1]
+        for (f0, v0, it), (f1, v1, _) in zip(ks, ks[1:]):
+            if f0 <= fr <= f1:
+                return v0 if it == 'hold' else v0 + (v1 - v0) * (fr - f0) / max(1, f1 - f0)
+        return ks[-1][1]
+    bad = []
+    for an in root.iter('LinearAnimation'):
+        rest, mouths = [], []
+        for ko in an.findall('KeyedObject'):
+            oid = ko.get('objectId')
+            for kp in ko.findall('KeyedProperty'):
+                if kp.get('propertyKey') != '18':
+                    continue
+                if oid == rest_id:
+                    rest = curve(kp)
+                elif oid in mouth_ids:
+                    mouths.append(curve(kp))
+        if not mouths:
+            continue
+        for fr in range(int(an.get('duration', '0')) + 1):
+            r = at(rest, fr, 1.0)
+            m = max(at(ks, fr, 0.0) for ks in mouths)
+            if min(r, m) > 0.5:
+                bad.append((an.get('name'), fr, round(r, 2), round(m, 2)))
+                break
+    if bad:
+        raise RuntimeError('два рта (клип, кадр, ротик покоя, другой рот): %s' % bad)
 
 
 def cubic_key(parent, frame, value, ease):
@@ -1810,6 +1863,7 @@ def main(project):
             for fr, val, ease in frames:
                 cubic_key(kp, fr, val, ease)
 
+    check_mouths(root)
     ET.indent(tree, space='    ')
     tree.write(path, encoding='unicode')
     print('bones', len(B), 'followers', len(followers))
