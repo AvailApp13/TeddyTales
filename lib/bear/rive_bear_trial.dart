@@ -17,7 +17,7 @@ import 'package:rive/rive.dart';
 /// `idle_life` — дыхание всем телом и мягкое моргание, у каждого
 /// выражения своя анимация всем телом (`emo_smile`, `emo_laugh`,
 /// `emo_surprised`, `emo_sad`, `emo_chew`, `emo_lick`, `emo_yawn`,
-/// `emo_sleepy`, `emo_upset`). Исходник и сборка — `docs/rive-bear.md`.
+/// `emo_sleepy`, `emo_upset`, `emo_love`). Исходник и сборка — `docs/rive-bear.md`.
 ///
 /// Здесь: покой крутится всегда, а выражение лица накладывается поверх на
 /// пару секунд — одним застывшим кадром из `face_demo` ([BearFace]).
@@ -37,7 +37,10 @@ enum BearFace {
   lick(14.45, 1.4),
   yawn(16.35, 1.8),
   sleepy(17.5, 2.0),
-  upset(19.4, 1.4);
+  upset(19.4, 1.4),
+
+  /// Любовь, нежность (ТЗ `emo_love_s45`, 27.09) — десятая кнопка.
+  tenderness(5.85, 2.0);
 
   const BearFace(this.frame, this.hold);
 
@@ -59,6 +62,7 @@ enum BearFace {
     yawn => 'emo_yawn',
     sleepy => 'emo_sleepy',
     upset => 'emo_upset',
+    tenderness => 'emo_love',
   };
 
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
@@ -75,6 +79,7 @@ enum BearFace {
     yawn => 'Зевок',
     sleepy => 'Сонный',
     upset => 'Обида',
+    tenderness => 'Любовь',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -90,6 +95,7 @@ enum BearFace {
     yawn => const BodyPose(tilt: 2, stretch: 0.045, lift: 0.01),
     sleepy => const BodyPose(tilt: 3, stretch: -0.025, lift: -0.006),
     upset => const BodyPose(stretch: -0.04, lift: -0.004),
+    tenderness => const BodyPose(tilt: 3.5, stretch: 0.02, lift: 0.01),
   };
 }
 
