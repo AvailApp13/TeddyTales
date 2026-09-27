@@ -651,6 +651,7 @@ class Emo:
             return p[3] if len(p) > 3 else EI
         self.track(bone, self.SX, [(p[0], (sx0 + (1 - sx0) * p[1]) / sx0 - 1, ez(p)) for p in pts])
         self.track(bone, self.SY, [(p[0], (sy0 + (1 - sy0) * p[2]) / sy0 - 1, ez(p)) for p in pts])
+        self.track(f'mh_{kind}', self.Y, [(p[0], p[2], ez(p)) for p in pts])
         self.ch[(E_IDS[f'{bone}_img'], self.OP)] = (
             [(0, 0.0, EI)] + [(p[0], min(1.0, max(0.0, p[2]) / MOUTH_SWAP), ez(p)) for p in pts]
             + [(self.dur - 2, 0.0, None)])
@@ -1417,6 +1418,7 @@ def _mood_mouth(spec, kind, w, h):
     spec[(f'mouth_{kind}', Emo.SX)] = lambda t: (sx0 + (1 - sx0) * w(t)) / sx0 - 1
     spec[(f'mouth_{kind}', Emo.SY)] = lambda t: (sy0 + (1 - sy0) * h(t)) / sy0 - 1
     spec[(f'mouth_{kind}_img', Emo.OP)] = lambda t: min(1.0, max(0.0, h(t)) / MOUTH_SWAP)
+    spec[(f'mh_{kind}', Emo.Y)] = h
     spec.setdefault('_mouth_h', []).append(h)
     if kind in mouth.JAW:
         _, top, bot = mouth.rows(kind)
@@ -1589,128 +1591,141 @@ def _wide_eyes(spec, w):
 
 
 def idle_trait_active():
-    """Активный: бодрый, голова выше, уши торчком; дважды покачивается с
-    пятки на носок, быстро глянул влево-вправо, маленький подскок на месте;
-    уголки рта чуть вверх, без улыбки. Дыхание ×1,2 — в приложении."""
+    """Активный: бодрый, голова высоко, уши торчком; всё время пружинит на
+    носочках (раз в секунду), часто зыркает по сторонам, раз за петлю
+    подпрыгивает; уголки рта вверх. Дыхание ×1,2 — в приложении."""
     sp = {}
-    toe = lambda t: mbump(t, 90, 18) + mbump(t, 140, 18) + mbump(t, 400, 18) + mbump(t, 450, 18)
-    hop = lambda t: mbump(t, 610, 16)
-    prep = lambda t: mbump(t, 588, 9)
-    look = lambda t: mbump(t, 230, 26) - mbump(t, 300, 26)
-    sp[('face', Emo.X)] = lambda t: 1.5
-    sp[('face', Emo.Y)] = lambda t: 5.0 * look(t)
-    sp[('head', Emo.R)] = lambda t: 0.03 * look(t - 4)
-    sp[('hips', Emo.Y)] = lambda t: -1.8 * toe(t) - 3.0 * hop(t) + 1.2 * prep(t)
-    sp[('breath', Emo.SY)] = lambda t: 0.012 * toe(t) + 0.015 * hop(t - 4)
-    sp[('ear_l1', Emo.R)] = lambda t: -0.07 + 0.05 * mbump(t, 622, 12) + 0.03 * look(t - 10)
-    sp[('ear_r1', Emo.R)] = lambda t: 0.07 - 0.05 * mbump(t, 622, 12) + 0.03 * look(t - 10)
-    sp[('ear_l2', Emo.R)] = lambda t: -0.04 + 0.04 * mbump(t, 628, 12)
-    sp[('ear_r2', Emo.R)] = lambda t: 0.04 - 0.04 * mbump(t, 628, 12)
-    sp[('hood2', Emo.R)] = lambda t: -0.03 * look(t - 14) + 0.04 * mbump(t, 626, 14) + 0.02 * toe(t - 6)
-    sp[('arm_l1', Emo.R)] = lambda t: 0.015 * toe(t) + 0.02 * hop(t)
-    sp[('arm_r1', Emo.R)] = lambda t: -0.015 * toe(t) - 0.02 * hop(t)
-    _mood_eyes(sp, lambda t: 0.04, lambda t: 0.0)
-    _pair(sp, 'mouth', Emo.X, lambda t: 2.0)
-    _pair(sp, 'brow', Emo.X, lambda t: 0.8)
+    bob = lambda t: sum(mbump(t, c, 12) for c in range(30, 700, 60))
+    hop = lambda t: mbump(t, 612, 16)
+    prep = lambda t: mbump(t, 590, 9)
+    look = lambda t: (mhold(t, 130, 175, 10) - mhold(t, 230, 275, 10)
+                      + mhold(t, 400, 440, 10) - mhold(t, 480, 520, 10))
+    sp[('face', Emo.X)] = lambda t: 2.5
+    sp[('face', Emo.Y)] = lambda t: 6.0 * look(t)
+    sp[('head', Emo.R)] = lambda t: 0.035 * look(t - 4)
+    sp[('hips', Emo.Y)] = lambda t: -1.4 * bob(t) - 5.0 * hop(t) + 1.8 * prep(t)
+    sp[('breath', Emo.SY)] = lambda t: 0.012 * bob(t) + 0.02 * hop(t - 4)
+    sp[('ear_l1', Emo.R)] = lambda t: -0.12 + 0.04 * bob(t - 5) + 0.08 * mbump(t, 626, 12)
+    sp[('ear_r1', Emo.R)] = lambda t: 0.12 - 0.04 * bob(t - 5) - 0.08 * mbump(t, 626, 12)
+    sp[('ear_l2', Emo.R)] = lambda t: -0.05 + 0.05 * mbump(t, 632, 12)
+    sp[('ear_r2', Emo.R)] = lambda t: 0.05 - 0.05 * mbump(t, 632, 12)
+    sp[('hood2', Emo.R)] = lambda t: -0.04 * look(t - 12) + 0.05 * mbump(t, 628, 14) + 0.02 * bob(t - 6)
+    sp[('arm_l1', Emo.R)] = lambda t: 0.012 * bob(t) + 0.025 * hop(t)
+    sp[('arm_r1', Emo.R)] = lambda t: -0.012 * bob(t) - 0.025 * hop(t)
+    _mood_eyes(sp, lambda t: 0.06, lambda t: 0.0)
+    _pair(sp, 'mouth', Emo.X, lambda t: 3.0)
+    _pair(sp, 'brow', Emo.X, lambda t: 1.5)
     return sp
 
 
 def idle_trait_curious():
-    """Любознательный: глаза чуть шире, брови вверх; заглядывает то влево,
-    то вправо (голова набок, корпус следом), уши поворачиваются по очереди;
-    раз за петлю смотрит вверх — «что там?»."""
+    """Любознательный: глаза широко, брови вверх; голова почти всё время
+    набок — то в одну сторону, то в другую (раз в 3 с), корпус следом, ухо
+    с той стороны торчком и подрагивает; раз за петлю смотрит вверх."""
     sp = {}
-    left = lambda t: mbump(t, 130, 70)
-    right = lambda t: mbump(t, 450, 70)
-    up = lambda t: mbump(t, 290, 45)
-    sp[('head', Emo.R)] = lambda t: 0.09 * (right(t) - left(t))
-    sp[('face', Emo.Y)] = lambda t: 4.5 * (right(t) - left(t))
-    sp[('face', Emo.X)] = lambda t: 0.8 + 3.0 * up(t)
-    sp[('hips', Emo.X)] = lambda t: 1.8 * (right(t - 8) - left(t - 8))
-    sp[('ear_l1', Emo.R)] = lambda t: -0.03 - 0.08 * left(t - 6) - 0.04 * up(t)
-    sp[('ear_r1', Emo.R)] = lambda t: 0.03 + 0.08 * right(t - 6) + 0.04 * up(t)
-    sp[('ear_l2', Emo.R)] = lambda t: -0.05 * left(t - 12)
-    sp[('ear_r2', Emo.R)] = lambda t: 0.05 * right(t - 12)
-    sp[('hood2', Emo.R)] = lambda t: -0.05 * (right(t - 16) - left(t - 16)) - 0.03 * up(t - 10)
-    _wide_eyes(sp, lambda t: 0.07 + 0.04 * up(t))
-    _pair(sp, 'brow', Emo.X, lambda t: 1.5 + 1.5 * up(t))
+    tilt = lambda t: (mhold(t, 20, 160, 20) - mhold(t, 200, 330, 20)
+                      + mhold(t, 440, 560, 20) - mhold(t, 590, 690, 20))
+    up = lambda t: mbump(t, 385, 45)
+    tw = lambda t: mbump(t, 100, 5) + mbump(t, 112, 5) + mbump(t, 500, 5) + mbump(t, 512, 5)
+    sp[('head', Emo.R)] = lambda t: 0.06 * tilt(t)
+    sp[('chest', Emo.R)] = lambda t: 0.015 * tilt(t - 6)
+    sp[('face', Emo.Y)] = lambda t: 5.0 * tilt(t)
+    sp[('face', Emo.X)] = lambda t: 1.5 + 4.0 * up(t)
+    sp[('hips', Emo.X)] = lambda t: 2.0 * tilt(t - 8)
+    sp[('ear_r1', Emo.R)] = lambda t: 0.04 + 0.1 * max(0.0, tilt(t - 6)) + 0.05 * tw(t) + 0.05 * up(t)
+    sp[('ear_l1', Emo.R)] = lambda t: -0.04 - 0.1 * max(0.0, -tilt(t - 6)) - 0.05 * tw(t - 200) - 0.05 * up(t)
+    sp[('ear_l2', Emo.R)] = lambda t: -0.04 * max(0.0, -tilt(t - 12))
+    sp[('ear_r2', Emo.R)] = lambda t: 0.04 * max(0.0, tilt(t - 12))
+    sp[('hood2', Emo.R)] = lambda t: -0.05 * tilt(t - 16) - 0.03 * up(t - 10)
+    _wide_eyes(sp, lambda t: 0.1 + 0.04 * up(t))
+    _pair(sp, 'brow', Emo.X, lambda t: 3.0 + 1.5 * up(t))
     return sp
 
 
 def idle_trait_affectionate():
-    """Ласковый: голова набок, медленно покачивается, будто баюкает; тёплый
-    прищур, тихая сомкнутая улыбка, уши мягко опущены, смотрит на зрителя;
-    раз за петлю — счастливый вздох."""
+    """Ласковый: голова набок, баюкающее покачивание всем телом, тёплый
+    прищур, сомкнутая улыбка, уши мягко опущены; дважды за петлю —
+    счастливый вздох."""
     sp = {}
     rock = lambda t: mwave(t, 2)
-    sigh = lambda t: mbump(t, 520, 60)
-    sp[('head', Emo.R)] = lambda t: 0.05 + 0.03 * mwave(t, 2, -0.4)
-    sp[('face', Emo.Y)] = lambda t: 2.0 + 1.5 * mwave(t, 2, -0.4)
-    sp[('face', Emo.X)] = lambda t: 0.5 + 1.0 * sigh(t)
-    sp[('hips', Emo.X)] = lambda t: 1.6 * rock(t)
-    sp[('breath', Emo.SY)] = lambda t: 0.04 * sigh(t)
-    sp[('chest', Emo.R)] = lambda t: -0.008 * sigh(t)
-    sp[('ear_l1', Emo.R)] = lambda t: 0.05 + 0.02 * mwave(t, 2, -1.0)
-    sp[('ear_r1', Emo.R)] = lambda t: -0.05 - 0.02 * mwave(t, 2, -1.0)
-    sp[('hood2', Emo.R)] = lambda t: -0.03 * mwave(t, 2, -0.9)
-    sp[('arm_l1', Emo.R)] = lambda t: 0.01 * rock(t)
-    sp[('arm_r1', Emo.R)] = lambda t: 0.01 * rock(t)
-    _mood_eyes(sp, lambda t: 0.2 + 0.1 * sigh(t), lambda t: 0.0)
-    _pair(sp, 'lid', Emo.X, lambda t: 4.0 + 2.0 * sigh(t))
-    _pair(sp, 'cheek', Emo.X, lambda t: 2.5)
-    _pair(sp, 'mouth', Emo.X, lambda t: 3.0)
-    _mood_mouth(sp, 'content', lambda t: 0.85, lambda t: 0.7)
+    sigh = lambda t: mbump(t, 200, 55) + mbump(t, 560, 55)
+    sp[('head', Emo.R)] = lambda t: 0.06 + 0.025 * mwave(t, 2, -0.4)
+    sp[('chest', Emo.R)] = lambda t: 0.015 * rock(t - 10) - 0.01 * sigh(t)
+    sp[('face', Emo.Y)] = lambda t: 3.0 + 2.0 * mwave(t, 2, -0.4)
+    sp[('face', Emo.X)] = lambda t: 0.5 + 1.5 * sigh(t)
+    sp[('hips', Emo.X)] = lambda t: 3.0 * rock(t)
+    sp[('breath', Emo.SY)] = lambda t: 0.05 * sigh(t)
+    sp[('ear_l1', Emo.R)] = lambda t: 0.08 + 0.02 * mwave(t, 2, -1.0)
+    sp[('ear_r1', Emo.R)] = lambda t: -0.08 - 0.02 * mwave(t, 2, -1.0)
+    sp[('hood2', Emo.R)] = lambda t: -0.04 * mwave(t, 2, -0.9)
+    sp[('arm_l1', Emo.R)] = lambda t: 0.012 * rock(t)
+    sp[('arm_r1', Emo.R)] = lambda t: 0.012 * rock(t)
+    _mood_eyes(sp, lambda t: 0.32 + 0.12 * sigh(t), lambda t: 0.0)
+    _pair(sp, 'lid', Emo.X, lambda t: 7.0 + 3.0 * sigh(t))
+    _pair(sp, 'cheek', Emo.X, lambda t: 4.0)
+    _pair(sp, 'mouth', Emo.X, lambda t: 5.0)
+    _mood_mouth(sp, 'content', lambda t: 1.0, lambda t: 0.95)
     return sp
 
 
 def idle_trait_calm():
-    """Спокойный: почти неподвижен, веки чуть прикрыты, уши расслаблены;
-    раз за петлю медленно кивает. Дыхание ×0,85 — в приложении."""
+    """Спокойный: почти неподвижен, веки наполовину прикрыты, безмятежная
+    полуулыбка, уши расслаблены; дважды за петлю медленно кивает.
+    Дыхание ×0,85 — в приложении."""
     sp = {}
-    nod = lambda t: mbump(t, 380, 100)
-    sp[('face', Emo.X)] = lambda t: -0.5 - 3.0 * nod(t)
-    sp[('head', Emo.R)] = lambda t: 0.01 * nod(t)
-    sp[('hood2', Emo.R)] = lambda t: 0.02 * nod(t - 20)
-    sp[('ear_l1', Emo.R)] = lambda t: 0.03
-    sp[('ear_r1', Emo.R)] = lambda t: -0.03
-    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.22 + 0.08 * nod(t))
-    _pair(sp, 'ulid', Emo.X, lambda t: -1.5 - 1.0 * nod(t))
+    nod = lambda t: mbump(t, 200, 90) + mbump(t, 540, 90)
+    sp[('face', Emo.X)] = lambda t: -1.0 - 4.0 * nod(t)
+    sp[('head', Emo.R)] = lambda t: 0.012 * nod(t)
+    sp[('hood2', Emo.R)] = lambda t: 0.03 * nod(t - 20)
+    sp[('ear_l1', Emo.R)] = lambda t: 0.05
+    sp[('ear_r1', Emo.R)] = lambda t: -0.05
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.32 + 0.1 * nod(t))
+    _pair(sp, 'ulid', Emo.X, lambda t: -3.0 - 1.0 * nod(t))
+    _pair(sp, 'mouth', Emo.X, lambda t: 1.5)
+    _mood_mouth(sp, 'content', lambda t: 0.6, lambda t: 0.35)
     return sp
 
 
 def idle_trait_independent():
-    """Самостоятельный: стоит ровно, подбородок чуть вверх, смотрит не на
-    зрителя, а в сторону — короткие чёткие повороты головы; раз дёрнул
-    ухом. Без улыбки."""
+    """Самостоятельный: подбородок вверх, взгляд из-под полуопущенных век,
+    брови ровно-строго; почти всё время смотрит в сторону, а не на
+    зрителя, — короткие чёткие повороты головы, мельком глянул в другую
+    сторону; дважды дёрнул ухом. Без улыбки."""
     sp = {}
-    away = lambda t: -mhold(t, 40, 250, 14) + mhold(t, 400, 600, 14)
-    sp[('face', Emo.X)] = lambda t: 2.0
-    sp[('face', Emo.Y)] = lambda t: 6.0 * away(t)
-    sp[('head', Emo.R)] = lambda t: 0.05 * away(t - 3)
-    sp[('hood2', Emo.R)] = lambda t: -0.03 * away(t - 10)
-    sp[('ear_r1', Emo.R)] = lambda t: 0.13 * mbump(t, 330, 6)
-    sp[('ear_r2', Emo.R)] = lambda t: 0.08 * mbump(t, 334, 7)
-    _pair(sp, 'brow', Emo.X, lambda t: -0.6)
-    _pair(sp, 'mouth', Emo.X, lambda t: -0.5)
+    away = lambda t: -mhold(t, 30, 340, 12) + 0.8 * mhold(t, 430, 640, 12)
+    sp[('face', Emo.X)] = lambda t: 3.0
+    sp[('face', Emo.Y)] = lambda t: 6.5 * away(t)
+    sp[('head', Emo.R)] = lambda t: 0.045 * away(t - 3)
+    sp[('hood2', Emo.R)] = lambda t: -0.04 * away(t - 10)
+    sp[('ear_r1', Emo.R)] = lambda t: 0.15 * mbump(t, 360, 6) + 0.15 * mbump(t, 660, 6)
+    sp[('ear_r2', Emo.R)] = lambda t: 0.09 * mbump(t, 364, 7) + 0.09 * mbump(t, 664, 7)
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.16)
+    _pair(sp, 'brow', Emo.X, lambda t: -1.2)
+    _pair(sp, 'mouth', Emo.X, lambda t: -1.0)
     return sp
 
 
 def idle_trait_reserved():
-    """Замкнутый: чуть сжался, голова опущена и отвёрнута, взгляд вниз, уши
-    назад; дважды робко поднимает глаза на зрителя — и снова опускает."""
+    """Замкнутый: сжался (плечи вниз, грудь меньше), голова низко опущена и
+    отвёрнута, веки тяжёлые, брови чуть домиком, уши прижаты назад; дважды
+    робко поднимает глаза на зрителя — и снова прячет."""
     sp = {}
-    peek = lambda t: mhold(t, 250, 300, 22) + mhold(t, 560, 590, 18)
-    sp[('face', Emo.X)] = lambda t: -4.5 + 3.8 * peek(t)
-    sp[('face', Emo.Y)] = lambda t: -3.5 + 2.8 * peek(t)
-    sp[('head', Emo.R)] = lambda t: -0.05 + 0.035 * peek(t)
-    sp[('hips', Emo.Y)] = lambda t: 1.5
-    sp[('breath', Emo.SY)] = lambda t: -0.015
-    sp[('ear_l1', Emo.R)] = lambda t: 0.08 - 0.02 * peek(t)
-    sp[('ear_r1', Emo.R)] = lambda t: -0.08 + 0.02 * peek(t)
-    sp[('ear_l2', Emo.R)] = lambda t: 0.04
-    sp[('ear_r2', Emo.R)] = lambda t: -0.04
-    sp[('hood2', Emo.R)] = lambda t: 0.03 - 0.02 * peek(t - 10)
-    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.2 - 0.14 * peek(t))
+    peek = lambda t: mhold(t, 240, 300, 22) + mhold(t, 560, 595, 18)
+    sp[('face', Emo.X)] = lambda t: -6.5 + 5.0 * peek(t)
+    sp[('face', Emo.Y)] = lambda t: -4.5 + 3.5 * peek(t)
+    sp[('head', Emo.R)] = lambda t: -0.06 + 0.04 * peek(t)
+    sp[('chest', Emo.R)] = lambda t: -0.012
+    sp[('hips', Emo.Y)] = lambda t: 3.0
+    sp[('breath', Emo.SY)] = lambda t: -0.035
+    sp[('breath', Emo.SX)] = lambda t: -0.01
+    sp[('ear_l1', Emo.R)] = lambda t: 0.14 - 0.03 * peek(t)
+    sp[('ear_r1', Emo.R)] = lambda t: -0.14 + 0.03 * peek(t)
+    sp[('ear_l2', Emo.R)] = lambda t: 0.06
+    sp[('ear_r2', Emo.R)] = lambda t: -0.06
+    sp[('hood2', Emo.R)] = lambda t: 0.04 - 0.03 * peek(t - 10)
+    sp[('brow_l', Emo.R)] = lambda t: -0.05
+    sp[('brow_r', Emo.R)] = lambda t: 0.05
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.3 - 0.22 * peek(t))
     return sp
 
 
@@ -1778,101 +1793,116 @@ def idle_bonus_1():
 
 
 def idle_bonus_2():
-    """Почесал ушко о плечо, 2,2 с: голова глубоко набок, два раза
-    потёрся, ухо сминается о плечо, довольный прищур — голова
-    возвращается, ухо распрямляется с перелётом."""
+    """Почесал ушко о плечо, 2,2 с: голова набок (5°) вместе с корпусом
+    (2°) — так капюшон не тянется (заказчик 27.09: «искажение капюшона»),
+    два раза потёрся, довольный прищур и улыбка — голова возвращается, ухо
+    распрямляется с перелётом."""
     e = Emo(132)
-    e.track('head', Emo.R, [(20, -0.14, EO), (38, -0.12), (56, -0.15), (74, -0.12), (92, -0.14),
-                            (114, 0.01), (126, 0.0)])
-    e.track('face', Emo.Y, [(20, -3.0, EO), (92, -3.0), (114, 0.0)])
-    e.track('ear_l1', Emo.SX, [(20, -0.14, EO), (92, -0.14), (110, 0.03), (122, 0.0)])
-    e.track('ear_l1', Emo.R, [(20, 0.1, EO), (38, 0.06), (56, 0.1), (74, 0.06), (92, 0.1), (112, -0.05), (124, 0.0)])
+    e.track('chest', Emo.R, [(20, -0.03, EO), (92, -0.03), (116, 0.0)])
+    e.track('head', Emo.R, [(20, -0.085, EO), (38, -0.065), (56, -0.09), (74, -0.065), (92, -0.085),
+                            (114, 0.006), (126, 0.0)])
+    e.track('face', Emo.Y, [(20, -4.0, EO), (38, -3.2), (56, -4.2), (74, -3.2), (92, -4.0), (114, 0.0)])
+    e.track('face', Emo.X, [(20, -1.0), (92, -1.0), (114, 0.0)])
+    e.track('ear_l1', Emo.SX, [(20, -0.06, EO), (92, -0.06), (110, 0.02), (122, 0.0)])
+    e.track('ear_l1', Emo.R, [(20, 0.08, EO), (38, 0.05), (56, 0.08), (74, 0.05), (92, 0.08), (112, -0.05), (124, 0.0)])
     e.track('ear_r1', Emo.R, [(24, -0.04), (96, -0.04), (116, 0.03), (128, 0.0)])
-    e.track('hips', Emo.X, [(20, -1.5), (92, -1.5), (116, 0.0)])
+    e.track('hips', Emo.X, [(20, -2.5), (92, -2.5), (116, 0.0)])
     e.track('hood2', Emo.R, [(24, -0.06), (96, -0.05), (118, 0.03), (130, 0.0)])
-    e.eyes([(10, 0.0), (26, 0.3, EO), (92, 0.3), (114, 0.0)])
-    e.pair('lid', Emo.X, [(26, 7, EO), (92, 7), (114, 0)])
-    e.pair('cheek', Emo.X, [(26, 3, EO), (92, 3), (114, 0)])
-    e.pair('mouth', Emo.X, [(26, 3), (92, 3), (114, 0)])
+    e.eyes([(10, 0.0), (26, 0.45, EO), (92, 0.45), (114, 0.0)])
+    e.pair('lid', Emo.X, [(26, 9, EO), (92, 9), (114, 0)])
+    e.pair('cheek', Emo.X, [(26, 4, EO), (92, 4), (114, 0)])
+    e.pair('mouth', Emo.X, [(26, 4), (92, 4), (114, 0)])
+    e.mouth_open([(14, 0.1, 0.0), (30, 0.85, 0.7, EO), (90, 0.85, 0.7), (108, 0.1, 0.0)], kind='content')
     return e.build()
 
 
 def idle_bonus_3():
-    """Прислушался, 2,5 с: замер (дыхание тише), голова набок, уши
-    торчком, глаза чуть шире, брови вверх — держит — голова в другую
-    сторону («что это?») — расслабился."""
+    """Прислушался, 2,5 с: замер (дыхание тише), голова набок к звуку,
+    ухо с той стороны торчком и дважды дёргается, глаза шире, брови вверх,
+    ротик приоткрыт — голова в другую сторону, там дёргается другое ухо —
+    расслабился."""
     e = Emo(150)
-    e.track('breath', Emo.SY, [(10, -0.012), (100, -0.01), (120, 0.02), (140, 0.0)])
-    e.track('head', Emo.R, [(18, 0.07, EO), (70, 0.07), (84, -0.05, EO), (116, -0.05), (140, 0.0)])
-    e.track('face', Emo.Y, [(18, 2.5, EO), (70, 2.5), (84, -2.5, EO), (116, -2.5), (140, 0.0)])
-    e.track('face', Emo.X, [(18, 1.0), (116, 1.0), (140, 0.0)])
-    e.track('ear_l1', Emo.R, [(14, -0.1, EO), (116, -0.1), (140, 0.0)])
-    e.track('ear_r1', Emo.R, [(14, 0.1, EO), (116, 0.1), (140, 0.0)])
-    e.track('ear_l2', Emo.R, [(18, -0.06), (88, -0.03), (118, -0.06), (142, 0.0)])
-    e.track('ear_r2', Emo.R, [(18, 0.06), (88, 0.03), (118, 0.06), (142, 0.0)])
-    e.eyes([(16, 0.06, EO), (116, 0.05), (140, 0.0)], lid='wide')
-    e.pair('brow', Emo.X, [(16, 2.5, EO), (116, 2.2), (140, 0.0)])
-    e.track('hood2', Emo.R, [(22, 0.05), (88, -0.04), (120, -0.02), (142, 0.0)])
+    e.track('breath', Emo.SY, [(10, -0.015), (100, -0.012), (120, 0.02), (140, 0.0)])
+    e.track('chest', Emo.R, [(18, 0.02, EO), (70, 0.02), (84, -0.02, EO), (116, -0.02), (140, 0.0)])
+    e.track('head', Emo.R, [(18, 0.06, EO), (70, 0.06), (84, -0.055, EO), (116, -0.055), (140, 0.0)])
+    e.track('face', Emo.Y, [(18, 4.5, EO), (70, 4.5), (84, -4.5, EO), (116, -4.5), (140, 0.0)])
+    e.track('face', Emo.X, [(18, 1.5), (116, 1.5), (140, 0.0)])
+    e.track('ear_r1', Emo.R, [(14, 0.16, EO), (36, 0.12), (42, 0.19), (48, 0.13), (56, 0.19), (62, 0.14),
+                              (74, 0.14), (86, 0.05), (116, 0.05), (140, 0.0)])
+    e.track('ear_l1', Emo.R, [(14, -0.05), (74, -0.05), (86, -0.16, EO), (96, -0.12), (102, -0.19),
+                              (108, -0.13), (116, -0.16), (140, 0.0)])
+    e.track('ear_l2', Emo.R, [(90, -0.06), (118, -0.06), (142, 0.0)])
+    e.track('ear_r2', Emo.R, [(18, 0.06), (76, 0.06), (100, 0.0)])
+    e.eyes([(16, 0.1, EO), (116, 0.09), (140, 0.0)], lid='wide')
+    e.pair('brow', Emo.X, [(16, 3.5, EO), (116, 3.2), (140, 0.0)])
+    e.mouth_open([(24, 0.1, 0.0), (36, 0.28, 0.22, EO), (112, 0.26, 0.2), (126, 0.1, 0.0)], kind='open')
+    e.track('hood2', Emo.R, [(22, 0.06), (88, -0.05), (120, -0.03), (142, 0.0)])
     return e.build()
 
 
 def idle_bonus_4():
-    """Переступил с ноги на ногу, 2 с: вес на левую — правая мягко
-    поднялась и опустилась — вес на правую — левая — выровнялся; без
-    удара. Руки чуть покачиваются (2°)."""
+    """Переступил с ноги на ногу, 2 с: вес на левую (таз в сторону, корпус
+    наклонился для равновесия) — правая стопа поднялась на 22 px и
+    опустилась — вес на правую — левая — выровнялся; без удара. Руки чуть
+    покачиваются (2°), уши подпрыгивают на каждом шаге."""
     e = Emo(120)
-    e.track('hips', Emo.X, [(10, -2.5, EO), (46, -2.5), (56, 2.5), (92, 2.5), (108, 0.0)])
-    e.track('hips', Emo.Y, [(18, -1.0), (28, 0.0), (66, -1.0), (76, 0.0)])
-    e.track('shin_r', Emo.X, [(14, 0.0), (22, -10.0, EO), (30, -10.0), (38, 0.0)])
-    e.track('shin_l', Emo.X, [(62, 0.0), (70, -10.0, EO), (78, -10.0), (86, 0.0)])
-    e.track('head', Emo.R, [(16, 0.015), (60, -0.015), (100, 0.0)])
-    e.track('face', Emo.Y, [(16, 1.0), (60, -1.0), (100, 0.0)])
-    e.track('hood2', Emo.R, [(20, -0.03), (64, 0.03), (104, 0.0)])
-    e.track('ear_l1', Emo.R, [(24, 0.03), (70, -0.02), (100, 0.0)])
-    e.track('ear_r1', Emo.R, [(24, 0.02), (70, -0.03), (100, 0.0)])
-    e.track('arm_l1', Emo.R, [(22, 0.02), (70, -0.015), (100, 0.0)])
-    e.track('arm_r1', Emo.R, [(22, -0.015), (70, 0.02), (100, 0.0)])
+    e.track('hips', Emo.X, [(10, -5.5, EO), (46, -5.5), (58, 5.5, EI), (92, 5.5), (110, 0.0)])
+    e.track('hips', Emo.Y, [(16, -1.5), (26, -2.0), (36, 0.0), (64, -1.5), (74, -2.0), (84, 0.0)])
+    e.track('chest', Emo.R, [(10, 0.025, EO), (46, 0.025), (58, -0.025, EI), (92, -0.025), (110, 0.0)])
+    e.track('head', Emo.R, [(12, -0.02), (46, -0.02), (60, 0.02), (92, 0.02), (112, 0.0)])
+    e.track('shin_r', Emo.X, [(14, 0.0), (24, -22.0, EO), (30, -22.0), (40, 0.0, EI)])
+    e.track('shin_l', Emo.X, [(62, 0.0), (72, -22.0, EO), (78, -22.0), (88, 0.0, EI)])
+    e.track('face', Emo.Y, [(16, 1.5), (60, -1.5), (100, 0.0)])
+    e.track('hood2', Emo.R, [(20, -0.05), (32, 0.02), (64, 0.05), (80, -0.02), (104, 0.0)])
+    e.track('ear_l1', Emo.R, [(24, -0.06), (36, 0.03), (72, -0.06), (84, 0.03), (100, 0.0)])
+    e.track('ear_r1', Emo.R, [(24, 0.06), (36, -0.03), (72, 0.06), (84, -0.03), (100, 0.0)])
+    e.track('arm_l1', Emo.R, [(22, 0.03), (70, -0.025), (100, 0.0)])
+    e.track('arm_r1', Emo.R, [(22, -0.025), (70, 0.03), (100, 0.0)])
     return e.build()
 
 
 def idle_bonus_5():
-    """Встряхнул головой, 1,4 с: чуть опустил голову, зажмурился — голова
-    качается влево-вправо с затуханием, уши и кончик капюшона хлопают с
-    запаздыванием — открыл глаза."""
+    """Встряхнулся, 1,4 с: зажмурился, сморщил нос — голова и всё тело
+    быстро качаются влево-вправо с затуханием, уши и кончик капюшона
+    хлопают с запаздыванием — открыл глаза."""
     e = Emo(84)
-    e.track('face', Emo.X, [(8, -1.5), (20, -1.0), (66, 0.0)])
-    e.eyes([(4, 0.0), (12, 0.7, EO), (50, 0.7), (64, 0.0)], lid='both')
-    e.track('head', Emo.R, [(14, 0.0), (19, 0.06), (25, -0.055), (31, 0.045), (37, -0.03), (43, 0.015), (50, 0.0)])
-    e.track('face', Emo.Y, [(19, 1.5), (25, -1.4), (31, 1.1), (37, -0.7), (43, 0.3), (50, 0.0)])
-    flap = [(22, -0.12), (28, 0.11), (34, -0.08), (40, 0.05), (46, -0.02), (54, 0.0)]
+    e.track('face', Emo.X, [(8, -2.0), (20, -1.5), (66, 0.0)])
+    e.eyes([(4, 0.0), (12, 0.85, EO), (50, 0.85), (64, 0.0)], lid='both')
+    e.track('muzzle', Emo.X, [(8, 1.5), (50, 1.5), (62, 0.0)])
+    sw = [(14, 0.0), (19, 1.0), (25, -0.9), (31, 0.7), (37, -0.45), (43, 0.2), (50, 0.0)]
+    e.track('head', Emo.R, [(f, 0.075 * v) for f, v in sw])
+    e.track('chest', Emo.R, [(f + 1, 0.02 * v) for f, v in sw])
+    e.track('face', Emo.Y, [(f, 3.5 * v) for f, v in sw])
+    e.track('hips', Emo.X, [(f + 1, 2.0 * v) for f, v in sw])
+    flap = [(22, -0.24), (28, 0.22), (34, -0.16), (40, 0.1), (46, -0.04), (54, 0.0)]
     e.track('ear_l1', Emo.R, flap)
     e.track('ear_r1', Emo.R, flap)
     e.track('ear_l2', Emo.R, [(f + 3, v * 0.7) for f, v in flap])
     e.track('ear_r2', Emo.R, [(f + 3, v * 0.7) for f, v in flap])
-    e.track('hood2', Emo.R, [(24, -0.1), (30, 0.09), (36, -0.07), (42, 0.04), (50, 0.0)])
+    e.track('hood2', Emo.R, [(24, -0.18), (30, 0.16), (36, -0.12), (42, 0.07), (50, 0.0)])
     return e.build()
 
 
 def idle_bonus_6():
-    """Вздохнул и улыбнулся сам себе, 2,8 с: медленный вдох, плечи вверх —
-    выдох, чуть осел — тихая сомкнутая улыбка, радостный прищур, голова
-    набок — улыбка гаснет. Руки чуть опускаются на выдохе (1°)."""
+    """Вздохнул и улыбнулся сам себе, 2,8 с: глубокий вдох — плечи и
+    голова поднимаются, грудь полная — долгий выдох, осел, глаза на миг
+    закрылись — тихая улыбка, радостный прищур, голова набок — улыбка
+    гаснет. Руки чуть опускаются на выдохе (1°)."""
     e = Emo(168)
-    e.track('breath', Emo.SY, [(10, 0.0), (50, 0.06), (80, -0.02), (120, -0.01), (150, 0.0)])
-    e.track('hips', Emo.Y, [(50, -1.5), (80, 1.5), (150, 0.0)])
-    e.track('chest', Emo.R, [(50, -0.012), (80, 0.008), (140, 0.0)])
-    e.track('face', Emo.X, [(50, 1.5), (80, -1.0), (110, 0.5), (150, 0.0)])
-    e.mouth_open([(78, 0.1, 0.0), (96, 1.0, 0.95, EO), (132, 1.0, 0.95), (152, 0.1, 0.0)], kind='content')
-    e.eyes([(80, 0.0), (98, 0.3, EO), (132, 0.28), (154, 0.0)])
-    e.pair('lid', Emo.X, [(80, 0), (98, 7, EO), (132, 7), (154, 0)])
-    e.pair('cheek', Emo.X, [(80, 0), (98, 4, EO), (132, 4), (154, 0)])
-    e.pair('mouth', Emo.X, [(84, 0), (98, 5, EO), (132, 5), (154, 0)])
-    e.track('head', Emo.R, [(84, 0.0), (104, 0.05, EO), (134, 0.045), (156, 0.0)])
-    e.track('face', Emo.Y, [(84, 0.0), (104, 2.0), (134, 1.8), (156, 0.0)])
-    e.track('arm_l1', Emo.R, [(80, -0.015), (120, 0.0)])
-    e.track('arm_r1', Emo.R, [(80, 0.015), (120, 0.0)])
-    e.track('ear_l1', Emo.R, [(82, 0.04), (140, 0.03), (160, 0.0)])
-    e.track('ear_r1', Emo.R, [(82, -0.04), (140, -0.03), (160, 0.0)])
+    e.track('breath', Emo.SY, [(6, 0.0), (48, 0.11, EO), (86, -0.03), (120, -0.01), (150, 0.0)])
+    e.track('hips', Emo.Y, [(48, -3.5, EO), (86, 2.0), (150, 0.0)])
+    e.track('chest', Emo.R, [(48, -0.02), (86, 0.01), (140, 0.0)])
+    e.track('face', Emo.X, [(48, 3.0, EO), (86, -2.5), (110, 0.5), (150, 0.0)])
+    e.eyes([(60, 0.0), (74, 0.6), (84, 0.6), (96, 0.4, EO), (132, 0.38), (154, 0.0)], lid='both')
+    e.mouth_open([(80, 0.1, 0.0), (98, 1.1, 1.1, EO), (132, 1.1, 1.1), (152, 0.1, 0.0)], kind='content')
+    e.pair('lid', Emo.X, [(84, 0), (98, 9, EO), (132, 9), (154, 0)])
+    e.pair('cheek', Emo.X, [(84, 0), (98, 5, EO), (132, 5), (154, 0)])
+    e.pair('mouth', Emo.X, [(84, 0), (98, 6, EO), (132, 6), (154, 0)])
+    e.track('head', Emo.R, [(84, 0.0), (104, 0.06, EO), (134, 0.055), (156, 0.0)])
+    e.track('face', Emo.Y, [(84, 0.0), (104, 3.0), (134, 2.8), (156, 0.0)])
+    e.track('arm_l1', Emo.R, [(86, -0.02), (120, 0.0)])
+    e.track('arm_r1', Emo.R, [(86, 0.02), (120, 0.0)])
+    _ears(e, [(48, -0.05), (86, 0.06), (140, 0.04), (160, 0.0)])
     return e.build()
 
 
@@ -2134,6 +2164,8 @@ def check_mouths(root):
         return ks[-1][1]
     bad = []
     for an in root.iter('LinearAnimation'):
+        if an.get('name', '').startswith('mop_'):     # служебные: прозрачности для приложения
+            continue
         rest, mouths = [], []
         for ko in an.findall('KeyedObject'):
             oid = ko.get('objectId')
@@ -2288,6 +2320,18 @@ def main(project):
     # 4в'. Полость рта над лицом, под выражениями (mouth.py).
     for n, mid in mouth.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'mouth_{n}_img'] = mid
+    # 4в''. Датчики ртов `mh_<вид>` (27.09): невидимые узлы, их y — насколько
+    #      раскрыт рот (та же высота, что в mouth_open). Приложение после всех
+    #      смешиваний читает их и само ставит прозрачности ртов (клипы mop_*):
+    #      смесь двух петель или петли с эмоцией иначе давала полупрозрачную
+    #      улыбку поверх полупрозрачного ротика покоя.
+    for k in mouth.KINDS:
+        nid = ident(next(ids))
+        # RootBone, а не Node: у костей x/y — ключи 90/91, как у всех Emo.track
+        ab.insert(0, ET.Element('RootBone', {'x': '0', 'y': '0', 'length': '0',
+                                             'name': f'mh_{k}', 'id': nid}))
+        E_IDS[f'mh_{k}'] = nid
+        E_REST[f'mh_{k}'] = dict(x=0.0, y=0.0)
     # 4г. Расправленная кофта у подмышек поверх кофты (crease.py).
     for side, cid in crease.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'flat_{side}'] = cid
@@ -2351,6 +2395,11 @@ def main(project):
     builders = dict(EMOTION_ANIMS)
     for n, dc in build_moods().items():       # петли настроения (loop)
         builders[n] = (lambda dc: lambda: dc)(dc)
+    # прозрачности ртов для приложения: mop_zero гасит все, mop_<вид> — один на 1
+    layers = ['rest'] + list(mouth.KINDS)
+    builders['mop_zero'] = lambda: (1, {(E_IDS[f'mouth_{k}_img'], Emo.OP): [(0, 0.0, None)] for k in layers})
+    for k in layers:
+        builders[f'mop_{k}'] = (lambda k: lambda: (1, {(E_IDS[f'mouth_{k}_img'], Emo.OP): [(0, 1.0, None)]}))(k)
     for name, fn in builders.items():
         emo = anims.get(name)
         if emo is None:

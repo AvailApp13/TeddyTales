@@ -882,6 +882,59 @@ final class _TrialPainter extends BasicArtboardPainter {
     play(face);
   }
 
+  // --- Два рта — никогда, и в смесях тоже (заказчик 27.09) -----------------
+  // Внутри каждого клипа прозрачности ртов уже по правилу (`check_mouths` в
+  // сборке). Но петли настроения и характера перетекают друг в друга, а
+  // эмоция ложится на петлю с плавными краями — и прозрачности тогда
+  // смешиваются линейно: на 0,2 с видны полупрозрачная улыбка и
+  // полупрозрачный ротик покоя. Поэтому после всех смешиваний прозрачности
+  // ставятся заново по тому же правилу, что в сборке, от того, насколько
+  // раскрыт каждый рот (датчики `mh_<вид>` в файле): рот виден, пока он
+  // больше щёлочки, ротик покоя — ровно настолько, насколько его нет.
+  static const List<String> _mouthKinds = [
+    'open',
+    'yawn',
+    'chew',
+    'sad',
+    'pout',
+    'sleepy',
+    'content',
+  ];
+
+  /// Порог щёлочки — `MOUTH_SWAP` в `tool/rive/rebuild_rig.py`.
+  static const double _mouthSwap = 0.06;
+
+  final Map<String, Component> _mouthSignal = {};
+  final Map<String, Animation> _mouthOp = {};
+  Animation? _mouthZero;
+
+  void _resolveMouths() {
+    final zero = _mouthZero;
+    if (zero == null || _mouthSignal.length != _mouthKinds.length) return;
+    // «Удивление» — фото-лицо со своим ртом, у него свои прозрачности.
+    final clip = _clip;
+    if (clip != null && clip == _clips['emo_surprised']) return;
+    zero
+      ..time = 0
+      ..apply(mix: 1);
+    var open = 0.0;
+    for (final kind in _mouthKinds) {
+      final h = math.max(0.0, _mouthSignal[kind]!.y);
+      final w = math.min(1.0, h / _mouthSwap);
+      open = math.max(open, w);
+      if (w > 0) {
+        _mouthOp[kind]
+          ?..time = 0
+          ..apply(mix: w);
+      }
+    }
+    if (open < 1) {
+      _mouthOp['rest']
+        ?..time = 0
+        ..apply(mix: 1 - open);
+    }
+  }
+
   void play(BearFace face) {
     petCancel();
     // Прежняя эмоция ещё идёт — вернуть её в покой, иначе её лицо и поза
@@ -962,28 +1015,51 @@ final class _TrialPainter extends BasicArtboardPainter {
     _loopTo(_loopName());
     _moodW = 1;
     _eHead = artboard.component('e_head');
+    _mouthSignal.clear();
+    for (final op in _mouthOp.values) {
+      op.dispose();
+    }
+    _mouthOp.clear();
+    _mouthZero?.dispose();
+    _mouthZero = artboard.animationNamed('mop_zero');
+    for (final kind in [..._mouthKinds, 'rest']) {
+      final op = artboard.animationNamed('mop_$kind');
+      if (op != null) _mouthOp[kind] = op;
+      if (kind == 'rest') continue;
+      final signal = artboard.component('mh_$kind');
+      if (signal != null) _mouthSignal[kind] = signal;
+    }
     notifyListeners();
   }
 
   @override
   bool advance(double elapsedSeconds) {
+    // Разбивку покоя запускаем до петли: сброс в покой при запуске
+    // (`play` → `petCancel`) петля в этом же кадре перекроет.
+    _advanceBonus(elapsedSeconds);
     _idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
-    _advanceMood(elapsedSeconds);
+    // Кончилась анимация — вернуть её кости в покой до петли настроения,
+    // а не после: иначе на один кадр мишка вставал в «чистый» покой поверх
+    // позы характера и дёргался (заказчик 27.09, кнопки 32, 33).
     final clip = _clip;
     if (clip != null) {
-      // Своя анимация поверх покоя; края смешиваются за 0,15 с, чтобы
-      // покой и первая поза анимации не расходились рывком.
       clip.advance(elapsedSeconds);
-      final t = clip.time;
-      final left = clip.duration - t;
-      if (left <= 0) {
+      if (clip.duration - clip.time <= 0) {
         _rest(clip);
         _clip = null;
-      } else {
-        const edge = 0.15;
-        final mix = t < edge ? t / edge : (left < edge ? left / edge : 1.0);
-        clip.apply(mix: mix.clamp(0.0, 1.0));
       }
+    }
+    _advanceMood(elapsedSeconds);
+    final live = _clip;
+    if (live != null) {
+      // Своя анимация поверх покоя. Края смешиваются за 0,35 с плавной
+      // кривой: поза характера или настроения (голова ниже, взгляд в
+      // сторону) перетекает в анимацию, а не перескакивает за 0,15 с.
+      final t = live.time;
+      final left = live.duration - t;
+      const edge = 0.35;
+      final w = t < edge ? t / edge : (left < edge ? left / edge : 1.0);
+      live.apply(mix: Curves.easeInOut.transform(w.clamp(0.0, 1.0)));
     }
     final face = _face;
     final faces = _faces;
@@ -1002,7 +1078,7 @@ final class _TrialPainter extends BasicArtboardPainter {
       }
     }
     _advancePet(elapsedSeconds);
-    _advanceBonus(elapsedSeconds);
+    _resolveMouths();
     super.advance(0);
     return true;
   }
@@ -1014,10 +1090,12 @@ final class _TrialPainter extends BasicArtboardPainter {
     _petFace?.dispose();
     _petPass?.dispose();
     _petOut?.dispose();
-    for (final clip in _moods.values) {
-      clip.dispose();
-    }
-    for (final clip in _clips.values) {
+    _mouthZero?.dispose();
+    for (final clip in [
+      ..._moods.values,
+      ..._clips.values,
+      ..._mouthOp.values,
+    ]) {
       clip.dispose();
     }
     super.dispose();
