@@ -37,7 +37,11 @@ enum BearFace {
   lick(14.45, 1.4),
   yawn(16.35, 1.8),
   sleepy(17.5, 2.0),
-  upset(19.4, 1.4);
+  upset(19.4, 1.4),
+
+  /// ⚠ Проверка рук (27.09): подъём на 30°, 65°, 90° — снять перед
+  /// публикацией вместе с [EmotionTestPanel].
+  arms(0, 4.5);
 
   const BearFace(this.frame, this.hold);
 
@@ -59,6 +63,7 @@ enum BearFace {
     yawn => 'emo_yawn',
     sleepy => 'emo_sleepy',
     upset => 'emo_upset',
+    arms => 'test_arms',
   };
 
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
@@ -75,6 +80,7 @@ enum BearFace {
     yawn => 'Зевок',
     sleepy => 'Сонный',
     upset => 'Обида',
+    arms => 'Руки 30/65/90°',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -90,6 +96,7 @@ enum BearFace {
     yawn => const BodyPose(tilt: 2, stretch: 0.045, lift: 0.01),
     sleepy => const BodyPose(tilt: 3, stretch: -0.025, lift: -0.006),
     upset => const BodyPose(stretch: -0.04, lift: -0.004),
+    arms => const BodyPose(),
   };
 }
 

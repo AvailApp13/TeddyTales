@@ -831,10 +831,23 @@ def emo_upset():
     return e.build()
 
 
+def test_arms():
+    """⚠ Проверка — снять перед публикацией вместе с проверочной панелью:
+    обе руки поднимаются чистым поворотом плеча на 30°, 65°
+    (горизонталь) и 90° с остановками, потом опускаются (разбор 27.09)."""
+    e = Emo(270)
+    a = [math.radians(v) for v in (30, 65, 90)]
+    for s, sg in (('l', 1), ('r', -1)):
+        e.track(f'arm_{s}1', Emo.R, [(36, a[0] * sg), (80, a[0] * sg), (116, a[1] * sg), (160, a[1] * sg),
+                                     (196, a[2] * sg), (236, a[2] * sg)])
+    return e.build()
+
+
 EMOTION_ANIMS = {
     'emo_smile': emo_smile, 'emo_laugh': emo_laugh, 'emo_surprised': emo_surprised,
     'emo_sad': emo_sad, 'emo_chew': emo_chew, 'emo_lick': emo_lick,
     'emo_yawn': emo_yawn, 'emo_sleepy': emo_sleepy, 'emo_upset': emo_upset,
+    'test_arms': test_arms,
 }
 
 
