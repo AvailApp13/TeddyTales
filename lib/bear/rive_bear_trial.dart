@@ -136,6 +136,11 @@ enum BearFace {
     treat => null,
   };
 
+  /// Заказчик утвердил — кнопка на проверочной панели больше не нужна
+  /// (заказчик 27.09: «которые утвердил — прятать, показывать только новые»).
+  /// Пока утверждены 1–20; клипы и поведение остаются в работе.
+  bool get approved => index <= bonusStretch.index;
+
   /// Характер, если это кнопка характера.
   BearTrait? get trait => switch (this) {
     traitActive => BearTrait.active,
@@ -1022,18 +1027,12 @@ final class _TrialPainter extends BasicArtboardPainter {
 /// ⚠ ПРОВЕРОЧНАЯ ПАНЕЛЬ — снять перед публикацией (заказчик 26.09: «кнопки
 /// 1, 2, 3… с правой стороны, подпиши каждую эмоцию — так проще вносить
 /// корректировки»). Номер и название: нажали — мишка играет эту эмоцию.
-/// Две колонки: эмоции 1–13 справа от мишки ([emotions]); покой,
-/// разбивки, характер и его реакции 14–33 слева ([idle]).
+/// Только то, что ещё не утверждено ([BearFace.approved]), одной колонкой
+/// справа; номера прежние, чтобы на них можно было ссылаться.
 class EmotionTestPanel extends StatefulWidget {
-  const EmotionTestPanel.emotions({super.key, required this.cue})
-    : idle = false;
-
-  const EmotionTestPanel.idle({super.key, required this.cue}) : idle = true;
+  const EmotionTestPanel({super.key, required this.cue});
 
   final BearFaceCue cue;
-
-  /// Колонка покоя (настроения, разбивки, характер) — иначе эмоций.
-  final bool idle;
 
   @override
   State<EmotionTestPanel> createState() => _EmotionTestPanelState();
@@ -1066,16 +1065,13 @@ class _EmotionTestPanelState extends State<EmotionTestPanel> {
   @override
   Widget build(BuildContext context) {
     final current = widget.cue.face;
-    final idle = widget.idle;
     return Column(
-      key: ValueKey(idle ? 'emotion-test-panel-idle' : 'emotion-test-panel'),
+      key: const ValueKey('emotion-test-panel'),
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: idle
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         for (final (i, face) in BearFace.values.indexed)
-          if ((face.index >= BearFace.moodHappy.index) == idle)
+          if (!face.approved)
             Padding(
               padding: const EdgeInsets.only(bottom: 3),
               child: _EmotionButton(

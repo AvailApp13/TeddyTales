@@ -1614,19 +1614,14 @@ class _RoomScene extends StatelessWidget {
           ),
         // ⚠ Проверочная панель эмоций — снять перед публикацией (заказчик
         // 26.09: кнопки справа с подписями, чтобы видеть, какая где; 27.09:
-        // каждая новая эмоция — сразу новой кнопкой здесь).
-        if (room == RoomKind.nursery && !asleep && !furnishing) ...[
+        // каждая новая эмоция — сразу новой кнопкой здесь; утверждённые
+        // прячутся — `BearFace.approved`).
+        if (room == RoomKind.nursery && !asleep && !furnishing)
           Positioned(
             right: 8,
             top: frame.bearTop + frame.bearHeight * 0.08,
-            child: EmotionTestPanel.emotions(cue: faceCue),
+            child: EmotionTestPanel(cue: faceCue),
           ),
-          Positioned(
-            left: 8,
-            top: frame.bearTop + frame.bearHeight * 0.08,
-            child: EmotionTestPanel.idle(cue: faceCue),
-          ),
-        ],
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.
         if (asleep && room != RoomKind.bedroom && !furnishing)
