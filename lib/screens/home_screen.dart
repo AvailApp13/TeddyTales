@@ -1378,30 +1378,6 @@ class _RoomScene extends StatelessWidget {
         // `idle_hungry`).
         // Спит — на кухне его нет (заказчик 26.09: он в спальне); разбудили
         // — плавно появляется за столом.
-        if (room == RoomKind.kitchen)
-          Positioned.fromRect(
-            rect: frame.rect,
-            child: IgnorePointer(
-              ignoring: asleep,
-              child: AnimatedOpacity(
-                opacity: asleep ? 0 : 1,
-                duration: const Duration(milliseconds: 650),
-                curve: Curves.easeOut,
-                // С 27.09 на кухне тот же анимированный мишка, что в
-                // игровой (заказчик: «переноси мишку на кухню»; ножки под
-                // столом убраны — наши скрыты скатертью).
-                child: KitchenBear(
-                  cue: faceCue,
-                  mood: mood,
-                  trait: _kitchenTrait(controller.state.trait),
-                  meal: meal,
-                  pet: pets,
-                  refuse: refusals,
-                  onTap: controller.petBear,
-                ),
-              ),
-            ),
-          ),
         if (room == RoomKind.bedroom) ...[
           // Окно живёт под мишкой: луна и звёзды мерцают, звёзды падают.
           Positioned.fromRect(rect: frame.rect, child: const NightWindow()),
@@ -1436,6 +1412,34 @@ class _RoomScene extends StatelessWidget {
             onTap: onPet,
           ),
         ),
+        // Мишка на кухне — над слоем «погладить», чтобы палец доходил до
+        // него самого: тап — реакция на касание, ведёт по голове — ласка,
+        // по животу — щекотка (заказчик 27.09: «включи поглаживание на
+        // кухне»). Рисуется он по-прежнему под местами и блюдами.
+        if (room == RoomKind.kitchen)
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: IgnorePointer(
+              ignoring: asleep,
+              child: AnimatedOpacity(
+                opacity: asleep ? 0 : 1,
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.easeOut,
+                // С 27.09 на кухне тот же анимированный мишка, что в
+                // игровой (заказчик: «переноси мишку на кухню»; ножки под
+                // столом убраны — наши скрыты скатертью).
+                child: KitchenBear(
+                  cue: faceCue,
+                  mood: mood,
+                  trait: _kitchenTrait(controller.state.trait),
+                  meal: meal,
+                  pet: pets,
+                  refuse: refusals,
+                  onTap: controller.petBear,
+                ),
+              ),
+            ),
+          ),
         // Дальние места — под мишкой: он стоит на трети глубины комнаты,
         // и кроватка у задней стены должна быть за ним, а не поперёк него.
         // Оба слоя мест лежат ровно в кадре комнаты: их координаты —

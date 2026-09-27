@@ -266,8 +266,13 @@ class RiveBearTrial extends StatefulWidget {
     this.trait = BearTrait.active,
     this.mood = BearMood.normal,
     this.seated = false,
+    this.reachBottom,
     this.onTap,
   });
+
+  /// Ниже этой линии (в координатах артборда 1024) мишку не видно — на
+  /// кухне там скатерть: ласка и щекотка оттуда не начинаются.
+  final double? reachBottom;
 
   /// Сидит за столом (кухня): вертикальные подскоки корпуса гасятся —
   /// пружинка «активного», прыжок «радости», подскоки реакций. Голова,
@@ -355,6 +360,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   _PetZone? _zoneAt(Offset p) {
     final (a, _) = _toArtboard(p);
+    final reach = widget.reachBottom;
+    if (reach != null && a.dy > reach) return null;
     if (a.dy < 545) return _PetZone.head;
     if (a.dy < 800) return _PetZone.belly;
     return null;
