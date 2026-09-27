@@ -1015,6 +1015,9 @@ class _HomeScreenState extends State<HomeScreen>
                 child: _RoomScene(
                   controller: widget.controller,
                   mood: _life.mood,
+                  forgotten: _life.forgotten,
+                  showBubble: _showSpeechBubble,
+                  language: widget.language,
                   onAcceptInitiative: _runAction,
                   riveAssetPath: widget.riveAssetPath,
                   game: widget.game,
@@ -1126,22 +1129,8 @@ class _HomeScreenState extends State<HomeScreen>
                         //
                         // Заказчик 26.09: реплику пока убрать из всех
                         // комнат — вернём, когда решим, с какой логикой.
-                        if (_showSpeechBubble &&
-                            _room == RoomKind.nursery &&
-                            !_asleep)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 64),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: PetSpeechBubble(
-                                mood: _life.mood,
-                                forgotten: _life.forgotten,
-                                initiative: widget.controller.initiative,
-                                language: widget.language,
-                                onTap: _runAction,
-                              ),
-                            ),
-                          ),
+                        // С 27.09 пузырь — над головой мишки, в сцене
+                        // (`_RoomScene`), не здесь.
                       ],
                     ),
                   ),
@@ -1218,6 +1207,9 @@ class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.controller,
     required this.mood,
+    required this.forgotten,
+    required this.showBubble,
+    required this.language,
     required this.onAcceptInitiative,
     required this.riveAssetPath,
     required this.onOpenCare,
@@ -1262,6 +1254,13 @@ class _RoomScene extends StatelessWidget {
 
   /// Состояние покоя мишки по показателям (`BearLife`).
   final BearMood mood;
+
+  /// Нужда ниже 15 — «Ты про меня забыл?».
+  final bool forgotten;
+
+  /// Пузырь-реплика над головой мишки (заказчик 27.09).
+  final bool showBubble;
+  final BearLanguage language;
   final ValueChanged<BearAction> onAcceptInitiative;
   final String riveAssetPath;
 
@@ -1514,6 +1513,23 @@ class _RoomScene extends StatelessWidget {
               trait: controller.state.trait,
               mood: mood,
               onTap: controller.petBear,
+            ),
+          ),
+        // Пузырь-реплика над головой (заказчик 27.09): всплывает и
+        // печатается; хвостик — к макушке капюшона.
+        if (showBubble && room == RoomKind.nursery && !asleep && !furnishing)
+          Positioned(
+            left: 16,
+            right: 16,
+            top: frame.bearTop - 50,
+            child: Center(
+              child: PetSpeechBubble(
+                mood: mood,
+                forgotten: forgotten,
+                initiative: controller.initiative,
+                language: language,
+                onTap: onAcceptInitiative,
+              ),
             ),
           ),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,

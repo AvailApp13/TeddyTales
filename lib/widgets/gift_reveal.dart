@@ -295,8 +295,9 @@ class _Envelope extends StatelessWidget {
       offset: Offset(0, bob),
       child: Transform.rotate(
         angle: wobble + shake,
+        // Заказчик 27.09: конверт был слишком большой — на 25 % меньше.
         child: Transform.scale(
-          scale: pop,
+          scale: 0.75 * pop,
           child: Center(
             child: SizedBox(
               width: 190,
