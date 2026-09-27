@@ -862,52 +862,101 @@ def emo_sad():
     return e.build()
 
 
-def emo_chew():
-    """Жуёт, 3,2 с (заказчик 27.09: без подмен, мягко, «как настоящее»).
-    Лицо покоя, всё костями: довольно прищурился, щёки набиты; четыре
-    жевка по 0,6 с — рот костью приоткрывается и почти смыкается
-    (`Emo.mouth_open`, полость жевания), подбородок ходит вниз-вверх и
-    по кругу вбок (жернова), щёки надуваются по очереди, нос чуть
-    поднимается на смыкании, голова кивает в такт, уши догоняют."""
-    e = Emo(192)
-    c = [20, 56, 92, 128]                      # жевок: открыт через 15 кадров, сомкнут через 36
-    mo = [(8, 0.5, 0.0)]
-    for i, a in enumerate(c):
-        mo += [(a + 15, 1.0, 1.0 - 0.06 * i), (a + 36, 0.8, 0.12)]
-    mo += [(176, 0.3, 0.0)]
-    e.mouth_open(mo, kind='chew')
+LIN = '0 0 1 1'
 
-    def chews(open_v, shut_v, lag=0):
-        pts = []
-        for a in c:
-            pts += [(a + lag + 15, open_v), (a + lag + 36, shut_v)]
-        return pts
-    e.track('chin', Emo.X, [(12, 0)] + chews(-3.5, 0.8) + [(178, 0)])
-    side = []
-    for i, a in enumerate(c):                  # подбородок по кругу: вбок на открытии, обратно к смыканию
-        k = 1 if i % 2 == 0 else -1
-        side += [(a + 8, 0.9 * k), (a + 22, 0.9 * k), (a + 34, 0.0)]
-    e.track('chin', Emo.Y, side + [(178, 0)])
-    e.track('muzzle', Emo.X, [(12, 0)] + chews(-0.3, 0.9) + [(178, 0)])
-    # довольный прищур и набитые щёки
-    e.eyes([(6, 0.0), (28, 0.3, EO), (160, 0.28), (184, 0.0)])
-    e.pair('lid', Emo.X, [(28, 8, EO), (160, 7.5), (184, 0)])
-    e.pair('cheek', Emo.X, [(28, 2.5, EO), (160, 2.2), (184, 0)])
-    puff_l, puff_r = [(20, 0.1)], [(20, 0.1)]
-    for i, a in enumerate(c):
-        big, small = (puff_l, puff_r) if i % 2 == 0 else (puff_r, puff_l)
-        big += [(a + 20, 0.18), (a + 36, 0.12)]
-        small += [(a + 20, 0.1), (a + 36, 0.12)]
-    e.track('cheek_l', Emo.SY, puff_l + [(176, 0)])
-    e.track('cheek_r', Emo.SY, puff_r + [(176, 0)])
-    e.pair('mouth', Emo.X, [(20, 3, EO), (160, 3), (184, 0)])
-    # голова кивает в такт, тело дышит, уши и капюшон догоняют
-    e.track('head', Emo.R, [(14, 0.02)] + chews(0.03, 0.018) + [(176, 0.01)])
-    e.track('face', Emo.X, [(12, 0)] + chews(-0.8, 0.6) + [(178, 0)])
-    e.track('breath', Emo.SY, [(20, 0.015)] + chews(0.02, 0.01, -4) + [(180, 0)])
-    e.track('ear_l1', Emo.R, [(16, 0)] + chews(-0.03, 0.0, 4))
-    e.track('ear_r1', Emo.R, [(16, 0)] + chews(0.03, 0.0, 4))
-    e.track('hood2', Emo.R, [(16, 0)] + chews(-0.03, 0.01, 6))
+
+def emo_chew():
+    """Жуёт, 4,1 с (заказчик 27.09: «не просто рот вверх-вниз, а прям
+    эффект жевания; ротик побольше»). Как жуют в анимации: челюсть ходит
+    не вверх-вниз, а по кругу — вниз-вбок, вверх через середину, и каждый
+    следующий жевок в другую сторону («восьмёрка»); щёки надуваются там,
+    где еда, и еда перекатывается на другую сторону; на смыкании уголки
+    рта напрягаются, нос чуть поднимается, веки сжимаются; голова кивает
+    в такт, уши и капюшон догоняют.
+
+    Ход: откусил («ам» — рот широко, 0,45 с) → пять жевков по 0,6 с
+    (полость жевания крупная: до 1,55 ширины и 1,35 высоты рта с фото) →
+    проглотил (подбородок и голова чуть вниз, довольная улыбка) → покой.
+    Все каналы — гладкие функции времени, ключи через 3 кадра, линейно:
+    движение по кругу без остановок в ключах."""
+    DUR = 248
+    e = Emo(DUR)
+    T, C0, N = 36, 30, 5                      # жевок, начало, сколько
+    C1 = C0 + T * N
+    side = [1, -1, 1, -1, 1]                  # куда уходит челюсть в каждом жевке
+    food = [1, 1, -1, -1, 1]                  # за какой щекой еда
+
+    def ss(a, b, t):
+        return smooth(a, b, t)
+
+    def bump(t, a, b):
+        """0 → 1 → 0 синусом на [a, b]."""
+        return math.sin(math.pi * (t - a) / (b - a)) ** 2 if a <= t <= b else 0.0
+
+    def M(t):                                 # «рот полон»: держится весь жевательный отрезок
+        return ss(4, 14, t) * (1 - ss(214, 236, t))
+
+    def Env(t):                               # жевки
+        return ss(26, 40, t) * (1 - ss(C1 - 12, C1 + 4, t))
+
+    def v(t):                                 # челюсть открыта 0..1
+        return (1 - math.cos(2 * math.pi * (t - C0) / T)) / 2 if C0 <= t <= C1 else 0.0
+
+    def lat(t):                               # челюсть вбок −1..1 (по кругу)
+        if not C0 <= t <= C1:
+            return 0.0
+        k = min(N - 1, int((t - C0) // T))
+        return side[k] * math.sin(2 * math.pi * (t - C0) / T)
+
+    def fd(t):                                # еда за щекой: −1 справа … 1 слева, перекатывается
+        k = (t - C0) / T - 0.5
+        i = max(0, min(N - 1, math.floor(k)))
+        j = max(0, min(N - 1, i + 1))
+        u = ss(0.0, 1.0, k - math.floor(k)) if k >= 0 else 0.0
+        return food[i] * (1 - u) + food[j] * u
+
+    def bite(t):
+        return bump(t, 2, 28)
+
+    def swallow(t):
+        return bump(t, 210, 240)
+
+    def content(t):
+        return ss(214, 226, t) * (1 - ss(232, 244, t))
+
+    def samp(fn, lag=0):
+        return [(f, fn(f - lag), LIN) for f in range(3, DUR - 3, 3)]
+
+    # рот: полость жевания — откусил, пять жевков по кругу, сомкнул
+    e.mouth_open([(f, 1.3 * M(f) + 0.25 * bite(f) + 0.25 * Env(f) * v(f),
+                   0.2 * M(f) + 1.4 * bite(f) + 1.15 * Env(f) * v(f), LIN)
+                  for f in range(3, DUR - 3, 3)], kind='chew')
+    e.track('mouth_chew', Emo.Y, samp(lambda t: 3.5 * Env(t) * lat(t)))
+    # полость опускается с челюстью — верх рта не упирается в нос
+    e.track('mouth_chew', Emo.X, samp(lambda t: -9.5 * (Env(t) * v(t) + bite(t)) - 1.5 * M(t)))
+    # челюсть по кругу, нос на смыкании вверх
+    e.track('chin', Emo.X, samp(lambda t: -4.5 * Env(t) * v(t) - 5 * bite(t) + 0.6 * Env(t) * (1 - v(t))
+                                - 2 * swallow(t)))
+    e.track('chin', Emo.Y, samp(lambda t: 3.0 * Env(t) * lat(t)))
+    e.track('muzzle', Emo.X, samp(lambda t: 0.5 * M(t) + 0.9 * Env(t) * (1 - v(t))))
+    e.track('muzzle', Emo.Y, samp(lambda t: 0.6 * Env(t) * lat(t)))
+    # щёки: надуты там, где еда; на смыкании сильнее
+    e.track('cheek_l', Emo.SY, samp(lambda t: M(t) * (0.08 + 0.08 * max(0.0, fd(t))) + 0.05 * Env(t) * (1 - v(t))))
+    e.track('cheek_r', Emo.SY, samp(lambda t: M(t) * (0.08 + 0.08 * max(0.0, -fd(t))) + 0.05 * Env(t) * (1 - v(t))))
+    e.pair('cheek', Emo.X, samp(lambda t: 1.5 * M(t) + 1.0 * Env(t) * (1 - v(t))))
+    # уголки рта напрягаются на смыкании; после глотка — довольная улыбка
+    e.pair('mouth', Emo.X, samp(lambda t: 1.0 * M(t) + 1.5 * Env(t) * (1 - v(t)) + 2.5 * content(t)))
+    # глаза: довольный прищур, на смыкании веки чуть сжимаются
+    e.eyes(samp(lambda t: 0.22 * M(t) + 0.06 * Env(t) * (1 - v(t)) + 0.1 * content(t)))
+    e.pair('lid', Emo.X, samp(lambda t: 5 * M(t) + 2 * Env(t) * (1 - v(t)) + 2 * content(t)))
+    # голова кивает в такт и чуть покачивается за челюстью; на откусе и
+    # глотке — вниз
+    e.track('face', Emo.X, samp(lambda t: Env(t) * (0.8 * v(t) - 0.4) - 1.5 * bite(t) - 2 * swallow(t)))
+    e.track('head', Emo.R, samp(lambda t: 0.015 * M(t) + 0.01 * Env(t) * lat(t)))
+    e.track('breath', Emo.SY, samp(lambda t: 0.015 * M(t) + 0.008 * Env(t) * v(t) + 0.02 * swallow(t)))
+    e.track('ear_l1', Emo.R, samp(lambda t: -0.03 * Env(t) * v(t), 4))
+    e.track('ear_r1', Emo.R, samp(lambda t: 0.03 * Env(t) * v(t), 4))
+    e.track('hood2', Emo.R, samp(lambda t: -0.025 * Env(t) * v(t) + 0.02 * swallow(t), 6))
     return e.build()
 
 
