@@ -100,8 +100,11 @@ CHAIN = [
     # рот раскрывается масштабом этих костей (mouth.py): горизонтальные,
     # в покое сжаты до щёлочки (mouth.CAVITIES); open — смех и улыбка,
     # yawn — зевок, chew — жевание
-] + [(f'mouth_{n}', 'face', mouth.center(n), (mouth.center(n)[0] + 20, mouth.CENTER_Y))
-     for n in mouth.KINDS]
+] + [(f'mouth_{n}', 'face', mouth.center(n), (mouth.center(n)[0] + 20, mouth.center(n)[1]))
+     for n in mouth.KINDS] + [
+    # нижняя челюсть жевания: низ полости жевания (mouth.py)
+    ('jaw_chew', 'mouth_chew', mouth.chew_rows()[::2], (mouth.chew_rows()[0] + 20, mouth.chew_rows()[2])),
+]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
 # точке. Покой (`idle_life`) двигает саму кость, эмоции — только `e_*`,
@@ -268,6 +271,10 @@ def weights_for(layer, x, y, B):
 
 
 def _weights_for(layer, x, y, B):
+    if layer == 'mouth_chew_img':      # верх — губа, низ — челюсть
+        _, top, bot = mouth.chew_rows()
+        k = min(1.0, max(0.0, (y - top) / (bot - top)))
+        return {b: v for b, v in (('mouth_chew', 1 - k), ('jaw_chew', k)) if v > 1e-4}
     if layer.startswith('mouth_') and layer.endswith('_img'):
         return {layer[:-4]: 1.0}
     if layer in ('face_img', 'lid_patch_img') or layer.startswith('face_'):
@@ -882,7 +889,8 @@ def emo_chew():
     в такт, уши и капюшон догоняют.
 
     Ход: откусил («ам» — рот широко, 0,45 с) → пять жевков по 0,6 с
-    (полость жевания крупная: до 1,55 ширины и 1,35 высоты рта с фото) →
+    (полость жевания крупная: до 1,55 ширины и 1,4 высоты рта с фото;
+    верхняя губа стоит, раскрывает рот нижняя челюсть `jaw_chew`) →
     проглотил (подбородок и голова чуть вниз, довольная улыбка) → покой.
     Все каналы — гладкие функции времени, ключи через 3 кадра, линейно:
     движение по кругу без остановок в ключах."""
@@ -934,19 +942,26 @@ def emo_chew():
     def samp(fn, lag=0):
         return [(f, fn(f - lag), LIN) for f in range(3, DUR - 3, 3)]
 
-    # рот: полость жевания — откусил, пять жевков по кругу, сомкнул
-    e.mouth_open([(f, 1.3 * M(f) + 0.25 * bite(f) + 0.25 * Env(f) * v(f),
-                   0.2 * M(f) + 1.4 * bite(f) + 1.15 * Env(f) * v(f), LIN)
+    # рот (заказчик 27.09: «рот целиком ездит влево-вправо — так не
+    # должно быть»): верхняя губа на месте под носом, двигается только
+    # нижняя челюсть — рот раскрывается вниз, низ уходит вбок и чуть
+    # наклоняется; подбородок идёт с челюстью, нос стоит
+    _, top, bot = mouth.chew_rows()
+    H = bot - top                              # полость жевания с фото, px
+
+    def opn(t):                                # насколько раскрыт (1 — как на фото)
+        return 0.15 * M(t) + 1.4 * bite(t) + 1.3 * Env(t) * v(t)
+    e.mouth_open([(f, 1.3 * M(f) + 0.25 * bite(f) + 0.2 * Env(f) * v(f), opn(f), LIN)
                   for f in range(3, DUR - 3, 3)], kind='chew')
-    e.track('mouth_chew', Emo.Y, samp(lambda t: 3.5 * Env(t) * lat(t)))
-    # полость опускается с челюстью — верх рта не упирается в нос
-    e.track('mouth_chew', Emo.X, samp(lambda t: -9.5 * (Env(t) * v(t) + bite(t)) - 1.5 * M(t)))
-    # челюсть по кругу, нос на смыкании вверх
-    e.track('chin', Emo.X, samp(lambda t: -4.5 * Env(t) * v(t) - 5 * bite(t) + 0.6 * Env(t) * (1 - v(t))
-                                - 2 * swallow(t)))
+    # верхняя губа — к ротику покоя (его верх), дальше не двигается
+    e.track('mouth_chew', Emo.X, [(2, -12.0, LIN), (DUR - 6, -12.0, LIN)])
+    e.track('jaw_chew', Emo.Y, samp(lambda t: H * opn(t)))
+    e.track('jaw_chew', Emo.X, samp(lambda t: 3.2 * Env(t) * lat(t)))
+    e.track('jaw_chew', Emo.R, samp(lambda t: 0.09 * Env(t) * lat(t)))
+    # подбородок — с челюстью: вниз и вбок; нос на смыкании чуть вверх
+    e.track('chin', Emo.X, samp(lambda t: -0.32 * H * opn(t) + 0.6 * Env(t) * (1 - v(t)) - 2 * swallow(t)))
     e.track('chin', Emo.Y, samp(lambda t: 3.0 * Env(t) * lat(t)))
     e.track('muzzle', Emo.X, samp(lambda t: 0.5 * M(t) + 0.9 * Env(t) * (1 - v(t))))
-    e.track('muzzle', Emo.Y, samp(lambda t: 0.6 * Env(t) * lat(t)))
     # щёки: надуты там, где еда; на смыкании сильнее
     e.track('cheek_l', Emo.SY, samp(lambda t: M(t) * (0.08 + 0.08 * max(0.0, fd(t))) + 0.05 * Env(t) * (1 - v(t))))
     e.track('cheek_r', Emo.SY, samp(lambda t: M(t) * (0.08 + 0.08 * max(0.0, -fd(t))) + 0.05 * Env(t) * (1 - v(t))))
@@ -1241,6 +1256,9 @@ def main(project):
         if name.startswith('mouth_') and name[6:] in mouth.KINDS:   # в покое рот сомкнут
             sx, sy = mouth.closed(name[6:])
             attrs.update(scaleX=fmt(sx), scaleY=fmt(sy))
+        if name == 'jaw_chew':        # в покое челюсть поднята к губе — полость сомкнута
+            _, top, bot = mouth.chew_rows()
+            attrs['y'] = fmt(top - bot)
         attrs.update(length=fmt(b['length']), name=f'b_{name}', id=b['id'])
         el = ET.Element(tag, attrs)
         helper.append(el)
