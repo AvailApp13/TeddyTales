@@ -296,18 +296,19 @@ class _HomeScreenState extends State<HomeScreen>
       // так, будто кухня ни при чём.
       case BearAction.feed:
         break;
+      // Заказчик 27.09: кольца только переключают комнаты, показатели
+      // от нажатия не растут — мыть, играть, гладить надо по-настоящему.
       case BearAction.wash:
-        controller.washBear();
+        break;
       // Сон так же: кольцо только приводит в спальню, показатель не
       // пополняет — заказчик 22.09: «при нажатии кнопки на сон оно не
       // должно пополняться до 100%». Уложить — кнопкой на ковре.
       case BearAction.sleep:
         break;
       case BearAction.play:
-        controller.playWithBear();
-        _faceCue.show(BearFace.laugh);
+        break;
       case BearAction.pet:
-        controller.petBear();
+        break;
       case BearAction.wake:
         controller.wakeBear();
       // Обучение, гардероб и редактор комнаты живут в своих разделах —

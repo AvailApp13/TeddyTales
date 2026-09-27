@@ -929,7 +929,9 @@ final class _TrialPainter extends BasicArtboardPainter {
   /// перекрёстная прозрачность держала оба рта наполовину видимыми
   /// (заказчик 27.09: «при касании два рта»). Половинных состояний нет:
   /// либо один рот целиком, либо другой.
-  final Set<String> _mouthOn = {};
+  /// Какой рот сейчас включён — один, самый раскрытый (заказчик 27.09,
+  /// щекотка: смеющийся рот поверх ещё не ушедшей улыбки покоя — два рта).
+  String? _mouthOn;
   static const double _mouthOff = 0.02;
 
   /// Когда у клипа закрывается рот — последний момент, где он раскрыт
@@ -975,24 +977,24 @@ final class _TrialPainter extends BasicArtboardPainter {
     zero
       ..time = 0
       ..apply(mix: 1);
+    String? best;
+    var bestH = 0.0;
     for (final kind in _mouthKinds) {
       final h = math.max(0.0, _mouthSignal[kind]!.y);
-      if (h >= _mouthSwap) {
-        _mouthOn.add(kind);
-      } else if (h <= _mouthOff) {
-        _mouthOn.remove(kind);
-      }
-      if (_mouthOn.contains(kind)) {
-        _mouthOp[kind]
-          ?..time = 0
-          ..apply(mix: 1);
+      if (h > bestH) {
+        bestH = h;
+        best = kind;
       }
     }
-    if (_mouthOn.isEmpty) {
-      _mouthOp['rest']
-        ?..time = 0
-        ..apply(mix: 1);
+    final on = _mouthOn;
+    if (bestH >= _mouthSwap) {
+      _mouthOn = best;
+    } else if (on != null && math.max(0.0, _mouthSignal[on]!.y) <= _mouthOff) {
+      _mouthOn = null;
     }
+    _mouthOp[_mouthOn ?? 'rest']
+      ?..time = 0
+      ..apply(mix: 1);
   }
 
   // --- Эмоции сам по себе (заказчик 27.09: «если нет никаких действий, он
