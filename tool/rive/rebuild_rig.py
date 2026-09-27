@@ -25,6 +25,7 @@ import lids  # noqa: E402
 import faces  # noqa: E402
 import crease  # noqa: E402
 import mouth  # noqa: E402
+import underpaint  # noqa: E402
 
 UP = -math.pi / 2
 
@@ -255,8 +256,52 @@ def _seg_dist(p, line):
     return d
 
 
+# Воротник (заказчик 27.09, обвёл зону под подбородком: «практически везде,
+# где есть движение головы, — разрывы»). Нижний край капюшона, низ мордочки
+# и задняя часть капюшона ходили за головой, а воротник кофты под ними — за
+# грудью: голова наклоняется, край капюшона уезжает на 5–10 px по бокам, и
+# из-под него показывается срезанный верх кофты. Как «сварка» швов в
+# Spine/Live2D, только полосой: у линии воротника все эти слои берут веса
+# кофты в той же точке и ходят вместе с ней, а выше, на 22 px, плавно
+# переходят к своим — это растяжка, а не разрыв. Линия — нижний край
+# капюшона в покое (по кадру): в середине y 553, к бокам 535.
+COLLAR_LAYERS = ('hood_img', 'hood_back_img', 'face_img', 'face_')
+COLLAR_RAMP = (34, 4)          # растяжка: выше линии, ниже линии, px
+
+
+def collar_y(x):
+    dx = abs(x - 517)
+    if dx <= 177:
+        return 553 - 18 * (dx / 177) ** 2
+    return 535 + (dx - 177)
+
+
+def collar_mode(x):
+    """0 — середина: капюшон и мордочка держатся за воротник; 1 — бока:
+    капюшон свой, ходит за головой целиком. По бокам голова уводит край
+    капюшона на 10–25 px (у «Любви» наклон 7,7°): если держать его за
+    плечо, край загибается крючком, а если тянуть за ним кофту — проседает
+    плечо. Поэтому бока свободны, а ткань, которая открывается под ними,
+    прорисована с запасом (`underpaint.py`)."""
+    return smooth(115, 160, abs(x - 517))
+
+
+def collar_share(x, y):
+    """Доля весов кофты у капюшона и мордочки (середина)."""
+    dx = abs(x - 517)
+    yc = collar_y(x)
+    up = COLLAR_RAMP[0] + 30 * min(1.0, dx / 177) ** 2
+    return smooth(yc - up, yc + COLLAR_RAMP[1], y) * (1 - collar_mode(x))
+
+
 def weights_for(layer, x, y, B):
     w = _pinned(layer, x, y, B)
+    if layer.startswith(COLLAR_LAYERS) and not layer.startswith('face_mouth'):
+        k = collar_share(x, y)
+        if k > 0:
+            shirt = _weights_for('shirt_img', x, y, B)
+            w = {b: w.get(b, 0) * (1 - k) + shirt.get(b, 0) * k for b in set(w) | set(shirt)}
+            w = {b: v for b, v in w.items() if v > 1e-4}
     for line, members, reps in SEAMS:
         if not layer.startswith(members):
             continue
@@ -314,10 +359,9 @@ def _weights_for(layer, x, y, B):
             bone = 'hood_sl' if x < 517 else 'hood_sr'
             w = {b: v * (1 - side) for b, v in w.items()}
             w[bone] = w.get(bone, 0) + side
-        drape = smooth(470, 545, y) * smooth(90, 170, abs(x - 517))
-        if drape > 0:
-            w = {b: v * (1 - drape) for b, v in w.items()}
-            w['chest'] = w.get('chest', 0) + drape
+        # низ, лежащий на плечах, держится за кофту — полосой воротника
+        # в weights_for (раньше — «драпировкой» к груди только по бокам, и
+        # мордочка рядом ходила за головой — у скул был разрыв)
         return w
     if layer.startswith('ear_l'):
         t = along((x, y), B['ear_l1']['start'], B['ear_l2']['end'])
@@ -2332,6 +2376,9 @@ def main(project):
                                              'name': f'mh_{k}', 'id': nid}))
         E_IDS[f'mh_{k}'] = nid
         E_REST[f'mh_{k}'] = dict(x=0.0, y=0.0)
+    # 4в'''. Ткань кофты и рукавов под капюшоном — с запасом (underpaint.py):
+    #       при движении головы из-под края капюшона видна кофта, а не срез.
+    print('underpaint', underpaint.build(project, root, byname), 'px')
     # 4г. Расправленная кофта у подмышек поверх кофты (crease.py).
     for side, cid in crease.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'flat_{side}'] = cid
