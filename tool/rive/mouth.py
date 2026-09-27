@@ -50,12 +50,46 @@ CAVITIES = {
     'yawn': ('yawn', 190, 292, 5.0, (0.6, 0.03)),     # «о» — круглее, без прямых углов
     'chew': ('chew_open', 184, 265, 2.2, (0.55, 0.05)),
 }
+# Рты-линии (заказчик 27.09: «у каждой эмоции должна быть мимика рта») —
+# не полость, а тёмная линия губ с утверждённых картинок; растут из ротика
+# покоя той же костью. имя → (картинка, порог темноты, масштаб в покое)
+SHAPES = {
+    'sad': ('sad', 115, (0.45, 0.35)),            # дуга уголками вниз
+    'pout': ('upset', 115, (0.45, 0.35)),         # надутые губы обиды
+    'sleepy': ('sleepy', 125, (0.5, 0.5)),        # расслабленная линия
+    'content': ('chew_closed', 125, (0.45, 0.5)),  # сомкнутая довольная улыбка
+}
+KINDS = list(CAVITIES) + list(SHAPES)
 REST = (679, 1043, 27, 16)   # ротик покоя в пикселях текстуры лица: центр, полуоси
+
+
+def _shape(name):
+    """Линия губ: маска по темноте, край — по тому, насколько пиксель
+    темнее меха вокруг (сглаженный, как на фото)."""
+    pic, thr, _ = SHAPES[name]
+    im = np.asarray(Image.open(os.path.join(SRC, f'{pic}.webp')).convert('RGB'), np.float64)
+    h, w = im.shape[:2]
+    lum = im.mean(2)
+    yy, xx = np.mgrid[0:h, 0:w]
+    reg = (yy >= 188) & (yy < 260) & (xx > 95) & (xx < 250)
+    loc = ndimage.gaussian_filter(lum, 6)
+    m = ((lum < thr) | ((loc - lum) > 30)) & reg
+    m = ndimage.binary_closing(m, iterations=2)
+    lab, n = ndimage.label(m)
+    sz = ndimage.sum(m, lab, range(1, n + 1))
+    m = np.isin(lab, [i + 1 for i, v in enumerate(sz) if v >= 0.15 * sz.max()])
+    fur = ndimage.maximum_filter(np.where(m, 0, lum), 9)       # мех рядом с линией
+    a = np.clip((fur - lum) / 70, 0, 1) * ndimage.binary_dilation(m, iterations=2)
+    return im, m, ndimage.gaussian_filter(a, 0.6)
 
 
 @lru_cache(maxsize=None)
 def cavity(name):
     """(RGBA uint8 плитки с рамкой PAD, рамка полости в плитке, x середины в мире)."""
+    if name in SHAPES:
+        im, m, a = _shape(name)
+        h, w = im.shape[:2]
+        return _pack(im, a, m, h, w)
     pic, ymin, ymax, sigma, _ = CAVITIES[name]
     im = np.asarray(Image.open(os.path.join(SRC, f'{pic}.webp')).convert('RGB'), np.float64)
     h, w = im.shape[:2]
@@ -73,6 +107,10 @@ def cavity(name):
     # ровный контур без зубцов порога, край мягкий, как у ворса
     m = ndimage.gaussian_filter(m.astype(np.float64), sigma) > 0.5
     a = ndimage.gaussian_filter(m.astype(np.float64), 1.1)
+    return _pack(im, a, m, h, w)
+
+
+def _pack(im, a, m, h, w):
     img = np.dstack([im, a * 255]).astype(np.uint8)
     out = np.zeros((h + 2 * PAD, w + 2 * PAD, 4), np.uint8)
     out[PAD:PAD + h, PAD:PAD + w] = img
@@ -87,7 +125,7 @@ def center(name):
 
 
 def closed(name):
-    return CAVITIES[name][4]
+    return CAVITIES[name][4] if name in CAVITIES else SHAPES[name][2]
 
 
 def rest_mouth(face):
@@ -158,7 +196,7 @@ def build(project, rive_root, ab, byname, next_id):
     holder = next(p for p in ab.iter() if top in list(p))
     ids = {}
     px0, py0 = FRAME[0] + BOX[0] - PAD, FRAME[1] + BOX[1] - PAD
-    for i, name in enumerate(CAVITIES):
+    for i, name in enumerate(KINDS):
         tile, box, _ = cavity(name)
         th, tw = tile.shape[:2]
         fn = f'bear_mouth_{name}.png'
