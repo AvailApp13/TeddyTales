@@ -23,6 +23,7 @@ from xf import M, f, world_map  # noqa: E402
 import mesh_refine  # noqa: E402
 import lids  # noqa: E402
 import faces  # noqa: E402
+import crease  # noqa: E402
 
 UP = -math.pi / 2
 
@@ -59,10 +60,14 @@ CHAIN = [
     ('ear_l2',  'ear_l1', None,         (340, 238)),
     ('ear_r1',  'head',   (605, 322),   (637, 290)),
     ('ear_r2',  'ear_r1', None,         (688, 236)),
-    ('arm_l1',  'chest',  (383, 540),   (323, 614)),
-    ('arm_l2',  'arm_l1', None,         (268, 690)),
-    ('arm_r1',  'chest',  (641, 540),   (703, 612)),
-    ('arm_r2',  'arm_r1', None,         (760, 688)),
+    # руки (27.09, «три звена»): плечо → середина → предплечье до манжеты,
+    # кисть — в конце списка (hand_l/r), за ней едет лапа
+    # ось плеча — в середине толщины руки у корня (между верхом рукава и
+    # подмышкой), как центр круглого сустава в Live2D/перекладке
+    ('arm_l1',  'chest',  (368, 556),   (342, 591)),
+    ('arm_l2',  'arm_l1', None,         (316, 626)),
+    ('arm_r1',  'chest',  (656, 556),   (682, 591)),
+    ('arm_r2',  'arm_r1', None,         (708, 626)),
     ('leg_l',   None,     (430, 790),   (430, 930)),
     ('leg_r',   None,     (607, 790),   (607, 930)),
     # мимика тоньше (26.09, «живые эмоции»): уголки рта, подбородок, нос,
@@ -82,6 +87,15 @@ CHAIN = [
     # можно поднять целиком, спереди это читается как согнутое колено.
     ('shin_l',  'leg_l',  (430, 872),   (430, 952)),
     ('shin_r',  'leg_r',  (607, 872),   (607, 952)),
+    ('arm_l3',  'arm_l2', None,         (290, 662)),
+    ('hand_l',  'arm_l3', None,         (258, 703)),
+    ('arm_r3',  'arm_r2', None,         (734, 662)),
+    ('hand_r',  'arm_r3', None,         (766, 703)),
+    # бок кофты под рукой (поправочная кость, как в Spine/Live2D): пока
+    # рука поднята немного, низ бока идёт за ней — рука не «отлипает»
+    # трещиной; дальше кость упирается (SIDE_CAP), подмышка раскрывается
+    ('side_l',  'chest',  (368, 556),   (340, 700)),
+    ('side_r',  'chest',  (656, 556),   (684, 700)),
 ]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
@@ -249,26 +263,17 @@ def _weights_for(layer, x, y, B):
     if layer.startswith('ear_r'):
         t = along((x, y), B['ear_r1']['start'], B['ear_r2']['end'])
         return blend3(t, 'head', 'ear_r1', 'ear_r2', a=0.22, b=0.5, c=0.58, d=0.88)
-    if layer == 'shirt_img':
-        w = chain_weights(-y, [('hips', -742), ('belly', -652), ('chest', -1e9)], blend=26)
-        # дыхание: грудь-живот в середине кофты
-        d = math.hypot((x - 517) / 150, (y - 640) / 120)
-        k = max(0.0, 1 - d) ** 1.5 * 0.7
+    if layer in ('shirt_img', 'shirt_flat_l_img', 'shirt_flat_r_img'):
+        side = 'l' if x < 512 else 'r'
+        w = stretch(torso_weights(x, y), arm_weights(side, x, y, B), armness('shirt', x, y))
+        k = side_share(x, y)
         if k > 0:
             w = {b: v * (1 - k) for b, v in w.items()}
-            w['breath'] = w.get('breath', 0) + k
-        side = smooth(120, 185, abs(x - 517)) * smooth(495, 540, y) * (1 - smooth(640, 720, y)) * 0.6
-        if side > 0:
-            arm = 'arm_l1' if x < 517 else 'arm_r1'
-            w = {b: v * (1 - side) for b, v in w.items()}
-            w[arm] = w.get(arm, 0) + side
+            w[f'side_{side}'] = w.get(f'side_{side}', 0) + k
         return w
-    if layer == 'sleeve_left_img':
-        t = along((x, y), B['arm_l1']['start'], B['arm_l2']['end'])
-        return blend3(t, 'chest', 'arm_l1', 'arm_l2', a=0.02, b=0.18, c=0.5, d=0.75)
-    if layer == 'sleeve_right_img':
-        t = along((x, y), B['arm_r1']['start'], B['arm_r2']['end'])
-        return blend3(t, 'chest', 'arm_r1', 'arm_r2', a=0.02, b=0.18, c=0.5, d=0.75)
+    if layer in ('sleeve_left_img', 'sleeve_right_img'):
+        side = 'l' if layer == 'sleeve_left_img' else 'r'
+        return stretch(torso_weights(x, y), arm_weights(side, x, y, B), armness('sleeve', x, y))
     if layer == 'shorts_img':
         side = 'l' if x < 518 else 'r'
         k = smooth(815, 880, y)          # таз → бедро
@@ -278,12 +283,91 @@ def _weights_for(layer, x, y, B):
     raise KeyError(layer)
 
 
+def torso_weights(x, y):
+    """Туловище под кофтой: таз → живот → грудь, в середине — «вдох»."""
+    w = chain_weights(-y, [('hips', -742), ('belly', -652), ('chest', -1e9)], blend=26)
+    d = math.hypot((x - 517) / 150, (y - 640) / 120)
+    k = max(0.0, 1 - d) ** 1.5 * 0.7
+    if k > 0:
+        w = {b: v * (1 - k) for b, v in w.items()}
+        w['breath'] = w.get('breath', 0) + k
+    return w
+
+
+def arm_weights(side, x, y, B):
+    """Рука дугой: плечо → середина → предплечье, мягкие полосы вдоль руки."""
+    t = along((x, y), B[f'arm_{side}1']['start'], B[f'arm_{side}3']['end'])
+    return blend_chain(t, [f'arm_{side}1', f'arm_{side}2', f'arm_{side}3'], [(0.24, 0.44), (0.56, 0.76)])
+
+
+# Растяжка у подмышки (27.09, как в Spine/Rive: вершины у сустава тянут и
+# туловище, и плечо; шов кофты и рукава — с одинаковыми весами, поэтому не
+# расходится). Шов — край кофты: половина ширины кофты от оси x = 512
+# по высоте y (замер по текстуре, слева и справа почти одинаково).
+SEAM = [(480, 131), (500, 133), (520, 136), (540, 136), (560, 139), (580, 143),
+        (600, 146), (620, 148), (640, 151), (660, 160), (680, 173), (700, 183)]
+STRETCH_IN, STRETCH_OUT = 50, 35   # ширина растяжки в кофту и в рукав, px
+
+
+def seam_half(y):
+    for (y0, h0), (y1, h1) in zip(SEAM, SEAM[1:]):
+        if y <= y1:
+            return h0 + (h1 - h0) * max(0.0, (y - y0) / (y1 - y0))
+    return SEAM[-1][1]
+
+
+def armness(kind, x, y):
+    """Доля руки в весах вершины: на шве 0,5, в кофту — к 0, в рукав — к 1.
+    До подмышки (y < 585) у кофты и рукава одна и та же доля — шов не
+    расходится. Ниже рукав отходит от бока, а бок кофты тянется за ним
+    всё слабее к подолу (заказчик 27.09: «в этой зоне майка должна
+    растянуться»)."""
+    out = abs(x - 512) - seam_half(y)          # >0 — снаружи кофты
+    g = 0.5 + 0.5 * smooth(0, STRETCH_OUT, out) if out >= 0 else 0.5 * (1 - smooth(0, STRETCH_IN, -out))
+    top = smooth(470, 495, y)
+    if kind == 'shirt':
+        # бок кофты под мышкой (от подмышки к подолу) тянется за рукой всё
+        # слабее книзу — ткань расправляется, бок выпрямляется
+        return top * (1 - smooth(588, 725, y)) * g
+    # рукав снизу от подмышки отходит от бока — подмышка раскрывается
+    return 1 - top * (1 - smooth(585, 690, y)) * (1 - g)
+
+
+def side_share(x, y):
+    """Доля кости бока у вершин кофты: вместе с растяжкой (armness) даёт
+    на шве ту же долю руки, что у рукава, — при малом подъёме бок идёт
+    за рукой без щели. Ниже подмышки, у шва, к подолу гаснет."""
+    out = abs(x - 512) - seam_half(y)
+    g = 0.5 if out >= 0 else 0.5 * (1 - smooth(0, STRETCH_IN, -out))
+    s1, s2 = smooth(585, 690, y), smooth(588, 725, y)
+    return min(1.0, (s1 + s2) * g) * (1 - smooth(705, 760, y))
+
+
+def stretch(torso, arm, g):
+    w = {b: v * (1 - g) for b, v in torso.items()}
+    for b, v in arm.items():
+        w[b] = w.get(b, 0) + v * g
+    return {b: v for b, v in w.items() if v > 1e-4}
+
+
 def blend3(t, a0, a1, a2, a=0.0, b=0.2, c=0.5, d=0.8):
     """0..1 вдоль цепочки: a0 → a1 (между a и b) → a2 (между c и d)."""
     k1 = smooth(a, b, t)
     k2 = smooth(c, d, t)
     w = {a0: 1 - k1, a1: k1 * (1 - k2), a2: k1 * k2}
     return {k: v for k, v in w.items() if v > 1e-4}
+
+
+def blend_chain(t, bones, spans):
+    """0..1 вдоль цепочки: bones[i] → bones[i+1] в полосе spans[i]."""
+    w = {bones[0]: 1.0}
+    for (a, b), nxt in zip(spans, bones[1:]):
+        k = smooth(a, b, t)
+        if k <= 0:
+            break
+        w = {bn: v * (1 - k) for bn, v in w.items()}
+        w[nxt] = w.get(nxt, 0) + k
+    return {bn: v for bn, v in w.items() if v > 1e-4}
 
 
 def pack(w, order):
@@ -373,11 +457,12 @@ def breathing(B, rest):
     add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wave(t, 26) - 0.07 * ear(t, 'r'))
     add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.09 * wave(t, 38) - 0.12 * ear(t - 3, 'r'))
     add('ear_r1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.06 * ear(t, 'r'))
-    # плечи поднимаются на вдохе, лапы отходят
-    add('arm_l1', R, lambda t: rest['arm_l1']['rotation'] + 0.024 * wave(t, 8))
-    add('arm_l2', R, lambda t: rest['arm_l2']['rotation'] + 0.03 * wave(t, 20))
-    add('arm_r1', R, lambda t: rest['arm_r1']['rotation'] - 0.024 * wave(t, 8))
-    add('arm_r2', R, lambda t: rest['arm_r2']['rotation'] - 0.03 * wave(t, 20))
+    # плечи поднимаются на вдохе, лапы отходят; звенья руки догоняют друг
+    # друга с запаздыванием — рука мягкая, как у плюшевой игрушки
+    for s, sg in (('l', 1), ('r', -1)):
+        for bone, amp, lag in ((f'arm_{s}1', 0.02, 8), (f'side_{s}', 0.02, 8), (f'arm_{s}2', 0.014, 15),
+                               (f'arm_{s}3', 0.014, 22), (f'hand_{s}', 0.03, 32)):
+            add(bone, R, lambda t, b=bone, a=amp * sg, g=lag: rest[b]['rotation'] + a * wave(t, g))
     return ch
 
 
@@ -421,6 +506,10 @@ def blink_face(rest):
 BEAD_H = 17   # половина видимой высоты бусины, px мира
 
 
+RAISE_FULL = 0.6   # при подъёме плеча на столько (рад, ~35°) складка расправлена
+SIDE_CAP = 0.08    # бок кофты идёт за рукой до такого подъёма (рад, ~4,5°)
+
+
 class Emo:
     """Сборщик одной эмоции: ключи — смещения от покоя кости эмоции."""
     R, SX, SY, X, Y, OP = 15, 16, 17, 90, 91, 18
@@ -437,6 +526,17 @@ class Emo:
             frames.append((p[0], b + p[1], p[2] if len(p) > 2 else EI))
         frames.append((self.dur - 2, b, None))
         self.ch[(E_IDS[name], key)] = frames
+        if key == self.R and name in ('arm_l1', 'arm_r1'):
+            # складка под мышкой расправляется вместе с подъёмом плеча
+            side, sg = name[4], (1 if name == 'arm_l1' else -1)
+            op = [(0, 0.0, EI)] + [(p[0], min(1.0, max(0.0, sg * p[1] / RAISE_FULL)), p[2] if len(p) > 2 else EI)
+                                   for p in pts] + [(self.dur - 2, 0.0, None)]
+            self.ch[(E_IDS[f'flat_{side}'], self.OP)] = op
+            # поправочная кость бока: тот же подъём, но не больше SIDE_CAP
+            b = E_REST[f'side_{side}']['rotation']
+            self.ch[(E_IDS[f'side_{side}'], self.R)] = (
+                [(0, b, EI)] + [(p[0], b + max(-SIDE_CAP, min(SIDE_CAP, p[1])), p[2] if len(p) > 2 else EI)
+                                for p in pts] + [(self.dur - 2, b, None)])
         return self
 
     def face(self, name, spans):
@@ -463,6 +563,24 @@ class Emo:
                 sp.append((on, nxt))
         for name, sp in spans.items():
             self.face(name, sp)
+        return self
+
+    def arms(self, pts, follow=0.25, lag=3):
+        """Обе руки: pts [(кадр, подъём плеча, кривая)] — для левой руки,
+        правая зеркально. Середина, предплечье и кисть догоняют плечо с
+        запаздыванием lag кадров на звено и поворачиваются на долю follow —
+        рука гнётся мягкой дугой, кисть чуть «перелетает» (как уши)."""
+        last = self.dur - 3
+        for s, sg in (('l', 1), ('r', -1)):
+            self.track(f'arm_{s}1', self.R, [(f, v * sg, *z) for f, v, *z in pts])
+            for i, (bone, k) in enumerate(((f'arm_{s}2', 1.0), (f'arm_{s}3', 1.0), (f'hand_{s}', 1.6)), 1):
+                seq, prev = [], 0
+                for f, v, *z in pts:
+                    fr = min(f + lag * i, last)
+                    if fr > prev:
+                        seq.append((fr, v * sg * follow * k, *z))
+                        prev = fr
+                self.track(bone, self.R, seq)
         return self
 
     def blinks(self, at, n=6):
@@ -566,13 +684,10 @@ def emo_laugh():
     e.track('face', Emo.X, [(22, -2), (34, 3, EO), (53, -2), (62, 2.5)]
             + pulses(g, 8, 10, 3.5, 2.2, EI, EI) + [(176, 2)])
     e.track('face', Emo.Y, [(30, 3), (176, 2.5)])
-    # лапы вверх на прыжке, потом вздрагивают со смехом
-    e.track('arm_l1', Emo.R, [(22, -0.03), (32, 0.03, EO), (40, 0.025), (52, 0.0), (62, 0.02)]
-            + pulses(g, 8, 10, 0.045, 0.02, EI, EI) + [(176, 0.02)])
-    e.track('arm_r1', Emo.R, [(22, 0.03), (32, -0.03, EO), (40, -0.025), (52, 0.0), (62, -0.02)]
-            + pulses(g, 8, 10, -0.045, -0.02, EI, EI) + [(176, -0.02)])
-    e.track('arm_l2', Emo.R, [(24, 0), (34, 0.2, EO), (42, 0.17), (54, 0)])
-    e.track('arm_r2', Emo.R, [(24, 0), (34, -0.2, EO), (42, -0.17), (54, 0)])
+    # лапы вскинуты на прыжке (~30°, складка под мышкой расправилась),
+    # на приземлении опускаются, потом вздрагивают со смехом
+    e.arms([(22, -0.03), (32, 0.52, EO), (40, 0.5), (54, 0.06, EIN), (62, 0.04)]
+           + pulses(g, 8, 10, 0.065, 0.03, EI, EI) + [(176, 0.03)])
     # уши и капюшон отстают: на толчке вниз, на вершине вверх, удар — вниз
     e.track('hood2', Emo.R, [(32, 0.09), (44, -0.09), (56, 0.06), (64, -0.04)]
             + pulses([a + 4 for a in g], 8, 10, -0.09, -0.04, EI, EI) + [(176, -0.02)])
@@ -604,8 +719,7 @@ def emo_surprised():
     e.track('ear_r2', Emo.R, [(20, 0.1, BACK), (96, 0.07)])
     e.track('hood2', Emo.R, [(20, 0.09), (38, -0.06), (58, 0.03), (96, 0.01)])
     e.track('hood1', Emo.R, [(20, 0.03), (40, -0.015)])
-    e.track('arm_l1', Emo.R, [(18, 0.07, BACK), (96, 0.05)])
-    e.track('arm_r1', Emo.R, [(18, -0.07, BACK), (96, -0.05)])
+    e.arms([(18, 0.34, BACK), (96, 0.28)])
     return e.build()
 
 
@@ -690,10 +804,8 @@ def emo_yawn():
     e.track('head', Emo.R, [(60, -0.05), (125, -0.045), (150, 0), (162, 0.015), (176, -0.012)])
     e.track('face', Emo.X, [(60, 5), (125, 4.5), (150, 0)])
     e.track('hips', Emo.Y, [(60, -5), (120, -4), (160, 2)])
-    e.track('arm_l1', Emo.R, [(60, 0.05), (125, 0.045), (160, 0)])
-    e.track('arm_r1', Emo.R, [(60, -0.05), (125, -0.045), (160, 0)])
-    e.track('arm_l2', Emo.R, [(66, 0.07), (125, 0.06), (165, 0)])
-    e.track('arm_r2', Emo.R, [(66, -0.07), (125, -0.06), (165, 0)])
+    # потянулся: лапы в стороны и вверх (~25°)
+    e.arms([(60, 0.45), (125, 0.4), (160, 0.0)], follow=0.15)
     e.track('ear_l1', Emo.R, [(60, 0.1), (125, 0.08), (165, -0.02)])
     e.track('ear_r1', Emo.R, [(60, -0.1), (125, -0.08), (165, 0.02)])
     e.track('hood2', Emo.R, [(70, -0.07), (130, 0.04), (170, -0.015)])
@@ -823,7 +935,7 @@ def main(project):
     # 1. Жёсткие контейнеры: их мир в покое (до правок).
     followers = {  # контейнер → новая кость
         'head': 'face', 'hood_lining': 'head',
-        'forearm_left': 'arm_l2', 'forearm_right': 'arm_r2',
+        'forearm_left': 'hand_l', 'forearm_right': 'hand_r',
         'leg_left': 'shin_l', 'leg_right': 'shin_r',
     }
     follow_world = {n: W[byname[n]] for n in followers}
@@ -908,7 +1020,7 @@ def main(project):
     face = byname['face_img'].find('Mesh')
     fskin = face.find('Skin')
     fm = M(*[f(fskin, k) for k in ('xx', 'xy', 'yx', 'yy', 'tx', 'ty')])
-    ids = iter(range(10000, 99999))
+    ids = iter(range(10000, 10 ** 7))
     added = mesh_refine.refine(face, fm.apply, FACE_REFINE, lambda: ident(next(ids)))
     print('face mesh +', added, 'points')
     eyes = [(byname['gaze_socket_l_img'], byname['gaze_bead_l_img']),
@@ -917,6 +1029,9 @@ def main(project):
     # 4в. Выражения лица целиком поверх бусин и век (faces.py).
     for n, fid in faces.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'face_{n}'] = fid
+    # 4г. Расправленная кофта у подмышек поверх кофты (crease.py).
+    for side, cid in crease.build(project, root, ab, byname, lambda: ident(next(ids))).items():
+        E_IDS[f'flat_{side}'] = cid
 
     # 5. Сетки: новые сухожилия и веса.
     for img in ab.iter('Image'):
