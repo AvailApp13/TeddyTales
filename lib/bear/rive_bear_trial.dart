@@ -386,14 +386,25 @@ final class _TrialPainter extends BasicArtboardPainter {
   double _t = 0;
 
   // --- Поглаживание (ТЗ act_pet, заказчик 27.09) ---------------------------
-  // `pet_face` — лицо «гладят», нарастает 0,3 с и держится, пока гладят;
-  // `pet_pass` — один проход ладони, запускается заново на каждый проход;
-  // наклон головы к пальцу — живьём, поворотом кости `e_head`; отпустили —
-  // после последнего прохода `pet_out` (досмаковал, открыл глаза, посмотрел
-  // вверх, подпрыгнул). Клипы собирает `tool/rive/rebuild_rig.py`.
+  // `pet_face` — лицо «гладят», нарастает 0,3 с и держится, пока гладят.
+  // `pet_pass` — цикл «ладонь прошла по голове» (голова проседает и
+  // тянется обратно, уши пружинят). Заказчик 27.09: «при каждом движении
+  // пальцем голова дёргается» — раньше цикл запускался заново каждые
+  // ~60 px пути пальца, и голова перескакивала из середины движения в
+  // начало. Теперь цикл не перезапускается: он крутится непрерывно со
+  // скоростью пальца (фаза), а сила плавно нарастает и затухает — палец
+  // остановился, голова мягко возвращается. Наклон к пальцу — пружиной
+  // (≈ 0,6 с на успокоение) по усреднённому положению пальца, а не за
+  // каждым его движением. Отпустили — сила затухает, потом `pet_out`
+  // (досмаковал, открыл глаза, посмотрел вверх, подпрыгнул). Клипы
+  // собирает `tool/rive/rebuild_rig.py`.
 
-  /// Наибольший наклон головы к пальцу, радианы (≈ 4°).
-  static const double _maxLean = 0.07;
+  /// Наибольший наклон головы к пальцу, радианы (≈ 3°).
+  static const double _maxLean = 0.05;
+
+  /// Скорость пальца (px артборда в секунду), при которой цикл «ладонь»
+  /// идёт в свою полную скорость и в полную силу.
+  static const double _fullSpeed = 320;
 
   Animation? _petFace;
   Animation? _petPass;
@@ -402,44 +413,47 @@ final class _TrialPainter extends BasicArtboardPainter {
   double _headBase = 0;
   bool _petting = false;
   bool _releasing = false;
-  bool _passOn = false;
   bool _outOn = false;
   double _faceT = 0;
-  double _passT = 0;
   double _outT = 0;
-  double _lean = 0;
+
+  /// Фаза цикла «ладонь» (в циклах), его скорость (циклов в секунду) и сила 0…1.
+  double _phase = 0;
+  double _rate = 0;
+  double _power = 0;
+
+  /// Путь пальца за кадр и сглаженная скорость, px артборда.
+  double _moved = 0;
+  double _speed = 0;
+
+  /// Куда тянется голова (−1…1, сглажено), наклон и его скорость (пружина).
   double _leanTarget = 0;
-  double _travel = 0;
+  double _leanAim = 0;
+  double _lean = 0;
+  double _leanV = 0;
   double? _script;
-  int _scriptPasses = 0;
 
   /// Палец коснулся головы и повёл.
   void petStart() {
     _rest(_clip);
     _clip = null;
     _face = null;
-    _outOn = false;
+    if (_outOn) _finishOut();
     _petting = true;
     _releasing = false;
     _faceT = 0;
-    _travel = 0;
-    _startPass();
     scheduleRepaint();
   }
 
   /// Палец идёт: [x] — где он по голове, −1 слева … 1 справа;
-  /// [distance] — сколько прошёл, px артборда. Каждые ~60 px — новый проход.
+  /// [distance] — сколько прошёл, px артборда.
   void petMove(double x, double distance) {
     if (!_petting) return;
     _leanTarget = x.clamp(-1.0, 1.0);
-    _travel += distance;
-    if (_travel >= 60 && (!_passOn || _passT > 0.3)) {
-      _travel = 0;
-      _startPass();
-    }
+    _moved += distance;
   }
 
-  /// Палец отпустили — выход после текущего прохода.
+  /// Палец отпустили — сила ласки затухает, потом выход.
   void petEnd() {
     if (_petting) _releasing = true;
   }
@@ -449,14 +463,20 @@ final class _TrialPainter extends BasicArtboardPainter {
     _script = null;
     _petting = false;
     _releasing = false;
-    _passOn = false;
-    _outOn = false;
+    _power = 0;
+    _rate = 0;
+    _speed = 0;
     _petFace
       ?..time = 0
       ..apply(mix: 1);
     _petPass
       ?..time = 0
       ..apply(mix: 1);
+    if (_outOn) _finishOut();
+  }
+
+  void _finishOut() {
+    _outOn = false;
     final out = _petOut;
     if (out != null) {
       out
@@ -465,35 +485,35 @@ final class _TrialPainter extends BasicArtboardPainter {
     }
   }
 
-  /// Кнопка «Гладим»: «рука» ходит по голове влево-вправо 2,4 с, проход —
-  /// раз в 0,55 с, потом отпускает.
+  /// Кнопка «Гладим»: «рука» спокойно ходит по голове влево-вправо 3 с,
+  /// потом отпускает.
   void scriptedPet() {
     petStart();
     _script = 0;
-    _scriptPasses = 0;
   }
 
-  void _startPass() {
-    _passOn = true;
-    _passT = 0;
-  }
+  /// Сглаживание: [v] к [to] за время [tau] секунд.
+  static double _ease(double v, double to, double dt, double tau) =>
+      v + (to - v) * math.min(1.0, dt / tau);
 
   void _advancePet(double dt) {
+    if (dt <= 0) return;
     final script = _script;
     if (script != null) {
       final t = script + dt;
       _script = t;
-      _leanTarget = math.sin(2 * math.pi * t / 1.1);
-      final n = (t / 0.55).floor();
-      if (n > _scriptPasses) {
-        _scriptPasses = n;
-        _startPass();
-      }
-      if (t >= 2.4) {
+      // ладонь ходит по голове: туда-обратно за 1,6 с, ~260 px/с
+      final x = math.sin(2 * math.pi * t / 1.6);
+      petMove(x, 260 * dt);
+      if (t >= 3.0) {
         _script = null;
         petEnd();
       }
     }
+    // скорость пальца — сглаженная, без рывков от неровных касаний
+    _speed = _ease(_speed, _moved / dt, dt, 0.2);
+    _moved = 0;
+    final pass = _petPass;
     if (_petting) {
       _faceT += dt;
       final face = _petFace;
@@ -502,49 +522,58 @@ final class _TrialPainter extends BasicArtboardPainter {
           ..time = math.min(_faceT, face.duration)
           ..apply(mix: 1);
       }
-    }
-    if (_passOn) {
-      _passT += dt;
-      final pass = _petPass;
-      if (pass == null || _passT >= pass.duration) {
-        _passOn = false;
+      final k = (_speed / _fullSpeed).clamp(0.0, 1.0);
+      final going = !_releasing;
+      final passLen = pass?.duration ?? 0.8;
+      // цикл идёт со скоростью пальца (не быстрее своей), сила — мягко
+      _rate = _ease(_rate, going ? k / passLen : 0.6 / passLen, dt, 0.3);
+      _power = _ease(_power, going ? math.min(1.0, k * 1.4) : 0.0, dt, 0.35);
+      _phase += _rate * dt;
+      if (pass != null) {
+        // сначала покой, потом цикл с силой _power: у костей эмоции нет
+        // другого источника значений, иначе mix копится от кадра к кадру
+        pass
+          ..time = 0
+          ..apply(mix: 1)
+          ..time = (_phase % 1) * pass.duration
+          ..apply(mix: _power);
+      }
+      if (_releasing && _power < 0.03) {
         pass
           ?..time = 0
           ..apply(mix: 1);
-      } else {
-        pass
-          ..time = _passT
-          ..apply(mix: 1);
+        _petting = false;
+        _releasing = false;
+        _power = 0;
+        _outOn = true;
+        _outT = 0;
       }
-    }
-    if (_petting && _releasing && !_passOn) {
-      _petting = false;
-      _releasing = false;
-      _outOn = true;
-      _outT = 0;
     }
     if (_outOn) {
       _outT += dt;
       final out = _petOut;
       if (out == null || _outT >= out.duration) {
-        _outOn = false;
-        if (out != null) {
-          out
-            ..time = out.duration
-            ..apply(mix: 1);
-        }
+        _finishOut();
       } else {
         out
           ..time = _outT
           ..apply(mix: 1);
       }
     }
-    // голова тянется к пальцу с запаздыванием ~0,1 с
-    final target = _petting ? _leanTarget * _maxLean : 0.0;
-    _lean += (target - _lean) * math.min(1.0, dt / 0.12);
+    // наклон к пальцу: цель — усреднённое положение пальца (0,35 с),
+    // голова идёт к ней пружиной без перелёта (≈ 0,6 с)
+    _leanAim = _ease(_leanAim, _petting ? _leanTarget : 0.0, dt, 0.35);
+    const w = 7.0;
+    final acc = w * w * (_leanAim * _maxLean - _lean) - 2 * w * _leanV;
+    _leanV += acc * dt;
+    _lean += _leanV * dt;
     final head = _eHead;
-    if (head != null && (_petting || _lean.abs() > 1e-4)) {
-      if (!_petting && _lean.abs() <= 2e-4) _lean = 0;
+    if (head != null &&
+        (_petting || _lean.abs() > 1e-4 || _leanV.abs() > 1e-4)) {
+      if (!_petting && _lean.abs() <= 2e-4 && _leanV.abs() <= 2e-4) {
+        _lean = 0;
+        _leanV = 0;
+      }
       head.rotation = _headBase + _lean;
     }
   }
