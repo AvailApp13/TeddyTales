@@ -31,6 +31,9 @@ enum BearPhraseContext {
 
   /// Взросление (КП 5.6).
   stageUp,
+
+  /// Нужда ниже 15 — про мишку забыли (заказчик 27.09, живой мишка).
+  forgotten,
 }
 
 /// Реплика питомца на трёх языках (КП 13.3, 13.4).
@@ -293,6 +296,22 @@ abstract final class BearPhrases {
       'Смотри, я подрос!',
       "Look, I've grown up!",
       '你看，我长大了！',
+    ),
+
+    // --- Про мишку забыли (нужда ниже 15) ---------------------------------
+    BearPhrase(
+      'forgotten_1',
+      BearPhraseContext.forgotten,
+      'Ты про меня забыл?',
+      'Did you forget about me?',
+      '你把我忘了吗？',
+    ),
+    BearPhrase(
+      'forgotten_2',
+      BearPhraseContext.forgotten,
+      'Мне совсем плохо…',
+      'I feel really bad…',
+      '我很难受……',
     ),
   ];
 

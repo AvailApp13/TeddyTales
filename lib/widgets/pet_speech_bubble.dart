@@ -14,12 +14,16 @@ class PetSpeechBubble extends StatefulWidget {
     super.key,
     required this.mood,
     required this.initiative,
+    this.forgotten = false,
     this.language = BearLanguage.ru,
     this.onTap,
   });
 
   final BearMood mood;
   final BearInitiative? initiative;
+
+  /// Нужда ниже 15 — реплика «Ты про меня забыл?» (`BearLife.forgotten`).
+  final bool forgotten;
   final BearLanguage language;
 
   /// Тап по пузырю — согласиться на предложение питомца.
@@ -54,6 +58,7 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble> {
   }
 
   BearPhraseContext _resolveContext() {
+    if (widget.forgotten) return BearPhraseContext.forgotten;
     final initiative = widget.initiative;
     if (initiative != null) {
       return switch (initiative.action) {

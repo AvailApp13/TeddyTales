@@ -7,8 +7,8 @@ import 'package:teddy_tales/bear/birth_scene_script.dart';
 
 void main() {
   group('BearPhrases — состав (КП 13.3)', () {
-    test('ровно 30 реплик', () {
-      expect(BearPhrases.all, hasLength(30));
+    test('30 реплик по КП + 2 «про меня забыли» (27.09)', () {
+      expect(BearPhrases.all, hasLength(32));
     });
 
     test('идентификаторы уникальны', () {

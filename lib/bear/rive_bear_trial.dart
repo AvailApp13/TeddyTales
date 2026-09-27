@@ -264,10 +264,15 @@ class RiveBearTrial extends StatefulWidget {
     super.key,
     required this.cue,
     this.trait = BearTrait.active,
+    this.mood = BearMood.normal,
     this.onTap,
   });
 
   final BearFaceCue cue;
+
+  /// Состояние покоя по показателям (`BearLife`, с гистерезисом): петля
+  /// `mood_*`; обычное — покой характера.
+  final BearMood mood;
 
   /// Характер мишки (КП 7.1–7.4): покой, реакции, разбивки. ⚠ ждёт
   /// согласования: по ТЗ характер виден только на стадиях 4–5; пока
@@ -401,6 +406,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     super.initState();
     widget.cue.addListener(_onCue);
     _painter.setTrait(widget.trait, real: true);
+    _painter.setMood('mood_${widget.mood.name}', real: true);
     File.asset(kTrialBearAsset, riveFactory: Factory.rive)
         .then((file) {
           if (!mounted) {
@@ -428,6 +434,9 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     }
     if (oldWidget.trait != widget.trait) {
       _painter.setTrait(widget.trait, real: true);
+    }
+    if (oldWidget.mood != widget.mood) {
+      _painter.setMood('mood_${widget.mood.name}', real: true);
     }
   }
 
@@ -774,6 +783,7 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   BearTrait _trait = BearTrait.active;
   bool _traitForced = false;
+  bool _moodForced = false;
 
   /// Выбранное настроение (`mood_*`); играет [_mood] — оно же или петля
   /// характера.
@@ -807,7 +817,11 @@ final class _TrialPainter extends BasicArtboardPainter {
     scheduleRepaint();
   }
 
-  void setMood(String name) {
+  /// [real] — состояние по показателям (`BearLife`); кнопка проверки
+  /// подменяет его до перезапуска.
+  void setMood(String name, {bool real = false}) {
+    if (real && _moodForced) return;
+    if (!real) _moodForced = true;
     _moodPick = name;
     _loopTo(_loopName());
   }
@@ -935,6 +949,66 @@ final class _TrialPainter extends BasicArtboardPainter {
     }
   }
 
+  // --- Эмоции сам по себе (заказчик 27.09: «если нет никаких действий, он
+  // должен что-то показывать») ------------------------------------------
+  // Раз в 40–90 с в тишине — эмоция по состоянию: голодный облизывается,
+  // скучающе зевает, надувается; сонный зевает и клюёт носом; грустный
+  // грустит, обижается; грязнуля встряхивается, трёт ушко; радостный
+  // улыбается, смеётся, любит; обычный — улыбка и разбивки. Характер
+  // сдвигает выбор: ласковый чаще показывает любовь, активный — смех,
+  // спокойный реже всех, замкнутый чаще молчит. Подряд одно и то же — нет.
+  static const Map<String, List<BearFace>> _spontByMood = {
+    'mood_hungry': [
+      BearFace.lick,
+      BearFace.lick,
+      BearFace.yawn,
+      BearFace.upset,
+    ],
+    'mood_sleepy': [BearFace.yawn, BearFace.yawn, BearFace.sleepy],
+    'mood_sad': [BearFace.sad, BearFace.upset, BearFace.bonusSigh],
+    'mood_dirty': [BearFace.bonusShake, BearFace.bonusEar, BearFace.upset],
+    'mood_happy': [BearFace.love, BearFace.laugh, BearFace.tenderness],
+    'mood_normal': [BearFace.love, BearFace.bonusListen, BearFace.bonusStretch],
+  };
+  static const Map<BearTrait, BearFace> _spontLike = {
+    BearTrait.affectionate: BearFace.tenderness,
+    BearTrait.active: BearFace.laugh,
+  };
+  double? _spontWait;
+  BearFace? _lastSpont;
+
+  void _advanceSpont(double dt) {
+    final busy =
+        _clip != null ||
+        _face != null ||
+        _petting ||
+        _outOn ||
+        _script != null ||
+        _moodW < 1;
+    if (busy) {
+      _spontWait = null;
+      return;
+    }
+    final slow = _trait == BearTrait.calm ? 1.6 : 1.0;
+    final wait = (_spontWait ??= (40 + _random.nextDouble() * 50) * slow) - dt;
+    _spontWait = wait;
+    if (wait > 0) return;
+    _spontWait = null;
+    // замкнутый в семи случаях из десяти оставляет всё при себе
+    if (_trait == BearTrait.reserved && _random.nextDouble() < 0.7) return;
+    final like = _spontLike[_trait];
+    final pool = [
+      for (final face in _spontByMood[_moodPick] ?? const <BearFace>[])
+        if (face != _lastSpont && _clips.containsKey(face.clip))
+          for (var i = 0; i < (face == like ? 3 : 1); i++) face,
+    ];
+    if (pool.isEmpty) return;
+    final face = pool[_random.nextInt(pool.length)];
+    _lastSpont = face;
+    _lastBonus = face;
+    play(face);
+  }
+
   void play(BearFace face) {
     petCancel();
     // Прежняя эмоция ещё идёт — вернуть её в покой, иначе её лицо и поза
@@ -1037,6 +1111,7 @@ final class _TrialPainter extends BasicArtboardPainter {
     // Разбивку покоя запускаем до петли: сброс в покой при запуске
     // (`play` → `petCancel`) петля в этом же кадре перекроет.
     _advanceBonus(elapsedSeconds);
+    _advanceSpont(elapsedSeconds);
     _idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
     // Кончилась анимация — вернуть её кости в покой до петли настроения,
     // а не после: иначе на один кадр мишка вставал в «чистый» покой поверх

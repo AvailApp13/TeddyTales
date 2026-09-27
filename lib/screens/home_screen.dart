@@ -44,6 +44,8 @@ import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
+import '../widgets/stats_test_panel.dart';
+import '../bear/bear_life.dart';
 import '../widgets/room_item_sheet.dart';
 import '../widgets/room_ceiling.dart';
 import '../widgets/room_slot_layer.dart';
@@ -136,13 +138,25 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Облачко-реплика мишки над кольцами (КП 3.4, 13.3). Заказчик 26.09:
   /// пока скрыто во всех комнатах, вернём позже — включить здесь.
-  static const bool _showSpeechBubble = false;
+  /// Пузырь вернулся в игровую (заказчик 27.09, живой мишка): реплика по
+  /// состоянию и нужде (`BearLife`), тап — действие. В других комнатах —
+  /// пока нет (заказчик 26.09).
+  static const bool _showSpeechBubble = true;
+
+  /// Живой мишка: состояние по показателям с гистерезисом, однократные
+  /// реакции на события (голод, покормили, проснулся, вошли).
+  late final BearLife _life = BearLife(
+    controller: widget.controller,
+    cue: _faceCue,
+  );
+  Timer? _lifeTimer;
 
   /// Картинки спальни раскодированы заранее — один раз на экран.
   bool _bedroomWarm = false;
 
   void _showRoom(RoomKind room) {
     if (room == _room) return;
+    _life.inNursery = room == RoomKind.nursery;
     setState(() {
       _room = room;
       // Ушли с кухни — блюда и готовка со стола убираются.
@@ -584,6 +598,14 @@ class _HomeScreenState extends State<HomeScreen>
       (_) => _refreshEaten(),
     );
     widget.game.addListener(_onGame);
+    _life
+      ..addListener(_onLife)
+      ..asleep = widget.game.asleep
+      ..inNursery = _room == RoomKind.nursery;
+    _lifeTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _life.tick(),
+    );
     // Долго не заходил — мишка гостил у бабушки (миграция 0016): одна
     // тёплая строка при входе вместо молчаливо подросших шкал.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -619,7 +641,12 @@ class _HomeScreenState extends State<HomeScreen>
   /// Сон пришёл с сервера (уложили на другом устройстве, выспался сам,
   /// разбудила еда) — спальня перерисовывается. Мишка подрос на сервере —
   /// праздник одной строкой (КП 5.6).
+  void _onLife() {
+    if (mounted) setState(() {});
+  }
+
   void _onGame() {
+    _life.asleep = widget.game.asleep;
     if (!mounted) return;
     setState(() {});
     final stage = widget.game.stageUp;
@@ -729,6 +756,10 @@ class _HomeScreenState extends State<HomeScreen>
     widget.game.removeListener(_onGame);
     _closeGap.dispose();
     _hungerTimer?.cancel();
+    _lifeTimer?.cancel();
+    _life
+      ..removeListener(_onLife)
+      ..dispose();
     _eaten
       ..removeListener(_onEatenChanged)
       ..dispose();
@@ -983,6 +1014,7 @@ class _HomeScreenState extends State<HomeScreen>
               Positioned.fill(
                 child: _RoomScene(
                   controller: widget.controller,
+                  mood: _life.mood,
                   onAcceptInitiative: _runAction,
                   riveAssetPath: widget.riveAssetPath,
                   game: widget.game,
@@ -1094,13 +1126,16 @@ class _HomeScreenState extends State<HomeScreen>
                         //
                         // Заказчик 26.09: реплику пока убрать из всех
                         // комнат — вернём, когда решим, с какой логикой.
-                        if (_showSpeechBubble && _room != RoomKind.bedroom)
+                        if (_showSpeechBubble &&
+                            _room == RoomKind.nursery &&
+                            !_asleep)
                           Padding(
                             padding: const EdgeInsets.only(right: 64),
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: PetSpeechBubble(
-                                mood: state.mood,
+                                mood: _life.mood,
+                                forgotten: _life.forgotten,
                                 initiative: widget.controller.initiative,
                                 language: widget.language,
                                 onTap: _runAction,
@@ -1182,6 +1217,7 @@ BearTrait _kitchenTrait(BearTrait trait) {
 class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.controller,
+    required this.mood,
     required this.onAcceptInitiative,
     required this.riveAssetPath,
     required this.onOpenCare,
@@ -1223,6 +1259,9 @@ class _RoomScene extends StatelessWidget {
   });
 
   final BearController controller;
+
+  /// Состояние покоя мишки по показателям (`BearLife`).
+  final BearMood mood;
   final ValueChanged<BearAction> onAcceptInitiative;
   final String riveAssetPath;
 
@@ -1473,6 +1512,7 @@ class _RoomScene extends StatelessWidget {
             child: RiveBearTrial(
               cue: faceCue,
               trait: controller.state.trait,
+              mood: mood,
               onTap: controller.petBear,
             ),
           ),
@@ -1620,7 +1660,15 @@ class _RoomScene extends StatelessWidget {
           Positioned(
             right: 8,
             top: frame.bearTop + frame.bearHeight * 0.08,
-            child: EmotionTestPanel(cue: faceCue),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                EmotionTestPanel(cue: faceCue),
+                // ⚠ Проверка показателей живого мишки — снять перед публикацией.
+                StatsTestPanel(controller: controller),
+              ],
+            ),
           ),
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.

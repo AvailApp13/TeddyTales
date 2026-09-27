@@ -29,9 +29,11 @@ class BearController extends ChangeNotifier {
     BearTraitTracker? traitTracker,
     this.initiativePolicy = const BearInitiativePolicy(),
     this.autoTrait = true,
-    this.pinnedFood,
+    double? pinnedFood,
     Random? random,
   }) : _state = _pin(initialState, pinnedFood),
+       _pinnedFood = pinnedFood,
+       _pinnedFoodInitial = pinnedFood,
        _decay = decay,
        traitTracker = traitTracker ?? BearTraitTracker(),
        _random = random ?? Random();
@@ -104,6 +106,12 @@ class BearController extends ChangeNotifier {
 
   /// Покормить. Раздел 7.2: `act_eat`, два варианта (7.6).
   void feedBear({double amount = 35}) {
+    // закрепление опущено проверочной панелью — еда его поднимает обратно
+    final pin = _pinnedFood;
+    final initial = _pinnedFoodInitial;
+    if (pin != null && initial != null && pin < initial) {
+      _pinnedFood = min(initial, pin + amount);
+    }
     _update(_state.copyWith(stats: stats.copyWith(food: stats.food + amount)));
     _fire(BearRigSpec.trgEat, varied: true);
     recordAction(BearAction.feed);
@@ -265,8 +273,40 @@ class BearController extends ChangeNotifier {
 
   /// На чём закреплён показатель «Еда»; `null` — живой. Приложение
   /// передаёт сюда [kTestFood] на время испытаний: тогда ни кормление, ни
-  /// время, ни сервер показатель не двигают.
-  final double? pinnedFood;
+  /// время, ни сервер показатель не двигают. Проверочная панель
+  /// показателей ([nudgeStats]) опускает закрепление, кормление поднимает
+  /// его обратно — не выше исходного.
+  double? _pinnedFood;
+  final double? _pinnedFoodInitial;
+
+  double? get pinnedFood => _pinnedFood;
+
+  /// ⚠ Проверка живого мишки (заказчик 27.09): сдвинуть показатели на
+  /// месте, минуя сервер и закрепление. Снять перед публикацией вместе с
+  /// панелью `StatsTestPanel`.
+  void nudgeStats({
+    double food = 0,
+    double sleep = 0,
+    double hygiene = 0,
+    double play = 0,
+  }) {
+    double clamp(double v) => v.clamp(0.0, 100.0);
+    final pin = _pinnedFood;
+    if (pin != null && food != 0) {
+      final initial = _pinnedFoodInitial ?? 100;
+      _pinnedFood = food > 0 ? initial : clamp(pin + food);
+    }
+    _update(
+      _state.copyWith(
+        stats: stats.copyWith(
+          food: clamp(stats.food + food),
+          sleep: clamp(stats.sleep + sleep),
+          hygiene: clamp(stats.hygiene + hygiene),
+          play: clamp(stats.play + play),
+        ),
+      ),
+    );
+  }
 
   static BearState _pin(BearState state, double? food) {
     if (food == null || state.stats.food == food) return state;
@@ -274,7 +314,7 @@ class BearController extends ChangeNotifier {
   }
 
   void _update(BearState next) {
-    next = _pin(next, pinnedFood);
+    next = _pin(next, _pinnedFood);
     if (next == _state) return;
     _state = next;
     _rig?.applyState(next);
