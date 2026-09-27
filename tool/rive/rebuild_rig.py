@@ -8,7 +8,7 @@
 2. Новый скелет (мировые координаты холста 1024×1024).
 3. Все сетки заново привязаны к новым костям, веса считаются по положению
    вершины.
-4. Жёсткие части (глаза и накладки лица, подкладка капюшона, лапы, стопы)
+4. Жёсткие части (глаза и накладки лица, подкладка капюшона, стопы)
    едут за костями через TransformConstraint их контейнеров — порядок
    отрисовки не меняется.
 5. idle_life — новое дыхание всем телом (моргание прежнее), из остальных
@@ -23,9 +23,16 @@ from xf import M, f, world_map  # noqa: E402
 import mesh_refine  # noqa: E402
 import lids  # noqa: E402
 import faces  # noqa: E402
-import crease  # noqa: E402
+import arms  # noqa: E402
 
 UP = -math.pi / 2
+
+# Руки (27.09): отдельные детали с круглым плечом (arms.py). Кости идут от
+# центра круга головки рукава вдоль оси руки — плечо, середина,
+# предплечье, кисть.
+ARMS = arms.meta()
+_AL = {n: (a, b) for n, a, b in arms.chain(ARMS, 'l')}
+_AR = {n: (a, b) for n, a, b in arms.chain(ARMS, 'r')}
 
 
 def ident(n):
@@ -60,14 +67,12 @@ CHAIN = [
     ('ear_l2',  'ear_l1', None,         (340, 238)),
     ('ear_r1',  'head',   (605, 322),   (637, 290)),
     ('ear_r2',  'ear_r1', None,         (688, 236)),
-    # руки (27.09, «три звена»): плечо → середина → предплечье до манжеты,
-    # кисть — в конце списка (hand_l/r), за ней едет лапа
-    # ось плеча — в середине толщины руки у корня (между верхом рукава и
-    # подмышкой), как центр круглого сустава в Live2D/перекладке
-    ('arm_l1',  'chest',  (368, 556),   (342, 591)),
-    ('arm_l2',  'arm_l1', None,         (316, 626)),
-    ('arm_r1',  'chest',  (656, 556),   (682, 591)),
-    ('arm_r2',  'arm_r1', None,         (708, 626)),
+    # руки: плечо → середина → предплечье → кисть (кисть — в конце
+    # списка); ось плеча — в центре круга головки рукава (arms.py)
+    ('arm_l1',  'chest',  _AL['arm_l1'][0], _AL['arm_l1'][1]),
+    ('arm_l2',  'arm_l1', None,         _AL['arm_l2'][1]),
+    ('arm_r1',  'chest',  _AR['arm_r1'][0], _AR['arm_r1'][1]),
+    ('arm_r2',  'arm_r1', None,         _AR['arm_r2'][1]),
     ('leg_l',   None,     (430, 790),   (430, 930)),
     ('leg_r',   None,     (607, 790),   (607, 930)),
     # мимика тоньше (26.09, «живые эмоции»): уголки рта, подбородок, нос,
@@ -87,15 +92,10 @@ CHAIN = [
     # можно поднять целиком, спереди это читается как согнутое колено.
     ('shin_l',  'leg_l',  (430, 872),   (430, 952)),
     ('shin_r',  'leg_r',  (607, 872),   (607, 952)),
-    ('arm_l3',  'arm_l2', None,         (290, 662)),
-    ('hand_l',  'arm_l3', None,         (258, 703)),
-    ('arm_r3',  'arm_r2', None,         (734, 662)),
-    ('hand_r',  'arm_r3', None,         (766, 703)),
-    # бок кофты под рукой (поправочная кость, как в Spine/Live2D): пока
-    # рука поднята немного, низ бока идёт за ней — рука не «отлипает»
-    # трещиной; дальше кость упирается (SIDE_CAP), подмышка раскрывается
-    ('side_l',  'chest',  (368, 556),   (340, 700)),
-    ('side_r',  'chest',  (656, 556),   (684, 700)),
+    ('arm_l3',  'arm_l2', None,         _AL['arm_l3'][1]),
+    ('hand_l',  'arm_l3', None,         _AL['hand_l'][1]),
+    ('arm_r3',  'arm_r2', None,         _AR['arm_r3'][1]),
+    ('hand_r',  'arm_r3', None,         _AR['hand_r'][1]),
 ]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
@@ -263,17 +263,10 @@ def _weights_for(layer, x, y, B):
     if layer.startswith('ear_r'):
         t = along((x, y), B['ear_r1']['start'], B['ear_r2']['end'])
         return blend3(t, 'head', 'ear_r1', 'ear_r2', a=0.22, b=0.5, c=0.58, d=0.88)
-    if layer in ('shirt_img', 'shirt_flat_l_img', 'shirt_flat_r_img'):
-        side = 'l' if x < 512 else 'r'
-        w = stretch(torso_weights(x, y), arm_weights(side, x, y, B), armness('shirt', x, y))
-        k = side_share(x, y)
-        if k > 0:
-            w = {b: v * (1 - k) for b, v in w.items()}
-            w[f'side_{side}'] = w.get(f'side_{side}', 0) + k
-        return w
+    if layer == 'shirt_img':
+        return torso_weights(x, y)
     if layer in ('sleeve_left_img', 'sleeve_right_img'):
-        side = 'l' if layer == 'sleeve_left_img' else 'r'
-        return stretch(torso_weights(x, y), arm_weights(side, x, y, B), armness('sleeve', x, y))
+        return arm_weights('l' if layer == 'sleeve_left_img' else 'r', x, y)
     if layer == 'shorts_img':
         side = 'l' if x < 518 else 'r'
         k = smooth(815, 880, y)          # таз → бедро
@@ -294,60 +287,14 @@ def torso_weights(x, y):
     return w
 
 
-def arm_weights(side, x, y, B):
-    """Рука дугой: плечо → середина → предплечье, мягкие полосы вдоль руки."""
-    t = along((x, y), B[f'arm_{side}1']['start'], B[f'arm_{side}3']['end'])
-    return blend_chain(t, [f'arm_{side}1', f'arm_{side}2', f'arm_{side}3'], [(0.24, 0.44), (0.56, 0.76)])
-
-
-# Растяжка у подмышки (27.09, как в Spine/Rive: вершины у сустава тянут и
-# туловище, и плечо; шов кофты и рукава — с одинаковыми весами, поэтому не
-# расходится). Шов — край кофты: половина ширины кофты от оси x = 512
-# по высоте y (замер по текстуре, слева и справа почти одинаково).
-SEAM = [(480, 131), (500, 133), (520, 136), (540, 136), (560, 139), (580, 143),
-        (600, 146), (620, 148), (640, 151), (660, 160), (680, 173), (700, 183)]
-STRETCH_IN, STRETCH_OUT = 50, 35   # ширина растяжки в кофту и в рукав, px
-
-
-def seam_half(y):
-    for (y0, h0), (y1, h1) in zip(SEAM, SEAM[1:]):
-        if y <= y1:
-            return h0 + (h1 - h0) * max(0.0, (y - y0) / (y1 - y0))
-    return SEAM[-1][1]
-
-
-def armness(kind, x, y):
-    """Доля руки в весах вершины: на шве 0,5, в кофту — к 0, в рукав — к 1.
-    До подмышки (y < 585) у кофты и рукава одна и та же доля — шов не
-    расходится. Ниже рукав отходит от бока, а бок кофты тянется за ним
-    всё слабее к подолу (заказчик 27.09: «в этой зоне майка должна
-    растянуться»)."""
-    out = abs(x - 512) - seam_half(y)          # >0 — снаружи кофты
-    g = 0.5 + 0.5 * smooth(0, STRETCH_OUT, out) if out >= 0 else 0.5 * (1 - smooth(0, STRETCH_IN, -out))
-    top = smooth(470, 495, y)
-    if kind == 'shirt':
-        # бок кофты под мышкой (от подмышки к подолу) тянется за рукой всё
-        # слабее книзу — ткань расправляется, бок выпрямляется
-        return top * (1 - smooth(588, 725, y)) * g
-    # рукав снизу от подмышки отходит от бока — подмышка раскрывается
-    return 1 - top * (1 - smooth(585, 690, y)) * (1 - g)
-
-
-def side_share(x, y):
-    """Доля кости бока у вершин кофты: вместе с растяжкой (armness) даёт
-    на шве ту же долю руки, что у рукава, — при малом подъёме бок идёт
-    за рукой без щели. Ниже подмышки, у шва, к подолу гаснет."""
-    out = abs(x - 512) - seam_half(y)
-    g = 0.5 if out >= 0 else 0.5 * (1 - smooth(0, STRETCH_IN, -out))
-    s1, s2 = smooth(585, 690, y), smooth(588, 725, y)
-    return min(1.0, (s1 + s2) * g) * (1 - smooth(705, 760, y))
-
-
-def stretch(torso, arm, g):
-    w = {b: v * (1 - g) for b, v in torso.items()}
-    for b, v in arm.items():
-        w[b] = w.get(b, 0) + v * g
-    return {b: v for b, v in w.items() if v > 1e-4}
+def arm_weights(side, x, y):
+    """Рука — вдоль оси от центра круга плеча (0) до конца лапы (1).
+    Головка рукава целиком на кости плеча: круг поворачивается, не
+    растягиваясь (жёсткая зона, как у Spine — «4 ряда точек на одной
+    кости»); сгиб — мягкими полосами между звеньями, лапа — на кисти."""
+    t = arms.along(ARMS, side, x, y)
+    return blend_chain(t, [f'arm_{side}1', f'arm_{side}2', f'arm_{side}3', f'hand_{side}'],
+                       [(0.30, 0.46), (0.56, 0.70), (0.76, 0.88)])
 
 
 def blend3(t, a0, a1, a2, a=0.0, b=0.2, c=0.5, d=0.8):
@@ -460,7 +407,7 @@ def breathing(B, rest):
     # плечи поднимаются на вдохе, лапы отходят; звенья руки догоняют друг
     # друга с запаздыванием — рука мягкая, как у плюшевой игрушки
     for s, sg in (('l', 1), ('r', -1)):
-        for bone, amp, lag in ((f'arm_{s}1', 0.02, 8), (f'side_{s}', 0.02, 8), (f'arm_{s}2', 0.014, 15),
+        for bone, amp, lag in ((f'arm_{s}1', 0.02, 8), (f'arm_{s}2', 0.014, 15),
                                (f'arm_{s}3', 0.014, 22), (f'hand_{s}', 0.03, 32)):
             add(bone, R, lambda t, b=bone, a=amp * sg, g=lag: rest[b]['rotation'] + a * wave(t, g))
     return ch
@@ -506,10 +453,6 @@ def blink_face(rest):
 BEAD_H = 17   # половина видимой высоты бусины, px мира
 
 
-RAISE_FULL = 0.6   # при подъёме плеча на столько (рад, ~35°) складка расправлена
-SIDE_CAP = 0.08    # бок кофты идёт за рукой до такого подъёма (рад, ~4,5°)
-
-
 class Emo:
     """Сборщик одной эмоции: ключи — смещения от покоя кости эмоции."""
     R, SX, SY, X, Y, OP = 15, 16, 17, 90, 91, 18
@@ -526,17 +469,6 @@ class Emo:
             frames.append((p[0], b + p[1], p[2] if len(p) > 2 else EI))
         frames.append((self.dur - 2, b, None))
         self.ch[(E_IDS[name], key)] = frames
-        if key == self.R and name in ('arm_l1', 'arm_r1'):
-            # складка под мышкой расправляется вместе с подъёмом плеча
-            side, sg = name[4], (1 if name == 'arm_l1' else -1)
-            op = [(0, 0.0, EI)] + [(p[0], min(1.0, max(0.0, sg * p[1] / RAISE_FULL)), p[2] if len(p) > 2 else EI)
-                                   for p in pts] + [(self.dur - 2, 0.0, None)]
-            self.ch[(E_IDS[f'flat_{side}'], self.OP)] = op
-            # поправочная кость бока: тот же подъём, но не больше SIDE_CAP
-            b = E_REST[f'side_{side}']['rotation']
-            self.ch[(E_IDS[f'side_{side}'], self.R)] = (
-                [(0, b, EI)] + [(p[0], b + max(-SIDE_CAP, min(SIDE_CAP, p[1])), p[2] if len(p) > 2 else EI)
-                                for p in pts] + [(self.dur - 2, b, None)])
         return self
 
     def face(self, name, spans):
@@ -1029,9 +961,8 @@ def main(project):
     # 4в. Выражения лица целиком поверх бусин и век (faces.py).
     for n, fid in faces.build(project, root, ab, byname, lambda: ident(next(ids))).items():
         E_IDS[f'face_{n}'] = fid
-    # 4г. Расправленная кофта у подмышек поверх кофты (crease.py).
-    for side, cid in crease.build(project, root, ab, byname, lambda: ident(next(ids))).items():
-        E_IDS[f'flat_{side}'] = cid
+    # 4г. Руки с круглым плечом и кофта с дорисованными боками (arms.py).
+    arms.build(project, root, ab, byname, lambda: ident(next(ids)))
 
     # 5. Сетки: новые сухожилия и веса.
     for img in ab.iter('Image'):
