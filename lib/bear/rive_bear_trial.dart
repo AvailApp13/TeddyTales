@@ -922,6 +922,50 @@ final class _TrialPainter extends BasicArtboardPainter {
   final Map<String, Animation> _mouthOp = {};
   Animation? _mouthZero;
 
+  /// Какие рты сейчас включены — с гистерезисом: рот включается, когда
+  /// раскрылся больше [_mouthSwap], выключается — когда закрылся до
+  /// [_mouthOff]. В файле рот проходит зону смены за кадр, а в смеси
+  /// (реакция поверх покоя, покой в покой) — медленно, и линейная
+  /// перекрёстная прозрачность держала оба рта наполовину видимыми
+  /// (заказчик 27.09: «при касании два рта»). Половинных состояний нет:
+  /// либо один рот целиком, либо другой.
+  final Set<String> _mouthOn = {};
+  static const double _mouthOff = 0.02;
+
+  /// Когда у клипа закрывается рот — последний момент, где он раскрыт
+  /// больше порога. Выход клипа в покой начинается с этого места: пока
+  /// рот клипа закрывается, петля уже подмешивает свой, и улыбка перетекает
+  /// в улыбку, а не захлопывается в ротик покоя (заказчик 27.09: «нет
+  /// ровного перехода»). Меряется один раз при загрузке файла.
+  final Map<Animation, double> _mouthCloseAt = {};
+
+  void _measureMouths() {
+    _mouthCloseAt.clear();
+    if (_mouthSignal.length != _mouthKinds.length) return;
+    for (final clip in _clips.values) {
+      double? last;
+      for (var t = clip.duration; t >= 0; t -= 1 / 15) {
+        clip
+          ..time = t
+          ..apply(mix: 1);
+        var h = 0.0;
+        for (final signal in _mouthSignal.values) {
+          h = math.max(h, signal.y);
+        }
+        if (h >= _mouthSwap) {
+          last = t;
+          break;
+        }
+      }
+      clip
+        ..time = 0
+        ..apply(mix: 1);
+      if (last != null && last < clip.duration - 0.1) {
+        _mouthCloseAt[clip] = last;
+      }
+    }
+  }
+
   void _resolveMouths() {
     final zero = _mouthZero;
     if (zero == null || _mouthSignal.length != _mouthKinds.length) return;
@@ -931,21 +975,23 @@ final class _TrialPainter extends BasicArtboardPainter {
     zero
       ..time = 0
       ..apply(mix: 1);
-    var open = 0.0;
     for (final kind in _mouthKinds) {
       final h = math.max(0.0, _mouthSignal[kind]!.y);
-      final w = math.min(1.0, h / _mouthSwap);
-      open = math.max(open, w);
-      if (w > 0) {
+      if (h >= _mouthSwap) {
+        _mouthOn.add(kind);
+      } else if (h <= _mouthOff) {
+        _mouthOn.remove(kind);
+      }
+      if (_mouthOn.contains(kind)) {
         _mouthOp[kind]
           ?..time = 0
-          ..apply(mix: w);
+          ..apply(mix: 1);
       }
     }
-    if (open < 1) {
+    if (_mouthOn.isEmpty) {
       _mouthOp['rest']
         ?..time = 0
-        ..apply(mix: 1 - open);
+        ..apply(mix: 1);
     }
   }
 
@@ -1103,6 +1149,7 @@ final class _TrialPainter extends BasicArtboardPainter {
       final signal = artboard.component('mh_$kind');
       if (signal != null) _mouthSignal[kind] = signal;
     }
+    _measureMouths();
     notifyListeners();
   }
 
@@ -1133,7 +1180,11 @@ final class _TrialPainter extends BasicArtboardPainter {
       final t = live.time;
       final left = live.duration - t;
       const edge = 0.35;
-      final w = t < edge ? t / edge : (left < edge ? left / edge : 1.0);
+      final closeAt = _mouthCloseAt[live];
+      final outLen = closeAt == null
+          ? edge
+          : math.min(0.9, live.duration - closeAt + 0.25);
+      final w = t < edge ? t / edge : (left < outLen ? left / outLen : 1.0);
       live.apply(mix: Curves.easeInOut.transform(w.clamp(0.0, 1.0)));
     }
     final face = _face;

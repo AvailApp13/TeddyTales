@@ -1614,24 +1614,26 @@ def mood_hungry():
 
 def mood_sleepy():
     """Сонный: веки наполовину закрыты, расслабленный рот; медленно
-    покачивается, голова клюёт и поднимается; один маленький зевок нижней
-    челюстью."""
+    покачивается, голова клюёт и поднимается; один зевок во весь рот, как
+    «Зевок» (заказчик 27.09: «зевает маленьким ртом — почему?»): голова
+    назад, грудь полная, глаза зажмурены, нижняя челюсть вниз."""
     sp = {}
     nod = lambda t: mbump(t, 300, 70)
-    yawn = lambda t: mbump(t, 540, 60)
+    yawn = lambda t: mbump(t, 540, 72)
     sway = lambda t: mwave(t, 2)
     sp[('hips', Emo.X)] = lambda t: 1.5 * sway(t)
     sp[('head', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.3) + 0.03 * nod(t)
-    sp[('face', Emo.X)] = lambda t: -1.0 - 5.0 * nod(t) + 2.0 * yawn(t)
-    sp[('hood2', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.6) + 0.04 * nod(t - 10)
-    sp[('breath', Emo.SY)] = lambda t: 0.04 * yawn(t)
+    sp[('face', Emo.X)] = lambda t: -1.0 - 5.0 * nod(t) + 4.0 * yawn(t)
+    sp[('hood2', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.6) + 0.04 * nod(t - 10) - 0.04 * yawn(t - 8)
+    sp[('breath', Emo.SY)] = lambda t: 0.07 * yawn(t)
+    sp[('chest', Emo.R)] = lambda t: -0.015 * yawn(t)
     sp[('ear_l1', Emo.R)] = lambda t: 0.06 + 0.04 * nod(t - 8)
     sp[('ear_r1', Emo.R)] = lambda t: -0.06 - 0.04 * nod(t - 8)
-    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.45 + 0.35 * nod(t) + 0.3 * yawn(t))
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.45 + 0.35 * nod(t) + 0.55 * yawn(t))
     _pair(sp, 'ulid', Emo.X, lambda t: -4.0 - 3.0 * nod(t))
-    _pair(sp, 'brow', Emo.X, lambda t: -0.8 + 2.0 * yawn(t))
+    _pair(sp, 'brow', Emo.X, lambda t: -0.8 + 3.0 * yawn(t))
     _mood_mouth(sp, 'sleepy', lambda t: 1.0 - yawn(t), lambda t: 1.0 - yawn(t))
-    _mood_mouth(sp, 'yawn', lambda t: 0.7 * min(1.0, yawn(t) / 0.2), lambda t: 0.55 * yawn(t))
+    _mood_mouth(sp, 'yawn', lambda t: min(1.0, yawn(t) / 0.2), lambda t: yawn(t))
     return sp
 
 
