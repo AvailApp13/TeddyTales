@@ -102,8 +102,10 @@ CHAIN = [
     # yawn — зевок, chew — жевание
 ] + [(f'mouth_{n}', 'face', mouth.center(n), (mouth.center(n)[0] + 20, mouth.center(n)[1]))
      for n in mouth.KINDS] + [
-    # нижняя челюсть жевания: низ полости жевания (mouth.py)
-    ('jaw_chew', 'mouth_chew', mouth.chew_rows()[::2], (mouth.chew_rows()[0] + 20, mouth.chew_rows()[2])),
+] + [
+    # нижняя челюсть жевания и зевка: низ полости (mouth.py)
+    (f'jaw_{n}', f'mouth_{n}', mouth.rows(n)[::2], (mouth.rows(n)[0] + 20, mouth.rows(n)[2]))
+    for n in mouth.JAW
 ]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
@@ -271,10 +273,11 @@ def weights_for(layer, x, y, B):
 
 
 def _weights_for(layer, x, y, B):
-    if layer == 'mouth_chew_img':      # верх — губа, низ — челюсть
-        _, top, bot = mouth.chew_rows()
+    if layer[6:-4] in mouth.JAW and layer.startswith('mouth_'):   # верх — губа, низ — челюсть
+        n = layer[6:-4]
+        _, top, bot = mouth.rows(n)
         k = min(1.0, max(0.0, (y - top) / (bot - top)))
-        return {b: v for b, v in (('mouth_chew', 1 - k), ('jaw_chew', k)) if v > 1e-4}
+        return {b: v for b, v in ((f'mouth_{n}', 1 - k), (f'jaw_{n}', k)) if v > 1e-4}
     if layer.startswith('mouth_') and layer.endswith('_img'):
         return {layer[:-4]: 1.0}
     if layer in ('face_img', 'lid_patch_img') or layer.startswith('face_'):
@@ -1028,10 +1031,18 @@ def emo_yawn():
     смыкается, глаза ещё закрыты, открыл, встряхнул головой, уши
     хлопнули. Руки не поднимает."""
     e = Emo(216)
-    e.mouth_open([(10, 0.1, 0.0), (40, 0.6, 0.35), (74, 1.0, 1.0, EO), (104, 0.96, 0.93),
-                  (120, 1.0, 0.98), (148, 0.6, 0.3), (166, 0.3, 0.0)], kind='yawn')
-    # полость опускается вместе с челюстью — верх рта не наползает на нос
-    e.track('mouth_yawn', Emo.X, [(10, 0), (74, -6, EO), (120, -5.6), (160, 0)])
+    # рот (заказчик 27.09: «так же зевок — нижней челюстью»): верхняя губа
+    # стоит под носом, рот раскрывает нижняя челюсть — медленно вниз, на
+    # вершине чуть дрожит, так же медленно вверх; подбородок идёт с ней
+    _, top, bot = mouth.rows('yawn')
+    H = 0.8 * (bot - top)                      # полное раскрытие — 0,8 рта с фото (≈ 40 px)
+    mo = [(10, 0.1, 0.0), (40, 0.6, 0.35), (74, 1.0, 1.0, EO), (104, 0.96, 0.93),
+          (120, 1.0, 0.98), (148, 0.6, 0.3), (166, 0.3, 0.0)]
+    e.mouth_open(mo, kind='yawn')
+    e.track('mouth_yawn', Emo.X, [(2, top - 500.0), (210, top - 500.0)])   # губа у верха ротика покоя
+    e.track('jaw_yawn', Emo.Y, [(p[0], H * p[2], p[3] if len(p) > 3 else EI) for p in mo])
+    # дрожь челюсти на вершине зевка
+    e.track('jaw_yawn', Emo.X, [(80, 0), (86, 0.6), (92, -0.5), (98, 0.4), (104, -0.3), (110, 0)])
     # глаза зажмурились: бусины сплющены, нижние и верхние веки сходятся
     e.eyes([(6, 0.0), (44, 0.72, EO), (150, 0.7), (180, 0.0)], lid='both')
     e.pair('lid', Emo.X, [(44, 9, EO), (150, 8.5), (180, 0)])
@@ -1039,7 +1050,8 @@ def emo_yawn():
     e.pair('eye', Emo.SX, [(44, -0.1), (150, -0.09), (180, 0)])
     e.pair('brow', Emo.X, [(50, 3, EO), (140, 2.5), (176, 0)])
     # челюсть вниз, мордочка тянется, щёки уже
-    e.track('chin', Emo.X, [(20, -1), (74, -5, EO), (120, -4.6), (160, 0)])
+    e.track('chin', Emo.X, [(10, 0), (40, -0.2 * H * 0.35), (74, -0.2 * H, EO), (104, -0.19 * H),
+                            (120, -0.2 * H), (148, -0.2 * H * 0.3), (166, 0)])
     e.track('chin', Emo.SX, [(74, 0.06), (120, 0.055), (160, 0)])
     e.track('muzzle', Emo.SX, [(74, 0.08, EO), (120, 0.075), (160, 0)])
     e.pair('cheek', Emo.SY, [(74, -0.04), (120, -0.035), (160, 0)])
@@ -1256,8 +1268,8 @@ def main(project):
         if name.startswith('mouth_') and name[6:] in mouth.KINDS:   # в покое рот сомкнут
             sx, sy = mouth.closed(name[6:])
             attrs.update(scaleX=fmt(sx), scaleY=fmt(sy))
-        if name == 'jaw_chew':        # в покое челюсть поднята к губе — полость сомкнута
-            _, top, bot = mouth.chew_rows()
+        if name.startswith('jaw_'):   # в покое челюсть поднята к губе — полость сомкнута
+            _, top, bot = mouth.rows(name[4:])
             attrs['y'] = fmt(top - bot)
         attrs.update(length=fmt(b['length']), name=f'b_{name}', id=b['id'])
         el = ET.Element(tag, attrs)
