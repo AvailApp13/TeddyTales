@@ -40,7 +40,17 @@ enum BearFace {
   upset(19.4, 1.4),
 
   /// Любовь, нежность (ТЗ `emo_love_s45`, 27.09) — десятая кнопка.
-  tenderness(5.85, 2.0);
+  tenderness(5.85, 2.0),
+
+  /// Поглаживание головы (ТЗ `act_pet`, 27.09): живой отклик на палец —
+  /// кнопка играет «руку» по заданному пути ([_TrialPainter.scriptedPet]).
+  pet(5.85, 3.4),
+
+  /// Щекотка животика (ТЗ `act_pet_s45_b`, 27.09).
+  tickle(4.4, 2.5),
+
+  /// Резкий мазок — вздрогнул (27.09).
+  startle(7.7, 0.7);
 
   const BearFace(this.frame, this.hold);
 
@@ -63,6 +73,9 @@ enum BearFace {
     sleepy => 'emo_sleepy',
     upset => 'emo_upset',
     tenderness => 'emo_love',
+    pet => null,
+    tickle => 'act_pet_b',
+    startle => 'pet_startle',
   };
 
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
@@ -80,6 +93,9 @@ enum BearFace {
     sleepy => 'Сонный',
     upset => 'Обида',
     tenderness => 'Любовь',
+    pet => 'Гладим',
+    tickle => 'Щекотка',
+    startle => 'Вздрогнул',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -96,8 +112,12 @@ enum BearFace {
     sleepy => const BodyPose(tilt: 3, stretch: -0.025, lift: -0.006),
     upset => const BodyPose(stretch: -0.04, lift: -0.004),
     tenderness => const BodyPose(tilt: 3.5, stretch: 0.02, lift: 0.01),
+    pet || tickle || startle => const BodyPose(),
   };
 }
+
+/// Где гладят: голова — ласка, животик — щекотно.
+enum _PetZone { head, belly }
 
 /// Поза корпуса: наклон в градусах (плюс — вправо), растяжение по высоте
 /// (минус — сжался, ширина меняется обратно, объём сохраняется) и подъём —
@@ -148,6 +168,11 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   /// Эмоция целиком: лицо из файла и поза корпуса.
   void _react(BearFace face) {
+    if (face == BearFace.pet) {
+      _painter.scriptedPet();
+      _bodyFace = null;
+      return;
+    }
     _painter.play(face);
     // Своя анимация (`emo_smile`) играет лицо и тело сама — поза корпуса
     // из приложения только у выражений без своей анимации.
@@ -159,6 +184,79 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   /// Какое по счёту касание — выражения идут по кругу.
   int _taps = 0;
+
+  // --- Поглаживание пальцем (ТЗ act_pet, заказчик 27.09) ---------------
+  // Провели пальцем по голове — мишку гладят: лицо блаженное, голова
+  // тянется к пальцу, на каждый проход проседает под ладонью. По животику —
+  // щекотно. Резкий быстрый мазок — вздрогнул. Тап — как раньше.
+  Size _size = Size.zero;
+  final Stopwatch _panClock = Stopwatch();
+  bool _panActive = false;
+  _PetZone? _zone;
+
+  /// Точка касания в координатах артборда 1024 × 1024 (мишка вписан по
+  /// меньшей стороне и прижат к низу) и масштаб экран → артборд.
+  (Offset, double) _toArtboard(Offset p) {
+    final s = math.min(_size.width, _size.height) / 1024;
+    if (s <= 0) return (Offset.zero, 1);
+    final ox = (_size.width - 1024 * s) / 2;
+    final oy = _size.height - 1024 * s;
+    return (Offset((p.dx - ox) / s, (p.dy - oy) / s), s);
+  }
+
+  _PetZone? _zoneAt(Offset p) {
+    final (a, _) = _toArtboard(p);
+    if (a.dy < 545) return _PetZone.head;
+    if (a.dy < 800) return _PetZone.belly;
+    return null;
+  }
+
+  void _panStart(DragStartDetails d) {
+    _panClock
+      ..reset()
+      ..start();
+    _panActive = false;
+    _zone = _zoneAt(d.localPosition);
+  }
+
+  void _panUpdate(DragUpdateDetails d) {
+    final zone = _zone;
+    if (zone == null) return;
+    // Ласка начинается, когда палец ведут дольше 0,12 с: быстрый мазок до
+    // этого — не поглаживание, а «вздрогнул» (в [_panEnd]).
+    if (!_panActive && _panClock.elapsedMilliseconds >= 120) {
+      _panActive = true;
+      if (zone == _PetZone.head) {
+        _painter.petStart();
+        _bodyFace = null;
+      } else {
+        _react(BearFace.tickle);
+      }
+      widget.onTap?.call();
+    }
+    if (_panActive && zone == _PetZone.head) {
+      final (a, s) = _toArtboard(d.localPosition);
+      _painter.petMove((a.dx - 512) / 180, d.delta.distance / s);
+    }
+  }
+
+  void _panEnd(DragEndDetails d) {
+    final speed = d.velocity.pixelsPerSecond.distance;
+    final ms = _panClock.elapsedMilliseconds;
+    _panClock.stop();
+    if (_zone == null) return;
+    if (!_panActive) {
+      if (speed > 900) _react(BearFace.startle);
+    } else if (_zone == _PetZone.head) {
+      if (ms < 250 && speed > 1500) {
+        _painter.petCancel();
+        _react(BearFace.startle);
+      } else {
+        _painter.petEnd();
+      }
+    }
+    _panActive = false;
+  }
 
   @override
   void initState() {
@@ -211,20 +309,26 @@ class _RiveBearTrialState extends State<RiveBearTrial>
         _react(BearFace.taps[_taps++ % BearFace.taps.length]);
         widget.onTap?.call();
       },
+      onPanStart: _panStart,
+      onPanUpdate: _panUpdate,
+      onPanEnd: _panEnd,
       child: LayoutBuilder(
-        builder: (context, box) => AnimatedBuilder(
-          animation: _body,
-          builder: (context, child) => Transform(
-            alignment: const Alignment(0, 0.92),
-            transform: _bodyTransform(box.maxHeight),
-            child: child,
-          ),
-          child: RiveFileWidget(
-            file: file,
-            painter: _painter,
-            artboardName: 'Bear_Boy',
-          ),
-        ),
+        builder: (context, box) {
+          _size = box.biggest;
+          return AnimatedBuilder(
+            animation: _body,
+            builder: (context, child) => Transform(
+              alignment: const Alignment(0, 0.92),
+              transform: _bodyTransform(box.maxHeight),
+              child: child,
+            ),
+            child: RiveFileWidget(
+              file: file,
+              painter: _painter,
+              artboardName: 'Bear_Boy',
+            ),
+          );
+        },
       ),
     );
   }
@@ -281,7 +385,172 @@ final class _TrialPainter extends BasicArtboardPainter {
   BearFace? _face;
   double _t = 0;
 
+  // --- Поглаживание (ТЗ act_pet, заказчик 27.09) ---------------------------
+  // `pet_face` — лицо «гладят», нарастает 0,3 с и держится, пока гладят;
+  // `pet_pass` — один проход ладони, запускается заново на каждый проход;
+  // наклон головы к пальцу — живьём, поворотом кости `e_head`; отпустили —
+  // после последнего прохода `pet_out` (досмаковал, открыл глаза, посмотрел
+  // вверх, подпрыгнул). Клипы собирает `tool/rive/rebuild_rig.py`.
+
+  /// Наибольший наклон головы к пальцу, радианы (≈ 4°).
+  static const double _maxLean = 0.07;
+
+  Animation? _petFace;
+  Animation? _petPass;
+  Animation? _petOut;
+  Component? _eHead;
+  double _headBase = 0;
+  bool _petting = false;
+  bool _releasing = false;
+  bool _passOn = false;
+  bool _outOn = false;
+  double _faceT = 0;
+  double _passT = 0;
+  double _outT = 0;
+  double _lean = 0;
+  double _leanTarget = 0;
+  double _travel = 0;
+  double? _script;
+  int _scriptPasses = 0;
+
+  /// Палец коснулся головы и повёл.
+  void petStart() {
+    _rest(_clip);
+    _clip = null;
+    _face = null;
+    _outOn = false;
+    _petting = true;
+    _releasing = false;
+    _faceT = 0;
+    _travel = 0;
+    _startPass();
+    scheduleRepaint();
+  }
+
+  /// Палец идёт: [x] — где он по голове, −1 слева … 1 справа;
+  /// [distance] — сколько прошёл, px артборда. Каждые ~60 px — новый проход.
+  void petMove(double x, double distance) {
+    if (!_petting) return;
+    _leanTarget = x.clamp(-1.0, 1.0);
+    _travel += distance;
+    if (_travel >= 60 && (!_passOn || _passT > 0.3)) {
+      _travel = 0;
+      _startPass();
+    }
+  }
+
+  /// Палец отпустили — выход после текущего прохода.
+  void petEnd() {
+    if (_petting) _releasing = true;
+  }
+
+  /// Сразу в покой (резкий мазок, другая эмоция).
+  void petCancel() {
+    _script = null;
+    _petting = false;
+    _releasing = false;
+    _passOn = false;
+    _outOn = false;
+    _petFace
+      ?..time = 0
+      ..apply(mix: 1);
+    _petPass
+      ?..time = 0
+      ..apply(mix: 1);
+    final out = _petOut;
+    if (out != null) {
+      out
+        ..time = out.duration
+        ..apply(mix: 1);
+    }
+  }
+
+  /// Кнопка «Гладим»: «рука» ходит по голове влево-вправо 2,4 с, проход —
+  /// раз в 0,55 с, потом отпускает.
+  void scriptedPet() {
+    petStart();
+    _script = 0;
+    _scriptPasses = 0;
+  }
+
+  void _startPass() {
+    _passOn = true;
+    _passT = 0;
+  }
+
+  void _advancePet(double dt) {
+    final script = _script;
+    if (script != null) {
+      final t = script + dt;
+      _script = t;
+      _leanTarget = math.sin(2 * math.pi * t / 1.1);
+      final n = (t / 0.55).floor();
+      if (n > _scriptPasses) {
+        _scriptPasses = n;
+        _startPass();
+      }
+      if (t >= 2.4) {
+        _script = null;
+        petEnd();
+      }
+    }
+    if (_petting) {
+      _faceT += dt;
+      final face = _petFace;
+      if (face != null) {
+        face
+          ..time = math.min(_faceT, face.duration)
+          ..apply(mix: 1);
+      }
+    }
+    if (_passOn) {
+      _passT += dt;
+      final pass = _petPass;
+      if (pass == null || _passT >= pass.duration) {
+        _passOn = false;
+        pass
+          ?..time = 0
+          ..apply(mix: 1);
+      } else {
+        pass
+          ..time = _passT
+          ..apply(mix: 1);
+      }
+    }
+    if (_petting && _releasing && !_passOn) {
+      _petting = false;
+      _releasing = false;
+      _outOn = true;
+      _outT = 0;
+    }
+    if (_outOn) {
+      _outT += dt;
+      final out = _petOut;
+      if (out == null || _outT >= out.duration) {
+        _outOn = false;
+        if (out != null) {
+          out
+            ..time = out.duration
+            ..apply(mix: 1);
+        }
+      } else {
+        out
+          ..time = _outT
+          ..apply(mix: 1);
+      }
+    }
+    // голова тянется к пальцу с запаздыванием ~0,1 с
+    final target = _petting ? _leanTarget * _maxLean : 0.0;
+    _lean += (target - _lean) * math.min(1.0, dt / 0.12);
+    final head = _eHead;
+    if (head != null && (_petting || _lean.abs() > 1e-4)) {
+      if (!_petting && _lean.abs() <= 2e-4) _lean = 0;
+      head.rotation = _headBase + _lean;
+    }
+  }
+
   void play(BearFace face) {
+    petCancel();
     // Прежняя эмоция ещё идёт — вернуть её в покой, иначе её лицо и поза
     // остаются поверх новой (заказчик 26.09: после каждой кнопки мишка
     // должен возвращаться в обычное состояние).
@@ -327,6 +596,14 @@ final class _TrialPainter extends BasicArtboardPainter {
       final animation = artboard.animationNamed(name);
       if (animation != null) _clips[name] = animation;
     }
+    _petFace?.dispose();
+    _petPass?.dispose();
+    _petOut?.dispose();
+    _petFace = artboard.animationNamed('pet_face');
+    _petPass = artboard.animationNamed('pet_pass');
+    _petOut = artboard.animationNamed('pet_out');
+    _eHead = artboard.component('e_head');
+    _headBase = _eHead?.rotation ?? 0;
     notifyListeners();
   }
 
@@ -365,6 +642,7 @@ final class _TrialPainter extends BasicArtboardPainter {
         faces.apply(mix: Curves.easeInOutCubic.transform(edge.clamp(0.0, 1.0)));
       }
     }
+    _advancePet(elapsedSeconds);
     super.advance(0);
     return true;
   }
@@ -373,6 +651,9 @@ final class _TrialPainter extends BasicArtboardPainter {
   void dispose() {
     _idle?.dispose();
     _faces?.dispose();
+    _petFace?.dispose();
+    _petPass?.dispose();
+    _petOut?.dispose();
     for (final clip in _clips.values) {
       clip.dispose();
     }

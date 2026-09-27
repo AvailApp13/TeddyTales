@@ -85,7 +85,7 @@ flutter build web --release --base-href /TeddyTales/ --dart-define=RIVE_NATIVE_W
   почте вернулась по просьбе заказчика) — снимать уже нечего.
 - На стартовой странице спрятаны Alipay, QQ, WeChat (заказчик 24.09):
   `_SignInMethod.shown` в `lib/screens/sign_in_screen.dart`.
-- Проверочная панель эмоций в игровой — кнопки 1–10 справа с подписями
+- Проверочная панель эмоций в игровой — кнопки 1–13 справа с подписями
   (заказчик 26.09): `EmotionTestPanel` в `lib/bear/rive_bear_trial.dart`,
   ставится в `lib/screens/home_screen.dart`. **Каждая новая эмоция —
   сразу новой кнопкой в этой панели** (заказчик 27.09: «чтобы я мог нажать

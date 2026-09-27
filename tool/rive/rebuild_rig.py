@@ -1233,11 +1233,153 @@ def emo_upset():
     return e.build()
 
 
+# --- Поглаживание (ТЗ act_pet / act_pet_s45_b; заказчик 27.09) ----------------
+# Как в Talking Tom: мишка откликается на палец, пока его гладят. Лицо
+# «гладят» (`pet_face`) нарастает за 0,3 с и держится; каждый проход руки —
+# `pet_pass` (голова проседает под ладонью и тянется обратно, уши
+# прижимаются и пружинят с перелётом, тело подаётся к руке); наклон головы к
+# пальцу приложение ставит само, живьём (кость `e_head`). Отпустили — после
+# последнего прохода `pet_out`: досмаковал 0,2 с, открыл глаза, посмотрел
+# вверх, дёрнул ушком, подпрыгнул. Животик — `act_pet_b`, щекотно; резкий
+# мазок — `pet_startle`, вздрогнул.
+PET_HOLD = 18      # кадр, где лицо «гладят» полное
+
+
+def _pet_face_emo(e, at=None):
+    """Лицо «гладят»: блаженный прищур снизу, улыбка, брови расслаблены.
+    at — кадры ключей (по умолчанию нарастание к PET_HOLD)."""
+    f = at or PET_HOLD
+    e.eyes([(f, 0.8, EO)] if at is None else at_pts(at, 0.8))
+    e.pair('lid', Emo.X, [(f, 16, EO)] if at is None else at_pts(at, 16))
+    e.pair('eye', Emo.SX, [(f, -0.08, EO)] if at is None else at_pts(at, -0.08))
+    e.pair('cheek', Emo.X, [(f, 7, EO)] if at is None else at_pts(at, 7))
+    e.pair('cheek', Emo.SY, [(f, 0.07, EO)] if at is None else at_pts(at, 0.07))
+    e.pair('brow', Emo.X, [(f, 2, EO)] if at is None else at_pts(at, 2))
+    e.pair('mouth', Emo.X, [(f, 6, EO)] if at is None else at_pts(at, 6))
+
+
+def at_pts(at, v):
+    """Выход: держит значение до at[0], к at[1] — покой."""
+    return [(at[0], v), (at[1], 0.0, EI)]
+
+
+def _drop_end(dur, ch):
+    """Без возврата в покой в конце — клип держит последнюю позу."""
+    for frames in ch.values():
+        if len(frames) > 2 and frames[-1][0] == dur - 2:
+            frames.pop()
+    return dur, ch
+
+
+def pet_face():
+    e = Emo(40)
+    _pet_face_emo(e)
+    e.mouth_open([(4, 0.1, 0.0), (PET_HOLD, 1.15, 1.2, EO)], kind='content')
+    return _drop_end(*e.build())
+
+
+def pet_pass():
+    """Один проход ладони, 0,53 с; начинается и кончается покоем — можно
+    запускать заново на каждый проход."""
+    e = Emo(32)
+    # голова проседает под ладонью (сжалась по высоте, чуть шире) и тянется обратно
+    e.track('head', Emo.SX, [(5, -0.035, EO), (14, 0.012), (24, 0.0)])
+    e.track('head', Emo.SY, [(5, 0.012, EO), (14, -0.004), (24, 0.0)])
+    e.track('face', Emo.X, [(5, -2.0, EO), (14, 0.6), (24, 0.0)])
+    # уши прижимаются под рукой с запаздыванием и пружинят с перелётом
+    e.track('ear_l1', Emo.R, [(9, 0.16, EO), (19, -0.05), (28, 0.0)])
+    e.track('ear_r1', Emo.R, [(9, -0.16, EO), (19, 0.05), (28, 0.0)])
+    e.track('ear_l2', Emo.R, [(12, 0.1, EO), (22, -0.04), (29, 0.0)])
+    e.track('ear_r2', Emo.R, [(12, -0.1, EO), (22, 0.04), (29, 0.0)])
+    # тело подаётся к руке, грудь чуть наполняется, кончик капюшона следом
+    e.track('hips', Emo.Y, [(3, 0.0), (10, -2.0, EO), (22, 0.0)])
+    e.track('breath', Emo.SY, [(10, 0.02), (24, 0.0)])
+    e.track('hood2', Emo.R, [(8, 0.06), (18, -0.03), (28, 0.0)])
+    return e.build()
+
+
+def pet_out():
+    """Отпустили: держит лицо 0,2 с, открывает глаза, смотрит вверх, дёргает
+    ушком, подпрыгивает; начинается ровно с лица `pet_face`."""
+    e = Emo(60)
+    _pet_face_emo(e, at=(12, 34))
+    e.mouth_open([(12, 1.15, 1.2), (40, 0.1, 0.0)], kind='content')
+    e.track('face', Emo.X, [(12, 0.0), (30, 3.0, EO), (50, 0.0)])
+    e.track('ear_r1', Emo.R, [(30, 0.0), (34, -0.1), (40, 0.04), (46, 0.0)])
+    e.track('ear_r2', Emo.R, [(33, 0.0), (37, -0.08), (43, 0.03), (49, 0.0)])
+    e.track('hips', Emo.Y, [(30, 0.0), (38, -3.0, EO), (48, 0.5), (56, 0.0)])
+    e.track('hood2', Emo.R, [(38, -0.04), (48, 0.02), (56, 0.0)])
+    dur, ch = e.build()
+    _, held = pet_face()
+    missing = set(held) - set(ch)
+    assert not missing, missing
+    for k, frames in ch.items():
+        if k in held:
+            frames[0] = (0, held[k][-1][1], frames[0][2])
+    return dur, ch
+
+
+def act_pet_b():
+    """Щекотно (животик), 2,5 с: зажмурился от смеха, хихикает — рот
+    приоткрывается толчками; ёжится — плечи и грудь сжимаются, голова
+    втягивается, тело изгибается влево-вправо; уши подпрыгивают. Руки не
+    поднимает."""
+    e = Emo(150)
+    g = [20, 44, 68, 92]                         # «хи»: пик через 8 кадров, спад через 12
+    mo = [(6, 0.1, 0.0), (16, 0.7, 0.3, EO)]
+    for a in g:
+        mo += [(a + 8, 0.85, 0.55), (a + 20, 0.75, 0.3)]
+    mo += [(128, 0.7, 0.25), (146, 0.1, 0.0)]
+    e.mouth_open(mo, kind='open')
+    e.eyes([(4, 0.0), (14, 0.7, EO), (128, 0.7), (146, 0.0)])
+    e.pair('lid', Emo.X, [(14, 14, EO), (128, 14), (146, 0)])
+    e.pair('cheek', Emo.X, [(14, 6, EO)] + [p for a in g for p in ((a + 8, 7.5), (a + 20, 6))] + [(128, 6), (146, 0)])
+    e.pair('mouth', Emo.X, [(14, 6, EO), (128, 6), (146, 0)])
+    e.pair('brow', Emo.X, [(14, 1.5), (128, 1.5), (146, 0)])
+    # ёжится: голова втянута, грудь сжата, тело изгибается влево-вправо
+    side = []
+    for i, a in enumerate(g):
+        k = 1 if i % 2 == 0 else -1
+        side += [(a + 8, k), (a + 20, 0.3 * k)]
+    e.track('face', Emo.X, [(12, -2.5, EO), (128, -2.2), (146, 0)])
+    e.track('breath', Emo.SY, [(12, -0.03, EO)] + [(a + 8, -0.045) for a in g] + [(128, -0.03), (146, 0)])
+    e.track('chest', Emo.R, [(f, 0.03 * k) for f, k in side] + [(140, 0)])
+    e.track('hips', Emo.X, [(f, 3.0 * k) for f, k in side] + [(140, 0)])
+    e.track('hips', Emo.Y, [(12, 1.5, EO), (128, 1.5), (146, 0)])
+    e.track('head', Emo.R, [(f + 3, -0.03 * k) for f, k in side] + [(140, 0)])
+    e.track('ear_l1', Emo.R, [p for a in g for p in ((a + 11, -0.08), (a + 22, 0.02))] + [(140, 0)])
+    e.track('ear_r1', Emo.R, [p for a in g for p in ((a + 11, 0.08), (a + 22, -0.02))] + [(140, 0)])
+    e.track('hood2', Emo.R, [(f + 6, -0.05 * k) for f, k in side] + [(142, 0)])
+    return e.build()
+
+
+def pet_startle():
+    """Резкий мазок, 0,7 с: вздрогнул — глаза шире, брови и уши вверх,
+    голова назад, ротик «о»; быстро (0,08 с), потом мягко в покой."""
+    e = Emo(42)
+    e.eyes([(5, 0.12, EO), (16, 0.07), (36, 0.0)], lid='wide')
+    e.pair('brow', Emo.X, [(5, 3.0, EO), (16, 2.0), (36, 0)])
+    e.track('ear_l1', Emo.R, [(5, -0.1, EO), (16, -0.06), (36, 0)])
+    e.track('ear_r1', Emo.R, [(5, 0.1, EO), (16, 0.06), (36, 0)])
+    e.track('face', Emo.X, [(5, 3.0, EO), (16, 2.0), (36, 0)])
+    e.track('hips', Emo.Y, [(5, -3.0, EO), (14, 0.8), (26, 0)])
+    e.track('breath', Emo.SY, [(5, 0.04, EO), (20, 0.01), (36, 0)])
+    _, top, bot = mouth.rows('yawn')
+    mo = [(3, 0.1, 0.0), (7, 0.55, 0.28, EO), (18, 0.5, 0.2), (34, 0.1, 0.0)]
+    e.mouth_open(mo, kind='yawn')
+    e.track('mouth_yawn', Emo.X, [(1, top - 500.0), (40, top - 500.0)])
+    e.track('jaw_yawn', Emo.Y, [(p[0], 0.8 * (bot - top) * p[2], p[3] if len(p) > 3 else EI) for p in mo])
+    e.track('hood2', Emo.R, [(8, 0.05), (18, -0.02), (30, 0)])
+    return e.build()
+
+
 EMOTION_ANIMS = {
     'emo_smile': emo_smile, 'emo_laugh': emo_laugh, 'emo_surprised': emo_surprised,
     'emo_sad': emo_sad, 'emo_chew': emo_chew, 'emo_lick': emo_lick,
     'emo_yawn': emo_yawn, 'emo_sleepy': emo_sleepy, 'emo_upset': emo_upset,
     'emo_love': emo_love,
+    'pet_face': pet_face, 'pet_pass': pet_pass, 'pet_out': pet_out,
+    'act_pet_b': act_pet_b, 'pet_startle': pet_startle,
 }
 
 
