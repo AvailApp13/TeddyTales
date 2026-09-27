@@ -89,8 +89,6 @@ flutter build web --release --base-href /TeddyTales/ --dart-define=RIVE_NATIVE_W
   (заказчик 26.09): `EmotionTestPanel` в `lib/bear/rive_bear_trial.dart`,
   ставится в `lib/screens/home_screen.dart`. Перед публикацией — убрать;
   касание мишки тогда вернуть к короткому кругу эмоций (`BearFace.taps`).
-  Там же кнопка 10 «Руки 30/65/90°» (27.09): `BearFace.arms` и анимация
-  `test_arms` в `tool/rive/rebuild_rig.py` — убрать вместе с панелью.
 
 ## Мишка: мимика должна быть плавной
 
