@@ -50,7 +50,18 @@ enum BearFace {
   tickle(4.4, 2.5),
 
   /// Резкий мазок — вздрогнул (27.09).
-  startle(7.7, 0.7);
+  startle(7.7, 0.7),
+
+  /// Покой с настроением (ТЗ idle_happy…idle_dirty, 27.09): кнопка
+  /// включает настроение, оно держится до другой кнопки настроения.
+  /// ⚠ Пока только кнопками — по показателям включить позже (заказчик
+  /// 27.09, вариант «Б»).
+  moodHappy(0, 0),
+  moodSad(0, 0),
+  moodHungry(0, 0),
+  moodSleepy(0, 0),
+  moodDirty(0, 0),
+  moodNormal(0, 0);
 
   const BearFace(this.frame, this.hold);
 
@@ -76,10 +87,30 @@ enum BearFace {
     pet => null,
     tickle => 'act_pet_b',
     startle => 'pet_startle',
+    moodHappy ||
+    moodSad ||
+    moodHungry ||
+    moodSleepy ||
+    moodDirty ||
+    moodNormal => null,
+  };
+
+  /// Петля настроения в файле, если это кнопка настроения.
+  String? get mood => switch (this) {
+    moodHappy => 'mood_happy',
+    moodSad => 'mood_sad',
+    moodHungry => 'mood_hungry',
+    moodSleepy => 'mood_sleepy',
+    moodDirty => 'mood_dirty',
+    moodNormal => 'mood_normal',
+    _ => null,
   };
 
   /// Касания по очереди — все эмоции, для проверки (заказчик 26.09).
-  static const List<BearFace> taps = values;
+  static final List<BearFace> taps = [
+    for (final face in values)
+      if (face.mood == null) face,
+  ];
 
   /// Подпись на проверочной панели ([EmotionTestPanel]).
   String get label => switch (this) {
@@ -96,6 +127,12 @@ enum BearFace {
     pet => 'Гладим',
     tickle => 'Щекотка',
     startle => 'Вздрогнул',
+    moodHappy => 'Покой: радость',
+    moodSad => 'Покой: грусть',
+    moodHungry => 'Покой: голод',
+    moodSleepy => 'Покой: сон',
+    moodDirty => 'Покой: грязнуля',
+    moodNormal => 'Покой: обычный',
   };
 
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
@@ -112,7 +149,7 @@ enum BearFace {
     sleepy => const BodyPose(tilt: 3, stretch: -0.025, lift: -0.006),
     upset => const BodyPose(stretch: -0.04, lift: -0.004),
     tenderness => const BodyPose(tilt: 3.5, stretch: 0.02, lift: 0.01),
-    pet || tickle || startle => const BodyPose(),
+    _ => const BodyPose(),
   };
 }
 
@@ -168,6 +205,12 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   /// Эмоция целиком: лицо из файла и поза корпуса.
   void _react(BearFace face) {
+    final mood = face.mood;
+    if (mood != null) {
+      _painter.setMood(mood);
+      _bodyFace = null;
+      return;
+    }
     if (face == BearFace.pet) {
       _painter.scriptedPet();
       _bodyFace = null;
@@ -410,7 +453,6 @@ final class _TrialPainter extends BasicArtboardPainter {
   Animation? _petPass;
   Animation? _petOut;
   Component? _eHead;
-  double _headBase = 0;
   bool _petting = false;
   bool _releasing = false;
   bool _outOn = false;
@@ -574,7 +616,61 @@ final class _TrialPainter extends BasicArtboardPainter {
         _lean = 0;
         _leanV = 0;
       }
-      head.rotation = _headBase + _lean;
+      // поверх того, что поставили петля настроения и клипы в этом кадре
+      // (петля каждый кадр задаёт поворот заново — прибавка не копится)
+      head.rotation = head.rotation + _lean;
+    }
+  }
+
+  // --- Покой с настроением (ТЗ idle_*; заказчик 27.09) ----------------------
+  // Петля настроения `mood_*` (12 с) ложится на `idle_life` и крутится всё
+  // время; смена настроения — плавное перетекание за 1,5 с. Все петли
+  // ключуют один набор каналов, поэтому «старая с силой 1, новая с силой
+  // w» даёт ровную смесь. Темп дыхания — скорость `idle_life` (ТЗ §5.10).
+  static const Map<String, double> _moodSpeed = {
+    'mood_happy': 1.15,
+    'mood_sad': 0.8,
+    'mood_sleepy': 0.75,
+  };
+  final Map<String, Animation> _moods = {};
+  String _mood = 'mood_normal';
+  String _moodPrev = 'mood_normal';
+  double _moodW = 1;
+  double _moodT = 0;
+
+  void setMood(String name) {
+    if (name == _mood) return;
+    // перетекание из текущей смеси: прежним считаем то, что сейчас сильнее
+    _moodPrev = _moodW >= 0.5 ? _mood : _moodPrev;
+    _mood = name;
+    _moodW = 0;
+    scheduleRepaint();
+  }
+
+  double _idleSpeed() {
+    final a = _moodSpeed[_moodPrev] ?? 1.0;
+    final b = _moodSpeed[_mood] ?? 1.0;
+    return a + (b - a) * _moodW;
+  }
+
+  void _advanceMood(double dt) {
+    final cur = _moods[_mood];
+    if (cur == null) return;
+    _moodW = math.min(1.0, _moodW + dt / 1.5);
+    _moodT += dt;
+    final w = Curves.easeInOut.transform(_moodW);
+    final prev = _moods[_moodPrev];
+    if (prev != null && _moodW < 1) {
+      prev
+        ..time = _moodT % prev.duration
+        ..apply(mix: 1);
+      cur
+        ..time = _moodT % cur.duration
+        ..apply(mix: w);
+    } else {
+      cur
+        ..time = _moodT % cur.duration
+        ..apply(mix: 1);
     }
   }
 
@@ -631,14 +727,29 @@ final class _TrialPainter extends BasicArtboardPainter {
     _petFace = artboard.animationNamed('pet_face');
     _petPass = artboard.animationNamed('pet_pass');
     _petOut = artboard.animationNamed('pet_out');
+    for (final clip in _moods.values) {
+      clip.dispose();
+    }
+    _moods.clear();
+    for (final name in const [
+      'mood_normal',
+      'mood_happy',
+      'mood_sad',
+      'mood_hungry',
+      'mood_sleepy',
+      'mood_dirty',
+    ]) {
+      final animation = artboard.animationNamed(name);
+      if (animation != null) _moods[name] = animation;
+    }
     _eHead = artboard.component('e_head');
-    _headBase = _eHead?.rotation ?? 0;
     notifyListeners();
   }
 
   @override
   bool advance(double elapsedSeconds) {
-    _idle?.advanceAndApply(elapsedSeconds);
+    _idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
+    _advanceMood(elapsedSeconds);
     final clip = _clip;
     if (clip != null) {
       // Своя анимация поверх покоя; края смешиваются за 0,15 с, чтобы
@@ -683,6 +794,9 @@ final class _TrialPainter extends BasicArtboardPainter {
     _petFace?.dispose();
     _petPass?.dispose();
     _petOut?.dispose();
+    for (final clip in _moods.values) {
+      clip.dispose();
+    }
     for (final clip in _clips.values) {
       clip.dispose();
     }
@@ -736,7 +850,7 @@ class _EmotionTestPanelState extends State<EmotionTestPanel> {
       children: [
         for (final (i, face) in BearFace.values.indexed)
           Padding(
-            padding: const EdgeInsets.only(bottom: 5),
+            padding: const EdgeInsets.only(bottom: 3),
             child: _EmotionButton(
               number: i + 1,
               face: face,
@@ -770,7 +884,7 @@ class _EmotionButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        height: 26,
+        height: 22,
         padding: const EdgeInsets.only(left: 3, right: 9),
         decoration: BoxDecoration(
           color: selected

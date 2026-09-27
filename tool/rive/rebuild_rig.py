@@ -1375,6 +1375,220 @@ def pet_startle():
     return e.build()
 
 
+# --- Покой с настроением (ТЗ idle_happy/sad/hungry/sleepy/dirty; 27.09) -----
+# Слой поверх `idle_life` (дыхание, моргание, осмотр остаются): петля 12 с,
+# в ней поза, лицо и 1–2 маленьких действия. Все каналы — гладкие
+# периодические функции времени (ключи через 6 кадров, линейно), f(0) =
+# f(конец) — петля без шва. Все петли ключуют одинаковый набор каналов (где
+# канал не нужен — покой), поэтому приложение смешивает любые две петли
+# без скачков. Темп дыхания — скорость `idle_life` в приложении (ТЗ §5.10).
+MOOD_T = 720
+MOOD_STEP = 6
+
+
+def _circ(t, c):
+    """Расстояние по кругу петли от кадра t до c."""
+    d = (t - c) % MOOD_T
+    return min(d, MOOD_T - d)
+
+
+def mbump(t, c, w):
+    """Плавный горб 0 → 1 → 0 шириной ±w кадров вокруг c (по кругу)."""
+    d = _circ(t, c)
+    return 0.5 * (1 + math.cos(math.pi * d / w)) if d < w else 0.0
+
+
+def mwave(t, n=1, phase=0.0):
+    return math.sin(2 * math.pi * n * t / MOOD_T + phase)
+
+
+def _mood_mouth(spec, kind, w, h):
+    """Рот настроения: ширина и высота — функции времени (как Emo.mouth_open)."""
+    sx0, sy0 = mouth.closed(kind)
+    spec[(f'mouth_{kind}', Emo.SX)] = lambda t: (sx0 + (1 - sx0) * w(t)) / sx0 - 1
+    spec[(f'mouth_{kind}', Emo.SY)] = lambda t: (sy0 + (1 - sy0) * h(t)) / sy0 - 1
+    spec[(f'mouth_{kind}_img', Emo.OP)] = lambda t: min(1.0, max(0.0, h(t)) / 0.1)
+    spec.setdefault('_mouth_h', []).append(h)
+    if kind in mouth.JAW:
+        _, top, bot = mouth.rows(kind)
+        k = 0.8 if kind == 'yawn' else 1.0
+        spec[(f'jaw_{kind}', Emo.Y)] = lambda t: k * (bot - top) * h(t)
+        spec[(f'mouth_{kind}', Emo.X)] = lambda t: top - 500.0
+
+
+def _mood_eyes(spec, low, top):
+    """Бусины: low — нижнее веко вверх (улыбка), top — верхнее вниз."""
+    for side in ('l', 'r'):
+        spec[(f'bead_{side}', Emo.SY)] = lambda t: -(low(t) + top(t))
+        spec[(f'bead_{side}', Emo.Y)] = lambda t: BEAD_H * (top(t) - low(t))
+
+
+def _pair(spec, name, key, fn, mirror=False):
+    spec[(f'{name}_l', key)] = fn
+    spec[(f'{name}_r', key)] = (lambda t: -fn(t)) if mirror else fn
+
+
+def mood_happy():
+    """Радость: голова выше, уши торчком, тело легче; лёгкая сомкнутая
+    улыбка, чуть прищур; раз за петлю покачивается из стороны в сторону,
+    раз — подпрыгивает на месте."""
+    sp = {}
+    sway = lambda t: mbump(t, 330, 120) * math.sin(2 * math.pi * (t - 210) / 240)
+    hop = lambda t: mbump(t, 600, 20)
+    prep = lambda t: mbump(t, 576, 10)
+    sp[('face', Emo.X)] = lambda t: 1.5
+    sp[('head', Emo.R)] = lambda t: 0.04 * sway(t - 8)
+    sp[('hips', Emo.X)] = lambda t: 2.5 * sway(t)
+    sp[('hips', Emo.Y)] = lambda t: -1.0 - 4.0 * hop(t) + 1.5 * prep(t)
+    sp[('breath', Emo.SY)] = lambda t: 0.02 + 0.02 * hop(t - 4)
+    sp[('ear_l1', Emo.R)] = lambda t: -0.06 + 0.06 * mbump(t, 614, 14)
+    sp[('ear_r1', Emo.R)] = lambda t: 0.06 - 0.06 * mbump(t, 614, 14)
+    sp[('ear_l2', Emo.R)] = lambda t: -0.04 + 0.05 * mbump(t, 620, 14)
+    sp[('ear_r2', Emo.R)] = lambda t: 0.04 - 0.05 * mbump(t, 620, 14)
+    sp[('hood2', Emo.R)] = lambda t: -0.04 * sway(t - 20) + 0.04 * mbump(t, 616, 16)
+    _mood_eyes(sp, lambda t: 0.12, lambda t: 0.0)
+    _pair(sp, 'lid', Emo.X, lambda t: 3.0)
+    _pair(sp, 'cheek', Emo.X, lambda t: 2.0)
+    _pair(sp, 'mouth', Emo.X, lambda t: 3.0)
+    _mood_mouth(sp, 'content', lambda t: 0.85, lambda t: 0.75)
+    return sp
+
+
+def mood_sad():
+    """Грусть: голова опущена и склонена, взгляд в сторону, уши поникли,
+    плечи осели; тяжёлые верхние веки, брови домиком (слабее эмоции),
+    маленькая грустная дуга; раз за петлю тяжёлый вздох."""
+    sp = {}
+    rise = lambda t: mbump(t, 380, 50)
+    sink = lambda t: mbump(t, 460, 70)
+    sp[('face', Emo.X)] = lambda t: -4.0 - 2.0 * sink(t)
+    sp[('face', Emo.Y)] = lambda t: -1.5 - 1.0 * mbump(t, 150, 120)
+    sp[('head', Emo.R)] = lambda t: 0.04 + 0.02 * sink(t)
+    sp[('hips', Emo.Y)] = lambda t: 2.5 - 1.0 * rise(t)
+    sp[('breath', Emo.SY)] = lambda t: -0.02 + 0.05 * rise(t) - 0.02 * sink(t)
+    sp[('chest', Emo.R)] = lambda t: -0.01
+    sp[('ear_l1', Emo.R)] = lambda t: 0.12 + 0.04 * sink(t - 10)
+    sp[('ear_r1', Emo.R)] = lambda t: -0.12 - 0.04 * sink(t - 10)
+    sp[('ear_l1', Emo.SX)] = lambda t: -0.06
+    sp[('ear_r1', Emo.SX)] = lambda t: -0.06
+    sp[('ear_l2', Emo.R)] = lambda t: 0.08
+    sp[('ear_r2', Emo.R)] = lambda t: -0.08
+    sp[('hood2', Emo.R)] = lambda t: 0.05 + 0.02 * sink(t - 14)
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.28 + 0.06 * sink(t))
+    _pair(sp, 'ulid', Emo.X, lambda t: -3.0)
+    sp[('brow_l', Emo.R)] = lambda t: -0.1
+    sp[('brow_r', Emo.R)] = lambda t: 0.1
+    _pair(sp, 'brow', Emo.X, lambda t: 1.0)
+    _pair(sp, 'mouth', Emo.X, lambda t: -2.0)
+    _mood_mouth(sp, 'sad', lambda t: 0.85, lambda t: 0.65)
+    return sp
+
+
+def mood_hungry():
+    """Голод: брови с надеждой; оглядывается по сторонам (ищет еду),
+    облизывается и причмокивает, животик урчит — два мелких толчка в
+    корпусе, мишка смотрит вниз на животик. Без рук (заказчик 27.09)."""
+    sp = {}
+    look_l = lambda t: mbump(t, 120, 60)
+    look_r = lambda t: mbump(t, 290, 60)
+    smack = lambda t: 0.4 * mbump(t, 470, 22) + 0.3 * mbump(t, 520, 20)
+    rumble = lambda t: mbump(t, 632, 6) + mbump(t, 650, 6)
+    down = lambda t: mbump(t, 655, 34)
+    sp[('face', Emo.Y)] = lambda t: 6.0 * (look_r(t) - look_l(t))
+    sp[('face', Emo.X)] = lambda t: 1.5 * (look_l(t) + look_r(t)) - 2.0 * down(t)
+    sp[('head', Emo.R)] = lambda t: 0.035 * (look_r(t - 6) - look_l(t - 6)) + 0.02 * down(t)
+    sp[('hood2', Emo.R)] = lambda t: -0.04 * (look_r(t - 14) - look_l(t - 14))
+    sp[('breath', Emo.SY)] = lambda t: 0.025 * rumble(t)
+    sp[('hips', Emo.Y)] = lambda t: 0.8 * rumble(t)
+    sp[('belly', Emo.R)] = lambda t: 0.006 * (mbump(t, 632, 6) - mbump(t, 650, 6))
+    sp[('brow_l', Emo.R)] = lambda t: -0.05
+    sp[('brow_r', Emo.R)] = lambda t: 0.05
+    _pair(sp, 'brow', Emo.X, lambda t: 1.5 + 0.8 * down(t))
+    sp[('ear_l1', Emo.R)] = lambda t: -0.03
+    sp[('ear_r1', Emo.R)] = lambda t: 0.03
+    sp[('chin', Emo.X)] = lambda t: -1.5 * smack(t) / 0.4
+    sp[('muzzle', Emo.X)] = lambda t: 0.8 * (mbump(t, 470, 22) + mbump(t, 520, 20))
+    _mood_mouth(sp, 'chew', lambda t: 0.6 * min(1.0, smack(t) / 0.1), smack)
+    return sp
+
+
+def mood_sleepy():
+    """Сонный: веки наполовину закрыты, расслабленный рот; медленно
+    покачивается, голова клюёт и поднимается; один маленький зевок нижней
+    челюстью."""
+    sp = {}
+    nod = lambda t: mbump(t, 300, 70)
+    yawn = lambda t: mbump(t, 540, 60)
+    sway = lambda t: mwave(t, 2)
+    sp[('hips', Emo.X)] = lambda t: 1.5 * sway(t)
+    sp[('head', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.3) + 0.03 * nod(t)
+    sp[('face', Emo.X)] = lambda t: -1.0 - 5.0 * nod(t) + 2.0 * yawn(t)
+    sp[('hood2', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.6) + 0.04 * nod(t - 10)
+    sp[('breath', Emo.SY)] = lambda t: 0.04 * yawn(t)
+    sp[('ear_l1', Emo.R)] = lambda t: 0.06 + 0.04 * nod(t - 8)
+    sp[('ear_r1', Emo.R)] = lambda t: -0.06 - 0.04 * nod(t - 8)
+    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.45 + 0.35 * nod(t) + 0.3 * yawn(t))
+    _pair(sp, 'ulid', Emo.X, lambda t: -4.0 - 3.0 * nod(t))
+    _pair(sp, 'brow', Emo.X, lambda t: -0.8 + 2.0 * yawn(t))
+    _mood_mouth(sp, 'sleepy', lambda t: 1.0 - yawn(t), lambda t: 1.0 - yawn(t))
+    _mood_mouth(sp, 'yawn', lambda t: 0.7 * min(1.0, yawn(t) / 0.2), lambda t: 0.55 * yawn(t))
+    return sp
+
+
+def mood_dirty():
+    """Грязнуля: морщится (нос вверх, глаза щурятся, губы поджаты); раз
+    за петлю отряхивается — быстрая затухающая дрожь всем телом, уши и
+    кончик капюшона хлопают; перед этим дёргает ухом. Без рук."""
+    sp = {}
+    shake = lambda t: mbump(t, 390, 42) * math.sin(2 * math.pi * (t - 348) / 10)
+    sp[('hips', Emo.X)] = lambda t: 3.5 * shake(t)
+    sp[('head', Emo.R)] = lambda t: 0.05 * shake(t - 2)
+    sp[('breath', Emo.SX)] = lambda t: 0.015 * abs(shake(t))
+    sp[('ear_l1', Emo.R)] = lambda t: 0.12 * shake(t - 3) + 0.1 * mbump(t, 150, 8)
+    sp[('ear_r1', Emo.R)] = lambda t: -0.12 * shake(t - 3)
+    sp[('hood2', Emo.R)] = lambda t: 0.08 * shake(t - 5)
+    sp[('muzzle', Emo.X)] = lambda t: 1.0
+    _mood_eyes(sp, lambda t: 0.15, lambda t: 0.15 + 0.2 * mbump(t, 390, 40))
+    _pair(sp, 'brow', Emo.X, lambda t: -1.0)
+    _mood_mouth(sp, 'pout', lambda t: 0.6, lambda t: 0.5)
+    return sp
+
+
+MOODS = {'mood_happy': mood_happy, 'mood_sad': mood_sad, 'mood_hungry': mood_hungry,
+         'mood_sleepy': mood_sleepy, 'mood_dirty': mood_dirty}
+
+
+def _mood_base(name, key):
+    if name.startswith('mouth_') and name.endswith('_img'):
+        return 0.0
+    r = E_REST[name]
+    return {Emo.R: r.get('rotation', 0.0), Emo.X: r.get('x', 0.0), Emo.Y: r.get('y', 0.0)}.get(key, 1.0)
+
+
+def build_moods():
+    """{имя клипа: (длина, каналы)} — все петли с одним набором каналов;
+    `mood_normal` — покой по всем этим каналам."""
+    specs = {n: fn() for n, fn in MOODS.items()}
+    for sp in specs.values():                  # ротик покоя гаснет под ртом настроения
+        hs = sp.pop('_mouth_h', [])
+        sp[('mouth_rest_img', Emo.OP)] = (lambda hs: lambda t: -min(1.0, max([0.0] + [h(t) for h in hs]) / 0.15))(hs)
+    keys = sorted({k for sp in specs.values() for k in sp})
+    specs['mood_normal'] = {}
+    out = {}
+    frames = list(range(0, MOOD_T + 1, MOOD_STEP))
+    for n, sp in specs.items():
+        ch = {}
+        for name, key in keys:
+            base = 1.0 if name == 'mouth_rest_img' else _mood_base(name, key)
+            fn = sp.get((name, key))
+            if fn is None:
+                ch[(E_IDS[name], key)] = [(0, base, LIN), (MOOD_T, base, LIN)]
+            else:
+                ch[(E_IDS[name], key)] = [(f, base + fn(f % MOOD_T), LIN) for f in frames]
+        out[n] = (MOOD_T, ch)
+    return out
+
+
 EMOTION_ANIMS = {
     'emo_smile': emo_smile, 'emo_laugh': emo_laugh, 'emo_surprised': emo_surprised,
     'emo_sad': emo_sad, 'emo_chew': emo_chew, 'emo_lick': emo_lick,
@@ -1577,7 +1791,9 @@ def main(project):
 
     # 8. Эмоции на новых костях: emo_smile заново, остальные — новые.
     anims = {a.attrib.get('name'): a for a in root.iter('LinearAnimation')}
-    builders = EMOTION_ANIMS
+    builders = dict(EMOTION_ANIMS)
+    for n, dc in build_moods().items():       # петли настроения (loop)
+        builders[n] = (lambda dc: lambda: dc)(dc)
     for name, fn in builders.items():
         emo = anims.get(name)
         if emo is None:
