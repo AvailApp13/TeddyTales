@@ -293,9 +293,13 @@ class _TablePawsPainter extends CustomPainter {
   static const Rect boxRight = Rect.fromLTWH(667.3, 588.8, 140.4, 143.0);
 
   /// Тень: под низом лапы, на скатерти (центр и размер в мире покоя).
-  static const Offset shadowLeft = Offset(276, 728);
-  static const Offset shadowRight = Offset(750, 726);
+  static const Offset shadowLeft = Offset(262, 722);
+  static const Offset shadowRight = Offset(764, 720);
   static const Size shadowSize = Size(118, 30);
+
+  /// Насколько лапа выше конца рукава рига, px артборда: манжета
+  /// заходит на рукав, лапа ложится на кромку, а не свисает перед ней.
+  static const double seatLift = 14;
 
   /// Похлопывание: кивок кисти до 14° и лапа чуть над столом.
   static const double patTurn = 0.24;
@@ -356,20 +360,26 @@ class _TablePawsPainter extends CustomPainter {
     double bump,
     double sign,
   ) {
-    canvas.save();
-    canvas.transform(at.storage);
-    // тень лежит на столе: при хлопке лапа отрывается — тень бледнее и шире
-    final shadowRect = Rect.fromCenter(
-      center: shadow,
-      width: shadowSize.width * (1 + 0.12 * bump),
-      height: shadowSize.height * (1 + 0.12 * bump),
-    );
+    // тень лежит на столе ровно, как бы ни была повёрнута кисть: при
+    // хлопке лапа отрывается — тень бледнее и шире
+    final shadowAt =
+        MatrixUtils.transformPoint(at, shadow) +
+        // под лапу: замер по кадрам 28.09 (тень выглядывала снизу)
+        Offset(sign < 0 ? 8 : 0, -14);
     canvas.drawOval(
-      shadowRect,
+      Rect.fromCenter(
+        center: shadowAt,
+        width: shadowSize.width * (1 + 0.12 * bump),
+        height: shadowSize.height * (1 + 0.12 * bump),
+      ),
       Paint()
         ..color = Color.fromRGBO(70, 60, 40, 0.28 * (1 - 0.45 * bump))
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
     );
+    canvas.save();
+    // лапа заходит на кромку, как у прежнего мишки: чуть выше конца рукава
+    canvas.translate(0, -seatLift);
+    canvas.transform(at.storage);
     // кивок кисти: поворот вокруг запястья, кончик лапы вверх
     canvas.translate(wrist.dx, wrist.dy - patLift * bump);
     canvas.rotate(sign * patTurn * bump);

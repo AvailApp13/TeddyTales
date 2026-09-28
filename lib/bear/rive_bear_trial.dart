@@ -285,16 +285,31 @@ class TablePaws extends ChangeNotifier {
   /// Кисти уже известны — до первого кадра рисовать нечего.
   bool get ready => _ready;
 
-  static Matrix4 _delta(Mat2D m, Offset rest, double restAngle) {
+  /// Лапы лежат на столе: вдох поднимает плечи, а лапы почти стоят
+  /// (заказчик 28.09: «продолжает дышать, руки в разные стороны»). По
+  /// высоте лапа идёт за кистью на [_follow] от отклонения, середина
+  /// отклонений — медленное среднее (≈ 4 с, длиннее вдоха 3 с).
+  static const double _follow = 0.2;
+  static const double _settle = 0.004;
+  double? _baseLeft;
+  double? _baseRight;
+
+  static Matrix4 _delta(Mat2D m, Offset rest, double restAngle, double y) {
     final angle = math.atan2(m[1], m[0]);
-    return Matrix4.translationValues(m[4], m[5], 0)
+    return Matrix4.translationValues(m[4], y, 0)
       ..rotateZ(angle - restAngle)
       ..translateByDouble(-rest.dx, -rest.dy, 0, 1);
   }
 
   void _update(Mat2D l, Mat2D r) {
-    left = _delta(l, restLeft, _angleLeft);
-    right = _delta(r, restRight, _angleRight);
+    final bl = _baseLeft = _baseLeft == null
+        ? l[5]
+        : _baseLeft! + (l[5] - _baseLeft!) * _settle;
+    final br = _baseRight = _baseRight == null
+        ? r[5]
+        : _baseRight! + (r[5] - _baseRight!) * _settle;
+    left = _delta(l, restLeft, _angleLeft, bl + (l[5] - bl) * _follow);
+    right = _delta(r, restRight, _angleRight, br + (r[5] - br) * _follow);
     _ready = true;
     notifyListeners();
   }
@@ -647,13 +662,16 @@ final class _TrialPainter extends BasicArtboardPainter {
   /// Куда писать положение кистей для слоя лап на столе.
   TablePaws? paws;
 
-  // Руки на столе (кухня, заказчик 27.09): плечо чуть внутрь, нижняя
-  // половина руки укорочена вдвое — рука идёт вперёд, к зрителю, и кисть
-  // оказывается у кромки стола ближе к середине. Смещения добавляются к
-  // тому, что поставили клипы, и снимаются перед следующим кадром:
-  // покачивания рук из клипов остаются.
-  static const double _seatTurn = 0.12;
-  static const double _seatShorten = 0.5;
+  // Руки на столе (кухня, заказчик 27.09–28.09, по образцу прежнего
+  // мишка). В покое руки рига разведены «стойкой» (~37° от вертикали);
+  // за столом так казалось, что стол засунут под мышки (заказчик 28.09).
+  // Руки опущены вдоль тела почти отвесно (плечо внутрь на 0,64 рад), а
+  // нижняя часть руки укорочена до 0,6 — рука идёт вперёд, к зрителю, и
+  // кисть ложится на кромку стола прямо под плечом, кончиком вниз.
+  // Смещения прибавляются к тому, что поставили клипы, и снимаются до
+  // следующего кадра: покачивания рук из клипов остаются.
+  static const double _seatTurn = 0.64;
+  static const double _seatShorten = 0.6;
   Component? _eArmL1;
   Component? _eArmR1;
   Component? _eArmL2;
