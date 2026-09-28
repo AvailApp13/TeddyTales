@@ -36,8 +36,8 @@
 
 Codemagic → «Android → Google Play (внутренний)» → Start. Тесты →
 номер сборки = последний в Google Play + 1 → AAB → внутренний канал,
-черновиком (после первой проверки Google можно поменять `release_status`
-на `completed`).
+черновиком (`submit_as_draft: true`; после первой проверки Google можно
+поставить `false` — выпуск сразу тестировщикам).
 
 Тот же сервисный аккаунт пригодится для проверки покупок
 (`docs/store-purchases.md`, секрет `GOOGLE_SERVICE_ACCOUNT`).

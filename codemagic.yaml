@@ -130,7 +130,9 @@ workflows:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         # Пока приложение не прошло проверку Google, выпуск — черновиком.
-        release_status: draft
+        # Ключ Codemagic — submit_as_draft (release_status он не знает и
+        # бракует весь файл, вместе с iOS; 28.09).
+        submit_as_draft: true
       email:
         recipients:
           - ru.life3@gmail.com
