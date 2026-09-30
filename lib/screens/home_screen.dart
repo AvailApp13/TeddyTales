@@ -1417,7 +1417,8 @@ class _RoomScene extends StatelessWidget {
         // него самого: тап — реакция на касание, ведёт по голове — ласка,
         // по животу — щекотка (заказчик 27.09: «включи поглаживание на
         // кухне»). Рисуется он по-прежнему под местами и блюдами.
-        if (room == RoomKind.kitchen)
+        // ⚠ Пока спрятан ([_kitchenBearShown]).
+        if (room == RoomKind.kitchen && _kitchenBearShown)
           Positioned.fromRect(
             rect: frame.rect,
             child: IgnorePointer(
@@ -1709,6 +1710,11 @@ class _RoomScene extends StatelessWidget {
 
   /// Низ проверочной ленты эмоций: над лапой в правом нижнем углу.
   static const double _stripBottom = 102;
+
+  /// ⚠ Мишка на кухне спрятан (заказчик 30.09: «пока не показываем, пока
+  /// не отработаем игровую комнату»). Кухня работает как прежде — блюда,
+  /// готовка, «+35» к еде; вернуть мишку — поставить `true`.
+  static const bool _kitchenBearShown = false;
 }
 
 /// Ряд кнопок комнаты вдоль нижнего края.
