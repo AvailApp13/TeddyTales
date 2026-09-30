@@ -23,6 +23,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart' show petDisplayName, stageTitle;
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/emotion_test_strip.dart';
 import '../widgets/alarm_sheet.dart';
 import '../widgets/bedroom_scene.dart';
 import '../widgets/kitchen_cooking.dart';
@@ -1668,23 +1669,22 @@ class _RoomScene extends StatelessWidget {
               onDiaper: newborn ? onDiaper : null,
             ),
           ),
-        // ⚠ Проверочная панель эмоций — снять перед публикацией (заказчик
-        // 26.09: кнопки справа с подписями, чтобы видеть, какая где; 27.09:
-        // каждая новая эмоция — сразу новой кнопкой здесь; утверждённые
-        // прячутся — `BearFace.approved`).
+        // ⚠ Проверка показателей живого мишки — снять перед публикацией.
         if (room == RoomKind.nursery && !asleep && !furnishing)
           Positioned(
             right: 8,
             top: frame.bearTop + frame.bearHeight * 0.08,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                EmotionTestPanel(cue: faceCue),
-                // ⚠ Проверка показателей живого мишки — снять перед публикацией.
-                StatsTestPanel(controller: controller),
-              ],
-            ),
+            child: StatsTestPanel(controller: controller),
+          ),
+        // ⚠ Проверочная лента всех 33 эмоций под мишкой — снять перед
+        // публикацией (заказчик 30.09: пронумеровать, подписать, листать
+        // влево-вправо — для заказчицы). Стоит над лапой в углу.
+        if (room == RoomKind.nursery && !asleep && !furnishing)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: _stripBottom,
+            child: EmotionTestStrip(cue: faceCue),
           ),
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.
@@ -1706,6 +1706,9 @@ class _RoomScene extends StatelessWidget {
 
   /// Сколько места вдоль правого края держим свободным под лапу.
   static const double _pawSpace = 112;
+
+  /// Низ проверочной ленты эмоций: над лапой в правом нижнем углу.
+  static const double _stripBottom = 102;
 }
 
 /// Ряд кнопок комнаты вдоль нижнего края.
