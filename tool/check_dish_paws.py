@@ -36,14 +36,16 @@ CENTER_X, STEP = 0.5, 0.276
 CENTER_BOTTOM, SIDE_BOTTOM = 0.6754, 0.6043
 CENTER_WIDTH, SIDE_WIDTH = 0.209, 0.158
 LIFT_FROM, SIDE_TILT = 0.55, 0.105
-TABLE_FIT = {'porridge': 0.92, 'soup': 0.85, 'yogurt': 0.87}
+TABLE_FIT = {'porridge': 0.92, 'soup': 0.85}
 
-DISHES = ['porridge', 'soup', 'sandwich', 'fruit', 'yogurt', 'cookie',
-          'salad', 'pasta', 'omelette', 'pie', 'meat', 'veggie']
+# Ирина 28.09: йогурт → рыба, пирог → курица. «Курица с овощами» (рецепт
+# meat) — та же картинка, что готовое блюдо «Курица».
+DISHES = ['porridge', 'soup', 'sandwich', 'fruit', 'fish', 'cookie',
+          'salad', 'pasta', 'omelette', 'chicken', 'pasta_mushrooms']
 
-# Мясное и овощное блюда готовятся на кухне (вариант A, 24.09) и встают
-# на то же место, что готовые блюда, поэтому проверяются вместе с ними.
-RECIPES = {'meat', 'veggie'}
+# Паста с грибами готовится на кухне (рецепт veggie) и встаёт на то же
+# место, что готовые блюда, поэтому проверяется вместе с ними.
+RECIPES = {'pasta_mushrooms'}
 
 
 def dish_path(dish):

@@ -183,12 +183,12 @@ void main() {
       final recipe = FoodCatalog.recipeById('sandwich');
       await pump(tester, recipe);
 
-      await tester.tap(item('chocolate'));
+      await tester.tap(item('flour'));
       await tester.pump();
       expect(wrong, 1);
       await tester.pump(KitchenCooking.hop);
       await tester.pump(const Duration(milliseconds: 500));
-      expect(item('chocolate'), findsOneWidget);
+      expect(item('flour'), findsOneWidget);
       expect(filled(tester), 0);
 
       // Правильный, но не по порядку, — тоже «не то»: порядок важен.
@@ -258,13 +258,14 @@ void main() {
     ) async {
       final recipe = FoodCatalog.recipeById('cookie');
       await pump(tester, recipe);
+      // Первый шаг печенья у Ирины — масло (28.09).
       final flour = find.descendant(
         of: find.byType(KitchenCooking),
         matching: find.byWidgetPredicate(
           (w) =>
               w is Image &&
               w.image is AssetImage &&
-              (w.image as AssetImage).assetName.endsWith('/flour.webp'),
+              (w.image as AssetImage).assetName.endsWith('/butter.webp'),
         ),
       );
       final rest = tester.getRect(flour).top;

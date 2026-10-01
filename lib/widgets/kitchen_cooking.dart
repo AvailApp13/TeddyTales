@@ -455,6 +455,12 @@ class _KitchenCookingState extends State<KitchenCooking>
                     fit: BoxFit.contain,
                     alignment: Alignment.bottomCenter,
                     filterQuality: FilterQuality.medium,
+                    // ⚠ Картинки новых продуктов (рецепты Ирины, 28.09) ещё
+                    // рисуются в Higgsfield — пока на их месте значок.
+                    errorBuilder: (_, _, _) => FittedBox(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(ingredient.emoji),
+                    ),
                   ),
                 ),
               ),
