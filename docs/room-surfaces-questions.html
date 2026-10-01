@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — игровая: цвет стен и пол</title>
+<style>
+  /* Шрифт тот же, что в приложении. */
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+
+  :root {
+    --ink: #4A3B2A;
+    --ink-soft: #8A7A68;
+    --line: #E3D7C6;
+    --cream: #FBF6EE;
+    --sage: #7FA98A;
+    --sage-soft: #EAF2EC;
+    --rose: #D98C86;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 21pt;
+    font-weight: 800;
+    margin: 0 0 2mm;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 7mm 0 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 1.5pt solid var(--sage);
+    break-after: avoid;
+  }
+
+  h3 {
+    font-size: 11pt;
+    font-weight: 800;
+    margin: 5mm 0 2mm;
+    break-after: avoid;
+  }
+
+  p { margin: 0 0 2.5mm; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1mm; }
+
+  .lead {
+    font-size: 11pt;
+    color: var(--ink);
+  }
+
+  .meta {
+    font-size: 9pt;
+    color: var(--ink-soft);
+    margin-bottom: 6mm;
+  }
+
+  .note {
+    background: var(--cream);
+    border-left: 2.5pt solid var(--sage);
+    padding: 3mm 4mm;
+    margin: 0 0 4mm;
+    break-inside: avoid;
+  }
+
+  .note strong { font-weight: 800; }
+
+  .tz {
+    background: #FFFFFF;
+    border: 1pt solid var(--line);
+    border-radius: 3mm;
+    padding: 3mm 4mm;
+    font-size: 9.5pt;
+    color: var(--ink-soft);
+    margin: 0 0 4mm;
+    break-inside: avoid;
+  }
+
+  .tz b { color: var(--ink); font-weight: 800; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 4mm;
+    font-size: 9.5pt;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 800;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    color: var(--ink-soft);
+    border-bottom: 1pt solid var(--line);
+    padding: 1.5mm 2mm;
+  }
+
+  td {
+    padding: 2mm;
+    border-bottom: 0.5pt solid var(--line);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: #FCFAF6; }
+
+  td.num { color: var(--ink-soft); width: 7mm; }
+  td.fill { background: #FFFDF9 !important; }
+
+  .q {
+    break-inside: avoid;
+    margin: 0 0 3mm;
+  }
+
+  .q-title {
+    font-weight: 800;
+    margin-bottom: 1.5mm;
+  }
+
+  .q-title .n {
+    display: inline-block;
+    min-width: 8mm;
+    color: var(--sage);
+  }
+
+  .hint {
+    font-size: 9pt;
+    color: var(--ink-soft);
+    margin: 0 0 2mm 8mm;
+  }
+
+  .answer {
+    margin-left: 8mm;
+    border: 0.75pt dashed var(--line);
+    border-radius: 2mm;
+    background: #FFFDF9;
+    height: 14mm;
+  }
+
+  .answer.tall { height: 24mm; }
+  .answer.short { height: 8mm; }
+
+  .choice {
+    margin: 0 0 2mm 8mm;
+    display: flex;
+    gap: 2.5mm;
+    align-items: baseline;
+    break-inside: avoid;
+  }
+
+  .box {
+    flex: none;
+    width: 4mm;
+    height: 4mm;
+    border: 1pt solid var(--ink-soft);
+    border-radius: 1mm;
+    display: inline-block;
+    transform: translateY(0.5mm);
+  }
+
+  .choice b { font-weight: 800; }
+  .choice .why { color: var(--ink-soft); }
+
+  .cols { display: flex; gap: 6mm; }
+  .cols > * { flex: 1; }
+
+  .foot {
+    margin-top: 5mm;
+    padding-top: 3mm;
+    border-top: 1pt solid var(--line);
+    font-size: 9pt;
+    color: var(--ink-soft);
+  }
+
+  .total {
+    background: var(--sage-soft);
+    border-radius: 3mm;
+    padding: 3.5mm 4mm;
+    break-inside: avoid;
+  }
+
+  .page-break { break-before: page; }
+</style>
+
+<style>
+  .pal { display: flex; flex-wrap: wrap; gap: 3mm 2mm; margin: 0 0 4mm; }
+  .sw { width: 27mm; text-align: center; break-inside: avoid; }
+  .dot { width: 15mm; height: 15mm; border-radius: 50%; margin: 0 auto 1mm;
+         border: 0.75pt solid rgba(74,59,42,0.25); }
+  .sw .code { font-size: 8.5pt; font-weight: 800; letter-spacing: 0.2pt; }
+  .sw .nm { font-size: 8.5pt; color: var(--ink-soft); line-height: 1.25; }
+  .sw .pick { margin-top: 1mm; font-size: 8pt; color: var(--ink-soft); }
+  .sw .pick .box { width: 3.5mm; height: 3.5mm; }
+  .fixed { background: var(--sage-soft); border-radius: 3mm; padding: 3mm 4mm;
+           margin: 0 0 4mm; break-inside: avoid; }
+  .search { font-size: 9.5pt; margin: 0 0 3mm 8mm; }
+  .search code { background: var(--cream); border: 0.5pt solid var(--line);
+                 border-radius: 1.5mm; padding: 0.3mm 1.5mm; font-family: inherit;
+                 font-weight: 700; white-space: nowrap; }
+  td.slot { height: 10mm; background: #FFFDF9 !important; }
+</style>
+
+</head>
+<body>
+
+<h1>Игровая: цвет стен и пол</h1>
+<div class="meta">Вопросы для Ирины · TeddyTales · 1 октября 2026 · от команды разработки</div>
+
+<p class="lead">
+  Ирина, добрый день! В игровой комнате можно будет менять стены и пол.
+  Ниже наше предложение по количеству и цветам. Отметьте галочкой, что
+  подходит, а где хочется иначе — впишите свой вариант или код цвета.
+  Обои и покрытия пола удобнее всего показать примерами: пришлите
+  скриншоты, которые вам нравятся, мы сделаем в стиле игры.
+</p>
+
+<div class="fixed">
+  <b>Сколько вариантов.</b> Стены — <b>10</b>: 4 бесплатно (нынешний цвет,
+  ещё два цвета и одни обои) и 6 за покупку. Пол — <b>10</b>: 4 бесплатно
+  (нынешний, ещё два тона и один особый, например ламинат) и 6 за покупку.<br>
+  <b>Не меняются:</b> плинтус, шторы и окно — они остаются как сейчас во всех вариантах.
+</div>
+
+<div class="note">
+  <strong>Почему пастель.</strong> Малыш переходит из комнаты в комнату:
+  кухня — шалфей и сливки, ванная — голубой и бежевый, спальня — ночные
+  синие тона, игровая — пудрово-розовая. Цвета ниже подобраны мягкими, чтобы
+  при переходе не было резкого скачка. Коды — в формате, который понимает
+  любой дизайнер (#RRGGBB).
+</div>
+
+<h2>А. Стены — 10 вариантов</h2>
+
+<h3>Палитра цветов стен</h3>
+<div class="pal">
+<div class="sw"><div class="dot" style="background:#E2A393"></div>
+<div class="code">С1 · #E2A393</div><div class="nm">Пудрово-розовая<br>(сейчас в игровой)</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#B9C9A8"></div>
+<div class="code">С2 · #B9C9A8</div><div class="nm">Шалфей<br>(как на кухне)</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#B8CCE0"></div>
+<div class="code">С3 · #B8CCE0</div><div class="nm">Небесная<br>(как в ванной)</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#F0C4A8"></div>
+<div class="code">С4 · #F0C4A8</div><div class="nm">Персиковая</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#EFE0C8"></div>
+<div class="code">С5 · #EFE0C8</div><div class="nm">Сливочная</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#CBBFDD"></div>
+<div class="code">С6 · #CBBFDD</div><div class="nm">Лавандовая</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#BFDCCF"></div>
+<div class="code">С7 · #BFDCCF</div><div class="nm">Мятная</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#F2D3D7"></div>
+<div class="code">С8 · #F2D3D7</div><div class="nm">Нежно-розовая</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#E3CBA6"></div>
+<div class="code">С9 · #E3CBA6</div><div class="nm">Песочная</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#C7D6E4"></div>
+<div class="code">С10 · #C7D6E4</div><div class="nm">Голубая дымка</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#D9B8C4"></div>
+<div class="code">С11 · #D9B8C4</div><div class="nm">Пыльная роза</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#F3E5B8"></div>
+<div class="code">С12 · #F3E5B8</div><div class="nm">Ванильная</div>
+<div class="pick"><span class="box"></span> берём</div></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А1.</span> Бесплатно: нынешний цвет и ещё два</div>
+  <div class="hint">С1 остаётся как есть — с него малыш начинает. Выберите ещё
+  два цвета из палитры (отметьте «берём») или впишите свои коды.</div>
+  <table>
+    <tr><th class="num">№</th><th>Цвет</th><th style="width:60mm">Номер из палитры или свой код</th></tr>
+    <tr><td class="num">1</td><td>Пудрово-розовая С1 · #E2A393 — сейчас в игровой</td><td>остаётся</td></tr>
+    <tr><td class="num">2</td><td>Бесплатный цвет</td><td class="slot"></td></tr>
+    <tr><td class="num">3</td><td>Бесплатный цвет</td><td class="slot"></td></tr>
+  </table>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А2.</span> Бесплатно: одни обои</div>
+  <div class="hint">Пришлите скриншот обоев, которые нравятся: узор, цвет фона,
+  крупный или мелкий рисунок. Если в голове есть только описание — напишите
+  словами.</div>
+  <div class="choice"><span class="box"></span><span><b>Пришлю скриншот</b></span></div>
+  <div class="choice"><span class="box"></span><span><b>Описание:</b></span></div>
+  <div class="answer short"></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А3.</span> За покупку: 6 вариантов</div>
+  <div class="hint">Каждый вариант — цвет из палитры (или свой код) либо
+  обои по вашему скриншоту. Сочетание любое: например, 3 цвета и 3 обоев.</div>
+  <table>
+    <tr><th class="num">№</th><th style="width:28mm">Цвет или обои</th><th>Номер из палитры, код или «скриншот №…»</th><th style="width:30mm">Цена</th></tr>
+    <tr><td class="num">5</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num">6</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num">7</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num">8</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num">9</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num">10</td><td style="white-space:nowrap"><span class="box"></span> цвет<br><span class="box"></span> обои</td><td class="slot"></td><td class="slot"></td></tr>
+  </table>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А4.</span> Где посмотреть обои</div>
+  <div class="hint">В Pinterest хорошо ищется по таким словам — можно
+  присылать прямо скриншоты оттуда:</div>
+  <div class="search">
+    <code>pastel nursery wallpaper</code> · <code>kids room wallpaper pattern</code> ·
+    <code>scandinavian nursery wallpaper</code> · <code>polka dot wallpaper pastel</code> ·
+    <code>star and moon nursery wallpaper</code> · <code>cloud wallpaper kids room</code> ·
+    <code>gingham wallpaper</code> · <code>striped wallpaper pastel</code> ·
+    <code>детские обои пастельные</code>
+  </div>
+</div>
+
+<h2 class="page-break">Б. Пол — 10 вариантов</h2>
+
+<h3>Палитра тонов пола</h3>
+<div class="pal">
+<div class="sw"><div class="dot" style="background:#EABA95"></div>
+<div class="code">П1 · #EABA95</div><div class="nm">Светлое дерево<br>(сейчас в игровой)</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#F1E3CD"></div>
+<div class="code">П2 · #F1E3CD</div><div class="nm">Беленый дуб</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#D9B48C"></div>
+<div class="code">П3 · #D9B48C</div><div class="nm">Медовое дерево</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#C8A27E"></div>
+<div class="code">П4 · #C8A27E</div><div class="nm">Орех светлый</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#E6D6C3"></div>
+<div class="code">П5 · #E6D6C3</div><div class="nm">Серо-бежевый дуб</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#9C7656"></div>
+<div class="code">П6 · #9C7656</div><div class="nm">Тёмный дуб</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#EBD8D2"></div>
+<div class="code">П7 · #EBD8D2</div><div class="nm">Пудровый</div>
+<div class="pick"><span class="box"></span> берём</div></div><div class="sw"><div class="dot" style="background:#DCE3D3"></div>
+<div class="code">П8 · #DCE3D3</div><div class="nm">Шалфейный</div>
+<div class="pick"><span class="box"></span> берём</div></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б1.</span> Бесплатно: нынешний пол и ещё два тона</div>
+  <div class="hint">П1 остаётся как есть. Ещё два тона — из палитры или свои
+  коды. Доски остаются теми же, меняется тон дерева.</div>
+  <table>
+    <tr><th class="num">№</th><th>Пол</th><th style="width:60mm">Номер из палитры или свой код</th></tr>
+    <tr><td class="num">1</td><td>Светлое дерево П1 · #EABA95 — сейчас в игровой</td><td>остаётся</td></tr>
+    <tr><td class="num">2</td><td>Бесплатный тон</td><td class="slot"></td></tr>
+    <tr><td class="num">3</td><td>Бесплатный тон</td><td class="slot"></td></tr>
+  </table>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б2.</span> Бесплатно: один особый пол</div>
+  <div class="hint">Что-то заметно другое, чем просто тон дерева. Отметьте или
+  пришлите пример.</div>
+  <div class="choice"><span class="box"></span><span><b>Ламинат широкой доской</b> — светлый, «дорогое дерево»</span></div>
+  <div class="choice"><span class="box"></span><span><b>Паркет ёлочкой</b></span></div>
+  <div class="choice"><span class="box"></span><span><b>Свой вариант</b> — пришлю скриншот или опишу:</span></div>
+  <div class="answer short"></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б3.</span> За покупку: 6 вариантов</div>
+  <div class="hint">Наши идеи — отметьте подходящие, остальное замените своими
+  примерами. Цвет каждого — из палитры или ваш код.</div>
+  <table>
+    <tr><th class="num"></th><th style="width:58mm">Вариант</th><th>Цвет, пример или замена</th><th style="width:26mm">Цена</th></tr>
+    <tr><td class="num"><span class="box"></span></td><td>Паркет ёлочкой</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Тёмный дуб</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Плитка «шахматка», кремовая с пудровой</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Мягкий ковролин</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Пастельные доски — каждая своего цвета</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Мягкий пол-пазл, как в детской</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Светлый мрамор</td><td class="slot"></td><td class="slot"></td></tr><tr><td class="num"><span class="box"></span></td><td>Свой вариант:</td><td class="slot"></td><td class="slot"></td></tr>
+  </table>
+  <div class="hint">Отметьте ровно шесть.</div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б4.</span> Где посмотреть полы</div>
+  <div class="search">
+    <code>herringbone floor nursery</code> · <code>light oak laminate kids room</code> ·
+    <code>pastel floor tiles checkerboard</code> · <code>nursery carpet pastel</code> ·
+    <code>foam puzzle mat nursery</code> · <code>scandinavian nursery floor</code>
+  </div>
+</div>
+
+<h2>В. Покупка</h2>
+
+<div class="q">
+  <div class="q-title"><span class="n">В1.</span> Платные стены и пол покупаются</div>
+  <div class="choice"><span class="box"></span><span><b>За монеты</b> игры</span></div>
+  <div class="choice"><span class="box"></span><span><b>За деньги</b> — в магазине приложений</span></div>
+  <div class="choice"><span class="box"></span><span><b>По-разному</b> — какие за что, отмечу в таблицах в колонке «Цена»</span></div>
+</div>
+
+<div class="total">
+  <b>Итого:</b> стены — 10 (4 бесплатно + 6 за покупку), пол — 10
+  (4 бесплатно + 6 за покупку). Плинтус, шторы и окно не меняются.
+  От вас — галочки, коды цветов и скриншоты обоев и полов, которые нравятся.
+  По ним мы сделаем варианты в стиле игры и покажем их в приложении на утверждение.
+</div>
+
+<div class="foot">
+  Если по какому-то пункту решения пока нет — так и напишите, мы поставим
+  рабочий вариант из палитры и вернёмся к нему позже.
+</div>
+
+</body>
+</html>
