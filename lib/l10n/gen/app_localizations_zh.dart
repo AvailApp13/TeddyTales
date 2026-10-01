@@ -1162,13 +1162,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recipeFruitSalad => '水果沙拉';
 
   @override
-  String get recipeMeat => '肉食料理';
+  String get recipeMeat => '鸡肉配蔬菜';
 
   @override
   String get recipeSandwich => '三明治';
 
   @override
-  String get recipeVeggie => '蔬菜料理';
+  String get recipeVeggie => '蘑菇意面';
 
   @override
   String roomItemBought(String name) {
@@ -2148,4 +2148,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bathDiaperSoon => '换尿布即将上线——等待宝宝动画';
+
+  @override
+  String get dishFish => '鱼';
+
+  @override
+  String get dishChicken => '鸡肉';
+
+  @override
+  String get dishDescFish => '柠檬蔬菜烤鱼';
+
+  @override
+  String get dishDescChicken => '配土豆和西兰花';
+
+  @override
+  String get ingredientEgg => '鸡蛋';
+
+  @override
+  String get ingredientChicken => '鸡肉';
+
+  @override
+  String get ingredientBroccoli => '西兰花';
+
+  @override
+  String get ingredientSauce => '酱汁';
+
+  @override
+  String get ingredientPasta => '意面';
+
+  @override
+  String get ingredientMushrooms => '蘑菇';
+
+  @override
+  String get ingredientSourCream => '酸奶油';
+
+  @override
+  String get ingredientMix => '搅拌';
 }

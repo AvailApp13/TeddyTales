@@ -88,12 +88,13 @@ class Recipe implements TablePlate {
   List<Ingredient> get allChoices => [...steps, ...distractors];
 
   /// Готовое блюдо на столе — того же размера и ракурса, что готовые блюда.
-  /// Печенье, сэндвич и фруктовый салат берут картинки готовых блюд;
-  /// мясного и овощного среди готовых нет, их нарисовали отдельно (24.09).
-  /// Потом их заменят картинки Ирины.
+  /// Печенье, сэндвич и фруктовый салат берут картинки готовых блюд,
+  /// «Курица с овощами» — готовое блюдо «Курица» (Ирина 28.09); пасты с
+  /// грибами среди готовых нет — своя картинка.
   @override
   String get image => switch (id) {
-    'meat' || 'veggie' => 'assets/rooms/kitchen/recipes/$id.webp',
+    'meat' => 'assets/rooms/kitchen/dishes/chicken.webp',
+    'veggie' => 'assets/rooms/kitchen/recipes/pasta_mushrooms.webp',
     'fruit_salad' => 'assets/rooms/kitchen/dishes/fruit.webp',
     _ => 'assets/rooms/kitchen/dishes/$id.webp',
   };
@@ -107,16 +108,20 @@ abstract final class FoodCatalog {
     Dish(id: 'soup', emoji: '🍲', title: 'Суп', price: 8, foodGain: 28),
     Dish(id: 'sandwich', emoji: '🥪', title: 'Сэндвич', price: 7, foodGain: 25),
     Dish(id: 'fruit', emoji: '🍓', title: 'Фрукты', price: 6, foodGain: 18),
-    Dish(id: 'yogurt', emoji: '🥛', title: 'Йогурт', price: 5, foodGain: 16),
+    // Ирина 28.09: йогурт → рыба, пирог → курица (замены, количество по
+    // КП 8.2 то же — 10). Старые id остаются на сервере для прежних сборок.
+    Dish(id: 'fish', emoji: '🐟', title: 'Рыба', price: 11, foodGain: 32),
     Dish(id: 'cookie', emoji: '🍪', title: 'Печенье', price: 5, foodGain: 12),
     Dish(id: 'salad', emoji: '🥗', title: 'Салат', price: 9, foodGain: 22),
     Dish(id: 'pasta', emoji: '🍝', title: 'Паста', price: 12, foodGain: 35),
     Dish(id: 'omelette', emoji: '🍳', title: 'Омлет', price: 10, foodGain: 30),
-    Dish(id: 'pie', emoji: '🥧', title: 'Пирог', price: 15, foodGain: 40),
+    Dish(id: 'chicken', emoji: '🍗', title: 'Курица', price: 15, foodGain: 40),
   ];
 
-  /// Ровно 5 рецептов, состав и длина из КП 8.5: печенье и сэндвич по 2–3 шага,
-  /// остальные по 4–6.
+  /// Ровно 5 рецептов (КП 8.5). Состав и порядок шагов — Ирины (ответы
+  /// 28.09). Механика — по КП 8.4: верный порядок, ошибка — подсказка и
+  /// повтор. Продукты-обманки правдоподобные, без «рыбы в печенье» (Ирина).
+  /// id `meat` и `veggie` прежние — по ним сервер считает награду.
   static const List<Recipe> recipes = <Recipe>[
     Recipe(
       id: 'cookie',
@@ -126,14 +131,15 @@ abstract final class FoodCatalog {
       reward: 8,
       foodGain: 14,
       steps: [
-        Ingredient('flour', '🌾', 'Мука'),
-        Ingredient('sugar', '🍯', 'Сахар'),
         Ingredient('butter', '🧈', 'Масло'),
+        Ingredient('sugar', '🍯', 'Сахар'),
+        Ingredient('egg', '🥚', 'Яйцо'),
+        Ingredient('flour', '🌾', 'Мука'),
       ],
       distractors: [
-        Ingredient('salt', '🧂', 'Соль'),
-        Ingredient('fish', '🐟', 'Рыба'),
-        Ingredient('pepper', '🌶', 'Перец'),
+        Ingredient('bread', '🍞', 'Хлеб'),
+        Ingredient('cheese', '🧀', 'Сыр'),
+        Ingredient('yogurt', '🥛', 'Йогурт'),
       ],
     ),
     Recipe(
@@ -149,9 +155,9 @@ abstract final class FoodCatalog {
         Ingredient('tomato', '🍅', 'Помидор'),
       ],
       distractors: [
-        Ingredient('chocolate', '🍫', 'Шоколад'),
-        Ingredient('onion', '🧅', 'Лук'),
-        Ingredient('candy', '🍬', 'Конфета'),
+        Ingredient('flour', '🌾', 'Мука'),
+        Ingredient('sugar', '🍯', 'Сахар'),
+        Ingredient('mushrooms', '🍄', 'Грибы'),
       ],
     ),
     Recipe(
@@ -164,54 +170,50 @@ abstract final class FoodCatalog {
       steps: [
         Ingredient('apple', '🍎', 'Яблоко'),
         Ingredient('banana', '🍌', 'Банан'),
-        Ingredient('orange', '🍊', 'Апельсин'),
         Ingredient('yogurt', '🥛', 'Йогурт'),
       ],
       distractors: [
-        Ingredient('salt', '🧂', 'Соль'),
-        Ingredient('pepper', '🌶', 'Перец'),
-        Ingredient('onion', '🧅', 'Лук'),
+        Ingredient('cheese', '🧀', 'Сыр'),
+        Ingredient('bread', '🍞', 'Хлеб'),
+        Ingredient('potato', '🥔', 'Картофель'),
       ],
     ),
     Recipe(
       id: 'meat',
-      emoji: '🍖',
-      title: 'Мясное блюдо',
+      emoji: '🍗',
+      title: 'Курица с овощами',
       difficulty: 3,
       reward: 20,
       foodGain: 38,
       steps: [
-        Ingredient('meat', '🍖', 'Мясо'),
-        Ingredient('onion', '🧅', 'Лук'),
-        Ingredient('carrot', '🥕', 'Морковь'),
-        Ingredient('spices', '🌿', 'Специи'),
-        Ingredient('butter', '🧈', 'Масло'),
+        Ingredient('chicken', '🍗', 'Курица'),
+        Ingredient('broccoli', '🥦', 'Брокколи'),
+        Ingredient('potato', '🥔', 'Картофель'),
+        Ingredient('sauce', '🥫', 'Соус'),
       ],
       distractors: [
+        Ingredient('flour', '🌾', 'Мука'),
         Ingredient('sugar', '🍯', 'Сахар'),
         Ingredient('banana', '🍌', 'Банан'),
-        Ingredient('chocolate', '🍫', 'Шоколад'),
       ],
     ),
     Recipe(
       id: 'veggie',
-      emoji: '🥔',
-      title: 'Овощное блюдо',
+      emoji: '🍝',
+      title: 'Паста с грибами',
       difficulty: 3,
       reward: 18,
       foodGain: 32,
       steps: [
-        Ingredient('potato', '🥔', 'Картофель'),
-        Ingredient('carrot', '🥕', 'Морковь'),
-        Ingredient('cabbage', '🥬', 'Капуста'),
-        Ingredient('greens', '🌿', 'Зелень'),
-        Ingredient('butter', '🧈', 'Масло'),
-        Ingredient('salt', '🧂', 'Соль'),
+        Ingredient('pasta', '🍝', 'Паста'),
+        Ingredient('mushrooms', '🍄', 'Грибы'),
+        Ingredient('sour_cream', '🥣', 'Сметана'),
+        Ingredient('spoon', '🥄', 'Перемешать'),
       ],
       distractors: [
-        Ingredient('chocolate', '🍫', 'Шоколад'),
-        Ingredient('honey', '🍯', 'Мёд'),
-        Ingredient('candy', '🍬', 'Конфета'),
+        Ingredient('bread', '🍞', 'Хлеб'),
+        Ingredient('apple', '🍎', 'Яблоко'),
+        Ingredient('sugar', '🍯', 'Сахар'),
       ],
     ),
   ];

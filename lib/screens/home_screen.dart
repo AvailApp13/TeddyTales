@@ -1914,7 +1914,8 @@ class _KitchenMenu extends StatelessWidget {
     required this.onToggleCook,
   });
 
-  /// Новорождённому — бутылочка первой кнопкой (КП 5). `null` — нет.
+  /// Новорождённому — бутылочка, и только она (КП 5). `null` — не
+  /// новорождённый: готовые блюда и готовка.
   final VoidCallback? onBottle;
 
   final bool dishesShown;
@@ -1939,23 +1940,28 @@ class _KitchenMenu extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
-        // Готовые блюда — прямо на стол, не в отдельный лист: нажал — блюда
-        // выехали, нажал ещё раз — убрались.
-        _Pill(
-          label: l10n.feedTabReady,
-          icon: Icons.room_service_outlined,
-          selected: dishesShown,
-          onTap: onToggleDishes,
-        ),
-        const SizedBox(width: 8),
-        // «Приготовить» — тоже прямо на стол (вариант A, заказчик 24.09):
-        // рецепты выезжают дугой, готовка идёт в самой кухне, без шторки.
-        _Pill(
-          label: l10n.feedTabCook,
-          icon: Icons.soup_kitchen_outlined,
-          selected: cookShown,
-          onTap: onToggleCook,
-        ),
+        // Новорождённого кормят только из бутылочки (ТЗ 5; заказчик 01.10:
+        // «там точно никаких рыб, брокколи — просто бутылочка»). Меню
+        // остальных стадий — ⚠ ждёт решения заказчика (docs/irina-wishes.md).
+        if (onBottle == null) ...[
+          // Готовые блюда — прямо на стол, не в отдельный лист: нажал — блюда
+          // выехали, нажал ещё раз — убрались.
+          _Pill(
+            label: l10n.feedTabReady,
+            icon: Icons.room_service_outlined,
+            selected: dishesShown,
+            onTap: onToggleDishes,
+          ),
+          const SizedBox(width: 8),
+          // «Приготовить» — тоже прямо на стол (вариант A, заказчик 24.09):
+          // рецепты выезжают дугой, готовка идёт в самой кухне, без шторки.
+          _Pill(
+            label: l10n.feedTabCook,
+            icon: Icons.soup_kitchen_outlined,
+            selected: cookShown,
+            onTap: onToggleCook,
+          ),
+        ],
       ],
     );
   }

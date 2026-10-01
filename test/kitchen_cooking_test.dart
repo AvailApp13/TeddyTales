@@ -110,7 +110,7 @@ void main() {
       }
       expect(
         FoodCatalog.recipeById('meat').image,
-        'assets/rooms/kitchen/recipes/meat.webp',
+        'assets/rooms/kitchen/dishes/chicken.webp',
       );
       expect(
         FoodCatalog.recipeById('fruit_salad').image,
@@ -274,10 +274,10 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('девять продуктов: подписи через одну ниже, ничего не '
+    testWidgets('семь продуктов: подписи через одну ниже, ничего не '
         'налезает', (tester) async {
-      final recipe = FoodCatalog.recipeById('veggie');
-      expect(recipe.allChoices, hasLength(9));
+      final recipe = FoodCatalog.recipeById('meat');
+      expect(recipe.allChoices, hasLength(7));
       await pump(tester, recipe);
 
       final boxes = [

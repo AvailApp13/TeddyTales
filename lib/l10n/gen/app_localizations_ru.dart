@@ -1246,13 +1246,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recipeFruitSalad => 'Фруктовый салат';
 
   @override
-  String get recipeMeat => 'Мясное блюдо';
+  String get recipeMeat => 'Курица с овощами';
 
   @override
   String get recipeSandwich => 'Сэндвич';
 
   @override
-  String get recipeVeggie => 'Овощное блюдо';
+  String get recipeVeggie => 'Паста с грибами';
 
   @override
   String roomItemBought(String name) {
@@ -2264,4 +2264,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get bathDiaperSoon => 'Смена подгузника — скоро: ждём анимацию малыша';
+
+  @override
+  String get dishFish => 'Рыба';
+
+  @override
+  String get dishChicken => 'Курица';
+
+  @override
+  String get dishDescFish => 'запечённая с лимоном и овощами';
+
+  @override
+  String get dishDescChicken => 'с картофелем и брокколи';
+
+  @override
+  String get ingredientEgg => 'Яйцо';
+
+  @override
+  String get ingredientChicken => 'Курица';
+
+  @override
+  String get ingredientBroccoli => 'Брокколи';
+
+  @override
+  String get ingredientSauce => 'Соус';
+
+  @override
+  String get ingredientPasta => 'Паста';
+
+  @override
+  String get ingredientMushrooms => 'Грибы';
+
+  @override
+  String get ingredientSourCream => 'Сметана';
+
+  @override
+  String get ingredientMix => 'Перемешать';
 }

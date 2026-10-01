@@ -1236,13 +1236,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeFruitSalad => 'Fruit salad';
 
   @override
-  String get recipeMeat => 'Meat dish';
+  String get recipeMeat => 'Chicken with vegetables';
 
   @override
   String get recipeSandwich => 'Sandwich';
 
   @override
-  String get recipeVeggie => 'Veggie dish';
+  String get recipeVeggie => 'Pasta with mushrooms';
 
   @override
   String roomItemBought(String name) {
@@ -2256,4 +2256,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get bathDiaperSoon =>
       'Diaper change is coming soon — waiting for the baby animation';
+
+  @override
+  String get dishFish => 'Fish';
+
+  @override
+  String get dishChicken => 'Chicken';
+
+  @override
+  String get dishDescFish => 'baked with lemon and vegetables';
+
+  @override
+  String get dishDescChicken => 'with potatoes and broccoli';
+
+  @override
+  String get ingredientEgg => 'Egg';
+
+  @override
+  String get ingredientChicken => 'Chicken';
+
+  @override
+  String get ingredientBroccoli => 'Broccoli';
+
+  @override
+  String get ingredientSauce => 'Sauce';
+
+  @override
+  String get ingredientPasta => 'Pasta';
+
+  @override
+  String get ingredientMushrooms => 'Mushrooms';
+
+  @override
+  String get ingredientSourCream => 'Sour cream';
+
+  @override
+  String get ingredientMix => 'Stir';
 }

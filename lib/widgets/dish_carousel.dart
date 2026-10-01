@@ -62,11 +62,7 @@ abstract final class DishArcGeometry {
   /// лапки. Доли подобраны по маскам с запасом 4 px кадра. Мясное и
   /// овощное блюда готовки (24.09) проверены тем же скриптом — им доля не
   /// нужна.
-  static const Map<String, double> tableFit = {
-    'porridge': 0.92,
-    'soup': 0.85,
-    'yogurt': 0.87,
-  };
+  static const Map<String, double> tableFit = {'porridge': 0.92, 'soup': 0.85};
 
   /// С какой доли пути к краю блюдо начинает подниматься. До неё оно едет
   /// по столу — ниже лапок.

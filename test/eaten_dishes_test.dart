@@ -25,7 +25,7 @@ void main() {
   test('проголодался — возвращаются все съеденные', () {
     final eaten = EatenDishes(clock: clock, returnAfter: null)
       ..eat('pasta')
-      ..eat('pie');
+      ..eat('chicken');
     var changes = 0;
     eaten.addListener(() => changes++);
     eaten.refresh(food: EatenDishes.hungryAt);

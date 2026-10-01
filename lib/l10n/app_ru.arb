@@ -740,9 +740,9 @@
   "profileZodiacLabel": "Знак зодиака",
   "recipeCookie": "Печенье",
   "recipeFruitSalad": "Фруктовый салат",
-  "recipeMeat": "Мясное блюдо",
+  "recipeMeat": "Курица с овощами",
   "recipeSandwich": "Сэндвич",
-  "recipeVeggie": "Овощное блюдо",
+  "recipeVeggie": "Паста с грибами",
   "@roomItemBought": {
     "placeholders": {
       "name": {
@@ -1355,5 +1355,23 @@
   "kitchenBottle": "Бутылочка",
   "kitchenBottleSoon": "Бутылочка с молоком — скоро: ждём анимацию малыша",
   "bathActionDiaper": "Подгузник",
-  "bathDiaperSoon": "Смена подгузника — скоро: ждём анимацию малыша"
+  "bathDiaperSoon": "Смена подгузника — скоро: ждём анимацию малыша",
+  "dishFish": "Рыба",
+  "dishChicken": "Курица",
+  "dishDescFish": "запечённая с лимоном и овощами",
+  "@dishDescFish": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "dishDescChicken": "с картофелем и брокколи",
+  "@dishDescChicken": {
+    "description": "Короткое описание блюда на табло под столом кухни (заказчик 24.09)."
+  },
+  "ingredientEgg": "Яйцо",
+  "ingredientChicken": "Курица",
+  "ingredientBroccoli": "Брокколи",
+  "ingredientSauce": "Соус",
+  "ingredientPasta": "Паста",
+  "ingredientMushrooms": "Грибы",
+  "ingredientSourCream": "Сметана",
+  "ingredientMix": "Перемешать"
 }

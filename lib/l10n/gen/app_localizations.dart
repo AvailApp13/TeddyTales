@@ -2185,7 +2185,7 @@ abstract class AppLocalizations {
   /// No description provided for @recipeMeat.
   ///
   /// In ru, this message translates to:
-  /// **'Мясное блюдо'**
+  /// **'Курица с овощами'**
   String get recipeMeat;
 
   /// No description provided for @recipeSandwich.
@@ -2197,7 +2197,7 @@ abstract class AppLocalizations {
   /// No description provided for @recipeVeggie.
   ///
   /// In ru, this message translates to:
-  /// **'Овощное блюдо'**
+  /// **'Паста с грибами'**
   String get recipeVeggie;
 
   /// No description provided for @roomItemBought.
@@ -3993,6 +3993,78 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Смена подгузника — скоро: ждём анимацию малыша'**
   String get bathDiaperSoon;
+
+  /// No description provided for @dishFish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рыба'**
+  String get dishFish;
+
+  /// No description provided for @dishChicken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Курица'**
+  String get dishChicken;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'запечённая с лимоном и овощами'**
+  String get dishDescFish;
+
+  /// Короткое описание блюда на табло под столом кухни (заказчик 24.09).
+  ///
+  /// In ru, this message translates to:
+  /// **'с картофелем и брокколи'**
+  String get dishDescChicken;
+
+  /// No description provided for @ingredientEgg.
+  ///
+  /// In ru, this message translates to:
+  /// **'Яйцо'**
+  String get ingredientEgg;
+
+  /// No description provided for @ingredientChicken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Курица'**
+  String get ingredientChicken;
+
+  /// No description provided for @ingredientBroccoli.
+  ///
+  /// In ru, this message translates to:
+  /// **'Брокколи'**
+  String get ingredientBroccoli;
+
+  /// No description provided for @ingredientSauce.
+  ///
+  /// In ru, this message translates to:
+  /// **'Соус'**
+  String get ingredientSauce;
+
+  /// No description provided for @ingredientPasta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Паста'**
+  String get ingredientPasta;
+
+  /// No description provided for @ingredientMushrooms.
+  ///
+  /// In ru, this message translates to:
+  /// **'Грибы'**
+  String get ingredientMushrooms;
+
+  /// No description provided for @ingredientSourCream.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сметана'**
+  String get ingredientSourCream;
+
+  /// No description provided for @ingredientMix.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перемешать'**
+  String get ingredientMix;
 }
 
 class _AppLocalizationsDelegate

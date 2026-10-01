@@ -16,12 +16,12 @@ String dishName(AppLocalizations l10n, String id) => switch (id) {
   'soup' => l10n.dishSoup,
   'sandwich' => l10n.dishSandwich,
   'fruit' => l10n.dishFruit,
-  'yogurt' => l10n.dishYogurt,
+  'fish' => l10n.dishFish,
   'cookie' => l10n.dishCookie,
   'salad' => l10n.dishSalad,
   'pasta' => l10n.dishPasta,
   'omelette' => l10n.dishOmelette,
-  'pie' => l10n.dishPie,
+  'chicken' => l10n.dishChicken,
   _ => _dishFallback(id),
 };
 
@@ -33,12 +33,12 @@ String dishDescription(AppLocalizations l10n, String id) => switch (id) {
   'soup' => l10n.dishDescSoup,
   'sandwich' => l10n.dishDescSandwich,
   'fruit' => l10n.dishDescFruit,
-  'yogurt' => l10n.dishDescYogurt,
+  'fish' => l10n.dishDescFish,
   'cookie' => l10n.dishDescCookie,
   'salad' => l10n.dishDescSalad,
   'pasta' => l10n.dishDescPasta,
   'omelette' => l10n.dishDescOmelette,
-  'pie' => l10n.dishDescPie,
+  'chicken' => l10n.dishDescChicken,
   _ => '',
 };
 
@@ -81,6 +81,14 @@ String ingredientName(AppLocalizations l10n, Ingredient ingredient) =>
       'Капуста' => l10n.ingredientCabbage,
       'Зелень' => l10n.ingredientGreens,
       'Мёд' => l10n.ingredientHoney,
+      'Яйцо' => l10n.ingredientEgg,
+      'Курица' => l10n.ingredientChicken,
+      'Брокколи' => l10n.ingredientBroccoli,
+      'Соус' => l10n.ingredientSauce,
+      'Паста' => l10n.ingredientPasta,
+      'Грибы' => l10n.ingredientMushrooms,
+      'Сметана' => l10n.ingredientSourCream,
+      'Перемешать' => l10n.ingredientMix,
       // Фолбэк — русское значение из данных.
       _ => ingredient.title,
     };
