@@ -441,26 +441,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get feedHintActive =>
-      'I\'ve been dashing about all day — let\'s have something filling!';
-
-  @override
-  String get feedHintAffectionate =>
-      'I\'d love something sweet… with you close by.';
-
-  @override
-  String get feedHintCalm => 'Something warm and simple would be lovely.';
-
-  @override
-  String get feedHintCurious => 'Shall we cook something new?';
-
-  @override
-  String get feedHintIndependent => 'I could manage on my own. Well, almost.';
-
-  @override
-  String get feedHintReserved => 'Could I just have some fruit?';
-
-  @override
   String get feedNotEnoughCoins => 'Not enough coins';
 
   @override
@@ -2292,4 +2272,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingredientMix => 'Stir';
+
+  @override
+  String get cravingActivePasta =>
+      'We\'ve been running around so much — I want a big plate of pasta!';
+
+  @override
+  String get cravingActiveChicken =>
+      'Chicken with potatoes — that\'s what\'ll get my energy back!';
+
+  @override
+  String get cravingActiveOmelette =>
+      'An omelette! I\'ll gobble it up — and back to playing.';
+
+  @override
+  String get cravingCuriousFish =>
+      'I wonder what fish with lemon tastes like? Let\'s try it!';
+
+  @override
+  String get cravingCuriousSalad =>
+      'Ooh, there\'s corn in the salad! Crunchy cucumber, sweet corn — shall we take it?';
+
+  @override
+  String get cravingCuriousOmelette =>
+      'A fluffy omelette with green onions! Let\'s take it while it\'s hot.';
+
+  @override
+  String get cravingAffectionateCookie =>
+      'Chocolate cookies shaped like bears! Shall we take them — one for me, one for you?';
+
+  @override
+  String get cravingAffectionateFruit =>
+      'Let\'s share the fruit: a strawberry for you, a strawberry for me.';
+
+  @override
+  String get cravingAffectionatePorridge =>
+      'Warm porridge, just like home… Will you sit with me while I eat?';
+
+  @override
+  String get cravingCalmSoup =>
+      'Hot soup with carrots and peas — I\'d love a bowl right now!';
+
+  @override
+  String get cravingCalmPorridge =>
+      'Porridge for breakfast — and the day starts without any rush.';
+
+  @override
+  String get cravingCalmFish =>
+      'Fish baked with lemon — the whole kitchen smells of it! Shall we have it?';
+
+  @override
+  String get cravingIndependentSandwich =>
+      'I choose the ham and cheese sandwich! Taking it?';
+
+  @override
+  String get cravingIndependentChicken =>
+      'Today I want chicken. Like the grown-ups.';
+
+  @override
+  String get cravingIndependentPasta =>
+      'Today I want pasta with tomato sauce. Decided — let\'s take it!';
+
+  @override
+  String get cravingReservedFruit =>
+      'Could I have some fruit? Strawberries, banana, grapes… I\'d really like some.';
+
+  @override
+  String get cravingReservedCookie =>
+      'Could I have a chocolate cookie? Just one… well, two.';
+
+  @override
+  String get cravingReservedSoup =>
+      'Could I have some soup with peas? It\'s so tasty.';
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,7 @@ import '../game/room_kind.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
+import '../l10n/food_l10n.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart' show petDisplayName, stageTitle;
 import '../theme/app_colors.dart';
@@ -507,6 +509,11 @@ class _HomeScreenState extends State<HomeScreen>
   /// Стоят ли готовые блюда на столе (дуга, заказчик 24.09).
   bool _dishesShown = false;
 
+  /// Любимое блюдо, которое мишка сейчас просит: о нём подсказка над
+  /// кнопками, у него сердечко на табло.
+  String? _craving;
+  final math.Random _random = math.Random();
+
   /// Съеденные блюда: их нет на столе до следующего голода (заказчик
   /// 24.09). Пока список поднимается с телефона — пустой.
   EatenDishes _eaten = EatenDishes(returnAfter: null);
@@ -836,6 +843,13 @@ class _HomeScreenState extends State<HomeScreen>
       _dishesShown = !_dishesShown;
       // На столе что-то одно: готовые блюда или готовка.
       if (_dishesShown) {
+        // Мишка просит одно из любимых блюд — каждый раз случайное (КП 8.1,
+        // 7.4; заказчик 01.10).
+        _craving = pickCraving(
+          widget.controller.state.trait,
+          _random,
+          available: [for (final d in _table) d.id],
+        );
         _recipesShown = false;
         _cooking = null;
         _dropCookPending();
@@ -904,8 +918,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// Блюдо стоит перед мишкой — он ест. Любимое блюдо характера нежит.
   void _serveCooked(Recipe recipe) {
     final dish = recipe.id == 'fruit_salad' ? 'fruit' : recipe.id;
-    final favourite =
-        favouriteDishByTrait[widget.controller.state.trait] == dish;
+    final favourite = isFavouriteDish(widget.controller.state.trait, dish);
     setState(
       () => _meal = KitchenMeal(
         id: ++_meals,
@@ -949,8 +962,7 @@ class _HomeScreenState extends State<HomeScreen>
     // Съеденное уходит со стола до следующего голода (заказчик 24.09),
     // остальные сдвигаются на его место.
     _eaten.eat(dish.id);
-    final favourite =
-        favouriteDishByTrait[widget.controller.state.trait] == dish.id;
+    final favourite = isFavouriteDish(widget.controller.state.trait, dish.id);
     // Стол закрывается, только когда мишка наелся — шкала «Еда» полна; или
     // когда блюд не осталось. Иначе можно сразу выбрать следующее.
     final full = widget.controller.stats.food >= 99.5;
@@ -1042,6 +1054,7 @@ class _HomeScreenState extends State<HomeScreen>
                   onPickAlarm: _pickAlarm,
                   onOpenFeed: _openFeed,
                   dishesShown: _dishesShown,
+                  craving: _craving,
                   dishArc: _dishArc,
                   dishes: _table,
                   onToggleDishes: _toggleDishes,
@@ -1221,6 +1234,7 @@ class _RoomScene extends StatelessWidget {
     required this.onPickAlarm,
     required this.onOpenFeed,
     required this.dishesShown,
+    this.craving,
     required this.dishArc,
     required this.dishes,
     required this.onToggleDishes,
@@ -1296,6 +1310,9 @@ class _RoomScene extends StatelessWidget {
   /// Готовые блюда на столе: показаны ли, как открыть и убрать, что делать
   /// при покупке блюда перед мишкой.
   final bool dishesShown;
+
+  /// Любимое блюдо, которое мишка просит (КП 8.1, 7.4).
+  final String? craving;
   final DishArc dishArc;
 
   /// Блюда на столе — без съеденных.
@@ -1570,12 +1587,9 @@ class _RoomScene extends StatelessWidget {
                 arc: dishArc,
                 dishes: dishes,
                 shown: dishesShown,
-                // Любимое блюдо характера — с сердечком на табло (КП 7.4).
-                board: (l10n, dish) => dishBoard(
-                  l10n,
-                  dish,
-                  favourite: favouriteDishByTrait[controller.state.trait],
-                ),
+                // Блюдо, которое мишка просит, — с сердечком на табло.
+                board: (l10n, dish) =>
+                    dishBoard(l10n, dish, favourite: craving),
               ),
             ),
           ),
@@ -1632,7 +1646,7 @@ class _RoomScene extends StatelessWidget {
             ),
           ),
         // Подсказка от характера (КП 8.1) — над кнопками, пока на столе
-        // блюда или рецепты: что мишке сегодня хочется.
+        // готовые блюда: какое из любимых мишке сейчас хочется.
         if (room == RoomKind.kitchen && !asleep && !newborn)
           Positioned(
             left: 16,
@@ -1641,12 +1655,19 @@ class _RoomScene extends StatelessWidget {
             child: IgnorePointer(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
-                child: (dishesShown || recipesShown) && cooking == null
-                    ? _KitchenHint(
-                        key: const ValueKey('kitchen-hint'),
-                        text: foodHint(context.l10n, controller.state.trait),
-                      )
-                    : const SizedBox.shrink(),
+                child: switch (dishesShown ? craving : null) {
+                  final dish? => _KitchenHint(
+                    key: ValueKey('kitchen-hint-$dish'),
+                    text:
+                        cravingText(
+                          context.l10n,
+                          controller.state.trait,
+                          dish,
+                        ) ??
+                        '',
+                  ),
+                  null => const SizedBox.shrink(),
+                },
               ),
             ),
           ),

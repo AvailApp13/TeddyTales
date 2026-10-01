@@ -1,6 +1,10 @@
 /// Еда: 10 готовых блюд и 5 рецептов с мини-играми (КП 8).
 library;
 
+import 'dart:math';
+
+import '../bear/bear_rig_spec.dart' show BearTrait;
+
 /// То, что ставится на стол кухни дугой: готовое блюдо или рецепт. У
 /// каждого — картинка тарелки без фона в ракурсе кухни.
 abstract interface class TablePlate {
@@ -221,4 +225,36 @@ abstract final class FoodCatalog {
   static Dish dishById(String id) => dishes.firstWhere((d) => d.id == id);
 
   static Recipe recipeById(String id) => recipes.firstWhere((r) => r.id == id);
+}
+
+/// Любимые блюда характера (КП 7.4 — характер влияет на предпочтения в
+/// еде; заказчик 01.10). Кухня каждый раз называет одно из трёх — фразой
+/// мишки ([cravingText] в `food_l10n.dart`), а съеденное любимое блюдо его
+/// нежит.
+const Map<BearTrait, List<String>> favouriteDishesByTrait = {
+  BearTrait.active: ['pasta', 'chicken', 'omelette'],
+  BearTrait.curious: ['fish', 'salad', 'omelette'],
+  BearTrait.affectionate: ['cookie', 'fruit', 'porridge'],
+  BearTrait.calm: ['soup', 'porridge', 'fish'],
+  BearTrait.independent: ['sandwich', 'chicken', 'pasta'],
+  BearTrait.reserved: ['fruit', 'cookie', 'soup'],
+};
+
+/// Любимое ли блюдо [dish] у характера [trait].
+bool isFavouriteDish(BearTrait trait, String dish) =>
+    favouriteDishesByTrait[trait]?.contains(dish) ?? false;
+
+/// Какое из любимых блюд мишка попросит сейчас: случайно, из тех, что ещё
+/// стоят на столе ([available]); если ни одного нет — из всех любимых.
+String pickCraving(
+  BearTrait trait,
+  Random random, {
+  Iterable<String>? available,
+}) {
+  final all = favouriteDishesByTrait[trait] ?? const ['pasta'];
+  final onTable = available == null
+      ? all
+      : all.where(available.contains).toList();
+  final from = onTable.isEmpty ? all : onTable;
+  return from[random.nextInt(from.length)];
 }

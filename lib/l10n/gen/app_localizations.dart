@@ -796,42 +796,6 @@ abstract class AppLocalizations {
   /// **'еда +{gain}'**
   String feedFoodGain(int gain);
 
-  /// No description provided for @feedHintActive.
-  ///
-  /// In ru, this message translates to:
-  /// **'Я сегодня носился как заводной — давай посытнее!'**
-  String get feedHintActive;
-
-  /// No description provided for @feedHintAffectionate.
-  ///
-  /// In ru, this message translates to:
-  /// **'Хочу что-нибудь сладкое… и чтобы ты рядом.'**
-  String get feedHintAffectionate;
-
-  /// No description provided for @feedHintCalm.
-  ///
-  /// In ru, this message translates to:
-  /// **'Мне бы чего-то тёплого и простого.'**
-  String get feedHintCalm;
-
-  /// No description provided for @feedHintCurious.
-  ///
-  /// In ru, this message translates to:
-  /// **'А приготовим что-нибудь новенькое?'**
-  String get feedHintCurious;
-
-  /// No description provided for @feedHintIndependent.
-  ///
-  /// In ru, this message translates to:
-  /// **'Я бы и сам справился. Ну, почти.'**
-  String get feedHintIndependent;
-
-  /// No description provided for @feedHintReserved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Можно просто фрукты?'**
-  String get feedHintReserved;
-
   /// No description provided for @feedNotEnoughCoins.
   ///
   /// In ru, this message translates to:
@@ -4065,6 +4029,114 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Перемешать'**
   String get ingredientMix;
+
+  /// КП 8.1, 7.4: подсказка от характера на кухне — мишка называет одно из трёх любимых блюд своего характера (утверждено заказчиком 01.10). Фразы — без рода: мишка бывает мальчиком и девочкой.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня столько бегали — хочу большую тарелку пасты!'**
+  String get cravingActivePasta;
+
+  /// No description provided for @cravingActiveChicken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Курица с картошкой — вот что вернёт мне силы!'**
+  String get cravingActiveChicken;
+
+  /// No description provided for @cravingActiveOmelette.
+  ///
+  /// In ru, this message translates to:
+  /// **'Омлет! Быстро съем — и снова играть.'**
+  String get cravingActiveOmelette;
+
+  /// No description provided for @cravingCuriousFish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Интересно, какая на вкус рыба с лимоном? Давай попробуем!'**
+  String get cravingCuriousFish;
+
+  /// No description provided for @cravingCuriousSalad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ой, в салате кукуруза! Хрустящий огурчик, сладкая кукуруза — давай возьмём?'**
+  String get cravingCuriousSalad;
+
+  /// No description provided for @cravingCuriousOmelette.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пышный омлет с зелёным луком! Давай возьмём, пока горячий.'**
+  String get cravingCuriousOmelette;
+
+  /// No description provided for @cravingAffectionateCookie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шоколадное печенье в форме мишек! Возьмём — одно мне, одно тебе?'**
+  String get cravingAffectionateCookie;
+
+  /// No description provided for @cravingAffectionateFruit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Давай фрукты пополам: тебе клубничку, мне клубничку.'**
+  String get cravingAffectionateFruit;
+
+  /// No description provided for @cravingAffectionatePorridge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёплая каша, как дома… Посидишь со мной, пока я ем?'**
+  String get cravingAffectionatePorridge;
+
+  /// No description provided for @cravingCalmSoup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Горячий суп с морковкой и горошком — вот бы сейчас тарелочку!'**
+  String get cravingCalmSoup;
+
+  /// No description provided for @cravingCalmPorridge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каша на завтрак — и день начинается без спешки.'**
+  String get cravingCalmPorridge;
+
+  /// No description provided for @cravingCalmFish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рыба, запечённая с лимоном, — пахнет на всю кухню! Давай её?'**
+  String get cravingCalmFish;
+
+  /// No description provided for @cravingIndependentSandwich.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я выбираю сэндвич с сыром и ветчиной! Берём?'**
+  String get cravingIndependentSandwich;
+
+  /// No description provided for @cravingIndependentChicken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня хочу курицу. Как взрослые.'**
+  String get cravingIndependentChicken;
+
+  /// No description provided for @cravingIndependentPasta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня хочу пасту с томатным соусом. Решено — берём!'**
+  String get cravingIndependentPasta;
+
+  /// No description provided for @cravingReservedFruit.
+  ///
+  /// In ru, this message translates to:
+  /// **'А можно фрукты? Клубника, банан, виноград… очень хочется.'**
+  String get cravingReservedFruit;
+
+  /// No description provided for @cravingReservedCookie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно шоколадное печенье? Хотя бы одно… ну, два.'**
+  String get cravingReservedCookie;
+
+  /// No description provided for @cravingReservedSoup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно мне супчик с горошком? Он такой вкусный.'**
+  String get cravingReservedSoup;
 }
 
 class _AppLocalizationsDelegate

@@ -448,26 +448,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get feedHintActive =>
-      'Я сегодня носился как заводной — давай посытнее!';
-
-  @override
-  String get feedHintAffectionate =>
-      'Хочу что-нибудь сладкое… и чтобы ты рядом.';
-
-  @override
-  String get feedHintCalm => 'Мне бы чего-то тёплого и простого.';
-
-  @override
-  String get feedHintCurious => 'А приготовим что-нибудь новенькое?';
-
-  @override
-  String get feedHintIndependent => 'Я бы и сам справился. Ну, почти.';
-
-  @override
-  String get feedHintReserved => 'Можно просто фрукты?';
-
-  @override
   String get feedNotEnoughCoins => 'Не хватает монет';
 
   @override
@@ -2300,4 +2280,74 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ingredientMix => 'Перемешать';
+
+  @override
+  String get cravingActivePasta =>
+      'Сегодня столько бегали — хочу большую тарелку пасты!';
+
+  @override
+  String get cravingActiveChicken =>
+      'Курица с картошкой — вот что вернёт мне силы!';
+
+  @override
+  String get cravingActiveOmelette => 'Омлет! Быстро съем — и снова играть.';
+
+  @override
+  String get cravingCuriousFish =>
+      'Интересно, какая на вкус рыба с лимоном? Давай попробуем!';
+
+  @override
+  String get cravingCuriousSalad =>
+      'Ой, в салате кукуруза! Хрустящий огурчик, сладкая кукуруза — давай возьмём?';
+
+  @override
+  String get cravingCuriousOmelette =>
+      'Пышный омлет с зелёным луком! Давай возьмём, пока горячий.';
+
+  @override
+  String get cravingAffectionateCookie =>
+      'Шоколадное печенье в форме мишек! Возьмём — одно мне, одно тебе?';
+
+  @override
+  String get cravingAffectionateFruit =>
+      'Давай фрукты пополам: тебе клубничку, мне клубничку.';
+
+  @override
+  String get cravingAffectionatePorridge =>
+      'Тёплая каша, как дома… Посидишь со мной, пока я ем?';
+
+  @override
+  String get cravingCalmSoup =>
+      'Горячий суп с морковкой и горошком — вот бы сейчас тарелочку!';
+
+  @override
+  String get cravingCalmPorridge =>
+      'Каша на завтрак — и день начинается без спешки.';
+
+  @override
+  String get cravingCalmFish =>
+      'Рыба, запечённая с лимоном, — пахнет на всю кухню! Давай её?';
+
+  @override
+  String get cravingIndependentSandwich =>
+      'Я выбираю сэндвич с сыром и ветчиной! Берём?';
+
+  @override
+  String get cravingIndependentChicken => 'Сегодня хочу курицу. Как взрослые.';
+
+  @override
+  String get cravingIndependentPasta =>
+      'Сегодня хочу пасту с томатным соусом. Решено — берём!';
+
+  @override
+  String get cravingReservedFruit =>
+      'А можно фрукты? Клубника, банан, виноград… очень хочется.';
+
+  @override
+  String get cravingReservedCookie =>
+      'Можно шоколадное печенье? Хотя бы одно… ну, два.';
+
+  @override
+  String get cravingReservedSoup =>
+      'Можно мне супчик с горошком? Он такой вкусный.';
 }

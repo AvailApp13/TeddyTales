@@ -14,34 +14,6 @@ import '../theme/app_theme.dart';
 import '../widgets/purchase_confirm.dart';
 import '../widgets/kitchen_scene.dart';
 
-/// Подсказка от характера питомца (КП 8.1 — «подсказка от характера»).
-///
-/// Реплики принадлежат экрану кормления, а не общему набору фраз BearPhrases:
-/// там реплики привязаны к настроению и стадии, а эти шесть — про еду и
-/// только про неё.
-String foodHint(AppLocalizations l10n, BearTrait trait) => switch (trait) {
-  BearTrait.active => l10n.feedHintActive,
-  BearTrait.curious => l10n.feedHintCurious,
-  BearTrait.affectionate => l10n.feedHintAffectionate,
-  BearTrait.calm => l10n.feedHintCalm,
-  BearTrait.independent => l10n.feedHintIndependent,
-  BearTrait.reserved => l10n.feedHintReserved,
-};
-
-/// Любимое блюдо по характеру (КП 7.4 — характер влияет на предпочтения в еде).
-///
-/// Пока это только подсветка карточки: разной прибавки «еды» за любимое блюдо
-/// КП не требует, а придумывать её самим — значит разойтись с балансом,
-/// который по КП 10.9 считается отдельно.
-const Map<BearTrait, String> favouriteDishByTrait = {
-  BearTrait.active: 'pasta',
-  BearTrait.curious: 'omelette',
-  BearTrait.affectionate: 'cookie',
-  BearTrait.calm: 'porridge',
-  BearTrait.independent: 'sandwich',
-  BearTrait.reserved: 'fruit',
-};
-
 /// Две вкладки экрана кормления (КП 8.1).
 ///
 /// Публичный: с 20.09 кормление открывается не само по себе, а с кухни, и
@@ -95,6 +67,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
   late FeedTab _tab = widget.initialTab;
 
+  /// Любимое блюдо, которое мишка просит в подсказке (КП 8.1, 7.4).
+  late final String _craving = pickCraving(
+    widget.controller.state.trait,
+    _random,
+  );
+
   /// Открытый рецепт — экран мини-игры. `null` — список блюд и рецептов.
   Recipe? _recipe;
 
@@ -144,8 +122,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     // Любимое блюдо — нежность, остальное — радость: реакция мишки в
     // сцене кухни, ТЗ 7.4.
-    final favourite =
-        favouriteDishByTrait[widget.controller.state.trait] == dish.id;
+    final favourite = isFavouriteDish(widget.controller.state.trait, dish.id);
     _closeWith(
       l10n.feedEatResult(
         dishName(l10n, dish.id),
@@ -281,7 +258,7 @@ class _FeedScreenState extends State<FeedScreen> {
           onSelected: (tab) => setState(() => _tab = tab),
         ),
         const SizedBox(height: 10),
-        _HintBar(emoji: '🧸', text: foodHint(l10n, trait)),
+        _HintBar(emoji: '🧸', text: cravingText(l10n, trait, _craving) ?? ''),
         const SizedBox(height: 10),
         Expanded(
           child: _tab == FeedTab.ready ? _buildDishes(trait) : _buildRecipes(),
@@ -291,8 +268,6 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildDishes(BearTrait trait) {
-    final favourite = favouriteDishByTrait[trait];
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         AppDimens.pagePadding,
@@ -317,7 +292,7 @@ class _FeedScreenState extends State<FeedScreen> {
             final dish = FoodCatalog.dishes[index];
             return _DishTile(
               dish: dish,
-              isFavourite: dish.id == favourite,
+              isFavourite: isFavouriteDish(trait, dish.id),
               canAfford: widget.game.coins >= dish.price,
               onTap: () => _eat(dish),
             );

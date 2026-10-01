@@ -7,6 +7,7 @@
 /// показывается русское значение из данных — экран не падает и не пустует.
 library;
 
+import '../bear/bear_rig_spec.dart' show BearTrait;
 import '../game/food.dart';
 import 'gen/app_localizations.dart';
 
@@ -106,3 +107,29 @@ String _recipeFallback(String id) {
   }
   return id;
 }
+
+/// Подсказка от характера на кухне (КП 8.1): мишка просит одно из своих
+/// любимых блюд ([favouriteDishesByTrait]). Фразы утверждены заказчиком
+/// 01.10. Для блюда не из любимых — `null`.
+String? cravingText(AppLocalizations l10n, BearTrait trait, String dish) =>
+    switch ((trait, dish)) {
+      (BearTrait.active, 'pasta') => l10n.cravingActivePasta,
+      (BearTrait.active, 'chicken') => l10n.cravingActiveChicken,
+      (BearTrait.active, 'omelette') => l10n.cravingActiveOmelette,
+      (BearTrait.curious, 'fish') => l10n.cravingCuriousFish,
+      (BearTrait.curious, 'salad') => l10n.cravingCuriousSalad,
+      (BearTrait.curious, 'omelette') => l10n.cravingCuriousOmelette,
+      (BearTrait.affectionate, 'cookie') => l10n.cravingAffectionateCookie,
+      (BearTrait.affectionate, 'fruit') => l10n.cravingAffectionateFruit,
+      (BearTrait.affectionate, 'porridge') => l10n.cravingAffectionatePorridge,
+      (BearTrait.calm, 'soup') => l10n.cravingCalmSoup,
+      (BearTrait.calm, 'porridge') => l10n.cravingCalmPorridge,
+      (BearTrait.calm, 'fish') => l10n.cravingCalmFish,
+      (BearTrait.independent, 'sandwich') => l10n.cravingIndependentSandwich,
+      (BearTrait.independent, 'chicken') => l10n.cravingIndependentChicken,
+      (BearTrait.independent, 'pasta') => l10n.cravingIndependentPasta,
+      (BearTrait.reserved, 'fruit') => l10n.cravingReservedFruit,
+      (BearTrait.reserved, 'cookie') => l10n.cravingReservedCookie,
+      (BearTrait.reserved, 'soup') => l10n.cravingReservedSoup,
+      _ => null,
+    };

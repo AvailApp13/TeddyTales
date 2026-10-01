@@ -388,24 +388,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get feedHintActive => '我今天跑了一整天，来点顶饱的吧！';
-
-  @override
-  String get feedHintAffectionate => '想吃点甜的……还要你陪着我。';
-
-  @override
-  String get feedHintCalm => '来点温暖简单的就好。';
-
-  @override
-  String get feedHintCurious => '我们做点新花样好不好？';
-
-  @override
-  String get feedHintIndependent => '我自己也行的。嗯……差不多行。';
-
-  @override
-  String get feedHintReserved => '就吃点水果，可以吗？';
-
-  @override
   String get feedNotEnoughCoins => '金币不够';
 
   @override
@@ -2184,4 +2166,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingredientMix => '搅拌';
+
+  @override
+  String get cravingActivePasta => '今天跑了好多路——我想吃一大盘意面！';
+
+  @override
+  String get cravingActiveChicken => '鸡肉配土豆——这才能让我恢复力气！';
+
+  @override
+  String get cravingActiveOmelette => '煎蛋卷！我快快吃完——然后接着玩。';
+
+  @override
+  String get cravingCuriousFish => '柠檬烤鱼是什么味道呢？我们尝尝吧！';
+
+  @override
+  String get cravingCuriousSalad => '哇，沙拉里有玉米！脆脆的黄瓜，甜甜的玉米——我们要这个好吗？';
+
+  @override
+  String get cravingCuriousOmelette => '蓬松的葱花煎蛋卷！趁热拿吧。';
+
+  @override
+  String get cravingAffectionateCookie => '小熊形状的巧克力饼干！我们拿吧——一块给我，一块给你？';
+
+  @override
+  String get cravingAffectionateFruit => '水果我们一人一半：你一颗草莓，我一颗草莓。';
+
+  @override
+  String get cravingAffectionatePorridge => '暖暖的粥，像在家里一样……我吃的时候你陪我坐一会儿好吗？';
+
+  @override
+  String get cravingCalmSoup => '热乎乎的胡萝卜豌豆汤——真想现在来一碗！';
+
+  @override
+  String get cravingCalmPorridge => '早餐喝粥——一天就从容地开始了。';
+
+  @override
+  String get cravingCalmFish => '柠檬烤鱼——整个厨房都是香味！我们吃它好吗？';
+
+  @override
+  String get cravingIndependentSandwich => '我选火腿奶酪三明治！就要它？';
+
+  @override
+  String get cravingIndependentChicken => '今天我想吃鸡肉。像大人一样。';
+
+  @override
+  String get cravingIndependentPasta => '今天我想吃番茄酱意面。决定了——就要它！';
+
+  @override
+  String get cravingReservedFruit => '可以吃点水果吗？草莓、香蕉、葡萄……好想吃。';
+
+  @override
+  String get cravingReservedCookie => '可以吃块巧克力饼干吗？就一块……好吧，两块。';
+
+  @override
+  String get cravingReservedSoup => '可以给我一碗豌豆汤吗？它好好吃。';
 }
