@@ -19,7 +19,7 @@ import '../widgets/kitchen_scene.dart';
 /// Реплики принадлежат экрану кормления, а не общему набору фраз BearPhrases:
 /// там реплики привязаны к настроению и стадии, а эти шесть — про еду и
 /// только про неё.
-String _foodHint(AppLocalizations l10n, BearTrait trait) => switch (trait) {
+String foodHint(AppLocalizations l10n, BearTrait trait) => switch (trait) {
   BearTrait.active => l10n.feedHintActive,
   BearTrait.curious => l10n.feedHintCurious,
   BearTrait.affectionate => l10n.feedHintAffectionate,
@@ -281,7 +281,7 @@ class _FeedScreenState extends State<FeedScreen> {
           onSelected: (tab) => setState(() => _tab = tab),
         ),
         const SizedBox(height: 10),
-        _HintBar(emoji: '🧸', text: _foodHint(l10n, trait)),
+        _HintBar(emoji: '🧸', text: foodHint(l10n, trait)),
         const SizedBox(height: 10),
         Expanded(
           child: _tab == FeedTab.ready ? _buildDishes(trait) : _buildRecipes(),

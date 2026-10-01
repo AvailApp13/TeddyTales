@@ -151,7 +151,11 @@ void main() {
 
     tearDown(() => arc.dispose());
 
-    Future<void> pump(WidgetTester tester, {int? initial}) async {
+    Future<void> pump(
+      WidgetTester tester, {
+      int? initial,
+      String? favourite,
+    }) async {
       arc = DishArc(count: dishes.length, initial: initial ?? pasta);
       await tester.pumpWidget(
         MaterialApp(
@@ -171,7 +175,12 @@ void main() {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: DishPlates(arc: arc, dishes: dishes),
+                      child: DishPlates(
+                        arc: arc,
+                        dishes: dishes,
+                        board: (l10n, dish) =>
+                            dishBoard(l10n, dish, favourite: favourite),
+                      ),
                     ),
                     Positioned.fill(
                       child: DishCarousel(
@@ -249,6 +258,25 @@ void main() {
       );
       // Под самими блюдами цен больше нет.
       expect(find.text('${dishes[pasta - 1].price}'), findsNothing);
+    });
+
+    testWidgets('любимое блюдо характера — с сердечком на табло (КП 7.4)', (
+      tester,
+    ) async {
+      await pump(tester, favourite: 'pasta');
+      final board = find.byKey(const ValueKey('dish-board-pasta'));
+      expect(
+        find.descendant(
+          of: board,
+          matching: find.byKey(const ValueKey('board-favourite')),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('у нелюбимого блюда сердечка нет', (tester) async {
+      await pump(tester, favourite: 'soup');
+      expect(find.byKey(const ValueKey('board-favourite')), findsNothing);
     });
 
     testWidgets('табло меняет надпись вслед за прокруткой', (tester) async {

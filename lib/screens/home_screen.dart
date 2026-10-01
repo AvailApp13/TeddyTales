@@ -1570,6 +1570,12 @@ class _RoomScene extends StatelessWidget {
                 arc: dishArc,
                 dishes: dishes,
                 shown: dishesShown,
+                // Любимое блюдо характера — с сердечком на табло (КП 7.4).
+                board: (l10n, dish) => dishBoard(
+                  l10n,
+                  dish,
+                  favourite: favouriteDishByTrait[controller.state.trait],
+                ),
               ),
             ),
           ),
@@ -1623,6 +1629,25 @@ class _RoomScene extends StatelessWidget {
               onServe: cookCallbacks.onServe,
               onEaten: cookCallbacks.onEaten,
               onFinished: cookCallbacks.onFinished,
+            ),
+          ),
+        // Подсказка от характера (КП 8.1) — над кнопками, пока на столе
+        // блюда или рецепты: что мишке сегодня хочется.
+        if (room == RoomKind.kitchen && !asleep && !newborn)
+          Positioned(
+            left: 16,
+            right: _pawSpace,
+            bottom: 34 + 44 + 12,
+            child: IgnorePointer(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                child: (dishesShown || recipesShown) && cooking == null
+                    ? _KitchenHint(
+                        key: const ValueKey('kitchen-hint'),
+                        text: foodHint(context.l10n, controller.state.trait),
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
           ),
         if (room == RoomKind.kitchen && !asleep)
@@ -1963,6 +1988,48 @@ class _KitchenMenu extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Подсказка от характера на кухне (КП 8.1): реплика мишки о еде в
+/// плашке того же вида, что кнопки под ней.
+class _KitchenHint extends StatelessWidget {
+  const _KitchenHint({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+        elevation: 3,
+        shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 7, 14, 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🧸', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

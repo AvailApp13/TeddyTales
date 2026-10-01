@@ -168,6 +168,7 @@ class BoardText {
     required this.value,
     this.steps = 0,
     this.done = 0,
+    this.favourite = false,
   });
 
   final String name;
@@ -179,17 +180,23 @@ class BoardText {
 
   /// Сколько закрашено. Дробное — кружок как раз закрашивается.
   final double done;
+
+  /// Любимое блюдо характера (КП 7.4): перед названием — сердечко.
+  final bool favourite;
 }
 
 /// Табло для блюда или рецепта [plate].
 typedef BoardOf<T> = BoardText Function(AppLocalizations l10n, T plate);
 
-/// Табло готового блюда: «Паста  с томатным соусом  ● 12».
-BoardText dishBoard(AppLocalizations l10n, Dish dish) => BoardText(
-  name: dishName(l10n, dish.id),
-  description: dishDescription(l10n, dish.id),
-  value: '${dish.price}',
-);
+/// Табло готового блюда: «Паста  с томатным соусом  ● 12»; любимое
+/// блюдо характера — с сердечком впереди ([favourite] — его id).
+BoardText dishBoard(AppLocalizations l10n, Dish dish, {String? favourite}) =>
+    BoardText(
+      name: dishName(l10n, dish.id),
+      description: dishDescription(l10n, dish.id),
+      value: '${dish.price}',
+      favourite: dish.id == favourite,
+    );
 
 /// Табло рецепта на дуге: «Сэндвич  3 шага  ● +9» (макет готовки,
 /// утверждён заказчиком 24.09).
@@ -895,6 +902,7 @@ class TableBoardLine extends StatelessWidget {
   double get _coin => 10 * scale;
   double get _dot => 9 * scale;
   double get _dotGap => 4 * scale;
+  double get _heart => 11 * scale;
 
   double get _dots =>
       text.steps == 0 ? 0 : text.steps * _dot + (text.steps - 1) * _dotGap;
@@ -912,7 +920,8 @@ class TableBoardLine extends StatelessWidget {
       return w;
     }
 
-    return measure(_span) +
+    return (text.favourite ? _heart + 4 * scale : 0) +
+        measure(_span) +
         (text.steps == 0 ? 0 : _gap + _dots) +
         _gap +
         _coin +
@@ -934,6 +943,16 @@ class TableBoardLine extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (text.favourite) ...[
+          Icon(
+            Icons.favorite_rounded,
+            key: const ValueKey('board-favourite'),
+            size: _heart,
+            color: AppColors.blush,
+            semanticLabel: context.l10n.feedFavourite,
+          ),
+          SizedBox(width: 4 * scale),
+        ],
         Text.rich(_span, maxLines: 1, semanticsLabel: _plain),
         if (text.steps > 0) ...[
           SizedBox(width: _gap),
