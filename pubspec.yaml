@@ -1,0 +1,130 @@
+name: teddy_tales
+description: "TeddyTales — анимированный персонаж-медведь (Rive + Flutter)."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # Генерация AppLocalizations из ARB (`flutter gen-l10n`).
+  intl: any
+
+  # Источник времени для decay-таймера. Нужен именно он, а не DateTime.now():
+  # fakeAsync подменяет `clock`, и таймер можно прокручивать в тестах.
+  clock: ^1.1.2
+
+  # Официальный рантайм rive-app/rive-flutter (НЕ rive-flutter-legacy).
+  # Версии >= 0.14 тянут за собой rive_native — нативные библиотеки
+  # скачиваются автоматически на `flutter run` / `flutter build`.
+  rive: ^0.14.11
+  font_awesome_flutter: ^11.0.0
+  supabase_flutter: ^2.17.2
+  shared_preferences: ^2.5.5
+  flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
+  video_player: ^2.14.0
+  audioplayers: ^6.8.1
+  share_plus: ^13.3.0
+  sign_in_with_apple: ^8.2.0
+  in_app_purchase: ^3.3.1
+  crypto: ^3.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # Нужен, чтобы гонять decay-таймер без ожидания реального времени.
+  # Начиная с 1.3.0 подменяет и Stopwatch, а не только Timer.
+  fake_async: ^1.3.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/rive/
+    - assets/images/
+    - assets/rooms/
+    # Спальня разобрана на слои, чтобы мишка в кровати дышал и моргал:
+    # мишка, передний край одеяла и свет ночника лежат отдельно от фона.
+    - assets/rooms/bedroom/
+    - assets/rooms/bedroom/dreams/
+    - assets/rooms/kitchen/
+    # Блюда на столе кухни (дуга «Готовые блюда»): тарелки без фона.
+    - assets/rooms/kitchen/dishes/
+    # Готовка на кухне (вариант A, 24.09): продукты под столом и два
+    # блюда, которых нет среди готовых, — мясное и овощное.
+    - assets/rooms/kitchen/ingredients/
+    - assets/rooms/kitchen/recipes/
+    - assets/ui/
+    # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
+    # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.
+    # Исходники и нарезка листов лежат рядом, но в приложение не попадают.
+    - assets/shop/items/
+    # Звуки кухни (24.09): синтезированы tool/make_sfx.py.
+    - assets/audio/
+    # Условия использования и политика конфиденциальности (КП 14.2) по
+    # языкам; тексты подставляются без правок кода.
+    - assets/legal/
+
+  fonts:
+    # Семейство обязано называться буквально «Roboto».
+    #
+    # Веб-движок Flutter сверяет имена семейств в FontManifest.json со строкой
+    # 'Roboto' (lib/web_ui/.../canvaskit/fonts.dart) и, не найдя её, безусловно
+    # качает woff2 с fonts.gstatic.com — независимо от того, какой fontFamily
+    # стоит в теме. Без сети шрифт не приходит, и приложение рисуется вообще
+    # без текста: экран есть, букв нет.
+    #
+    # Файлы взяты из кэша самого Flutter — это тот же дизайн, который движок и
+    # собирался скачать, поэтому метрики и вёрстка не меняются. Лицензия
+    # Apache 2.0 лежит рядом, её нужно сохранять при распространении.
+    #
+    # Кириллицу покрывают полностью, китайского в них нет — для локали zh
+    # (КП 16.1) нужен отдельный CJK-шрифт, см. docs/fonts.md.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Roboto-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+
+    # Nunito — округлый гротеск для надписей поверх сцены (шапка, подписи
+    # колец, лепестки меню). Заказчик 20.09: «надо поменять эти шрифты и
+    # сделать так, чтобы они смотрелись визуально прикольно» — у Roboto
+    # слишком канцелярский рисунок для детской игры.
+    #
+    # Файл вариативный: вес задаётся не начертанием, а осью `wght`, поэтому
+    # в коде стоит `fontVariations`, а не один только `fontWeight`. Статику
+    # Google для Nunito больше не публикует. Лицензия OFL лежит рядом.
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
+
+    # Эмодзи. В Roboto их нет вообще, а веб-движок за недостающими глифами
+    # ходит на fonts.gstatic.com — без сети вместо иконок получаются квадраты.
+    #
+    # Это сабсет Noto Color Emoji ровно под те 108 символов, что встречаются
+    # в коде: 206 КБ вместо 10,7 МБ полного шрифта. Пересобрать после добавления
+    # новых эмодзи: tool/subset_emoji.py.
+    #
+    # ЗАГЛУШКА: эмодзи стоят на месте иллюстраций предметов. По КП 10.4 состав
+    # утверждается Заказчиком до отрисовки — когда придут картинки, шрифт
+    # останется нужен только для реплик.
+    # Иероглифы для локали zh: сабсет под реально используемые символы,
+    # пересборка — tool/subset_cjk.py. Полный CJK-шрифт весил бы десятки МБ.
+    - family: CJK
+      fonts:
+        - asset: assets/fonts/CJK-Subset.ttf
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji-Subset.ttf

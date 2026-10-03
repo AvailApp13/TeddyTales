@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Спальня по слоям · переделка</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  :root {
+    /* Та же палитра, что на первой странице ТЗ: стена в тени, ворс мишки,
+       свет ночника, зелёный плед. Сцена ночная — тема одна, тёмная. */
+    --night: #141C2B;
+    --night-2: #1E2839;
+    --night-3: #273145;
+    --cream: #F3EADC;
+    --muted: #A2AEC2;
+    --lamp: #F2B95C;
+    --sage: #8FB8A2;
+    --rust: #E08A72;
+    --line: #33405A;
+
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding-block: 28px 56px;
+    padding-inline: 16px;
+    background: var(--night);
+    color: var(--cream);
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 7vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .sub { color: var(--muted); margin: 10px 0 0; max-width: 58ch; }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--lamp);
+    margin: 0 0 4px;
+  }
+
+  h3 { font-size: 19px; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+
+  p { margin: 0; }
+
+  .head-note {
+    border-left: 2px solid var(--lamp);
+    padding-left: 14px;
+    color: var(--cream);
+  }
+
+  /* --- Кнопка копирования ------------------------------------------------ */
+
+  .copy {
+    appearance: none;
+    border: 0;
+    border-radius: 12px;
+    background: var(--lamp);
+    color: #2A1E08;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+    min-height: 46px;
+  }
+
+  .copy:hover { background: #F7C878; }
+  .copy:active { transform: translateY(1px); }
+  .copy:focus-visible { outline: 3px solid var(--sage); outline-offset: 2px; }
+  .copy.done { background: var(--sage); color: #10221A; }
+
+  .copy.ghost {
+    background: transparent;
+    color: var(--lamp);
+    border: 1.5px solid var(--line);
+    font-size: 14px;
+    padding: 9px 14px;
+    min-height: 40px;
+  }
+
+  .copy.ghost:hover { border-color: var(--lamp); background: #1A2435; }
+  .copy.ghost.done { background: var(--sage); color: #10221A; border-color: var(--sage); }
+
+  .copy-all { width: 100%; font-size: 17px; padding: 16px; min-height: 56px; }
+
+  /* --- Карточки ---------------------------------------------------------- */
+
+  .card {
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .card-foot { display: flex; justify-content: flex-end; }
+
+  .file {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    color: var(--lamp);
+    letter-spacing: -0.01em;
+  }
+
+  .why { color: var(--muted); font-size: 15px; }
+
+  pre {
+    margin: 0;
+    padding: 14px;
+    background: var(--night);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--cream);
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  .group-label {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* --- Приёмка ------------------------------------------------------------ */
+
+  .verdict { display: flex; flex-direction: column; gap: 10px; }
+
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+  .mark {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+
+  .ok  { background: var(--sage); color: #10221A; }
+  .bad { background: var(--rust); color: #2E1009; }
+
+  .row-body { display: flex; flex-direction: column; gap: 2px; }
+  .row-body .file { font-size: 14.5px; }
+  .row-body .note { color: var(--muted); font-size: 14.5px; }
+
+  /* --- Таблица обмеров ---------------------------------------------------- */
+
+  .scroll { overflow-x: auto; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { color: var(--lamp); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.1em; }
+  td.num { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  tr:last-child td { border-bottom: 0; }
+  .wrong { color: var(--rust); }
+  .right { color: var(--sage); }
+
+  ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+  footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 18px; }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <h1>Спальня по слоям · переделка</h1>
+    <p class="sub">
+      Обмерил все семь присланных файлов по исходной картинке спальни.
+      Три слоя приняты и трогать их не надо. Четыре мишки нужно переделать —
+      ниже ровно что и с какими цифрами.
+    </p>
+  </header>
+
+  <section>
+    <h2>Приёмка</h2>
+    <div class="verdict">
+      <div class="row">
+        <span class="mark ok">✓</span>
+        <span class="row-body">
+          <span class="file">room.png</span>
+          <span class="note">941 × 1672, мишка убран, подушки дорисованы чисто. Вся остальная картинка совпадает с исходником точка в точку. Принято.</span>
+        </span>
+      </div>
+      <div class="row">
+        <span class="mark ok">✓</span>
+        <span class="row-body">
+          <span class="file">blanket_front.png</span>
+          <span class="note">941 × 1672, альфа есть, вырезано прямо из исходника, верхняя кромка на y = 912, на всю ширину. Принято.</span>
+        </span>
+      </div>
+      <div class="row">
+        <span class="mark ok">✓</span>
+        <span class="row-body">
+          <span class="file">lamp_glow.png</span>
+          <span class="note">941 × 1672, фон прозрачный, ядро свечения 785–880 по ширине и 740–942 по высоте — ровно на лампе. Принято.</span>
+        </span>
+      </div>
+      <div class="row">
+        <span class="mark bad">✕</span>
+        <span class="row-body">
+          <span class="file">четыре мишки</span>
+          <span class="note">Рисунок верный, но фигура в 2,4 раза крупнее нужной, и между собой у них два разных масштаба. Плюс это четыре отдельных рисунка, а не один мишка с перерисованным лицом: капюшон, уши и лапы у них в разных местах. Переделать.</span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Что намерено</h2>
+    <div class="card">
+      <p class="why">Как отдано и как надо. Все числа — точки на холсте 941 × 1672.</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Файл</th><th>Размер фигуры</th><th>Левый верхний угол</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>глаза открыты</td><td class="num wrong">860 × 946</td><td class="num wrong">65, 400</td></tr>
+            <tr><td>глаза полуприкрыты</td><td class="num wrong">862 × 958</td><td class="num wrong">60, 374</td></tr>
+            <tr><td>глаза закрыты</td><td class="num wrong">594 × 650</td><td class="num wrong">203, 508</td></tr>
+            <tr><td>зевок</td><td class="num wrong">590 × 644</td><td class="num wrong">194, 508</td></tr>
+            <tr><td><strong>нужно</strong></td><td class="num right"><strong>236 × 260</strong></td><td class="num right"><strong>355, 690</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Мишка на своём месте</h3>
+      <p class="why">Снято с исходной картинки спальни, отсчёт от левого верхнего угла.</p>
+      <div class="scroll">
+        <table>
+          <tbody>
+            <tr><td>Холст каждого слоя</td><td class="num">941 × 1672</td></tr>
+            <tr><td>Прямоугольник фигуры</td><td class="num">355, 690 — 591, 950 (236 × 260)</td></tr>
+            <tr><td>Кончик колпака</td><td class="num">463, 690</td></tr>
+            <tr><td>Левый глаз (центр)</td><td class="num">444, 857 · размер 15 × 13</td></tr>
+            <tr><td>Правый глаз (центр)</td><td class="num">502, 849 · размер 14 × 13</td></tr>
+            <tr><td>Нос</td><td class="num">464–491 по ширине, 864–885 по высоте</td></tr>
+            <tr><td>Рот</td><td class="num">460–514 по ширине, 878–901 по высоте</td></tr>
+            <tr><td><strong>Зона лица — только её можно менять</strong></td><td class="num"><strong>420, 830 — 530, 915</strong></td></tr>
+            <tr><td>Одеяло перекрывает мишку от</td><td class="num">y = 912</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Задания для GPT</h2>
+    <p class="why" style="margin-bottom:14px">
+      Два задания, строго по очереди. Второе делается по файлу из первого —
+      иначе снова получатся четыре разных мишки.
+    </p>
+
+    <article class="card">
+      <div class="card-top">
+        <h3>1. База — мишка на месте</h3>
+        <span class="file">bear.png</span>
+      </div>
+      <p class="why">Один вырез из исходника в его настоящем размере. Всё остальное строится из него.</p>
+      <pre data-copy="base">Прикладываю картинку детской спальни, размер 941 × 1672 точки.
+
+Нужен один файл: плюшевый мишка с этой картинки на полностью прозрачном фоне.
+
+РАЗМЕР И МЕСТО (это главное, прошлый раз было не так):
+— Холст файла ровно 941 × 1672 точки.
+— Фигура мишки занимает прямоугольник от точки 355, 690 до точки 591, 950 — то есть 236 точек в ширину и 260 в высоту.
+— Кончик колпака приходится на точку 463, 690.
+— Мишка остаётся ровно там же, где он на картинке спальни. Не центрировать, не обрезать по контуру, не увеличивать.
+— Всё поле вне фигуры полностью прозрачное.
+
+ЧТО ВХОДИТ В ФИГУРУ:
+Колпак с капюшоном, голова, оба уха, обе лапы, лежащие на одеяле. Глаза открытые, как на исходнике.
+
+ЧЕГО ДЕЛАТЬ НЕЛЬЗЯ:
+— Нельзя рисовать мишку заново. Это должен быть тот же самый мишка с исходной картинки: та же форма капюшона, те же места ушей и лап, тот же свет и те же тени на шерсти.
+— Тень, которую мишка отбрасывает на подушку, не включать — она остаётся на фоне.
+— Никакой белой или серой каймы по краю.
+
+КАК ВЫРЕЗАТЬ КРАЙ:
+Мягко, по волоску, с полупрозрачными кончиками ворса.
+
+Формат: PNG-24 с альфа-каналом, без сжатия с потерями.
+Имя файла: bear.png
+
+Если инструмент не умеет поставить фигуру в заданный прямоугольник — отдай мишку на прозрачном фоне как есть, но тогда ОБЯЗАТЕЛЬНО сохрани этот файл: все следующие три файла должны быть сделаны из него, а не нарисованы заново.</pre>
+      <div class="card-foot"><button class="copy ghost" data-target="base">Копировать</button></div>
+    </article>
+
+    <article class="card" style="margin-top:14px">
+      <div class="card-top">
+        <h3>2. Три варианта лица</h3>
+        <span class="file">bear_eyes_half · bear_eyes_closed · bear_yawn</span>
+      </div>
+      <p class="why">Не новые картинки, а копии первого файла с перекрашенной мордочкой.</p>
+      <pre data-copy="faces">Прикладываю файл bear.png — мишка на прозрачном фоне.
+
+Нужны три его копии, в которых меняется ТОЛЬКО мордочка:
+
+1. bear_eyes_half.png — глаза полуприкрыты, сонный взгляд, рот закрыт.
+2. bear_eyes_closed.png — глаза закрыты дугами, рот закрыт, спокойная мордочка.
+3. bear_yawn.png — глаза закрыты, рот открыт в зевке.
+
+ГЛАВНОЕ ТРЕБОВАНИЕ:
+Каждый файл делается так: открыть bear.png и перерисовать пиксели ТОЛЬКО внутри прямоугольника от точки 420, 830 до точки 530, 915. Это зона глаз, носа и рта.
+
+Всё, что за пределами этого прямоугольника, должно остаться в точности таким же, как в bear.png, точка в точку: колпак, капюшон, уши, лапы, складки ткани, цвет шерсти, свет, тени, край ворса и альфа-канал.
+
+ЧЕГО ДЕЛАТЬ НЕЛЬЗЯ:
+— Нельзя генерировать мишку заново для каждого варианта. Если мишка будет нарисован с нуля, у него сдвинутся капюшон, уши и лапы, и при переключении он задёргается. Прошлый раз получилось именно так.
+— Нельзя менять размер холста, положение фигуры, её масштаб и поворот.
+— Нельзя трогать нос: он остаётся на месте, 464–491 по ширине и 864–885 по высоте.
+
+ОРИЕНТИРЫ ПО ЛИЦУ (точки на холсте 941 × 1672):
+— Левый глаз: центр 444, 857, размер около 15 × 13.
+— Правый глаз: центр 502, 849, размер около 14 × 13.
+— Рот: 460–514 по ширине, 878–901 по высоте.
+Голова слегка наклонена, поэтому правый глаз выше левого на 8 точек — этот наклон сохранить.
+
+Размер всех трёх файлов ровно такой же, как у bear.png.
+Формат: PNG-24 с альфа-каналом.</pre>
+      <div class="card-foot"><button class="copy ghost" data-target="faces">Копировать</button></div>
+    </article>
+
+    <div class="group-label" style="margin-top:18px">Оба задания разом</div>
+    <div class="card" style="margin-top:8px">
+      <p class="why">Если удобнее отдать одним куском — здесь оба задания подряд и проверка в конце.</p>
+      <button class="copy copy-all" data-target="all">Копировать всё</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Проверка перед отправкой</h2>
+    <div class="card">
+      <ul>
+        <li>Файлов четыре: <span class="file">bear.png</span>, <span class="file">bear_eyes_half.png</span>, <span class="file">bear_eyes_closed.png</span>, <span class="file">bear_yawn.png</span>.</li>
+        <li>У всех четырёх одинаковый размер холста и фигура на одном и том же месте.</li>
+        <li>Если наложить любые два друг на друга — отличаются только глаза и рот. Капюшон, уши и лапы совпадают.</li>
+        <li>Фон прозрачный, белой каймы по краю нет.</li>
+        <li>Прислать файлами, а не картинками в переписке: в переписке они приходят сжатыми и без прозрачности, проверить их невозможно.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Три принятых слоя — <span class="file">room.png</span>,
+    <span class="file">blanket_front.png</span> и
+    <span class="file">lamp_glow.png</span> — переделывать не надо,
+    они уже лежат у меня и годятся.
+  </footer>
+
+</main>
+
+<script>
+  const intro =
+    'Разбираем картинку детской спальни на слои, чтобы мишка в кровати мог дышать, ' +
+    'моргать и зевать. Комната, одеяло и свет ночника уже готовы и приняты. ' +
+    'Осталось переделать самого мишку — два задания подряд.\n\n';
+
+  const outro =
+    '\n\n———\n\nПРОВЕРКА ПЕРЕД ОТПРАВКОЙ:\n' +
+    '— файлов четыре: bear.png, bear_eyes_half.png, bear_eyes_closed.png, bear_yawn.png;\n' +
+    '— у всех четырёх одинаковый размер холста и фигура на одном и том же месте;\n' +
+    '— если наложить любые два друг на друга, отличаются только глаза и рот, а капюшон, уши и лапы совпадают;\n' +
+    '— фон прозрачный, белой или серой каймы по краю нет;\n' +
+    '— отдать файлами, а не картинками в переписке.';
+
+  const order = ['base', 'faces'];
+
+  function textOf(key) {
+    const node = document.querySelector('pre[data-copy="' + key + '"]');
+    return node ? node.textContent : '';
+  }
+
+  function fullBrief() {
+    const parts = order.map((key, i) => 'ЗАДАНИЕ ' + (i + 1) + '\n\n' + textOf(key));
+    return intro + parts.join('\n\n———\n\n') + outro;
+  }
+
+  async function put(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      // Буфер через clipboard доступен не всегда — тогда через поле ввода.
+      const pad = document.createElement('textarea');
+      pad.value = text;
+      pad.setAttribute('readonly', '');
+      pad.style.position = 'fixed';
+      pad.style.top = '-1000px';
+      document.body.appendChild(pad);
+      pad.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(pad);
+      return ok;
+    }
+  }
+
+  document.querySelectorAll('.copy').forEach((button) => {
+    const was = button.textContent;
+    button.addEventListener('click', async () => {
+      const key = button.dataset.target;
+      const text = key === 'all' ? fullBrief() : textOf(key);
+      const ok = await put(text);
+      button.textContent = ok ? 'Скопировано' : 'Выдели и скопируй вручную';
+      button.classList.toggle('done', ok);
+      setTimeout(() => {
+        button.textContent = was;
+        button.classList.remove('done');
+      }, 1800);
+    });
+  });
+</script>
+</body>
+</html>
