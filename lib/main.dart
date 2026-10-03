@@ -14,6 +14,7 @@ import 'backend/supabase_store.dart';
 import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
+import 'game/food.dart';
 import 'game/game_calendar.dart';
 import 'game/referral_info.dart';
 import 'game/game_state.dart';
@@ -314,7 +315,19 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       _game.onLinkApple = auth.signInWithApple;
     }
     _startStore();
+    if (widget.boot.isOnline) unawaited(_loadFoodPrices());
     WidgetsBinding.instance.addObserver(_lifecycle);
+  }
+
+  /// Цены блюд и награды рецептов из панели управления (КП 15.3, 15.4).
+  /// Не пришли — остаются цены из каталога; списывает всё равно сервер.
+  Future<void> _loadFoodPrices() async {
+    try {
+      FoodPrices.apply(await widget.boot.store.config());
+      if (mounted) setState(() {});
+    } on Object catch (error) {
+      debugPrint('Цены блюд с сервера не пришли: $error');
+    }
   }
 
   /// Покупки за деньги (КП 11.3). Только с сервером и в приложении из

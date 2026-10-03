@@ -12,29 +12,70 @@ abstract interface class TablePlate {
   String get image;
 }
 
+/// Цены блюд и награды рецептов с сервера (КП 15.3, 15.4): настройки
+/// `dishes` и `recipes` в `game_config`, их правят в панели управления.
+/// Списывает и начисляет монеты всё равно сервер — здесь только то, что
+/// приложение показывает, чтобы на табло стояло то же число, что спишется.
+abstract final class FoodPrices {
+  static Map<String, dynamic> _dishes = const {};
+  static Map<String, dynamic> _recipes = const {};
+
+  /// Взять цены из настроек сервера: `{dishes: {id: {price, food}},
+  /// recipes: {id: {reward, food}}}`. Чего нет — остаётся из каталога.
+  static void apply(Map<String, dynamic> config) {
+    final dishes = config['dishes'];
+    final recipes = config['recipes'];
+    if (dishes is Map) _dishes = Map<String, dynamic>.from(dishes);
+    if (recipes is Map) _recipes = Map<String, dynamic>.from(recipes);
+  }
+
+  /// Забыть цены сервера — для тестов.
+  static void reset() {
+    _dishes = const {};
+    _recipes = const {};
+  }
+
+  static num? _field(Map<String, dynamic> table, String id, String field) {
+    final row = table[id];
+    if (row is! Map) return null;
+    final value = row[field];
+    return value is num ? value : null;
+  }
+
+  static int? dishPrice(String id) => _field(_dishes, id, 'price')?.round();
+  static double? dishFood(String id) => _field(_dishes, id, 'food')?.toDouble();
+  static int? recipeReward(String id) =>
+      _field(_recipes, id, 'reward')?.round();
+  static double? recipeFood(String id) =>
+      _field(_recipes, id, 'food')?.toDouble();
+}
+
 /// Готовое блюдо из вкладки «Готовые блюда» (КП 8.2).
 class Dish implements TablePlate {
   const Dish({
     required this.id,
     required this.emoji,
     required this.title,
-    required this.price,
-    required this.foodGain,
-  });
+    required int price,
+    required double foodGain,
+  }) : _price = price,
+       _foodGain = foodGain;
 
   @override
   final String id;
   final String emoji;
   final String title;
 
-  /// Цена в монетах. КП 8.2 задаёт вилку 5–15.
-  ///
-  /// ЗАГЛУШКА: конкретные значения не утверждены. По КП 10.9 стоимость
-  /// считается отдельно, по 15.4 приезжает из панели управления.
-  final int price;
+  final int _price;
+  final double _foodGain;
 
-  /// Насколько поднимается показатель «Еда».
-  final double foodGain;
+  /// Цена в монетах. КП 8.2 задаёт вилку 5–15. Правится в панели
+  /// управления (КП 15.3, 15.4) и приезжает с сервера ([FoodPrices]);
+  /// значение здесь — на случай, когда сервера нет.
+  int get price => FoodPrices.dishPrice(id) ?? _price;
+
+  /// Насколько поднимается показатель «Еда» — тоже с сервера.
+  double get foodGain => FoodPrices.dishFood(id) ?? _foodGain;
 
   /// Картинка блюда для стола на кухне: тарелка без фона, в стиле и
   /// ракурсе кухни (Higgsfield, 24.09).
@@ -62,11 +103,12 @@ class Recipe implements TablePlate {
     required this.emoji,
     required this.title,
     required this.difficulty,
-    required this.reward,
-    required this.foodGain,
+    required int reward,
+    required double foodGain,
     required this.steps,
     required this.distractors,
-  });
+  }) : _reward = reward,
+       _foodGain = foodGain;
 
   @override
   final String id;
@@ -76,10 +118,14 @@ class Recipe implements TablePlate {
   /// Уровень сложности 1–3, показывается звёздами (КП 8.3).
   final int difficulty;
 
-  /// Награда в монетах за успешное приготовление.
-  final int reward;
+  final int _reward;
+  final double _foodGain;
 
-  final double foodGain;
+  /// Награда в монетах за успешное приготовление. Правится в панели
+  /// управления и приезжает с сервера ([FoodPrices]).
+  int get reward => FoodPrices.recipeReward(id) ?? _reward;
+
+  double get foodGain => FoodPrices.recipeFood(id) ?? _foodGain;
 
   /// Ингредиенты в правильном порядке. КП 8.4 требует именно
   /// последовательность, а не просто набор.
