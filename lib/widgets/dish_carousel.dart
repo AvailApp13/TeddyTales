@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
@@ -407,10 +408,17 @@ class DishCarousel<T extends TablePlate> extends StatefulWidget {
     this.onClose,
     this.closeLabel,
     this.tag = 'dish',
+    this.spinTo,
   });
 
   final DishArc arc;
   final List<T> dishes;
+
+  /// Блюдо, которое мишка просит (КП 8.1, 7.4): когда тарелки опустились
+  /// на стол, дуга плавно проворачивается и ставит его перед мишкой
+  /// (заказчик 04.10: «не просто появляется, а проворачивается и
+  /// показывает»). `null` — дуга остаётся как есть.
+  final String? spinTo;
 
   /// Нажали на блюдо перед мишкой — мишка ест (на кухне без окна
   /// подтверждения, заказчик 24.09). У рецептов — начать готовку.
@@ -459,10 +467,47 @@ class _DishCarouselState<T extends TablePlate> extends State<DishCarousel<T>>
         // Пружина останавливается «около» цели — ставим ровно на место.
         if (status == AnimationStatus.completed) _arc.offset = _target;
       });
+    if (widget.spinTo != null) {
+      // Сначала тарелки садятся на стол и мишка говорит, чего хочет, —
+      // потом дуга едет к этому блюду.
+      _spinTimer = Timer(
+        DishPlates.appearDuration + const Duration(milliseconds: 350),
+        _spin,
+      );
+    }
+  }
+
+  Timer? _spinTimer;
+
+  void _spin() {
+    if (!mounted) return;
+    final index = widget.dishes.indexWhere((d) => d.id == widget.spinTo);
+    final count = widget.dishes.length;
+    if (index < 0 || count == 0) return;
+    // Кратчайшим путём по кругу.
+    final from = _arc.offset.roundToDouble();
+    var steps = (index - from.toInt()) % count;
+    if (steps > count / 2) steps -= count;
+    if (steps == 0) return;
+    final target = from + steps;
+    _target = target;
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      _arc.offset = target;
+      return;
+    }
+    _snap.value = _arc.offset;
+    _snap.animateTo(
+      target,
+      duration: Duration(
+        milliseconds: (450 + 230 * steps.abs()).clamp(600, 1600),
+      ),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   @override
   void dispose() {
+    _spinTimer?.cancel();
     _snap.dispose();
     super.dispose();
   }
@@ -486,6 +531,7 @@ class _DishCarouselState<T extends TablePlate> extends State<DishCarousel<T>>
   }
 
   void _onDragUpdate(DragUpdateDetails details, double width) {
+    _spinTimer?.cancel();
     _snap.stop();
     _arc.offset -= details.delta.dx / (width * DishArcGeometry.step);
   }
@@ -506,6 +552,7 @@ class _DishCarouselState<T extends TablePlate> extends State<DishCarousel<T>>
   }
 
   void _onTap(Offset local, Size size) {
+    _spinTimer?.cancel();
     if (widget.dishes.isEmpty) {
       widget.onTapElsewhere?.call();
       return;

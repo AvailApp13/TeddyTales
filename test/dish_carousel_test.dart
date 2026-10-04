@@ -155,6 +155,7 @@ void main() {
       WidgetTester tester, {
       int? initial,
       String? favourite,
+      String? spinTo,
     }) async {
       arc = DishArc(count: dishes.length, initial: initial ?? pasta);
       await tester.pumpWidget(
@@ -189,6 +190,7 @@ void main() {
                         onBuy: bought.add,
                         onTapElsewhere: () => elsewhere++,
                         onClose: () => closed++,
+                        spinTo: spinTo,
                       ),
                     ),
                   ],
@@ -272,6 +274,28 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('дуга сама доворачивает к блюду, которое мишка просит', (
+      tester,
+    ) async {
+      await pump(tester, favourite: 'chicken', spinTo: 'chicken');
+      // Сначала перед мишкой паста — тарелки только сели на стол.
+      expect(current(tester), 'pasta');
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      expect(current(tester), 'chicken');
+      expect(arc.offset, arc.offset.roundToDouble());
+    });
+
+    testWidgets('свайп до поворота отменяет его', (tester) async {
+      await pump(tester, spinTo: 'chicken');
+      await tester.drag(
+        find.byKey(const ValueKey('dish-carousel-band')),
+        const Offset(-20, 0),
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(current(tester), isNot('chicken'));
     });
 
     testWidgets('у нелюбимого блюда сердечка нет', (tester) async {

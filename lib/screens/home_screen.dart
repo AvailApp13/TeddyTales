@@ -1599,6 +1599,7 @@ class _RoomScene extends StatelessWidget {
             child: DishCarousel(
               arc: dishArc,
               dishes: dishes,
+              spinTo: craving,
               onBuy: onBuyDish,
               onTapElsewhere: onPet,
               onClose: onHideDishes,
