@@ -170,6 +170,7 @@ class BoardText {
     this.steps = 0,
     this.done = 0,
     this.favourite = false,
+    this.food = '',
   });
 
   final String name;
@@ -184,6 +185,11 @@ class BoardText {
 
   /// Любимое блюдо характера (КП 7.4): перед названием — сердечко.
   final bool favourite;
+
+  /// Насколько поднимется «Еда», «+25%» — после цены, со значком вилки
+  /// (заказчик 04.10: «сколько стоит и какой процент поднимется»). Пусто —
+  /// не показывается.
+  final String food;
 }
 
 /// Табло для блюда или рецепта [plate].
@@ -197,6 +203,7 @@ BoardText dishBoard(AppLocalizations l10n, Dish dish, {String? favourite}) =>
       description: dishDescription(l10n, dish.id),
       value: '${dish.price}',
       favourite: dish.id == favourite,
+      food: '+${dish.foodGain.round()}%',
     );
 
 /// Табло рецепта на дуге: «Сэндвич  3 шага  ● +9» (макет готовки,
@@ -950,6 +957,14 @@ class TableBoardLine extends StatelessWidget {
   double get _dot => 9 * scale;
   double get _dotGap => 4 * scale;
   double get _heart => 11 * scale;
+  double get _fork => 11 * scale;
+
+  /// Цвет прибавки «Еды» — как у кружка «Еда» наверху, посветлее для
+  /// тёмной капсулы.
+  static const Color foodTint = Color(0xFFF7C3BD);
+
+  TextStyle get _foodStyle =>
+      sceneText(size: 11 * scale, weight: 800, color: foodTint);
 
   double get _dots =>
       text.steps == 0 ? 0 : text.steps * _dot + (text.steps - 1) * _dotGap;
@@ -973,7 +988,13 @@ class TableBoardLine extends StatelessWidget {
         _gap +
         _coin +
         4 * scale +
-        measure(TextSpan(text: text.value, style: _price));
+        measure(TextSpan(text: text.value, style: _price)) +
+        (text.food.isEmpty
+            ? 0
+            : _gap +
+                  _fork +
+                  3 * scale +
+                  measure(TextSpan(text: text.food, style: _foodStyle)));
   }
 
   InlineSpan get _span => TextSpan(
@@ -1028,6 +1049,17 @@ class TableBoardLine extends StatelessWidget {
         ),
         SizedBox(width: 4 * scale),
         Text(text.value, style: _price),
+        if (text.food.isNotEmpty) ...[
+          SizedBox(width: _gap),
+          Icon(
+            Icons.restaurant_rounded,
+            key: const ValueKey('board-food'),
+            size: _fork,
+            color: foodTint,
+          ),
+          SizedBox(width: 3 * scale),
+          Text(text.food, style: _foodStyle),
+        ],
       ],
     );
   }

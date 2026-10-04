@@ -258,6 +258,14 @@ void main() {
         find.descendant(of: board, matching: find.text('12')),
         findsOneWidget,
       );
+      // Рядом с ценой — насколько поднимется «Еда» (заказчик 04.10).
+      expect(
+        find.descendant(
+          of: board,
+          matching: find.text('+${dishes[pasta].foodGain.round()}%'),
+        ),
+        findsOneWidget,
+      );
       // Под самими блюдами цен больше нет.
       expect(find.text('${dishes[pasta - 1].price}'), findsNothing);
     });
