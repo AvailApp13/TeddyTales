@@ -791,5 +791,10 @@
   "cravingIndependentPasta": "Today I want pasta with tomato sauce. Decided — let's take it!",
   "cravingReservedFruit": "Could I have some fruit? Strawberries, banana, grapes… I'd really like some.",
   "cravingReservedCookie": "Could I have a chocolate cookie? Just one… well, two.",
-  "cravingReservedSoup": "Could I have some soup with peas? It's so tasty."
+  "cravingReservedSoup": "Could I have some soup with peas? It's so tasty.",
+  "ingredientHam": "Ham",
+  "ingredientLettuce": "Lettuce",
+  "ingredientStrawberry": "Strawberry",
+  "ingredientGrapes": "Grapes",
+  "ingredientBlueberries": "Blueberries"
 }

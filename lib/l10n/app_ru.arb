@@ -1388,5 +1388,10 @@
   "cravingIndependentPasta": "Сегодня хочу пасту с томатным соусом. Решено — берём!",
   "cravingReservedFruit": "А можно фрукты? Клубника, банан, виноград… очень хочется.",
   "cravingReservedCookie": "Можно шоколадное печенье? Хотя бы одно… ну, два.",
-  "cravingReservedSoup": "Можно мне супчик с горошком? Он такой вкусный."
+  "cravingReservedSoup": "Можно мне супчик с горошком? Он такой вкусный.",
+  "ingredientHam": "Ветчина",
+  "ingredientLettuce": "Салатный лист",
+  "ingredientStrawberry": "Клубника",
+  "ingredientGrapes": "Виноград",
+  "ingredientBlueberries": "Голубика"
 }

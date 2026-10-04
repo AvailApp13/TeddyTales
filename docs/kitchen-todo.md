@@ -1,5 +1,23 @@
 # Кухня — что осталось (записано 01.10.2026)
 
+## Задача на 05.10: 5 продуктов под утверждённые картинки блюд
+
+Заказчик 04.10: «блюда утверждены, мы их не меняем, подгоняем ингредиенты».
+Рецепты уже переписаны (`lib/game/food.dart`); где нет картинки — эмодзи.
+04.10 прошла только клубника (лимит). Осталось, тем же общим началом
+промта, что ниже, `aspect_ratio 1:1`, образцы сыр и помидор:
+
+| Файл `ingredients/` | Хвост промта |
+|---|---|
+| `ham.webp` | a few neat thin slices of pink ham, slightly fanned out. |
+| `lettuce.webp` | two fresh bright green curly lettuce leaves. |
+| `grapes.webp` | a small bunch of light green grapes on a stem. |
+| `blueberries.webp` | a small neat pile of fresh blueberries, dusty dark blue. |
+| `pasta.webp` (заменить) | a neat bundle of dry uncooked long spaghetti tied with a thin twine, lying diagonally, golden yellow. |
+
+Дальше — как обычно: `tool/fetch-media.json` → ветка `claude/media-cache`
+→ обрезать поля, 200 px, webp → тесты, сборка, артефакт.
+
 ## Задача на 02.10: 9 картинок в Higgsfield
 
 03.10: прошло 5 из 9 (курица, паста, грибы, сметана, ложка). 04.10 —

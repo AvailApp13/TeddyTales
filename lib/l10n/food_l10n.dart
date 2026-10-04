@@ -90,6 +90,11 @@ String ingredientName(AppLocalizations l10n, Ingredient ingredient) =>
       'Грибы' => l10n.ingredientMushrooms,
       'Сметана' => l10n.ingredientSourCream,
       'Перемешать' => l10n.ingredientMix,
+      'Ветчина' => l10n.ingredientHam,
+      'Салатный лист' => l10n.ingredientLettuce,
+      'Клубника' => l10n.ingredientStrawberry,
+      'Виноград' => l10n.ingredientGrapes,
+      'Голубика' => l10n.ingredientBlueberries,
       // Фолбэк — русское значение из данных.
       _ => ingredient.title,
     };

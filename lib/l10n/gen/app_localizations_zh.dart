@@ -2220,4 +2220,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cravingReservedSoup => '可以给我一碗豌豆汤吗？它好好吃。';
+
+  @override
+  String get ingredientHam => '火腿';
+
+  @override
+  String get ingredientLettuce => '生菜';
+
+  @override
+  String get ingredientStrawberry => '草莓';
+
+  @override
+  String get ingredientGrapes => '葡萄';
+
+  @override
+  String get ingredientBlueberries => '蓝莓';
 }

@@ -2344,4 +2344,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cravingReservedSoup =>
       'Could I have some soup with peas? It\'s so tasty.';
+
+  @override
+  String get ingredientHam => 'Ham';
+
+  @override
+  String get ingredientLettuce => 'Lettuce';
+
+  @override
+  String get ingredientStrawberry => 'Strawberry';
+
+  @override
+  String get ingredientGrapes => 'Grapes';
+
+  @override
+  String get ingredientBlueberries => 'Blueberries';
 }

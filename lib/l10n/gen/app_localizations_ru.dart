@@ -2350,4 +2350,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get cravingReservedSoup =>
       'Можно мне супчик с горошком? Он такой вкусный.';
+
+  @override
+  String get ingredientHam => 'Ветчина';
+
+  @override
+  String get ingredientLettuce => 'Салатный лист';
+
+  @override
+  String get ingredientStrawberry => 'Клубника';
+
+  @override
+  String get ingredientGrapes => 'Виноград';
+
+  @override
+  String get ingredientBlueberries => 'Голубика';
 }

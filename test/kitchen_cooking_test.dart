@@ -88,7 +88,7 @@ void main() {
 
       expect(find.byKey(const ValueKey('recipe-sandwich')), findsOneWidget);
       expect(find.byKey(const ValueKey('recipe-price-board')), findsOneWidget);
-      expect(labels(tester), contains('Сэндвич  3 шага'));
+      expect(labels(tester), contains('Сэндвич  5 шагов'));
       expect(find.text('+9'), findsOneWidget);
 
       // Нажатие на рецепт перед мишкой — начать готовку.
@@ -170,9 +170,9 @@ void main() {
         expect(box.left, greaterThanOrEqualTo(0));
         expect(box.right, lessThanOrEqualTo(screen.width));
       }
-      // На табло — название, три пустых кружка и награда.
+      // На табло — название, пять пустых кружков и награда.
       expect(find.text('Сэндвич'), findsOneWidget);
-      expect(labels(tester).where((l) => l == '○').length, 3);
+      expect(labels(tester).where((l) => l == '○').length, 5);
       expect(find.text('+9'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });

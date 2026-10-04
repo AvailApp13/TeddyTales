@@ -4137,6 +4137,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Можно мне супчик с горошком? Он такой вкусный.'**
   String get cravingReservedSoup;
+
+  /// No description provided for @ingredientHam.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ветчина'**
+  String get ingredientHam;
+
+  /// No description provided for @ingredientLettuce.
+  ///
+  /// In ru, this message translates to:
+  /// **'Салатный лист'**
+  String get ingredientLettuce;
+
+  /// No description provided for @ingredientStrawberry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клубника'**
+  String get ingredientStrawberry;
+
+  /// No description provided for @ingredientGrapes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виноград'**
+  String get ingredientGrapes;
+
+  /// No description provided for @ingredientBlueberries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Голубика'**
+  String get ingredientBlueberries;
 }
 
 class _AppLocalizationsDelegate

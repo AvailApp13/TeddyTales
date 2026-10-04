@@ -791,5 +791,10 @@
   "cravingIndependentPasta": "今天我想吃番茄酱意面。决定了——就要它！",
   "cravingReservedFruit": "可以吃点水果吗？草莓、香蕉、葡萄……好想吃。",
   "cravingReservedCookie": "可以吃块巧克力饼干吗？就一块……好吧，两块。",
-  "cravingReservedSoup": "可以给我一碗豌豆汤吗？它好好吃。"
+  "cravingReservedSoup": "可以给我一碗豌豆汤吗？它好好吃。",
+  "ingredientHam": "火腿",
+  "ingredientLettuce": "生菜",
+  "ingredientStrawberry": "草莓",
+  "ingredientGrapes": "葡萄",
+  "ingredientBlueberries": "蓝莓"
 }

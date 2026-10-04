@@ -185,6 +185,9 @@ abstract final class FoodCatalog {
         Ingredient('sugar', '🍯', 'Сахар'),
         Ingredient('egg', '🥚', 'Яйцо'),
         Ingredient('flour', '🌾', 'Мука'),
+        // На утверждённой картинке печенье шоколадное (заказчик 04.10:
+        // блюда не меняем, продукты подгоняем под картинку).
+        Ingredient('chocolate', '🍫', 'Шоколад'),
       ],
       distractors: [
         Ingredient('bread', '🍞', 'Хлеб'),
@@ -200,8 +203,12 @@ abstract final class FoodCatalog {
       reward: 9,
       foodGain: 26,
       steps: [
+        // Как на картинке сэндвича (заказчик 04.10): хлеб, сыр, ветчина,
+        // салатный лист, помидор.
         Ingredient('bread', '🍞', 'Хлеб'),
         Ingredient('cheese', '🧀', 'Сыр'),
+        Ingredient('ham', '🥓', 'Ветчина'),
+        Ingredient('lettuce', '🥬', 'Салатный лист'),
         Ingredient('tomato', '🍅', 'Помидор'),
       ],
       distractors: [
@@ -218,9 +225,13 @@ abstract final class FoodCatalog {
       reward: 14,
       foodGain: 24,
       steps: [
+        // Как на картинке салата (заказчик 04.10): йогурта на ней нет, есть
+        // клубника, виноград и голубика.
         Ingredient('apple', '🍎', 'Яблоко'),
         Ingredient('banana', '🍌', 'Банан'),
-        Ingredient('yogurt', '🥛', 'Йогурт'),
+        Ingredient('strawberry', '🍓', 'Клубника'),
+        Ingredient('grapes', '🍇', 'Виноград'),
+        Ingredient('blueberries', '🫐', 'Голубика'),
       ],
       distractors: [
         Ingredient('cheese', '🧀', 'Сыр'),
