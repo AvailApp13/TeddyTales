@@ -206,6 +206,38 @@ workflows:
           echo "Номер этой сборки: $BUILD_NUMBER"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
 
+      - name: Вход через Apple в портале
+        # Включает у Bundle ID возможность «Sign In with Apple» тем же ключом
+        # API, что и подпись (заказчик 06.10: «сам всё сделай»). Если она уже
+        # включена — ничего не трогает. Если только что включили, старые
+        # профили App Store удаляются: в них нет нового права, и следующий
+        # шаг создаст свежий профиль уже с ним.
+        script: |
+          set -e
+          BID=$(app-store-connect list-bundle-ids \
+            --bundle-id-identifier "$BUNDLE_ID" --json | python3 -c '
+          import json, os, sys
+          ids = [b["id"] for b in json.load(sys.stdin)
+                 if b["attributes"]["identifier"] == os.environ["BUNDLE_ID"]]
+          print(ids[0])')
+          echo "Bundle ID $BUNDLE_ID: $BID"
+          HAS=$(app-store-connect bundle-ids capabilities "$BID" --json | python3 -c '
+          import json, sys
+          caps = [c["attributes"]["capabilityType"] for c in json.load(sys.stdin)]
+          print("yes" if "APPLE_ID_AUTH" in caps else "no")')
+          echo "Sign In with Apple уже включён: $HAS"
+          if [ "$HAS" = "no" ]; then
+            app-store-connect bundle-ids enable-capabilities "$BID" \
+              --capability "Sign In with Apple"
+            for P in $(app-store-connect bundle-ids profiles --bundle-ids "$BID" \
+                --type IOS_APP_STORE --json | python3 -c '
+          import json, sys
+          print(" ".join(p["id"] for p in json.load(sys.stdin)))'); do
+              echo "Удаляю старый профиль без нового права: $P"
+              app-store-connect profiles delete "$P"
+            done
+          fi
+
       - name: Профили подписи
         # Подпись нарочно собрана скриптом, а не блоком `ios_signing`:
         # автоматический режим трижды падал с «No matching profiles found»
@@ -233,6 +265,7 @@ workflows:
         script: |
           flutter build ipa --release \
             --build-number=$BUILD_NUMBER \
+            --dart-define=APPLE_SIGN_IN=true \
             --export-options-plist=$HOME/export_options.plist
 
     artifacts:
