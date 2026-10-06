@@ -262,22 +262,49 @@ workflows:
           wanted = {"APPLE_ID_AUTH": "Sign In with Apple",
                     "PUSH_NOTIFICATIONS": "Push Notifications"}
           missing = [name for key, name in wanted.items() if key not in have]
-          if not missing:
+          if missing:
+              print("Включаю:", ", ".join(missing))
+              # «Уже включено» (список прав прочитался не так) сборку не валит.
+              if not run("bundle-ids", "enable-capabilities", bid, "--capability",
+                         *missing, want_json=False, fatal=False):
+                  print("⚠ Включить не вышло — дальше проверю профили")
+          else:
               print("Всё нужное уже включено")
-              sys.exit(0)
 
-          print("Включаю:", ", ".join(missing))
-          # Если Apple ответит «уже включено» (список прав прочитался не так) —
-          # не валим сборку: подпись на следующем шаге всё равно покажет,
-          # есть ли права в профиле.
-          if not run("bundle-ids", "enable-capabilities", bid, "--capability",
-                     *missing, want_json=False, fatal=False):
-              print("⚠ Включить не вышло — оставляю профили как есть")
-              sys.exit(0)
-          for prof in run("bundle-ids", "profiles", "--bundle-ids", bid,
-                          "--type", "IOS_APP_STORE"):
-              print("Удаляю старый профиль без новых прав:", prof["id"])
-              run("profiles", "delete", prof["id"], want_json=False)
+          # Профиль App Store, выпущенный до включения прав, остаётся
+          # «активным», но прав в нём нет — Xcode его отвергает (сборка 06.10:
+          # «profile doesn't include the Push Notifications capability»).
+          # Поэтому каждый раз смотрим внутрь профилей этого приложения и
+          # удаляем те, где нет aps-environment или Sign In with Apple; шаг
+          # «Профили подписи» выпустит новый, уже с правами.
+          import base64
+          def content(p):
+              a = attrs(p)
+              raw = a.get("profileContent") or a.get("profile_content") or ""
+              try:
+                  return base64.b64decode(raw).decode("latin-1")
+              except Exception:
+                  return ""
+          profiles = run("profiles", "list", "--type", "IOS_APP_STORE")
+          for prof in profiles:
+              text = content(prof)
+              name = attrs(prof).get("name", "")
+              if text:
+                  if f".{bundle}<" not in text and f".{bundle}\n" not in text:
+                      continue
+                  ok = ("aps-environment" in text
+                        and "com.apple.developer.applesignin" in text)
+              else:
+                  # Содержимое профиля CLI не отдал — узнаём свои по имени
+                  # (Codemagic называет их «TeddyTales ios_app_store …») и
+                  # пересоздаём: проверить права внутри нечем.
+                  if not name.lower().startswith("teddytales"):
+                      continue
+                  ok = False
+              print(f"Профиль «{name}» ({prof['id']}): {'права есть' if ok else 'прав нет'}")
+              if not ok:
+                  print("Удаляю профиль без новых прав:", prof["id"])
+                  run("profiles", "delete", prof["id"], want_json=False, fatal=False)
           PY
 
       - name: Профили подписи
