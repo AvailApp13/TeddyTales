@@ -22,20 +22,19 @@
 - **Панель** → «Отправить уведомление»: тип, тексты на трёх языках,
   «Сколько получат» и «Отправить».
 
+## Ключ APNs — подключён 06.10
+
+«TeddyTales Push», Key ID `R9Y52RRD5Z`, Team ID `F2MD3735EJ`, среда
+**Production** (TestFlight и App Store). Лежит в Vault Supabase
+(`apns_key_p8`, `apns_key_id`, `apns_team_id`). Проверено: Apple на
+тестовый запрос ответила `BadDeviceToken` — ключ и Team ID приняты.
+Ключей «на всю команду» в аккаунте больше не создать (лимит Apple),
+этот — отдельный. Заменить ключ: `vault.update_secret(...)`.
+
 ## ⚠ Ждёт
 
-1. **Ключ APNs** — создаётся только вручную: developer.apple.com →
-   Certificates, Identifiers & Profiles → **Keys** → «+» → галочка **Apple
-   Push Notifications service (APNs)** → Continue → Register → Download.
-   Нужны файл `.p8`, его Key ID и Team ID (Membership details). Ключ App
-   Store Connect API (Users and Access → Integrations) для push **не
-   подходит**.
-   Положить в Vault (SQL Editor Supabase):
-   `select vault.create_secret('<.p8 целиком>', 'apns_key_p8');`
-   `select vault.create_secret('<Key ID>', 'apns_key_id');`
-   `select vault.create_secret('<Team ID>', 'apns_team_id');`
-2. **Android** — FCM после проекта Firebase. В материковом Китае без
+1. **Android** — FCM после проекта Firebase. В материковом Китае без
    сервисов Google серверные push на Android не дойдут — нужны службы
    производителей (Huawei, Xiaomi), отдельная работа.
-3. Панель на сайте (gh-pages) обновляется отдельно — с разрешения
+2. Панель на сайте (gh-pages) обновляется отдельно — с разрешения
    заказчика.
