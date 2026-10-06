@@ -271,6 +271,20 @@ workflows:
           else:
               print("Всё нужное уже включено")
 
+          # Проверка: права действительно включились? Иначе дальше Xcode
+          # упадёт на подписи с невнятной ошибкой — лучше остановиться здесь
+          # и сказать прямо, что включить руками.
+          now = set()
+          for c in run("bundle-ids", "capabilities", bid):
+              print("  право:", json.dumps(c, ensure_ascii=False)[:300])
+              a = attrs(c)
+              now.add(a.get("capabilityType") or a.get("capability_type") or "")
+          still = [name for key, name in wanted.items() if key not in now]
+          if still:
+              sys.exit("Apple не включила: " + ", ".join(still) +
+                       ". Включить вручную: developer.apple.com → Identifiers → "
+                       + bundle + " → галочки → Save, и запустить сборку снова.")
+
           # Профиль App Store, выпущенный до включения прав, остаётся
           # «активным», но прав в нём нет — Xcode его отвергает (сборка 06.10:
           # «profile doesn't include the Push Notifications capability»).
