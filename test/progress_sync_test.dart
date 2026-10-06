@@ -77,6 +77,14 @@ class _FakeStore implements ProgressStore {
   Future<void> deleteAccount() async {}
 
   @override
+  Future<void> registerPushToken({
+    required String token,
+    required String platform,
+    required String locale,
+    required List<String> kinds,
+  }) async {}
+
+  @override
   Future<PetSnapshot> completeLevel(String categoryId, int level) async {
     if (failing) throw const ProgressStoreException('нет сети');
     levels.add((categoryId, level));

@@ -22,6 +22,7 @@ import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
+import 'notifications/push_registration.dart';
 import 'notifications/smart_texts.dart' show notificationName;
 import 'alarm/wake_alarm.dart';
 import 'audio/sounds.dart';
@@ -258,6 +259,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// перестраивать расписание десятки раз за сессию впустую: пока
   /// приложение открыто, напоминания всё равно не показываются.
   void _planReminders() {
+    // Типы уведомлений могли переключить в настройках — сервер должен
+    // знать, кому слать «Событие» и «Новинки магазина» (КП 13.2).
+    if (widget.boot.isOnline) unawaited(_registerPush());
     final service = widget.notifications;
     if (service == null) return;
 
@@ -301,7 +305,11 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // сервиса или это веб — нет и вопроса «Напоминать о малыше?».
     final notifications = widget.notifications;
     if (notifications != null && !kIsWeb) {
-      _game.onAskNotifications = notifications.requestPermission;
+      _game.onAskNotifications = () async {
+        final granted = await notifications.requestPermission();
+        if (granted) unawaited(_registerPush());
+        return granted;
+      };
     }
     if (widget.boot.isOnline) _game.onDeleteAccount = _deleteAccount;
     // Гость привязывает Apple, чтобы не потерять мишку (КП 1.3). Пока
@@ -316,7 +324,38 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     }
     _startStore();
     if (widget.boot.isOnline) unawaited(_loadFoodPrices());
+    if (widget.boot.isOnline) unawaited(_registerPush());
     WidgetsBinding.instance.addObserver(_lifecycle);
+  }
+
+  /// Что последним отдали серверу для push — чтобы не слать то же самое
+  /// при каждом уходе в фон.
+  String? _pushSent;
+
+  /// Адрес телефона для push с сервера (КП 13.1) вместе с языком и
+  /// включёнными типами. Нет токена — тихо выходим: локальные напоминания
+  /// работают и без него.
+  Future<void> _registerPush() async {
+    final token = await PushRegistration.deviceToken();
+    if (token == null || !mounted) return;
+    final kinds = [
+      for (final kind in NotificationKind.values)
+        if (_game.isNotificationOn(kind.id)) kind.id,
+    ];
+    final locale = _language.name;
+    final key = '$token|$locale|${kinds.join(',')}';
+    if (key == _pushSent) return;
+    try {
+      await widget.boot.store.registerPushToken(
+        token: token,
+        platform: 'ios',
+        locale: locale,
+        kinds: kinds,
+      );
+      _pushSent = key;
+    } on Object catch (error) {
+      debugPrint('Адрес для push не сохранён: $error');
+    }
   }
 
   /// Цены блюд и награды рецептов из панели управления (КП 15.3, 15.4).

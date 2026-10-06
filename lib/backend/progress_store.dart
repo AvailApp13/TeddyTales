@@ -81,6 +81,15 @@ abstract interface class ProgressStore {
   /// App Store 5.1.1(v) — раз аккаунт создаётся в приложении, удаляться он
   /// должен там же.
   Future<void> deleteAccount();
+
+  /// Адрес телефона для push с сервера (КП 13.1): токен, платформа
+  /// (`ios`/`android`), язык и включённые типы уведомлений (КП 13.2).
+  Future<void> registerPushToken({
+    required String token,
+    required String platform,
+    required String locale,
+    required List<String> kinds,
+  });
 }
 
 /// Ошибка обращения к хранилищу.

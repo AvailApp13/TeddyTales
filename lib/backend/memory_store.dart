@@ -135,6 +135,15 @@ class MemoryStore implements ProgressStore {
   @override
   Future<Map<String, dynamic>> config() async => _config;
 
+  /// Без сервера push не бывает — адрес некому отдать.
+  @override
+  Future<void> registerPushToken({
+    required String token,
+    required String platform,
+    required String locale,
+    required List<String> kinds,
+  }) async {}
+
   @override
   Future<void> deleteAccount() async {
     throw const ProgressStoreException('Аккаунт удаляется только при связи');

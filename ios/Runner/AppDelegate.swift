@@ -20,6 +20,59 @@ import SwiftUI
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "WakeAlarmPlugin") {
       WakeAlarmPlugin.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PushTokenPlugin") {
+      PushTokenPlugin.register(with: registrar)
+    }
+  }
+}
+
+/// Адрес этого iPhone для push с сервера (КП 13.1): «Событие» и «Новинки
+/// магазина». Канал `teddytales/push`:
+///  - `register` → токен APNs строкой в hex или ошибка `failed`.
+/// Разрешение на показ уведомлений спрашивает flutter_local_notifications;
+/// токен Apple выдаёт и без него, но показывать push будет только с ним.
+final class PushTokenPlugin: NSObject, FlutterPlugin {
+  private var pending: [FlutterResult] = []
+
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let channel = FlutterMethodChannel(
+      name: "teddytales/push",
+      binaryMessenger: registrar.messenger()
+    )
+    let instance = PushTokenPlugin()
+    registrar.addMethodCallDelegate(instance, channel: channel)
+    registrar.addApplicationDelegate(instance)
+  }
+
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "register":
+      pending.append(result)
+      DispatchQueue.main.async {
+        UIApplication.shared.registerForRemoteNotifications()
+      }
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
+    pending.forEach { $0(hex) }
+    pending.removeAll()
+  }
+
+  func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    let failure = FlutterError(
+      code: "failed", message: error.localizedDescription, details: nil)
+    pending.forEach { $0(failure) }
+    pending.removeAll()
   }
 }
 

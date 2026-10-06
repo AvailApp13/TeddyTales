@@ -393,6 +393,31 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   }
 
   @override
+  Future<void> registerPushToken({
+    required String token,
+    required String platform,
+    required String locale,
+    required List<String> kinds,
+  }) async {
+    try {
+      await _client.rpc<dynamic>(
+        'register_push_token',
+        params: {
+          'p_token': token,
+          'p_platform': platform,
+          'p_locale': locale,
+          'p_kinds': kinds,
+        },
+      );
+    } on Object catch (error) {
+      throw ProgressStoreException(
+        'Не удалось сохранить адрес для уведомлений',
+        cause: error,
+      );
+    }
+  }
+
+  @override
   Future<void> deleteAccount() async {
     try {
       await _client.rpc<dynamic>('delete_my_account');
