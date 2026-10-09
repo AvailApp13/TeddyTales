@@ -2422,4 +2422,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get furnishCurrent => 'Now';
+
+  @override
+  String get furnishTabCurtains => 'Curtains';
+
+  @override
+  String get furnishTabCeiling => 'Ceiling';
+
+  @override
+  String get furnishSoon => 'soon';
+
+  @override
+  String furnishSoonToast(String what) {
+    return '$what — coming in the next update';
+  }
 }

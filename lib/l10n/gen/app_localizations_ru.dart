@@ -2428,4 +2428,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get furnishCurrent => 'Сейчас';
+
+  @override
+  String get furnishTabCurtains => 'Тюль';
+
+  @override
+  String get furnishTabCeiling => 'Потолок';
+
+  @override
+  String get furnishSoon => 'скоро';
+
+  @override
+  String furnishSoonToast(String what) {
+    return '$what — в следующем обновлении';
+  }
 }

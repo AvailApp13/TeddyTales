@@ -817,5 +817,16 @@
   "furnishPickWall": "选择墙面",
   "furnishPickFloor": "选择地板",
   "furnishFree": "免费",
-  "furnishCurrent": "当前"
+  "furnishCurrent": "当前",
+  "furnishTabCurtains": "纱帘",
+  "furnishTabCeiling": "天花板",
+  "furnishSoon": "即将",
+  "furnishSoonToast": "{what}将在下次更新中推出",
+  "@furnishSoonToast": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  }
 }

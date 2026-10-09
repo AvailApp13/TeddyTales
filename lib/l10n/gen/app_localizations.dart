@@ -4293,6 +4293,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сейчас'**
   String get furnishCurrent;
+
+  /// No description provided for @furnishTabCurtains.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тюль'**
+  String get furnishTabCurtains;
+
+  /// No description provided for @furnishTabCeiling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Потолок'**
+  String get furnishTabCeiling;
+
+  /// No description provided for @furnishSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'скоро'**
+  String get furnishSoon;
+
+  /// No description provided for @furnishSoonToast.
+  ///
+  /// In ru, this message translates to:
+  /// **'{what} — в следующем обновлении'**
+  String furnishSoonToast(String what);
 }
 
 class _AppLocalizationsDelegate

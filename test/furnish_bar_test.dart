@@ -114,4 +114,46 @@ void main() {
       expect(ItemCatalog.byId(item.id).id, item.id);
     }
   });
+
+  testWidgets('тюль и потолок — кнопки «скоро», выбора пока нет', (
+    tester,
+  ) async {
+    // Заказчик 09.10: показать сейчас, чтобы предложить Ирине доделать в
+    // следующем обновлении (docs/irina-wishes.md, строка 3).
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: FurnishBar(
+              game: game,
+              room: RoomKind.nursery,
+              picked: null,
+              onPick: (_) {},
+              onShop: () {},
+              onDone: () {},
+              onSurface: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (!kRoomSurfacesShown) return;
+    expect(find.text('Тюль'), findsOneWidget);
+    expect(find.text('Потолок'), findsOneWidget);
+    expect(find.text('скоро'), findsNWidgets(2));
+
+    await tester.tap(find.text('Тюль'));
+    await tester.pump();
+    expect(find.text('Тюль — в следующем обновлении'), findsOneWidget);
+    // Лента не переключилась: по-прежнему вещи.
+    expect(find.text('Выбери вещь'), findsOneWidget);
+  });
 }

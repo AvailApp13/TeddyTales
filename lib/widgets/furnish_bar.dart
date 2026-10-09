@@ -164,24 +164,52 @@ class _FurnishBarState extends State<FurnishBar> {
             ),
             if (tabs) ...[
               const SizedBox(height: 4),
-              Row(
-                children: [
-                  for (final t in _Tab.values) ...[
-                    if (t != _Tab.items) const SizedBox(width: 8),
-                    _TabChip(
-                      label: switch (t) {
-                        _Tab.items => l10n.furnishTabItems,
-                        _Tab.walls => l10n.furnishTabWalls,
-                        _Tab.floor => l10n.furnishTabFloor,
-                      },
-                      chosen: t == tab,
-                      onTap: () {
-                        setState(() => _tab = t);
-                        widget.onSurfaceTab?.call(t != _Tab.items);
-                      },
-                    ),
+              // Сверху над «скоро» нужен запас под пометку; на узком экране
+              // ряд листается вбок.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.only(top: 9),
+                child: Row(
+                  children: [
+                    for (final t in _Tab.values) ...[
+                      if (t != _Tab.items) const SizedBox(width: 8),
+                      _TabChip(
+                        label: switch (t) {
+                          _Tab.items => l10n.furnishTabItems,
+                          _Tab.walls => l10n.furnishTabWalls,
+                          _Tab.floor => l10n.furnishTabFloor,
+                        },
+                        chosen: t == tab,
+                        onTap: () {
+                          setState(() => _tab = t);
+                          widget.onSurfaceTab?.call(t != _Tab.items);
+                        },
+                      ),
+                    ],
+                    // ⚠ ждёт согласования с Ириной: выбор тюля и потолка —
+                    // сверх ТЗ (docs/irina-wishes.md, строка 3). Заказчик
+                    // 09.10: кнопки показать сейчас с пометкой «скоро», чтобы
+                    // предложить Ирине доделать в следующем обновлении.
+                    for (final soon in [
+                      l10n.furnishTabCurtains,
+                      l10n.furnishTabCeiling,
+                    ]) ...[
+                      const SizedBox(width: 8),
+                      _SoonChip(
+                        label: soon,
+                        onTap: () => ScaffoldMessenger.maybeOf(context)
+                          ?..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.furnishSoonToast(soon)),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
             const SizedBox(height: 8),
@@ -266,6 +294,58 @@ class _TabChip extends StatelessWidget {
             color: chosen ? AppColors.sageDark : AppColors.textPrimary,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Кнопка того, что появится позже: приглушённая, с пометкой «скоро» сверху.
+class _SoonChip extends StatelessWidget {
+  const _SoonChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.outline),
+            ),
+            child: Text(
+              label,
+              style: sceneText(
+                size: 12,
+                weight: 600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          Positioned(
+            top: -9,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.blushStrong,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                context.l10n.furnishSoon,
+                style: sceneText(size: 9, weight: 800, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

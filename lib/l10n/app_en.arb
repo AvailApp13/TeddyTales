@@ -817,5 +817,16 @@
   "furnishPickWall": "Pick the walls",
   "furnishPickFloor": "Pick the floor",
   "furnishFree": "Free",
-  "furnishCurrent": "Now"
+  "furnishCurrent": "Now",
+  "furnishTabCurtains": "Curtains",
+  "furnishTabCeiling": "Ceiling",
+  "furnishSoon": "soon",
+  "furnishSoonToast": "{what} — coming in the next update",
+  "@furnishSoonToast": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  }
 }

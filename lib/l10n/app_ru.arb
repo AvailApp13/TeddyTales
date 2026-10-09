@@ -1414,5 +1414,16 @@
   "furnishPickWall": "Выбери стены",
   "furnishPickFloor": "Выбери пол",
   "furnishFree": "Бесплатно",
-  "furnishCurrent": "Сейчас"
+  "furnishCurrent": "Сейчас",
+  "furnishTabCurtains": "Тюль",
+  "furnishTabCeiling": "Потолок",
+  "furnishSoon": "скоро",
+  "furnishSoonToast": "{what} — в следующем обновлении",
+  "@furnishSoonToast": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  }
 }

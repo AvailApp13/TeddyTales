@@ -2298,4 +2298,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get furnishCurrent => '当前';
+
+  @override
+  String get furnishTabCurtains => '纱帘';
+
+  @override
+  String get furnishTabCeiling => '天花板';
+
+  @override
+  String get furnishSoon => '即将';
+
+  @override
+  String furnishSoonToast(String what) {
+    return '$what将在下次更新中推出';
+  }
 }
