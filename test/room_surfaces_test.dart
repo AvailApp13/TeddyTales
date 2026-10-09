@@ -4,11 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/game_state.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
+import 'package:teddy_tales/game/room_kind.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 import 'package:teddy_tales/widgets/furnish_bar.dart';
 
 /// Стены и пол игровой — по 10, 4 бесплатно (заказчик 09.10,
-/// docs/room-surfaces-answers.md).
+/// docs/room-surfaces-answers.md); слои — из 3D (docs/room-structure-plan.md).
 void main() {
   for (final kind in [ItemKind.wallpaper, ItemKind.floor]) {
     group(kind.name, () {
@@ -20,22 +21,29 @@ void main() {
         expect(all.where((i) => i.price > 0), hasLength(6));
       });
 
-      test('у показанных есть образец и слой', () {
+      test('все десять показаны, у каждого образец и слой', () {
+        expect(FurnishBar.surfaces(kind), hasLength(10));
         for (final item in FurnishBar.surfaces(kind)) {
           expect(File(item.image!).existsSync(), isTrue, reason: item.id);
-          final layer = item.surfaceLayer;
-          if (layer != null) {
-            expect(File(layer).existsSync(), isTrue, reason: item.id);
-          }
+          expect(File(item.surfaceLayer!).existsSync(), isTrue, reason: item.id);
         }
       });
     });
   }
 
-  test('нынешние стена и пол — сама картинка комнаты, без слоя', () {
-    expect(ItemCatalog.byId('wall_rose').surfaceLayer, isNull);
-    expect(ItemCatalog.byId('floor_wood').surfaceLayer, isNull);
-    expect(ItemCatalog.byId('wall_mint').surfaceLayer, isNotNull);
+  test('отделка, тюль и картинка по умолчанию на месте', () {
+    expect(File('assets/rooms/nursery/trim.webp').existsSync(), isTrue);
+    expect(File('assets/rooms/nursery/curtains.webp').existsSync(), isTrue);
+    expect(File('assets/rooms/nursery3d.jpg').existsSync(), isTrue);
+  });
+
+  test('выбор стен и пола открыт вместе с игровой из 3D', () {
+    // Заказчик 09.10: на прежней картинке выбор был спрятан.
+    expect(kRoomSurfacesShown, kNursery3d);
+    for (final item in ItemCatalog.all.where((i) => i.isSurface)) {
+      expect(item.onSale, kNursery3d, reason: item.id);
+    }
+    expect(ItemCatalog.byId('pic_bear').onSale, isTrue);
   });
 
   test('снятый с продажи id в сохранении не роняет каталог', () {
@@ -57,20 +65,12 @@ void main() {
     );
     addTearDown(game.dispose);
     addTearDown(bear.dispose);
+
     final coins = game.coins;
     expect(game.buy('wall_mint'), isTrue);
     expect(game.coins, coins);
     game.togglePlaced('wall_mint');
     expect(game.isPlaced('wall_mint'), isTrue);
     expect(game.isPlaced('wall_rose'), isFalse);
-  });
-
-  test('пока выбор спрятан, стены и пол не продаются', () {
-    // Заказчик 09.10: «вкладки пока убери» — до новой 3D-базы игровой.
-    expect(kRoomSurfacesShown, isFalse);
-    for (final item in ItemCatalog.all.where((i) => i.isSurface)) {
-      expect(item.onSale, isFalse, reason: item.id);
-    }
-    expect(ItemCatalog.byId('pic_bear').onSale, isTrue);
   });
 }

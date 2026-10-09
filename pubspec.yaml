@@ -61,8 +61,9 @@ flutter:
     # блюда, которых нет среди готовых, — мясное и овощное.
     - assets/rooms/kitchen/ingredients/
     - assets/rooms/kitchen/recipes/
-    # Игровая: сменные стены и пол — слои поверх картинки и образцы для
-    # выбора (tool/room_surfaces.py, заказчик 09.10).
+    # Игровая из 3D: отделка и тюль, сменные стены и пол, образцы для
+    # выбора (tool/nursery3d/compose.py, заказчик 09.10).
+    - assets/rooms/nursery/
     - assets/rooms/nursery/walls/
     - assets/rooms/nursery/floors/
     - assets/rooms/nursery/swatches/

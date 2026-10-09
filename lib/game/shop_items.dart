@@ -11,6 +11,7 @@ library;
 import '../bear/bear_rig_spec.dart';
 import '../bear/bear_state.dart';
 import 'item_groups.dart';
+import 'room_kind.dart';
 
 /// Куда предмет попадает в магазине и в комнате.
 enum ItemKind {
@@ -117,10 +118,9 @@ class ShopItem {
   /// выбор открыт ([kRoomSurfacesShown]).
   bool get onSale => photo && (!isSurface || kRoomSurfacesShown);
 
-  /// Слой стены или пола поверх картинки игровой. У нынешних (с них малыш
-  /// начинает) слоя нет — это сама картинка. См. tool/room_surfaces.py.
+  /// Слой стены или пола игровой из 3D (`tool/nursery3d/compose.py`):
+  /// стена — непрозрачная на весь кадр, пол — с прозрачностью по краям.
   String? get surfaceLayer => switch (kind) {
-    _ when id == 'wall_rose' || id == 'floor_wood' => null,
     ItemKind.wallpaper => 'assets/rooms/nursery/walls/$id.webp',
     ItemKind.floor => 'assets/rooms/nursery/floors/$id.webp',
     _ => null,
@@ -161,12 +161,11 @@ class ShopItem {
 
 /// Выбор стен и пола игровой открыт.
 ///
-/// ⚠ Спрятан до новой базы игровой в 3D (заказчик 09.10: «вкладки пока
-/// убери», `docs/room-structure-plan.md`): перекраска поверх нынешней
-/// картинки оставляла розовыми потолок, плинтусы, откосы и тюль. Пока
-/// `false` — нет вкладок «Стены» и «Пол», стены и пол не продаются, а
-/// комната рисуется своей картинкой, что бы ни было выбрано раньше.
-const bool kRoomSurfacesShown = false;
+/// Открыт вместе с игровой из 3D ([kNursery3d], заказчик 09.10): стены и
+/// пол там — отдельные слои под белой отделкой и тюлем
+/// (`tool/nursery3d/compose.py`). На прежней картинке перекраска оставляла
+/// розовыми потолок, плинтусы, откосы и тюль — с ней выбор спрятан.
+const bool kRoomSurfacesShown = kNursery3d;
 
 /// Каталог игровых предметов.
 abstract final class ItemCatalog {
@@ -349,8 +348,7 @@ abstract final class ItemCatalog {
     // Стены и пол игровой — по 10 (заказчик 09.10, раскладка —
     // docs/room-surfaces-answers.md): 4 бесплатно, 6 за монеты. Первые в
     // каждом ряду — нынешние, с них малыш начинает. ⚠ Цены ждут
-    // согласования (КП 10.9), меняются из панели. Особые полы без
-    // `photo` — их образцы ещё не нарисованы (лимит Higgsfield 09.10).
+    // согласования (КП 10.9), меняются из панели.
     ShopItem(
       id: 'wall_rose',
       group: ItemGroup.walls,
@@ -460,6 +458,7 @@ abstract final class ItemCatalog {
       group: ItemGroup.floors,
       title: 'Ламинат широкой доской',
       price: 0,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(
@@ -475,6 +474,7 @@ abstract final class ItemCatalog {
       group: ItemGroup.floors,
       title: 'Плитка «шахматка»',
       price: 50,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(
@@ -482,6 +482,7 @@ abstract final class ItemCatalog {
       group: ItemGroup.floors,
       title: 'Мягкий ковролин',
       price: 50,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(
@@ -489,6 +490,7 @@ abstract final class ItemCatalog {
       group: ItemGroup.floors,
       title: 'Пол-пазл',
       price: 50,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(

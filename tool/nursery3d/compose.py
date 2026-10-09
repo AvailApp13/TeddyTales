@@ -122,13 +122,17 @@ class Room:
         rgb = lin_to_srgb8(lin)
         return Image.fromarray(np.dstack([rgb, np.full(rgb.shape[:2], 255, np.uint8)]), 'RGBA')
 
-    def floor_layer(self, albedo_fn, target=None):
+    def floor_layer(self, albedo_fn):
         acc = 0
         for su, sv in ((-0.25, -0.25), (0.25, -0.25), (-0.25, 0.25), (0.25, 0.25)):
             x, y = self.floor_xy(su, sv)
             acc = acc + albedo_fn(x, y)
         albedo = acc / 4
         lin = albedo * self.light * self.exposure
+        # Солнце на светлом полу не выгорает в белое: верх мягко прижат.
+        knee, top = 0.68, 0.30
+        over = lin > knee
+        lin[over] = knee + top * np.tanh((lin[over] - knee) / top)
         rgb = lin_to_srgb8(lin)
         cov = self.mask['floor']
         alpha = np.clip(cov / np.maximum(1 - self.above_floor(), 1e-3), 0, 1)
@@ -136,9 +140,24 @@ class Room:
         return Image.fromarray(np.dstack([rgb, (alpha * 255 + 0.5).astype(np.uint8)]), 'RGBA')
 
     def trim_layer(self):
-        """Отделка, потолок и вид за окном — из рендера как есть."""
+        """Отделка, потолок и вид за окном — из рендера как есть.
+
+        Редкие тёмные точки на стыках брусков рамы (куда свет не доходит)
+        заменяются средним из соседних светлых пикселей."""
         cov = self.above_floor()
         lin = self.rgb * self.exposure
+        dark = (room_lum(lin) < 0.08) & (self.mask['trim'] > 0.5)
+        if dark.any():
+            ys, xs = np.nonzero(dark)
+            fixed = lin.copy()
+            for y, x in zip(ys, xs):
+                y0, y1 = max(y - 3, 0), min(y + 4, self.h)
+                x0, x1 = max(x - 3, 0), min(x + 4, self.w)
+                patch = lin[y0:y1, x0:x1].reshape(-1, 3)
+                ok = room_lum(patch) >= 0.08
+                if ok.any():
+                    fixed[y, x] = patch[ok].mean(axis=0)
+            lin = fixed
         rgb = lin_to_srgb8(lin)
         return Image.fromarray(np.dstack([rgb, (cov * 255 + 0.5).astype(np.uint8)]), 'RGBA')
 
@@ -169,12 +188,13 @@ def flat(color_srgb):
     return fn
 
 
-def wood_planks(color_srgb, plank=0.19, length=2.4, seed=7):
-    """Доски светлого дерева: стыки вразбежку, мягкие волокна, тонкие швы."""
-    base = srgb_to_lin(color_srgb)
+def wood_planks(albedo, plank=0.19, length=2.4, seed=7, grain_amp=1.0,
+                seam_dark=0.15, tint_sd=0.025):
+    """Доски: стыки вразбежку, мягкие волокна, тонкие швы. albedo — линейный."""
+    base = np.asarray(albedo, dtype=np.float64)
     rng = np.random.default_rng(seed)
     offs = rng.uniform(0, length, 512)
-    tint = rng.normal(0, 0.008, (512, 3)) + rng.normal(0, 0.025, (512, 1))
+    tint = rng.normal(0, tint_sd * 0.3, (512, 3)) + rng.normal(0, tint_sd, (512, 1))
 
     def fn(x, y):
         i = np.floor(x / plank).astype(int)
@@ -182,16 +202,99 @@ def wood_planks(color_srgb, plank=0.19, length=2.4, seed=7):
         fx = x / plank - i
         o = offs[k]
         fy = np.mod(y + o, length) / length
-        grain = (0.016 * np.sin(2 * np.pi * (fx * 7.0 + 0.35 * np.sin(y * 2.1 + i)))
-                 + 0.010 * np.sin(2 * np.pi * (fx * 19.0 + y * 0.9 + i * 0.37)))
+        grain = grain_amp * (
+            0.016 * np.sin(2 * np.pi * (fx * 7.0 + 0.35 * np.sin(y * 2.1 + i)))
+            + 0.010 * np.sin(2 * np.pi * (fx * 19.0 + y * 0.9 + i * 0.37)))
         # Вдали волокна сливаются — гасим их, чтобы не было ряби.
         grain = grain * np.clip(1.6 - y / 3.0, 0.15, 1.0)
         shade = 1 + tint[k] + grain[..., None]
         # Швы — мягкие: тонкая тень, а не чёрная линия.
-        seam = np.exp(-np.minimum(fx, 1 - fx) / 0.008)
-        joint = np.exp(-np.minimum(fy, 1 - fy) * length / 0.006)
-        dark = (1 - 0.15 * np.maximum(seam, joint))[..., None]
+        seam = np.exp(-np.minimum(fx, 1 - fx) * plank / 0.0015)
+        joint = np.exp(-np.minimum(fy, 1 - fy) * length / 0.0012)
+        dark = (1 - seam_dark * np.maximum(seam, joint))[..., None]
         return base * shade * dark
+    return fn
+
+
+def checker(a1, a2, size=0.30, grout=0.0035, grout_albedo=None):
+    """Плитка «шахматка»: квадраты двух цветов, тонкие швы."""
+    a1, a2 = np.asarray(a1), np.asarray(a2)
+    g = np.asarray(grout_albedo) if grout_albedo is not None else (a1 + a2) / 2 * 0.93
+
+    def fn(x, y):
+        i = np.floor(x / size).astype(int)
+        j = np.floor(y / size).astype(int)
+        fx = x / size - i
+        fy = y / size - j
+        col = np.where(((i + j) % 2 == 0)[..., None], a1, a2)
+        d = np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 1 - fy)) * size
+        line = np.clip(1 - d / grout, 0, 1)[..., None]
+        return col * (1 - line) + g * line
+    return fn
+
+
+def carpet(albedo, seed=11):
+    """Ковролин: ровный цвет, мелкий ворс и едва заметные разводы."""
+    base = np.asarray(albedo, dtype=np.float64)
+    rng = np.random.default_rng(seed)
+    noise = rng.normal(0, 1, (256, 256))
+
+    def fn(x, y):
+        # Ворс — мелкое зерно, вдали сливается в ровный цвет.
+        ix = (np.floor(x / 0.004).astype(int)) % 256
+        iy = (np.floor(y / 0.004).astype(int)) % 256
+        fade = np.clip(1.5 - y / 2.5, 0.0, 1.0)
+        fibre = 0.035 * noise[iy, ix] * fade
+        mottle = 0.012 * np.sin(x * 3.1 + np.sin(y * 1.7)) * np.sin(y * 2.3)
+        return base * (1 + fibre + mottle)[..., None]
+    return fn
+
+
+def puzzle(albedos, size=0.6, seam=0.003, seed=3):
+    """Мягкий пол-пазл: квадраты 60 см с замками-выступами, пастельные цвета."""
+    cols = np.stack([np.asarray(c, dtype=np.float64) for c in albedos])
+    rng = np.random.default_rng(seed)
+    foam = rng.normal(0, 1, (256, 256))
+    r2, dl = 0.075 ** 2, 0.05      # выступ: радиус и вынос за грань, доли стороны
+
+    def own(X, Y):
+        """Чей кусок под точкой (в долях стороны) — с учётом выступов."""
+        i, j = np.floor(X).astype(int), np.floor(Y).astype(int)
+        oi, oj = i.copy(), j.copy()
+        # Правая грань плитки i; направление выступа чередуется.
+        sgn = np.where((i + j) % 2 == 0, 1, -1)
+        c = (X - (i + 1 + sgn * dl)) ** 2 + (Y - (j + 0.5)) ** 2 < r2
+        oi = np.where(c, np.where(sgn > 0, i, i + 1), oi)
+        oj = np.where(c, j, oj)
+        # Левая грань — это правая грань плитки i − 1.
+        sgn = np.where((i - 1 + j) % 2 == 0, 1, -1)
+        c = (X - (i + sgn * dl)) ** 2 + (Y - (j + 0.5)) ** 2 < r2
+        oi = np.where(c, np.where(sgn > 0, i - 1, i), oi)
+        oj = np.where(c, j, oj)
+        # Дальняя грань плитки j и ближняя (дальняя у j − 1).
+        sgn = np.where((i + j) % 2 == 1, 1, -1)
+        c = (X - (i + 0.5)) ** 2 + (Y - (j + 1 + sgn * dl)) ** 2 < r2
+        oj = np.where(c, np.where(sgn > 0, j, j + 1), oj)
+        oi = np.where(c, i, oi)
+        sgn = np.where((i + j - 1) % 2 == 1, 1, -1)
+        c = (X - (i + 0.5)) ** 2 + (Y - (j + sgn * dl)) ** 2 < r2
+        oj = np.where(c, np.where(sgn > 0, j - 1, j), oj)
+        oi = np.where(c, i, oi)
+        return oi, oj
+
+    def fn(x, y):
+        X, Y = x / size, y / size
+        oi, oj = own(X, Y)
+        col = cols[np.mod(oi + 2 * oj, len(cols))]
+        e = seam / size
+        ai, aj = own(X + e, Y)
+        bi, bj = own(X, Y + e)
+        edge = (ai != oi) | (aj != oj) | (bi != oi) | (bj != oj)
+        ix = (np.floor(x / 0.003).astype(int)) % 256
+        iy = (np.floor(y / 0.003).astype(int)) % 256
+        fade = np.clip(1.5 - y / 2.5, 0.0, 1.0)
+        tex = 1 + 0.02 * foam[iy, ix] * fade
+        return col * tex[..., None] * np.where(edge, 0.84, 1.0)[..., None]
     return fn
 
 
@@ -222,6 +325,122 @@ def stack(layers):
     return comp.convert('RGB')
 
 
+# --- 10 стен и 10 полов (docs/room-surfaces-answers.md) -----------------------
+# id — как в lib/game/shop_items.dart. Цвет — каким вариант выглядит в
+# обычном свете комнаты (код палитры из анкеты); узор — образец из
+# tool/surface_tiles и сторона его плитки на стене в метрах.
+
+def hexrgb(h):
+    return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+
+
+WALLS = {
+    'wall_rose': ('flat', '#E2A393'),       # С1, нынешняя
+    'wall_cream': ('flat', '#EFE0C8'),      # С5
+    'wall_mint': ('flat', '#BFDCCF'),       # С7
+    'wall_dots': ('tile', 'wall-dots.webp', 0.80),
+    'wall_forest': ('tile', 'wall-forest.webp', 1.60),
+    'wall_clouds': ('tile', 'wall-clouds.webp', 1.15),
+    'wall_sprigs': ('tile', 'wall-sprigs.webp', 0.70),
+    'wall_bunnies': ('tile', 'wall-bunnies.webp', 0.75),
+    'wall_lavender': ('flat', '#CBBFDD'),   # С6
+    'wall_sky': ('flat', '#B8CCE0'),        # С3
+}
+
+FLOORS = {
+    'floor_wood': ('planks', '#EABA95', {}),           # П1, нынешний
+    'floor_honey': ('planks', '#D9B48C', {}),          # П3
+    'floor_greige': ('planks', '#E6D6C3', {}),         # П5
+    # Ламинат широкой доской — светлый, «дорогое дерево».
+    'floor_laminate': ('planks', '#E8D3B4', dict(plank=0.27, length=2.2, grain_amp=1.6,
+                                                 seam_dark=0.20, tint_sd=0.015)),
+    'floor_dark_oak': ('planks', '#9C7656', dict(grain_amp=2.0, seam_dark=0.25, tint_sd=0.035)),  # П6
+    'floor_checker': ('checker', '#F3EBDD', '#EBCFCB'),  # кремовая с пудровой
+    'floor_carpet': ('carpet', '#E3D8CA'),
+    'floor_puzzle': ('puzzle', ['#BFE3D0', '#F3C9D0', '#F6E3A6', '#BFD9F0']),
+    'floor_powder': ('planks', '#EBD8D2', {}),         # П7
+    'floor_light': ('planks', '#F1E3CD', {}),          # П2, беленый дуб
+}
+
+
+def wall_material(spec, tiles):
+    if spec[0] == 'flat':
+        return flat(hexrgb(spec[1]))
+    return tile(tiles / spec[1], spec[2])
+
+
+def floor_material(spec, fl):
+    """Альбедо пола — так, чтобы в обычном свете пол был цвета палитры."""
+    def cal(h):
+        return srgb_to_lin(hexrgb(h)) / fl
+    kind = spec[0]
+    if kind == 'planks':
+        return wood_planks(cal(spec[1]), **spec[2])
+    if kind == 'checker':
+        return checker(cal(spec[1]), cal(spec[2]))
+    if kind == 'carpet':
+        return carpet(cal(spec[1]))
+    return puzzle([cal(h) for h in spec[1]])
+
+
+def build(r, root):
+    """Все слои игровой — в assets/rooms/nursery/ — и картинка по умолчанию."""
+    from PIL import ImageFilter
+    base = root / 'assets/rooms/nursery'
+    tiles = root / 'tool/surface_tiles'
+    for d in ('walls', 'floors', 'swatches'):
+        (base / d).mkdir(parents=True, exist_ok=True)
+    trim = r.trim_layer()
+    trim.save(base / 'trim.webp', quality=90, method=6)
+    curt = r.curtain_layer()
+    curt.save(base / 'curtains.webp', quality=90, method=6)
+    fl = r.median_floor_light()
+
+    # Стена непрозрачная, но вне стен (под полом, потолком, окном) её не
+    # видно — там ровная заливка: файл в разы меньше.
+    near = Image.fromarray(((r.mask['walls'] > 0.002) * 255).astype(np.uint8))
+    near = np.asarray(near.filter(ImageFilter.MaxFilter(9))) > 0
+    walls, floors = {}, {}
+    for wid, spec in WALLS.items():
+        a = np.asarray(r.wall_layer(wall_material(spec, tiles)))[..., :3].copy()
+        a[~near] = np.median(a[r.mask['walls'] > 0.99], axis=0).astype(np.uint8)
+        img = Image.fromarray(a, 'RGB')
+        img.save(base / 'walls' / f'{wid}.webp', quality=88, method=6)
+        walls[wid] = img.convert('RGBA')
+        print(f'{wid:16s} {(base / "walls" / f"{wid}.webp").stat().st_size // 1024:5d} КБ')
+    for fid, spec in FLOORS.items():
+        lay = r.floor_layer(floor_material(spec, fl))
+        lay.save(base / 'floors' / f'{fid}.webp', quality=88, method=6)
+        floors[fid] = lay
+        print(f'{fid:16s} {(base / "floors" / f"{fid}.webp").stat().st_size // 1024:5d} КБ')
+
+    default = stack([walls['wall_rose'], floors['floor_wood'], trim, curt])
+    default.save(root / 'assets/rooms/nursery3d.jpg', quality=92, optimize=True,
+                 progressive=True)
+
+    shots = []
+    for wid in WALLS:
+        comp = stack([walls[wid], floors['floor_wood'], trim, curt])
+        comp.crop((520, 360, 840, 680)).resize((160, 160), Image.LANCZOS).save(
+            base / 'swatches' / f'{wid}.webp', quality=88)
+        shots.append(comp)
+    for fid in FLOORS:
+        comp = stack([walls['wall_rose'], floors[fid], trim, curt])
+        comp.crop((620, 1280, 940, 1600)).resize((160, 160), Image.LANCZOS).save(
+            base / 'swatches' / f'{fid}.webp', quality=88)
+        shots.append(comp)
+    return shots
+
+
+def contact_sheet(shots, path, cols=5, w=235):
+    h = int(w * shots[0].height / shots[0].width)
+    rows = (len(shots) + cols - 1) // cols
+    sheet = Image.new('RGB', (cols * (w + 8), rows * (h + 8)), 'white')
+    for k, im in enumerate(shots):
+        sheet.paste(im.resize((w, h), Image.LANCZOS), ((k % cols) * (w + 8), (k // cols) * (h + 8)))
+    sheet.save(path, quality=88)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--render', required=True)
@@ -230,6 +449,8 @@ def main():
     ap.add_argument('--flat', help='куда сохранить собранную комнату (jpg) для приложения')
     ap.add_argument('--demo', action='store_true',
                     help='несколько стен и полов на одних слоях — для показа')
+    ap.add_argument('--build', action='store_true',
+                    help='все 10 стен и 10 полов, отделка и тюль — в assets/rooms/nursery')
     args = ap.parse_args()
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -246,7 +467,7 @@ def main():
         wall = r.wall_layer(flat(wall_t))
         # Альбедо пола — так, чтобы в обычном свете пол был цвета картинки.
         fl = r.median_floor_light()
-        floor = r.floor_layer(wood_planks(srgb_lin_to_srgb8(srgb_to_lin(floor_t) / fl)))
+        floor = r.floor_layer(wood_planks(srgb_to_lin(floor_t) / fl))
         trim = r.trim_layer()
         layers = [wall, floor, trim]
         if r.curtains is not None:
@@ -271,6 +492,10 @@ def main():
     if args.demo:
         demo(r, out)
 
+    if args.build:
+        shots = build(r, pathlib.Path(__file__).resolve().parents[2])
+        contact_sheet(shots, out / 'all.jpg')
+
 
 def srgb_lin_to_srgb8(lin):
     return lin_to_srgb8(np.asarray(lin, dtype=np.float64))
@@ -288,7 +513,7 @@ def demo(r, out):
     fl = r.median_floor_light()
 
     def floor(color):
-        return r.floor_layer(wood_planks(srgb_lin_to_srgb8(srgb_to_lin(color) / fl)))
+        return r.floor_layer(wood_planks(srgb_to_lin(color) / fl))
 
     variants = [
         ('Мятная + медовое дерево', r.wall_layer(flat((191, 220, 207))), floor((217, 180, 140))),

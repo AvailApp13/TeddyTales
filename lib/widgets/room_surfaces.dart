@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import '../game/game_state.dart';
 import '../game/shop_items.dart';
 
-/// Стены и пол игровой поверх картинки комнаты (заказчик 09.10).
+/// Стены и пол игровой из 3D (заказчик 09.10, `docs/room-structure-plan.md`).
 ///
-/// Картинка `nursery.jpg` — это и есть нынешние стены (пудровые) и пол
-/// (светлое дерево). Остальные варианты — прозрачные слои того же размера
-/// (`tool/room_surfaces.py`): перекрашенная стена или узор в перспективе,
-/// со светом из окна. Окно, шторы, карниз и плинтус остаются с картинки.
+/// Комната собрана слоями (`tool/nursery3d/compose.py`), снизу вверх:
+/// стена (цвет или обои, со светом комнаты) → пол → отделка (потолок,
+/// карниз, плинтусы, рама, вид за окном) → тюль. Отделка и тюль одни на все
+/// варианты и всегда белые; меняются только стена и пол.
+///
+/// Под слоями лежит картинка по умолчанию (`nursery3d.jpg` — пудровые стены
+/// и светлое дерево), поэтому пока слои грузятся, комната уже на месте.
 ///
 /// [preview] — вариант, который сейчас примеряют, ещё не купив: пока
 /// открыто окно покупки, комната уже в нём.
@@ -18,24 +21,29 @@ class RoomSurfaces extends StatelessWidget {
   final GameState game;
   final ShopItem? preview;
 
-  ShopItem? _current(ItemKind kind) {
+  static const String _trim = 'assets/rooms/nursery/trim.webp';
+  static const String _curtains = 'assets/rooms/nursery/curtains.webp';
+
+  ShopItem _current(ItemKind kind, String fallback) {
     final p = preview;
     if (p != null && p.kind == kind) return p;
     for (final id in game.placed) {
       final item = ItemCatalog.byIdOrNull(id);
       if (item != null && item.kind == kind) return item;
     }
-    return null;
+    return ItemCatalog.byId(fallback);
   }
 
   @override
   Widget build(BuildContext context) {
     if (!kRoomSurfacesShown) return const SizedBox.shrink();
-    final layers = [
-      for (final kind in const [ItemKind.wallpaper, ItemKind.floor])
-        if (_current(kind)?.surfaceLayer case final path?) path,
-    ];
-    if (layers.isEmpty) return const SizedBox.shrink();
+    final wall = _current(ItemKind.wallpaper, 'wall_rose');
+    final floor = _current(ItemKind.floor, 'floor_wood');
+    // По умолчанию картинка под слоями — ровно это, рисовать нечего.
+    if (wall.id == 'wall_rose' && floor.id == 'floor_wood') {
+      return const SizedBox.shrink();
+    }
+    final layers = [wall.surfaceLayer!, floor.surfaceLayer!, _trim, _curtains];
 
     return IgnorePointer(
       child: Stack(
@@ -48,7 +56,6 @@ class RoomSurfaces extends StatelessWidget {
               fit: BoxFit.fill,
               gaplessPlayback: true,
               filterQuality: FilterQuality.medium,
-              // Слоя нет (не собран) — остаётся картинка комнаты.
               errorBuilder: (context, _, _) => const SizedBox.shrink(),
             ),
         ],
