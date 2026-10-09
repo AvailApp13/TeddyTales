@@ -2407,7 +2407,7 @@ abstract class AppLocalizations {
   /// No description provided for @furnishPickItem.
   ///
   /// In ru, this message translates to:
-  /// **'Выбери вещь'**
+  /// **'Выбери предмет интерьера'**
   String get furnishPickItem;
 
   /// No description provided for @furnishPickSlot.
@@ -4255,7 +4255,7 @@ abstract class AppLocalizations {
   /// No description provided for @furnishTabItems.
   ///
   /// In ru, this message translates to:
-  /// **'Вещи'**
+  /// **'Интерьер'**
   String get furnishTabItems;
 
   /// No description provided for @furnishTabWalls.

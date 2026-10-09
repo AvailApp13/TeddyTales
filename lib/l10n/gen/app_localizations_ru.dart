@@ -1362,7 +1362,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shopNotEnoughCoins => 'Не хватает монет';
 
   @override
-  String get furnishPickItem => 'Выбери вещь';
+  String get furnishPickItem => 'Выбери предмет интерьера';
 
   @override
   String get furnishPickSlot => 'Теперь выбери место';
@@ -2409,7 +2409,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get itemFloorPowder => 'Пудровый';
 
   @override
-  String get furnishTabItems => 'Вещи';
+  String get furnishTabItems => 'Интерьер';
 
   @override
   String get furnishTabWalls => 'Стены';

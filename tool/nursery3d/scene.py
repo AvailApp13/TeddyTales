@@ -61,17 +61,20 @@ def depth_at_u(u):
     return F_PX * WL / (VP[0] - u)
 
 
-# Окно на левой стене — по картинке: рама от края кадра до u ≈ 95,
-# стекло с y ≈ 100 до 770 у u = 50.
-WIN_Y0 = depth_at_u(-140)     # ближний край проёма (за кадром слева)
-WIN_Y1 = depth_at_u(96)       # дальний край проёма
+# Окно — посередине левой стены, в столбцах u 100…230 кадра.
+# Заказчик 09.10: на телефонах окна почти не было видно (было у самого края,
+# u 0…96), а у угла — тоже не надо. Кадр вписывается в экран по высоте и
+# срезается по бокам: на 19,5:9 — около 85 px слева, на 20:9 — 94. Окно с
+# u = 100 видно целиком на этих телефонах и на планшетах.
+WIN_Y0 = depth_at_u(100)      # ближний край проёма
+WIN_Y1 = depth_at_u(230)      # дальний край проёма
 WIN_Z0 = 0.58                 # низ проёма (подоконник)
 WIN_Z1 = 2.42                 # верх проёма
 
-# Тюль: главный — между окном и углом (u 100…215), второй — у ближнего
-# края окна (u 0…20, почти весь за кадром).
-CURTAIN_MAIN = (depth_at_u(98), depth_at_u(216))
-CURTAIN_NEAR = (depth_at_u(-40), depth_at_u(22))
+# Тюль по бокам окна: ближнее полотно (u 48…98) и дальнее — между окном и
+# углом (u 232…272).
+CURTAIN_NEAR = (depth_at_u(48), depth_at_u(98))
+CURTAIN_MAIN = (depth_at_u(232), depth_at_u(272))
 ROD_Z = 2.50
 
 
@@ -178,61 +181,202 @@ def sheer_material():
     return m
 
 
-def view_material(path):
-    """Вид за окном — светящаяся картинка (небо, облака, листва)."""
-    m = bpy.data.materials.new('view')
+def _emission_mix(nt, bsdf_out, color_socket, strength):
+    """BSDF + немного свечения своим цветом: подсветка неба в тенях улицы."""
+    em = nt.nodes.new('ShaderNodeEmission')
+    em.inputs['Strength'].default_value = strength
+    nt.links.new(color_socket, em.inputs['Color'])
+    add = nt.nodes.new('ShaderNodeAddShader')
+    nt.links.new(bsdf_out, add.inputs[0])
+    nt.links.new(em.outputs[0], add.inputs[1])
+    return add.outputs[0]
+
+
+def foliage_material(name, dark, light, scale, fill=0.35):
+    """Листва: пятна света и тени крупными клочьями, немного на просвет."""
+    m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
     nt.nodes.clear()
     out = nt.nodes.new('ShaderNodeOutputMaterial')
+    noise = nt.nodes.new('ShaderNodeTexNoise')
+    noise.inputs['Scale'].default_value = scale
+    noise.inputs['Detail'].default_value = 12
+    noise.inputs['Roughness'].default_value = 0.62
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].position = 0.38
+    ramp.color_ramp.elements[0].color = (*dark, 1)
+    ramp.color_ramp.elements[1].position = 0.68
+    ramp.color_ramp.elements[1].color = (*light, 1)
+    nt.links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
+    bsdf = nt.nodes.new('ShaderNodeBsdfPrincipled')
+    bsdf.inputs['Roughness'].default_value = 0.85
+    bsdf.inputs['Specular IOR Level'].default_value = 0.2
+    nt.links.new(ramp.outputs['Color'], bsdf.inputs['Base Color'])
+    # Рельеф листьев: мелкая неровность света по всей кроне.
+    leaves = nt.nodes.new('ShaderNodeTexNoise')
+    leaves.inputs['Scale'].default_value = scale * 6
+    leaves.inputs['Detail'].default_value = 6
+    bump = nt.nodes.new('ShaderNodeBump')
+    bump.inputs['Strength'].default_value = 0.7
+    nt.links.new(leaves.outputs['Fac'], bump.inputs['Height'])
+    nt.links.new(bump.outputs['Normal'], bsdf.inputs['Normal'])
+    transl = nt.nodes.new('ShaderNodeBsdfTranslucent')
+    nt.links.new(ramp.outputs['Color'], transl.inputs['Color'])
+    # Солнце светит из-за деревьев: листва на просвет светится.
+    mix = nt.nodes.new('ShaderNodeMixShader')
+    mix.inputs[0].default_value = 0.42
+    nt.links.new(bsdf.outputs[0], mix.inputs[1])
+    nt.links.new(transl.outputs[0], mix.inputs[2])
+    nt.links.new(_emission_mix(nt, mix.outputs[0], ramp.outputs['Color'], fill),
+                 out.inputs['Surface'])
+    return m
+
+
+def sky_material():
+    """Небо: у горизонта светлая дымка, выше — чистый голубой."""
+    m = bpy.data.materials.new('sky_dome')
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new('ShaderNodeOutputMaterial')
+    coord = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    nt.links.new(coord.outputs['Object'], sep.inputs[0])
+    rng = nt.nodes.new('ShaderNodeMapRange')
+    rng.inputs['From Min'].default_value = 0.0
+    rng.inputs['From Max'].default_value = 70.0
+    nt.links.new(sep.outputs['Z'], rng.inputs['Value'])
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    els = ramp.color_ramp.elements
+    els[0].position, els[0].color = 0.0, (0.86, 0.88, 0.90, 1)
+    els[1].position, els[1].color = 0.6, (0.30, 0.48, 0.84, 1)
+    e = els.new(0.12)
+    e.color = (0.55, 0.68, 0.88, 1)
+    nt.links.new(rng.outputs['Result'], ramp.inputs['Fac'])
     em = nt.nodes.new('ShaderNodeEmission')
-    tex = nt.nodes.new('ShaderNodeTexImage')
-    tex.image = bpy.data.images.load(str(path))
-    em.inputs['Strength'].default_value = 1.0
-    nt.links.new(tex.outputs['Color'], em.inputs['Color'])
+    em.inputs['Strength'].default_value = 1.35
+    nt.links.new(ramp.outputs['Color'], em.inputs['Color'])
     nt.links.new(em.outputs[0], out.inputs['Surface'])
     return m
 
 
-def make_view_texture(path):
-    """Вид за окном: голубое небо с облаком, ниже — кроны деревьев.
+def grass_material():
+    m = bpy.data.materials.new('grass')
+    m.use_nodes = True
+    nt = m.node_tree
+    bsdf = nt.nodes['Principled BSDF']
+    noise = nt.nodes.new('ShaderNodeTexNoise')
+    noise.inputs['Scale'].default_value = 0.6
+    noise.inputs['Detail'].default_value = 8
+    ramp = nt.nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].color = (0.10, 0.24, 0.04, 1)
+    ramp.color_ramp.elements[1].color = (0.24, 0.42, 0.08, 1)
+    nt.links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
+    nt.links.new(ramp.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 0.95
+    out = nt.nodes['Material Output']
+    nt.links.new(_emission_mix(nt, bsdf.outputs[0], ramp.outputs['Color'], 0.3),
+                 out.inputs['Surface'])
+    return m
 
-    Картинка ровно на ту часть плоскости, что видна сквозь окно (см.
-    VIEW_Y, VIEW_Z): небо сверху, зелень в нижних двух пятых.
+
+def crown(name, loc, r, mat, seed, squash=1.12):
+    """Крона: шар со «взлохмаченной» поверхностью — клочья листвы."""
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=r, location=loc)
+    ob = bpy.context.active_object
+    ob.name = name
+    ob.scale = (1.0, 1.0, squash)
+    tex = bpy.data.textures.new(f'{name}_clumps', 'CLOUDS')
+    tex.noise_scale = r * 0.42
+    tex.noise_depth = 2
+    d = ob.modifiers.new('clumps', 'DISPLACE')
+    d.texture = tex
+    d.strength = r * 0.38
+    d.mid_level = 0.5
+    tex2 = bpy.data.textures.new(f'{name}_leaves', 'CLOUDS')
+    tex2.noise_scale = r * 0.12
+    d2 = ob.modifiers.new('leaves', 'DISPLACE')
+    d2.texture = tex2
+    d2.strength = r * 0.10
+    # Клочья листвы по краю кроны — неровный силуэт, а не гладкий шар.
+    tex3 = bpy.data.textures.new(f'{name}_tufts', 'VORONOI')
+    tex3.noise_scale = r * 0.16
+    d3 = ob.modifiers.new('tufts', 'DISPLACE')
+    d3.texture = tex3
+    d3.strength = r * 0.14
+    ob.data.materials.append(mat)
+    for p in ob.data.polygons:
+        p.use_smooth = True
+    for c in ob.users_collection:
+        c.objects.unlink(ob)
+    bpy.data.collections['view'].objects.link(ob)
+    ob.visible_shadow = False
+    return ob
+
+
+def outdoor():
+    """Улица за окном — настоящие кроны, газон и небо в перспективе камеры.
+
+    Заказчик 09.10: «чтобы в окне был более реалистичный вид». Всё освещено
+    тем же солнцем, что и комната. Тени от улицы в комнату не падают
+    (visible_shadow = False): пятна рам на полу остаются.
     """
-    from PIL import Image, ImageFilter
-    w, h = 512, 1024
-    yy, xx = np.mgrid[0:h, 0:w] / np.array([h, w])[:, None, None]
-    t = yy[..., None]
-    sky = np.array([0.40, 0.66, 0.94]) * (1 - t) + np.array([0.78, 0.89, 0.99]) * t
-    img = sky.copy()
-    rng = np.random.default_rng(5)
-    clouds = np.zeros((h, w))
-    for cx, cy, r in ((0.3, 0.16, 0.16), (0.55, 0.13, 0.12), (0.75, 0.2, 0.14),
-                      (0.15, 0.34, 0.10), (0.45, 0.36, 0.12), (0.85, 0.40, 0.09)):
-        clouds += np.exp(-(((xx - cx) / r) ** 2 + ((yy - cy) / (r * 0.35)) ** 2) * 2.5)
-    c = np.clip(clouds, 0, 1)[..., None] * 0.95
-    img = img * (1 - c) + c
-    crown = np.zeros((h, w))
-    tone = np.zeros((h, w))
-    for _ in range(26):
-        cx, cy = rng.uniform(-0.1, 1.1), rng.uniform(0.58, 1.02)
-        r = rng.uniform(0.10, 0.22)
-        d = np.sqrt(((xx - cx) / r) ** 2 + ((yy - cy) / (r * 0.55)) ** 2)
-        m = np.clip((1.0 - d) * 6, 0, 1)
-        lit = np.clip(0.5 + (cx - xx) / r * 0.5 + (cy - yy) / r * 0.6, 0, 1)
-        tone = np.where(m > crown, lit, tone)
-        crown = np.maximum(crown, m)
-    green_dark = np.array([0.42, 0.66, 0.24])
-    green_lit = np.array([0.72, 0.86, 0.36])
-    green = green_dark * (1 - tone[..., None]) + green_lit * tone[..., None]
-    k = crown[..., None]
-    img = img * (1 - k) + green * k
-    im = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
-    im.filter(ImageFilter.GaussianBlur(2.5)).save(path)
+    view = bpy.data.collections['view']
+    sky = bpy.data.objects.new('sky_dome', bpy.data.meshes.new('sky_dome'))
+    sx = -160.0
+    sky.data.from_pydata([(sx, -80, -40), (sx, 480, -40), (sx, 480, 260), (sx, -80, 260)],
+                         [], [(0, 1, 2, 3)])
+    sky.data.materials.append(sky_material())
+    view.objects.link(sky)
+    sky.visible_shadow = False
+
+    ground = bpy.data.objects.new('lawn', bpy.data.meshes.new('lawn'))
+    gx0, gx1 = -170.0, -WL - WALL_T - 0.01
+    ground.data.from_pydata([(gx0, -60, 0), (gx1, -60, 0), (gx1, 460, 0), (gx0, 460, 0)],
+                            [], [(0, 1, 2, 3)])
+    ground.data.materials.append(grass_material())
+    view.objects.link(ground)
+    ground.visible_shadow = False
+
+    near_leaf = foliage_material('leaf_near', (0.04, 0.12, 0.02), (0.30, 0.50, 0.09), 7.0, fill=0.55)
+    mid_leaf = foliage_material('leaf_mid', (0.06, 0.16, 0.04), (0.34, 0.54, 0.12), 6.0, fill=0.6)
+    far_leaf = foliage_material('leaf_far', (0.16, 0.24, 0.17), (0.34, 0.46, 0.30), 3.0, fill=0.5)
+    bark = material('bark', (0.10, 0.07, 0.05), rough=0.9, spec=0.1)
+
+    # Сквозь окно на расстоянии d за стеной видна полоса y ≈ 1,98·d…2,47·d,
+    # z ≈ 0,73 − 0,07·d … 0,73 + 0,87·d. Внизу — кусты у газона, сбоку —
+    # ближнее дерево, дальше кроны сада, над ними небо, у горизонта — дымка.
+    trees = [
+        ((-9.0, 16.6, 4.4), 1.7, near_leaf),     # ветки заглядывают с края
+        ((-17.0, 37.0, 4.2), 2.2, mid_leaf),
+        ((-21.0, 46.5, 4.8), 2.8, mid_leaf),
+        ((-26.0, 60.0, 5.2), 3.0, mid_leaf),
+    ]
+    for k, (loc, r, mat) in enumerate(trees):
+        crown(f'tree_{k}', loc, r, mat, k + 1)
+        h = loc[2] - r * 0.5
+        bpy.ops.mesh.primitive_cylinder_add(radius=max(0.09, r * 0.07), depth=h,
+                                            location=(loc[0], loc[1], h / 2))
+        t = bpy.context.active_object
+        t.name = f'trunk_{k}'
+        t.data.materials.append(bark)
+        for c in t.users_collection:
+            c.objects.unlink(t)
+        view.objects.link(t)
+        t.visible_shadow = False
+    for k, (loc, r) in enumerate([((-6.0, 12.6, 0.3), 0.8), ((-6.5, 14.8, 0.35), 0.9),
+                                  ((-7.0, 16.6, 0.3), 0.8), ((-12.0, 26.0, 0.4), 1.2),
+                                  ((-14.0, 31.5, 0.4), 1.3)]):
+        crown(f'bush_{k}', loc, r, near_leaf, 20 + k, squash=0.62)
+    # Дальняя линия деревьев у горизонта — в дымке.
+    for k in range(10):
+        x = -48.0 - 5 * (k % 3)
+        y = 92.0 + 16 * k
+        crown(f'far_{k}', (x, y, 4.0 + (k % 4)), 6.5 + (k % 3) * 1.5, far_leaf, 40 + k, squash=0.8)
 
 
-def build(view_png):
+def build():
     reset()
     white = material('white', srgb_to_linear((240, 236, 228)), rough=0.6, spec=0.3)
     neutral = material('neutral', (NEUTRAL,) * 3)
@@ -285,24 +429,10 @@ def build(view_png):
     box('mullion_high', 'trim', (fx0 + i, mid - 0.025, tz + 0.025), (fx1 - i, mid + 0.025, zt), white)
     # Короб карниза для штор над окном.
     box('pelmet', 'trim', (-WL, CURTAIN_NEAR[0] - 0.15, ROD_Z - 0.03),
-        (-WL + 0.15, CURTAIN_MAIN[1] + 0.08, CEIL - CORNICE), white, 0.01)
+        (-WL + 0.15, min(CURTAIN_MAIN[1] + 0.06, D - 0.004), CEIL - CORNICE), white, 0.01)
 
-    # Вид за окном.
-    view = bpy.data.objects.new('view', bpy.data.meshes.new('view'))
-    # Окно видно под острым углом: сквозь него видна полоса плоскости
-    # y 4,6…6,2 м, z 0,5…3,5 м (на 1,2 м за стеной). Картинка вида
-    # растянута ровно на неё, с запасом.
-    vx = -WL - 1.2
-    y0, y1, z0, z1 = 4.2, 6.6, 0.0, 4.0
-    view.data.from_pydata([(vx, y0, z0), (vx, y1, z0), (vx, y1, z1), (vx, y0, z1)],
-                          [], [(0, 1, 2, 3)])
-    uv = view.data.uv_layers.new(name='UVMap')
-    corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
-    for loop in view.data.loops:
-        uv.data[loop.index].uv = corners[loop.vertex_index]
-    view.data.materials.append(view_material(view_png))
-    bpy.data.collections['view'].objects.link(view)
-    view.visible_shadow = False
+    # Вид за окном — улица в 3D.
+    outdoor()
 
     sheer = sheer_material()
     curtain('curtain_main', *CURTAIN_MAIN, sheer, 1)
@@ -324,8 +454,8 @@ def lights():
     sun.angle = math.radians(1.0)
     sun.color = (1.0, 0.92, 0.80)
     ob = bpy.data.objects.new('sun', sun)
-    # Пятна — как на картинке: от окна к центру пола, ближе к камере.
-    direction = Vector((0.75, -0.82, -1.0)).normalized()
+    # Пятна рам — от подножия окна к полу слева от мишки.
+    direction = Vector((1.1, -1.9, -1.6)).normalized()
     ob.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
     sc.collection.objects.link(ob)
 
@@ -394,7 +524,7 @@ def camera():
     cam.shift_x = -(VP[0] - W_PX / 2) / H_PX
     cam.shift_y = -(H_PX / 2 - VP[1]) / H_PX
     cam.clip_start = 0.05
-    cam.clip_end = 50
+    cam.clip_end = 1000          # небо и дальние деревья — за сотню метров
     ob = bpy.data.objects.new('cam', cam)
     ob.location = (0, 0, EYE)
     ob.rotation_euler = (math.radians(90), 0, 0)
@@ -504,9 +634,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     jobs = set(args.only.split(','))
 
-    view_png = out / 'view_texture.png'
-    make_view_texture(view_png)
-    build(view_png)
+    build()
     lights()
     cam = camera()
     print(f'Комната: глаз {EYE:.3f} м, задняя стена {D:.3f} м, левая {WL:.3f} м, '

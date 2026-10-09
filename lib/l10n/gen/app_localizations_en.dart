@@ -1352,7 +1352,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopNotEnoughCoins => 'Not enough coins';
 
   @override
-  String get furnishPickItem => 'Pick a thing';
+  String get furnishPickItem => 'Pick an interior item';
 
   @override
   String get furnishPickSlot => 'Now pick a spot';
@@ -2403,7 +2403,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemFloorPowder => 'Powder pink';
 
   @override
-  String get furnishTabItems => 'Things';
+  String get furnishTabItems => 'Interior';
 
   @override
   String get furnishTabWalls => 'Walls';

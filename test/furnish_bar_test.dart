@@ -153,7 +153,7 @@ void main() {
     await tester.tap(find.text('Тюль'));
     await tester.pump();
     expect(find.text('Тюль — в следующем обновлении'), findsOneWidget);
-    // Лента не переключилась: по-прежнему вещи.
-    expect(find.text('Выбери вещь'), findsOneWidget);
+    // Лента не переключилась: по-прежнему интерьер.
+    expect(find.text('Выбери предмет интерьера'), findsOneWidget);
   });
 }

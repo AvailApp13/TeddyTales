@@ -1279,7 +1279,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shopNotEnoughCoins => '金币不够';
 
   @override
-  String get furnishPickItem => '选一件物品';
+  String get furnishPickItem => '选一件家居';
 
   @override
   String get furnishPickSlot => '再选一个位置';
@@ -2279,7 +2279,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get itemFloorPowder => '粉色地板';
 
   @override
-  String get furnishTabItems => '物品';
+  String get furnishTabItems => '家居';
 
   @override
   String get furnishTabWalls => '墙面';

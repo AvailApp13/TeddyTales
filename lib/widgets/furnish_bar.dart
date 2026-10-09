@@ -48,7 +48,7 @@ class FurnishBar extends StatefulWidget {
   /// `null` — вкладок нет.
   final ValueChanged<ShopItem>? onSurface;
 
-  /// Открыта вкладка «Стены» или «Пол» (`true`) или «Вещи» (`false`).
+  /// Открыта вкладка «Стены» или «Пол» (`true`) или «Интерьер» (`false`).
   /// Заказчик 09.10: крестики мест — только когда ставят вещи.
   final ValueChanged<bool>? onSurfaceTab;
 
@@ -258,7 +258,7 @@ class _FurnishBarState extends State<FurnishBar> {
   }
 }
 
-/// Вкладка ленты: «Вещи», «Стены», «Пол».
+/// Вкладка ленты: «Интерьер», «Стены», «Пол» (заказчик 09.10: не «Вещи»).
 class _TabChip extends StatelessWidget {
   const _TabChip({
     required this.label,
