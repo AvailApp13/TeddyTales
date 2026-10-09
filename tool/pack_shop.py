@@ -64,6 +64,11 @@ def main() -> int:
 
     print(f'{len(mapping)} шт., всего {total / 1024:.0f} КБ, '
           f'в среднем {total / len(mapping) / 1024:.0f} КБ')
+    # Сетки нажатия — по только что упакованным картинкам, чтобы не
+    # разошлись с ними (заказчик 09.10: нажимается только сама вещь).
+    if args.out == Path('assets/shop/items'):
+        from item_shapes import write_shapes
+        write_shapes()
     return 0
 
 

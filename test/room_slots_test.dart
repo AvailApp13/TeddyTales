@@ -5,6 +5,7 @@ import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/game_state.dart';
 import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/game/item_metrics.dart';
+import 'package:teddy_tales/game/item_shapes.dart';
 import 'package:teddy_tales/game/room_camera.dart';
 import 'package:teddy_tales/game/room_kind.dart';
 import 'package:teddy_tales/game/room_render.dart';
@@ -99,6 +100,45 @@ void main() {
       }
     });
 
+    test('в 3D-комнате картинки вещей не выходят за край экрана', () {
+      // Проверка 09.10: справа столик, корзины, растения срезались краем
+      // экрана на 12–36 %, комод — на 19–28 %. Самый вытянутый ходовой
+      // экран (iPhone 19,5:9) оставляет от кадра 0.09–0.91 по ширине.
+      // Кроме места у окна: кресло там стоит у самой стены, куда его
+      // поставил заказчик 09.10 («поставь его сюда»).
+      for (final slot in nursery3dSlots) {
+        if (slot.id == 'nursery.floor_left') continue;
+        for (final item in ItemCatalog.all.where(slot.takes)) {
+          if (roomRenderOf(slot.id, item.id) != null) continue;
+          final box = boxOf(slot, item);
+          final key = '${slot.id}/${item.id}';
+          expect(box.left, greaterThanOrEqualTo(0.09), reason: key);
+          expect(box.left + box.width, lessThanOrEqualTo(0.91), reason: key);
+        }
+      }
+    });
+
+    test('нажимается только сама вещь, а не её тень', () {
+      // Проверка 09.10: нажатие по комоду, ковру и полу у ног мишки
+      // открывало кресло — прямоугольник его слоя с тенью накрывал
+      // полкомнаты. У каждого слоя и каждой картинки — сетка нажатия.
+      for (final entry in roomRenders.entries) {
+        expect(entry.value.hit, isNotNull, reason: entry.key);
+      }
+      for (final item in ItemCatalog.all) {
+        if (metricsOf(item.id) == null) continue;
+        expect(itemShapes[item.id], isNotNull, reason: item.id);
+      }
+      // Кресло: середина — нажимается, тень на полу справа внизу — нет.
+      final chair = roomRenders['nursery.floor_left/armchair']!;
+      bool at(double u, double v) => chair.hit!.contains(
+        (u / 941 - chair.left) / chair.width,
+        (v / 1672 - chair.top) / chair.height,
+      );
+      expect(at(230, 880), isTrue);
+      expect(at(700, 1150), isFalse);
+    });
+
     test('у каждого готового слоя есть файл, место и вещь', () {
       expect(roomRenders, isNotEmpty);
       for (final key in roomRenders.keys) {
@@ -157,16 +197,16 @@ void main() {
 
     test('дальше — мельче: одна и та же вещь в разной глубине', () {
       final far = boxOf(
-        slotById('nursery.floor_right')!,
-        ItemCatalog.byId('basket'),
+        slotById('nursery.corner_right')!,
+        ItemCatalog.byId('teddy'),
       );
       final near = boxOf(
-        slotById('nursery.corner_right')!,
-        ItemCatalog.byId('basket'),
+        slotById('nursery.toy_right')!,
+        ItemCatalog.byId('teddy'),
       );
 
-      // Та же корзина у задней стены и посреди комнаты. Без перспективы они
-      // выходили одинаковыми, и комната читалась плоской.
+      // Тот же мишка-игрушка в углу у задней стены и у ног мишки. Без
+      // перспективы они выходили одинаковыми, и комната читалась плоской.
       expect(near.width, greaterThan(far.width * 1.3));
     });
 
@@ -220,12 +260,69 @@ void main() {
     test('у задней стены справа — ни кресла, ни кроватки', () {
       // Заказчик 09.10: «там максимум должны становиться тумбочки, которые
       // у нас есть, какие-то шкафчики, цветы, пальмы».
+      // Домики — тоже сюда (ответ заказчика на проверку 09.10).
       final right = slotById('nursery.floor_right')!;
       for (final id in ['armchair', 'armchair_bean', 'swing', 'bed']) {
         expect(right.takes(ItemCatalog.byId(id)), isFalse, reason: id);
       }
-      for (final id in ['dresser', 'table', 'plant', 'flowers_daisy']) {
+      for (final id in [
+        'dresser',
+        'table',
+        'plant',
+        'flowers_daisy',
+        'dollhouse',
+        'house_felt',
+      ]) {
         expect(right.takes(ItemCatalog.byId(id)), isTrue, reason: id);
+      }
+    });
+
+    test('у мишки — только игрушки', () {
+      // Заказчик 09.10: цветы в вазах — у задней стены и справа, а не на
+      // полу рядом с мишкой.
+      for (final id in ['nursery.toy_left', 'nursery.toy_right']) {
+        final slot = slotById(id)!;
+        for (final toy in ['teddy', 'bunny', 'cubes', 'pyramid']) {
+          expect(slot.takes(ItemCatalog.byId(toy)), isTrue, reason: '$id/$toy');
+        }
+        for (final other in ['flowers_daisy', 'flowers_orchid', 'plant']) {
+          expect(
+            slot.takes(ItemCatalog.byId(other)),
+            isFalse,
+            reason: '$id/$other',
+          );
+        }
+      }
+    });
+
+    test('каждой вещи с картинкой есть место — кроме кроватки', () {
+      // Кроватка — заглушка до замены (заказчик 09.10: «убирать не надо,
+      // мы её заменим»), места ей пока нет. Остальное купленное должно
+      // куда-то вставать — иначе вещь в «Интерьере» есть, а поставить некуда.
+      final homeless = [
+        for (final item in ItemCatalog.all)
+          if (item.onSale &&
+              item.group.placeable &&
+              metricsOf(item.id) != null &&
+              !roomSlots.any((s) => s.takes(item)))
+            item.id,
+      ];
+      expect(homeless, ['bed']);
+    });
+
+    test('на месте у окна — только сидячие места', () {
+      // Заказчик 09.10: «там только кресла — подвесное, не подвесное».
+      final left = slotById('nursery.floor_left')!;
+      for (final id in [
+        'armchair',
+        'armchair_bean',
+        'armchair_wing',
+        'swing',
+      ]) {
+        expect(left.takes(ItemCatalog.byId(id)), isTrue, reason: id);
+      }
+      for (final id in ['table', 'plant', 'teddy', 'pic_bear', 'dollhouse']) {
+        expect(left.takes(ItemCatalog.byId(id)), isFalse, reason: id);
       }
     });
 

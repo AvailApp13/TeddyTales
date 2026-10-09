@@ -132,6 +132,9 @@ const List<RoomSlot> nursery3dSlots = [
   // комнате на 40° — ракурс как на фото магазина. Против середины окна его
   // закрывал мишка; заказчик обвёл место левее мишки, перед окном, ближе к
   // нам — 3,3 м вглубь. x — середина кресла, y — его ближний к нам край.
+  //
+  // Заказчик 09.10: «там только кресла размещаем — подвесное, не
+  // подвесное, сидячие места только в этом месте».
   RoomSlot(
     id: 'nursery.floor_left',
     room: RoomKind.nursery,
@@ -141,13 +144,23 @@ const List<RoomSlot> nursery3dSlots = [
     metres: 0.85,
     maxMetres: 1.0,
     depth: 3,
+    groups: {ItemGroup.chairs, ItemGroup.seats},
   ),
+  // Справа от мишки до края экрана — 20 см пола у ног и 80 см задней
+  // стены. Проверка 09.10: вещи здесь срезались краем экрана и наезжали
+  // друг на друга. Теперь три места разведены по глубине, как на
+  // обставленной детской от 20.09: комод у задней стены, рядом в углу —
+  // растение или корзина, игрушка — впереди, у ног мишки. Ни одна вещь не
+  // выходит за край экрана Android 20:9 (0.10–0.90 кадра); мишка закрывает
+  // левую четверть комода — в «Обставить» он спрятан, и комод виден весь.
+  //
   // Задняя стена справа от мишки. Заказчик 09.10: «ни кресло, ни кровать
-  // не должны установиться — максимум тумбочки, шкафчики, цветы, пальмы».
+  // не должны установиться — максимум тумбочки, шкафчики, цветы, пальмы»;
+  // кукольный домик и домик из фетра — тоже сюда (ответ на проверку 09.10).
   RoomSlot(
     id: 'nursery.floor_right',
     room: RoomKind.nursery,
-    x: 0.799,
+    x: 0.720,
     y: 0.545,
     fit: ItemFit.floor,
     metres: 1.10,
@@ -159,14 +172,17 @@ const List<RoomSlot> nursery3dSlots = [
       ItemGroup.wardrobes,
       ItemGroup.plants,
       ItemGroup.flowers,
+      ItemGroup.houses,
     },
   ),
-  // Справа перед комодом: растение, корзина, цветы.
+  // В углу правее комода, чуть ближе к нам: растение, корзина, цветы.
+  // Стоит в глубине, у стены: ближе вещь вырастает и закрывает комод, а
+  // правее — уходит за край экрана.
   RoomSlot(
     id: 'nursery.corner_right',
     room: RoomKind.nursery,
-    x: 0.852,
-    y: 0.636,
+    x: 0.820,
+    y: 0.565,
     fit: ItemFit.floor,
     metres: 0.45,
     maxMetres: 0.52,
@@ -182,32 +198,41 @@ const List<RoomSlot> nursery3dSlots = [
     maxMetres: 1.1,
     depth: 1,
   ),
+  // Игрушки по бокам от мишки, на ковре, на той же глубине, что и он.
+  // Проверка 09.10: игрушка слева стояла прямо перед креслом и закрывала
+  // его низ — теперь она ниже кресла и левее мишки. Заказчик 09.10: здесь
+  // только игрушки — цветы в вазах встают у задней стены и справа.
   RoomSlot(
     id: 'nursery.toy_left',
     room: RoomKind.nursery,
-    x: 0.181,
-    y: 0.737,
+    x: 0.230,
+    y: 0.775,
     fit: ItemFit.floor,
     metres: 0.36,
     maxMetres: 0.40,
     depth: 5,
+    groups: {ItemGroup.plush, ItemGroup.toys},
   ),
   RoomSlot(
     id: 'nursery.toy_right',
     room: RoomKind.nursery,
-    x: 0.804,
-    y: 0.737,
+    x: 0.780,
+    y: 0.775,
     fit: ItemFit.floor,
     metres: 0.36,
     maxMetres: 0.40,
     depth: 5,
+    groups: {ItemGroup.plush, ItemGroup.toys},
   ),
-  // Задняя стена над комодом и над головой мишки.
+  // Задняя стена над комодом и над головой мишки. Проверка 09.10: комод с
+  // растением и лампой наверху доставал до полки, а полка-луна срезалась
+  // краем экрана — полка поднята на 15 см (1,77 м) и сдвинута на 9 см
+  // влево, картины — влево за ней, теперь они ровно над мишкой.
   RoomSlot(
     id: 'nursery.wall_shelf',
     room: RoomKind.nursery,
-    x: 0.804,
-    y: 0.297,
+    x: 0.781,
+    y: 0.275,
     fit: ItemFit.wall,
     metres: 0.90,
     maxMetres: 1.0,
@@ -215,7 +240,7 @@ const List<RoomSlot> nursery3dSlots = [
   RoomSlot(
     id: 'nursery.wall_pic_left',
     room: RoomKind.nursery,
-    x: 0.467,
+    x: 0.415,
     y: 0.249,
     fit: ItemFit.wall,
     metres: 0.55,
@@ -224,7 +249,7 @@ const List<RoomSlot> nursery3dSlots = [
   RoomSlot(
     id: 'nursery.wall_pic_right',
     room: RoomKind.nursery,
-    x: 0.644,
+    x: 0.592,
     y: 0.249,
     fit: ItemFit.wall,
     metres: 0.55,

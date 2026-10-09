@@ -240,6 +240,16 @@ class _Price extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Бесплатное — словом, без монетки (заказчик 09.10).
+    if (price == 0) {
+      return Text(
+        context.l10n.furnishFree,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.sageDark,
+        ),
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

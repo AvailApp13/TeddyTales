@@ -644,16 +644,29 @@ class _Price extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 13,
-            height: 13,
-            decoration: const BoxDecoration(
-              color: AppColors.coin,
-              shape: BoxShape.circle,
+          // Заказчик 09.10: бесплатное — «Бесплатно», как в ленте
+          // «Обставить», а не «0» с монеткой.
+          if (price == 0)
+            Text(
+              context.l10n.furnishFree,
+              style: sceneText(
+                size: 12,
+                weight: 800,
+                color: AppColors.sageDark,
+              ),
+            )
+          else ...[
+            Container(
+              width: 13,
+              height: 13,
+              decoration: const BoxDecoration(
+                color: AppColors.coin,
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Text('$price', style: sceneText(size: 12, weight: 800)),
+            const SizedBox(width: 6),
+            Text('$price', style: sceneText(size: 12, weight: 800)),
+          ],
         ],
       ),
     );

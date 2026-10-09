@@ -11,17 +11,21 @@
 /// магазина, как раньше.
 library;
 
+import 'hit_mask.dart';
 import 'room_kind.dart';
 import 'room_renders.dart';
 
 /// Где слой вещи лежит в кадре комнаты — доли ширины и высоты кадра.
 class RoomRender {
-  const RoomRender(this.left, this.top, this.width, this.height);
+  const RoomRender(this.left, this.top, this.width, this.height, [this.hit]);
 
   final double left;
   final double top;
   final double width;
   final double height;
+
+  /// Где в слое сама вещь, без тени: только там слой нажимается.
+  final HitMask? hit;
 }
 
 /// Готовый слой вещи [itemId] в месте [slotId] или `null`.

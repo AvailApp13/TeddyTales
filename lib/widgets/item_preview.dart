@@ -314,17 +314,20 @@ class _PriceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 13,
-            height: 13,
-            decoration: const BoxDecoration(
-              color: AppColors.coin,
-              shape: BoxShape.circle,
+          // Бесплатное — словом, без монетки (заказчик 09.10).
+          if (price != 0) ...[
+            Container(
+              width: 13,
+              height: 13,
+              decoration: const BoxDecoration(
+                color: AppColors.coin,
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 6),
+          ],
           Text(
-            '$price',
+            price == 0 ? context.l10n.furnishFree : '$price',
             style: sceneText(
               size: 13,
               weight: 800,

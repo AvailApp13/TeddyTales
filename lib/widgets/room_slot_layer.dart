@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../game/game_state.dart';
+import '../game/hit_mask.dart';
 import '../game/item_metrics.dart';
+import '../game/item_shapes.dart';
 import '../game/room_kind.dart';
 import '../game/room_render.dart';
 import '../game/room_slots.dart';
@@ -214,6 +217,10 @@ class RoomSlotLayer extends StatelessWidget {
                 layer: render == null
                     ? null
                     : roomRenderAsset(slot.id, item.id),
+                // Нажимается только сама вещь — не тень и не прозрачные
+                // углы картинки (заказчик 09.10: нажатие по комоду
+                // открывало кресло).
+                shape: render != null ? render.hit : itemShapes[item.id],
                 // Занятое место, куда выбранная вещь тоже встанет, обводится
                 // пунктиром: иначе человек с кроваткой в руках не видит на
                 // экране ни одной подсказки — единственное место, где она
@@ -239,6 +246,7 @@ class _FilledSlot extends StatelessWidget {
     required this.item,
     required this.onTap,
     this.layer,
+    this.shape,
     this.replaceable = false,
   });
 
@@ -246,6 +254,9 @@ class _FilledSlot extends StatelessWidget {
 
   /// Слой вещи, посчитанной в 3D на этом месте; `null` — картинка магазина.
   final String? layer;
+
+  /// Где на картинке сама вещь; `null` — нажимается весь прямоугольник.
+  final HitMask? shape;
 
   Widget _picture() => layer == null
       ? ItemPicture(item: item)
@@ -261,19 +272,58 @@ class _FilledSlot extends StatelessWidget {
     return Semantics(
       button: true,
       label: shopItemName(context.l10n, item.id),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        // Ни FittedBox, ни отступов: прямоугольник уже посчитан по
-        // пропорциям самой картинки, и вещь занимает его целиком.
-        child: replaceable
-            ? CustomPaint(
-                foregroundPainter: _DashedFrame(fill: false),
-                child: _picture(),
-              )
-            : _picture(),
+      child: _ShapeHit(
+        mask: shape,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          // Ни FittedBox, ни отступов: прямоугольник уже посчитан по
+          // пропорциям самой картинки, и вещь занимает его целиком.
+          child: replaceable
+              ? CustomPaint(
+                  foregroundPainter: _DashedFrame(fill: false),
+                  child: _picture(),
+                )
+              : _picture(),
+        ),
       ),
     );
+  }
+}
+
+/// Нажимается только сама вещь: точка вне [mask] — прозрачное или тень —
+/// уходит к тому, что лежит под вещью.
+///
+/// Заказчик 09.10: нажатие по комоду, ковру и полу у ног мишки открывало
+/// кресло — прямоугольник его слоя вместе с тенью накрывал полкомнаты.
+class _ShapeHit extends SingleChildRenderObjectWidget {
+  const _ShapeHit({required this.mask, required super.child});
+
+  final HitMask? mask;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderShapeHit(mask);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderShapeHit renderObject) {
+    renderObject.mask = mask;
+  }
+}
+
+class _RenderShapeHit extends RenderProxyBox {
+  _RenderShapeHit(this.mask);
+
+  HitMask? mask;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final shape = mask;
+    if (shape != null &&
+        !shape.contains(position.dx / size.width, position.dy / size.height)) {
+      return false;
+    }
+    return super.hitTest(result, position: position);
   }
 }
 

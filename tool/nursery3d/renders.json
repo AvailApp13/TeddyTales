@@ -1,56 +1,101 @@
 {
- "nursery.floor_left/armchair": [
-  0.0,
-  0.3020334928229665,
-  0.8820403825717322,
-  0.5382775119617225
- ],
- "nursery.rug/rug": [
-  0.12858660998937302,
-  0.7159090909090909,
-  0.7587672688629118,
-  0.1471291866028708
- ],
- "nursery.wall_pic_left/pic_bear": [
-  0.40170031880977686,
-  0.20035885167464115,
-  0.1381509032943677,
-  0.09569377990430622
- ],
- "nursery.wall_pic_left/pic_heart": [
-  0.39638682252922425,
-  0.19617224880382775,
-  0.14452709883103082,
-  0.1034688995215311
- ],
- "nursery.wall_pic_right/pic_bear": [
-  0.5759829968119022,
-  0.20035885167464115,
-  0.14452709883103082,
-  0.09569377990430622
- ],
- "nursery.wall_pic_right/pic_heart": [
-  0.5770456960680127,
-  0.19557416267942584,
-  0.14452709883103082,
-  0.10466507177033493
- ],
- "nursery.wall_shelf/pic_bear": [
-  0.740701381509033,
-  0.24880382775119617,
-  0.1434643995749203,
-  0.09629186602870814
- ],
- "nursery.wall_shelf/pic_heart": [
-  0.7396386822529224,
-  0.24401913875598086,
-  0.14558979808714134,
-  0.10466507177033493
- ],
- "nursery.wall_shelf/shelf": [
-  0.7066950053134963,
-  0.24700956937799043,
-  0.22741764080765142,
-  0.09270334928229665
- ]
+ "nursery.floor_left/armchair": {
+  "hit": "0000000000000000000000000000000000000000000000000fc000003ff000007ff800007fff8000ffff8000ffffc000ffffc000ffffc000ffffc000ffffc000ffffc000ffff8000ffff00003fe00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+  "rect": [
+   0.0,
+   0.30203,
+   0.88204,
+   0.53828
+  ]
+ },
+ "nursery.rug/rug": {
+  "hit": "03fefffc07fffffe0ffffffe0fffffff1fffffff1fffffff1fffffff1fffffff1fffffff3fffffff3fffffff7fffffff7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffefffffffc7ffffff83ffffff03fffffe00fffffc003fffe0000fff00000000000",
+  "rect": [
+   0.12859,
+   0.71591,
+   0.75877,
+   0.14713
+  ]
+ },
+ "nursery.rug/rug_cloud": {
+  "hit": "0001ff000003ff80007fffc000fffffc01fffffe03fffffe07ffffff1fffffff3fffffff3fffffff7ffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffefffffff8fffffff8fffffff8fffffff87ffffff81ffffff01ffffff01ffffff01fffffe01fffffc00fff7f8007fe1e0003fc000000e00000",
+  "rect": [
+   0.14453,
+   0.7189,
+   0.73433,
+   0.13457
+  ]
+ },
+ "nursery.rug/rug_heart": {
+  "hit": "000fff80001ffff000fffff000fffffc01fffffc0ffffffc0fffffff0fffffff0fffffff3fffffff7fffffff7fffffff7fffffff7fffffff7ffffffffffffffffffffffffffffffefffffffefffffffefffffffe7ffffffe7ffffffc7fffffc07fffffc07fffffc07fffffc003fff7c003f3f00001f3e00001e3e00000000000",
+  "rect": [
+   0.12327,
+   0.70036,
+   0.75983,
+   0.19856
+  ]
+ },
+ "nursery.wall_pic_left/pic_bear": {
+  "hit": "003c780000fffe007ffffffc7ffffffe7ffffffe7ffffffe7ffffffe7ffffffc7ffffffc7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffc7ffffffefffffffefffffffefffffffe7ffffffe3cffff7800000000",
+  "rect": [
+   0.34538,
+   0.20156,
+   0.14028,
+   0.0951
+  ]
+ },
+ "nursery.wall_pic_left/pic_heart": {
+  "hit": "0007fff0003ffffc007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe003ffffc00000000",
+  "rect": [
+   0.29118,
+   0.19737,
+   0.19554,
+   0.10287
+  ]
+ },
+ "nursery.wall_pic_right/pic_bear": {
+  "hit": "00000000007ff8007ffffff8fffffffcfffffffcfffffffcfffffffcfffffff8fffffff8fffffff8fffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffff8fffffff8fffffff8fffffffcfffffffcfffffffcfffffffc7ffffef800000000",
+  "rect": [
+   0.52604,
+   0.20036,
+   0.14134,
+   0.09629
+  ]
+ },
+ "nursery.wall_pic_right/pic_heart": {
+  "hit": "000000003fffffe07ffffff8fffffff8fffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffff87ffffff83ffffff000000000",
+  "rect": [
+   0.52497,
+   0.19557,
+   0.14346,
+   0.10467
+  ]
+ },
+ "nursery.wall_shelf/pic_bear": {
+  "hit": "00000000007ff0007ffffff0fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff87ffffff000000000",
+  "rect": [
+   0.7152,
+   0.22608,
+   0.14559,
+   0.09689
+  ]
+ },
+ "nursery.wall_shelf/pic_heart": {
+  "hit": "000000001fffffe07ffffff07ffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff87ffffff87ffffff03fffffe000000000",
+  "rect": [
+   0.71307,
+   0.22189,
+   0.14878,
+   0.10467
+  ]
+ },
+ "nursery.wall_shelf/shelf": {
+  "hit": "000000000000000000000000001fc000003fe000007ff00007fff0000ffff8001fffff001fffff801fffffc01fffffc07fffffc0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff03f001ff03f001ff01f001fe01f000fe01e000fe0000003e0000003c000000000",
+  "rect": [
+   0.68332,
+   0.22428,
+   0.22742,
+   0.0933
+  ]
+ }
 }

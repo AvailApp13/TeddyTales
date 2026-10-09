@@ -1,44 +1,89 @@
 // Сгенерировано tool/nursery3d/items.py — не править руками.
 //
 // Вещи игровой, посчитанные в 3D на своих местах: слой вещи вместе с
-// тенью и где он лежит в кадре комнаты (доли ширины и высоты кадра).
+// тенью, где он лежит в кадре комнаты (доли ширины и высоты кадра) и
+// где в нём сама вещь — сетка нажатия (lib/game/hit_mask.dart).
 // Пара «место/вещь», которой здесь нет, рисуется картинкой магазина.
 
+import 'hit_mask.dart';
 import 'room_render.dart';
 
 const Map<String, RoomRender> roomRenders = {
-  'nursery.floor_left/armchair': RoomRender(0.00000, 0.30203, 0.88204, 0.53828),
-  'nursery.rug/rug': RoomRender(0.12859, 0.71591, 0.75877, 0.14713),
+  'nursery.floor_left/armchair': RoomRender(
+    0.00000,
+    0.30203,
+    0.88204,
+    0.53828,
+    HitMask('0000000000000000000000000000000000000000000000000fc000003ff000007ff800007fff8000ffff8000ffffc000ffffc000ffffc000ffffc000ffffc000ffffc000ffff8000ffff00003fe00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
+  ),
+  'nursery.rug/rug': RoomRender(
+    0.12859,
+    0.71591,
+    0.75877,
+    0.14713,
+    HitMask('03fefffc07fffffe0ffffffe0fffffff1fffffff1fffffff1fffffff1fffffff1fffffff3fffffff3fffffff7fffffff7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffefffffffc7ffffff83ffffff03fffffe00fffffc003fffe0000fff00000000000'),
+  ),
+  'nursery.rug/rug_cloud': RoomRender(
+    0.14453,
+    0.71890,
+    0.73433,
+    0.13457,
+    HitMask('0001ff000003ff80007fffc000fffffc01fffffe03fffffe07ffffff1fffffff3fffffff3fffffff7ffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffefffffff8fffffff8fffffff8fffffff87ffffff81ffffff01ffffff01ffffff01fffffe01fffffc00fff7f8007fe1e0003fc000000e00000'),
+  ),
+  'nursery.rug/rug_heart': RoomRender(
+    0.12327,
+    0.70036,
+    0.75983,
+    0.19856,
+    HitMask('000fff80001ffff000fffff000fffffc01fffffc0ffffffc0fffffff0fffffff0fffffff3fffffff7fffffff7fffffff7fffffff7fffffff7ffffffffffffffffffffffffffffffefffffffefffffffefffffffe7ffffffe7ffffffc7fffffc07fffffc07fffffc07fffffc003fff7c003f3f00001f3e00001e3e00000000000'),
+  ),
   'nursery.wall_pic_left/pic_bear': RoomRender(
-    0.40170,
-    0.20036,
-    0.13815,
-    0.09569,
+    0.34538,
+    0.20156,
+    0.14028,
+    0.09510,
+    HitMask('003c780000fffe007ffffffc7ffffffe7ffffffe7ffffffe7ffffffe7ffffffc7ffffffc7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffe7ffffffc7ffffffefffffffefffffffefffffffe7ffffffe3cffff7800000000'),
   ),
   'nursery.wall_pic_left/pic_heart': RoomRender(
-    0.39639,
-    0.19617,
-    0.14453,
-    0.10347,
+    0.29118,
+    0.19737,
+    0.19554,
+    0.10287,
+    HitMask('0007fff0003ffffc007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe007ffffe003ffffc00000000'),
   ),
   'nursery.wall_pic_right/pic_bear': RoomRender(
-    0.57598,
+    0.52604,
     0.20036,
-    0.14453,
-    0.09569,
+    0.14134,
+    0.09629,
+    HitMask('00000000007ff8007ffffff8fffffffcfffffffcfffffffcfffffffcfffffff8fffffff8fffffff8fffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffff8fffffff8fffffff8fffffffcfffffffcfffffffcfffffffc7ffffef800000000'),
   ),
   'nursery.wall_pic_right/pic_heart': RoomRender(
-    0.57705,
+    0.52497,
     0.19557,
-    0.14453,
+    0.14346,
     0.10467,
+    HitMask('000000003fffffe07ffffff8fffffff8fffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffffcfffffff87ffffff83ffffff000000000'),
   ),
-  'nursery.wall_shelf/pic_bear': RoomRender(0.74070, 0.24880, 0.14346, 0.09629),
-  'nursery.wall_shelf/pic_heart': RoomRender(
-    0.73964,
-    0.24402,
+  'nursery.wall_shelf/pic_bear': RoomRender(
+    0.71520,
+    0.22608,
     0.14559,
-    0.10467,
+    0.09689,
+    HitMask('00000000007ff0007ffffff0fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff87ffffff000000000'),
   ),
-  'nursery.wall_shelf/shelf': RoomRender(0.70670, 0.24701, 0.22742, 0.09270),
+  'nursery.wall_shelf/pic_heart': RoomRender(
+    0.71307,
+    0.22189,
+    0.14878,
+    0.10467,
+    HitMask('000000001fffffe07ffffff07ffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff8fffffff87ffffff87ffffff03fffffe000000000'),
+  ),
+  'nursery.wall_shelf/shelf': RoomRender(
+    0.68332,
+    0.22428,
+    0.22742,
+    0.09330,
+    HitMask('000000000000000000000000001fc000003fe000007ff00007fff0000ffff8001fffff001fffff801fffffc01fffffc07fffffc0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff0fffffff03f001ff03f001ff01f001fe01f000fe01e000fe0000003e0000003c000000000'),
+  ),
 };

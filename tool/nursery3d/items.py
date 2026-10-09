@@ -38,7 +38,9 @@ from mathutils import Matrix, Vector
 from PIL import Image
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
+sys.path.insert(0, str(pathlib.Path(__file__).parents[1]))
 import scene as room  # noqa: E402
+from hit_grid import grid as hit_grid, to_hex  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SHOP = ROOT / 'assets/shop'
@@ -57,19 +59,30 @@ SPOTS = {
     # закрывал мишка — заказчик обвёл место левее мишки, перед окном, ближе
     # к нам: 3,3 м вглубь, задний угол — у стены.
     'nursery.floor_left': dict(kind='left', y=3.30, face=-40),
-    'nursery.floor_right': dict(kind='back', x=-0.02, face=-90),
-    'nursery.corner_right': dict(kind='floor', x=0.10, y=2.90, face=-100),
+    # Справа (проверка интерьера 09.10: вещи срезались краем экрана и
+    # наезжали друг на друга). Правее мишки до края экрана — 20 см пола у
+    # ног и 80 см задней стены, поэтому три места разведены по глубине:
+    # комод у задней стены — правым краем у края экрана Android; в углу
+    # рядом с ним — растение или корзина; игрушка — впереди, у ног мишки.
+    'nursery.floor_right': dict(kind='back', x=-0.33, face=-90),
+    'nursery.corner_right': dict(kind='floor', x=0.05, y=4.10, face=-100),
     'nursery.rug': dict(kind='rug', x=-0.33, y=1.62),
-    'nursery.toy_left': dict(kind='floor', x=-0.88, y=1.95, face=-70),
-    'nursery.toy_right': dict(kind='floor', x=0.0, y=1.95, face=-110),
-    'nursery.wall_shelf': dict(kind='wall', x=0.0, z=1.62),
-    'nursery.wall_pic_left': dict(kind='wall', x=-1.30, z=1.95),
-    'nursery.wall_pic_right': dict(kind='wall', x=-0.62, z=1.95),
+    # Игрушки — по бокам от мишки, на ковре, на той же глубине, что и он:
+    # слева игрушка больше не заслоняет низ кресла (проверка 09.10).
+    'nursery.toy_left': dict(kind='floor', x=-0.67, y=1.62, face=-70),
+    'nursery.toy_right': dict(kind='floor', x=-0.03, y=1.62, face=-110),
+    # Полка выше на 15 см — комод до неё не достаёт; левее на 9 см — не
+    # срезается краем экрана. Картины сдвинуты влево за ней — над мишкой.
+    'nursery.wall_shelf': dict(kind='wall', x=-0.09, z=1.77),
+    'nursery.wall_pic_left': dict(kind='wall', x=-1.50, z=1.95),
+    'nursery.wall_pic_right': dict(kind='wall', x=-0.82, z=1.95),
 }
 
-# Что где проба (заказчик 09.10): ковёр, картины, полка, кресло.
+# Что считается в 3D: ковры, картины, полка, кресло (заказчик 09.10).
 JOBS = [
     ('nursery.rug', 'rug'),
+    ('nursery.rug', 'rug_cloud'),
+    ('nursery.rug', 'rug_heart'),
     ('nursery.wall_pic_left', 'pic_bear'),
     ('nursery.wall_pic_right', 'pic_bear'),
     ('nursery.wall_shelf', 'pic_bear'),
@@ -100,7 +113,10 @@ def item_scale(item_id):
 
 # Ковёр на картинке магазина снят сверху под углом: круглые глаза мишки
 # сплющены до 0,82 — во столько и сжата глубина. Разворачиваем обратно.
-RUG_FORESHORTEN = {'rug': 0.82}
+# «Облако» снято так же: пятиконечные звёзды на нём сплющены в среднем до
+# 0,78 при 0,95 у ровной звезды — те же 0,82. Ковёр с сердцем круглый:
+# кольца на нём сжаты до 0,63–0,66, контур с помпонами — до 0,635.
+RUG_FORESHORTEN = {'rug': 0.82, 'rug_cloud': 0.82, 'rug_heart': 0.635}
 
 
 def srgb_to_linear(c):
@@ -115,14 +131,24 @@ def shop_source(item_id):
     return SHOP / mapping[item_id]
 
 
-def prepare_texture(item_id, tex_dir, unsquash=1.0):
+def prepare_texture(item_id, tex_dir, unsquash=1.0, single=False):
     """Картинка вещи без пустых полей; для ковра — ещё и в виде сверху.
+
+    single — оставить один самый крупный кусок: ковёр цельный, а в вырезку
+    с листа магазина попадают чужие клочки (у «облака» — лист растения).
 
     Возвращает путь к PNG, пропорцию (высота / ширина) и контур вещи в долях
     картинки (для ковра — форма основы)."""
     import cv2
     im = Image.open(shop_source(item_id)).convert('RGBA')
     a = np.asarray(im)[..., 3]
+    if single:
+        n, lab, st, _ = cv2.connectedComponentsWithStats((a > 200).astype(np.uint8))
+        big = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA]))
+        px = np.asarray(im).copy()
+        px[..., 3][lab != big] = 0
+        im = Image.fromarray(px, 'RGBA')
+        a = px[..., 3]
     ys, xs = np.nonzero(a > 200)
     im = im.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
     if unsquash != 1.0:
@@ -197,7 +223,8 @@ def build_card(item_id, tex_dir, depth):
 
 def build_rug(item_id, tex_dir):
     """Ковёр: основа в форме ковра толщиной 12 мм, сверху — картинка."""
-    path, aspect, contour = prepare_texture(item_id, tex_dir, RUG_FORESHORTEN.get(item_id, 1.0))
+    path, aspect, contour = prepare_texture(item_id, tex_dir, RUG_FORESHORTEN.get(item_id, 1.0),
+                                            single=True)
     w = WIDTH[item_id] * SCALE
     d = w * aspect
     t = 0.012
@@ -644,24 +671,34 @@ def compose_job(job_dir, r, floor_like):
     k = room.W_PX / w
     rect = (x0 * k / room.W_PX, y0 * k / room.H_PX, (x1 - x0) * k / room.W_PX,
             (y1 - y0) * k / room.H_PX)
-    return img, rect
+    # Сетка нажатия — по самой вещи, без тени (заказчик 09.10: нажатие по
+    # комоду и ковру открывало кресло — его слой с тенью накрывал полкомнаты).
+    hit = to_hex(hit_grid(a[y0:y1, x0:x1]))
+    return img, rect, hit
 
 
 def write_dart(entries, path):
+    """entries: «место/вещь» → {'rect': [l, t, w, h], 'hit': сетка}. Пишется
+    сразу так, как его оставил бы `dart format`."""
     lines = [
         '// Сгенерировано tool/nursery3d/items.py — не править руками.',
         '//',
         '// Вещи игровой, посчитанные в 3D на своих местах: слой вещи вместе с',
-        '// тенью и где он лежит в кадре комнаты (доли ширины и высоты кадра).',
+        '// тенью, где он лежит в кадре комнаты (доли ширины и высоты кадра) и',
+        '// где в нём сама вещь — сетка нажатия (lib/game/hit_mask.dart).',
         '// Пара «место/вещь», которой здесь нет, рисуется картинкой магазина.',
         '',
+        "import 'hit_mask.dart';",
         "import 'room_render.dart';",
         '',
         'const Map<String, RoomRender> roomRenders = {',
     ]
     for key in sorted(entries):
-        l, t, w, h = entries[key]
-        lines.append(f"  '{key}': RoomRender({l:.5f}, {t:.5f}, {w:.5f}, {h:.5f}),")
+        l, t, w, h = entries[key]['rect']
+        lines.append(f"  '{key}': RoomRender(")
+        lines += [f'    {v:.5f},' for v in (l, t, w, h)]
+        lines.append(f"    HitMask('{entries[key]['hit']}'),")
+        lines.append('  ),')
     lines.append('};')
     path.write_text('\n'.join(lines) + '\n')
 
@@ -694,16 +731,22 @@ def main():
     layer_dir.mkdir(parents=True, exist_ok=True)
     for slot_id, item_id in jobs:
         name = f'{slot_id.split(".")[1]}__{item_id}'
-        img, rect = compose_job(out / name, r, floor_like=item_id.startswith('rug'))
+        img, rect, hit = compose_job(out / name, r, floor_like=item_id.startswith('rug'))
         img.save(layer_dir / f'{name}.webp', quality=90, alpha_quality=100, method=6)
-        entries[f'{slot_id}/{item_id}'] = rect
+        entries[f'{slot_id}/{item_id}'] = {'rect': [round(v, 5) for v in rect], 'hit': hit}
         print(f'{name}: {img.width}×{img.height}, '
               f'{(layer_dir / (name + ".webp")).stat().st_size // 1024} КБ')
     if args.assets:
-        # Пересчитанные пары дописываются к уже готовым.
+        # Пересчитанные пары дописываются к уже готовым; пары, которых больше
+        # нет в JOBS (место переехало), выбрасываются вместе со слоем.
         book = pathlib.Path(__file__).parent / 'renders.json'
         allr = json.loads(book.read_text()) if book.exists() else {}
         allr.update(entries)
+        known = {f'{s}/{i}' for s, i in JOBS}
+        for key in [k for k in allr if k not in known]:
+            del allr[key]
+            s, i = key.split('/')
+            (layer_dir / f'{s.split(".")[1]}__{i}.webp').unlink(missing_ok=True)
         book.write_text(json.dumps(allr, indent=1, sort_keys=True, ensure_ascii=False) + '\n')
         write_dart(allr, ROOT / 'lib/game/room_renders.dart')
     (out / 'rects.json').write_text(json.dumps(entries, indent=1))
