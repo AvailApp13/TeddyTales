@@ -71,10 +71,18 @@ WIN_Y1 = depth_at_u(230)      # дальний край проёма
 WIN_Z0 = 0.58                 # низ проёма (подоконник)
 WIN_Z1 = 2.42                 # верх проёма
 
-# Тюль по бокам окна: ближнее полотно (u 48…98) и дальнее — между окном и
-# углом (u 232…272).
-CURTAIN_NEAR = (depth_at_u(48), depth_at_u(98))
-CURTAIN_MAIN = (depth_at_u(232), depth_at_u(272))
+# Тюль по бокам окна (заказчик 09.10): от края карниза до окна, окно не
+# закрывает. Полотно висит в CURTAIN_OFF от стены, складки — ±CURTAIN_AMP;
+# камера смотрит на стену под острым углом, поэтому выступающая часть
+# складок видна правее, чем крепление у стены. Ближнее полотно кончается так,
+# чтобы и самая выступающая складка была левее окна (u < 100).
+CURTAIN_OFF = 0.05
+CURTAIN_AMP = 0.045
+CURTAIN_FLARE = 0.02
+PELMET_Y0 = depth_at_u(-60)            # левый край карниза — за кадром
+_front = WL - (CURTAIN_OFF + CURTAIN_AMP + CURTAIN_FLARE)
+CURTAIN_NEAR = (PELMET_Y0 + 0.03, F_PX * _front / (VP[0] - 100))
+CURTAIN_MAIN = (depth_at_u(230) + 0.02, D - 0.03)
 ROD_Z = 2.50
 
 
@@ -122,43 +130,63 @@ def box(name, coll, lo, hi, mat, bevel=0.0):
     return ob
 
 
-def curtain(name, y0, y1, mat, seed):
-    """Тюль: полотно со складками, висит в 9 см от левой стены."""
+def curtain(name, y0, y1, mats, seed):
+    """Тюль: полотно с крупными складками сверху донизу.
+
+    Заказчик 09.10: «чтобы смотрелась, а не облачко», «больше складок, шире
+    складки». Складки ровные, шаг 11 см; книзу полотно чуть отходит от
+    стены; сверху — плотная шторная лента, снизу — плотный подгиб.
+    mats: (тюль, плотная ткань ленты и подгиба).
+    """
     rng = np.random.default_rng(seed)
-    nx, nz = 160, 120
+    nx, nz = 260, 170
     width = y1 - y0
-    verts, faces = [], []
-    phases = rng.uniform(0, 2 * math.pi, 3)
+    verts, faces, slots = [], [], []
+    ph = rng.uniform(0, 2 * math.pi, 3)
     for j in range(nz + 1):
         t = j / nz                       # 0 — низ, 1 — верх
         z = 0.012 + t * (ROD_Z - 0.012)
-        amp = 0.018 + 0.030 * (1 - t) ** 1.5   # книзу складки глубже
+        amp = CURTAIN_AMP * (0.85 + 0.15 * (1 - t))
+        if t > 0.97:                     # у ленты складки собраны плотнее
+            amp *= 0.6
+        flare = CURTAIN_FLARE * (1 - t) ** 3  # низ чуть отходит от стены
         for i in range(nx + 1):
-            s = i / nx
-            y = y0 + s * width
-            fold = (math.sin(2 * math.pi * s * width / 0.13 + phases[0])
-                    + 0.45 * math.sin(2 * math.pi * s * width / 0.071 + phases[1])
-                    + 0.25 * math.sin(2 * math.pi * s * width / 0.29 + phases[2]))
-            x = -WL + 0.09 + amp * fold
+            sx = i / nx
+            y = y0 + sx * width
+            # Складки по 11 см: на полуметровом полотне их 4–5, каждая
+            # крупная и ровная; поверх — лёгкая неровность ткани.
+            fold = (math.sin(2 * math.pi * sx * width / 0.11 + ph[0])
+                    + 0.22 * math.sin(2 * math.pi * sx * width / 0.33 + ph[1])
+                    + 0.08 * math.sin(2 * math.pi * sx * width / 0.047 + ph[2]))
+            fold = max(-1.0, min(1.0, fold / 1.1))
+            x = -WL + CURTAIN_OFF + amp * fold + flare
             verts.append((x, y, z))
     for j in range(nz):
+        zc = 0.012 + (j + 0.5) / nz * (ROD_Z - 0.012)
+        dense = zc < 0.07 or zc > ROD_Z - 0.06
         for i in range(nx):
             a = j * (nx + 1) + i
             faces.append((a, a + 1, a + nx + 2, a + nx + 1))
+            slots.append(1 if dense else 0)
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
     me.update()
-    for p in me.polygons:
+    for p, k in zip(me.polygons, slots):
         p.use_smooth = True
+        p.material_index = k
     ob = bpy.data.objects.new(name, me)
-    ob.data.materials.append(mat)
+    for m in mats:
+        ob.data.materials.append(m)
     bpy.data.collections['curtains'].objects.link(ob)
     return ob
 
 
-def sheer_material():
-    """Белый тюль: часть света проходит насквозь, часть рассеивается."""
-    m = bpy.data.materials.new('sheer')
+def sheer_material(name='sheer', cloth_share=0.74):
+    """Белый тюль: часть света проходит насквозь, часть рассеивается.
+
+    cloth_share — доля ткани, остальное — просвет: 0,74 — обои видны сквозь
+    тюль, но он читается как ткань; у ленты и подгиба плотнее."""
+    m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
     nt.nodes.clear()
@@ -168,13 +196,13 @@ def sheer_material():
     cloth = nt.nodes.new('ShaderNodeMixShader')
     transl = nt.nodes.new('ShaderNodeBsdfTranslucent')
     diff = nt.nodes.new('ShaderNodeBsdfDiffuse')
-    white = (0.92, 0.90, 0.86, 1)
+    white = (0.93, 0.91, 0.87, 1)
     transl.inputs['Color'].default_value = white
     diff.inputs['Color'].default_value = white
-    cloth.inputs[0].default_value = 0.45
+    cloth.inputs[0].default_value = 0.40          # на просвет / рассеяние
     nt.links.new(transl.outputs[0], cloth.inputs[1])
     nt.links.new(diff.outputs[0], cloth.inputs[2])
-    mix.inputs[0].default_value = 0.62          # доля ткани, остальное — просвет
+    mix.inputs[0].default_value = cloth_share
     nt.links.new(transp.outputs[0], mix.inputs[1])
     nt.links.new(cloth.outputs[0], mix.inputs[2])
     nt.links.new(mix.outputs[0], out.inputs['Surface'])
@@ -428,13 +456,15 @@ def build():
     box('mullion_low', 'trim', (fx0 + i, mid - 0.025, zb), (fx1 - i, mid + 0.025, tz - 0.025), white)
     box('mullion_high', 'trim', (fx0 + i, mid - 0.025, tz + 0.025), (fx1 - i, mid + 0.025, zt), white)
     # Короб карниза для штор над окном.
-    box('pelmet', 'trim', (-WL, CURTAIN_NEAR[0] - 0.15, ROD_Z - 0.03),
-        (-WL + 0.15, min(CURTAIN_MAIN[1] + 0.06, D - 0.004), CEIL - CORNICE), white, 0.01)
+    # Карниз для штор: от левого края (за кадром) до угла; тюль висит от его
+    # края до окна и от окна до угла.
+    box('pelmet', 'trim', (-WL, PELMET_Y0, ROD_Z - 0.03),
+        (-WL + 0.15, D - 0.004, CEIL - CORNICE), white, 0.01)
 
     # Вид за окном — улица в 3D.
     outdoor()
 
-    sheer = sheer_material()
+    sheer = (sheer_material(), sheer_material('sheer_dense', 0.95))
     curtain('curtain_main', *CURTAIN_MAIN, sheer, 1)
     curtain('curtain_near', *CURTAIN_NEAR, sheer, 2)
 
