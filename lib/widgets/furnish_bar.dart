@@ -31,6 +31,7 @@ class FurnishBar extends StatefulWidget {
     required this.onShop,
     required this.onDone,
     this.onSurface,
+    this.onSurfaceTab,
   });
 
   final GameState game;
@@ -46,6 +47,10 @@ class FurnishBar extends StatefulWidget {
   /// Выбрали стены или пол (вкладки «Стены» и «Пол», только в игровой).
   /// `null` — вкладок нет.
   final ValueChanged<ShopItem>? onSurface;
+
+  /// Открыта вкладка «Стены» или «Пол» (`true`) или «Вещи» (`false`).
+  /// Заказчик 09.10: крестики мест — только когда ставят вещи.
+  final ValueChanged<bool>? onSurfaceTab;
 
   /// Купленные вещи, которым в этой комнате есть куда встать.
   ///
@@ -96,7 +101,10 @@ class _FurnishBarState extends State<FurnishBar> {
     final game = widget.game;
     final picked = widget.picked;
     final mine = widget.items;
-    final tabs = widget.onSurface != null && widget.room == RoomKind.nursery;
+    final tabs =
+        kRoomSurfacesShown &&
+        widget.onSurface != null &&
+        widget.room == RoomKind.nursery;
     final tab = tabs ? _tab : _Tab.items;
     final surfaceKind = switch (tab) {
       _Tab.walls => ItemKind.wallpaper,
@@ -167,7 +175,10 @@ class _FurnishBarState extends State<FurnishBar> {
                         _Tab.floor => l10n.furnishTabFloor,
                       },
                       chosen: t == tab,
-                      onTap: () => setState(() => _tab = t),
+                      onTap: () {
+                        setState(() => _tab = t);
+                        widget.onSurfaceTab?.call(t != _Tab.items);
+                      },
                     ),
                   ],
                 ],

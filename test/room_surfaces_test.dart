@@ -64,4 +64,13 @@ void main() {
     expect(game.isPlaced('wall_mint'), isTrue);
     expect(game.isPlaced('wall_rose'), isFalse);
   });
+
+  test('пока выбор спрятан, стены и пол не продаются', () {
+    // Заказчик 09.10: «вкладки пока убери» — до новой 3D-базы игровой.
+    expect(kRoomSurfacesShown, isFalse);
+    for (final item in ItemCatalog.all.where((i) => i.isSurface)) {
+      expect(item.onSale, isFalse, reason: item.id);
+    }
+    expect(ItemCatalog.byId('pic_bear').onSale, isTrue);
+  });
 }

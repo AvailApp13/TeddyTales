@@ -360,6 +360,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// Стены или пол, которые примеряют, пока открыто окно покупки.
   ShopItem? _surfacePreview;
 
+  /// В ленте открыты «Стены» или «Пол»: крестиков мест нет, тапы по местам
+  /// ничего не делают (заказчик 09.10: крестики — только когда ставят вещи).
+  bool _surfaceTab = false;
+
   /// Выбор стен или пола в ленте обустройства. Свои и бесплатные ставятся
   /// сразу; платные сначала примеряются — комната уже в новом цвете, пока
   /// человек решает в окне покупки, — и остаются, только если купили.
@@ -393,15 +397,18 @@ class _HomeScreenState extends State<HomeScreen>
     if (slotsOf(_room).isEmpty) _room = RoomKind.nursery;
     _furnishing = true;
     _picked = null;
+    _surfaceTab = false;
   });
 
   void _stopFurnishing() => setState(() {
     _furnishing = false;
     _picked = null;
+    _surfaceTab = false;
   });
 
   /// Тап по месту в режиме обустройства.
   void _useSlot(RoomSlot slot) {
+    if (_surfaceTab) return;
     final game = widget.game;
     final l10n = context.l10n;
     final picked = _picked;
@@ -1071,6 +1078,7 @@ class _HomeScreenState extends State<HomeScreen>
                   game: widget.game,
                   onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
                   furnishing: _furnishing,
+                  slotHints: _furnishing && !_surfaceTab,
                   picked: _picked,
                   surfacePreview: _surfacePreview,
                   room: _room,
@@ -1209,6 +1217,7 @@ class _HomeScreenState extends State<HomeScreen>
                     picked: _picked,
                     onPick: (item) => setState(() => _picked = item),
                     onSurface: _pickSurface,
+                    onSurfaceTab: (on) => setState(() => _surfaceTab = on),
                     onShop: () {
                       _stopFurnishing();
                       _openSheet(ShopScreen(game: widget.game));
@@ -1253,6 +1262,7 @@ class _RoomScene extends StatelessWidget {
     required this.game,
     required this.onSlotTap,
     required this.furnishing,
+    required this.slotHints,
     required this.picked,
     this.surfacePreview,
     required this.room,
@@ -1312,6 +1322,10 @@ class _RoomScene extends StatelessWidget {
   /// Идёт ли обустройство: тогда свободные места подсвечены, а занятые
   /// отдают вещь обратно по тапу.
   final bool furnishing;
+
+  /// Подсвечивать ли места крестиками: в обустройстве, но не на вкладках
+  /// «Стены» и «Пол».
+  final bool slotHints;
 
   /// Вещь в руках: подсвечиваются только те места, куда она встанет.
   final ShopItem? picked;
@@ -1511,7 +1525,7 @@ class _RoomScene extends StatelessWidget {
             game: game,
             room: room,
             depth: SlotDepth.behind,
-            hint: furnishing,
+            hint: slotHints,
             picked: picked,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,
@@ -1601,7 +1615,7 @@ class _RoomScene extends StatelessWidget {
           child: RoomSlotLayer(
             game: game,
             room: room,
-            hint: furnishing,
+            hint: slotHints,
             picked: picked,
             onTapItem: (slot, _) => onSlotTap(slot),
             onTapEmpty: onSlotTap,

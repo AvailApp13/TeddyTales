@@ -30,6 +30,7 @@ class RoomSurfaces extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!kRoomSurfacesShown) return const SizedBox.shrink();
     final layers = [
       for (final kind in const [ItemKind.wallpaper, ItemKind.floor])
         if (_current(kind)?.surfaceLayer case final path?) path,

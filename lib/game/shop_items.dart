@@ -113,6 +113,10 @@ class ShopItem {
   /// Стена или пол игровой: не вещь в слоте, а слой поверх всей комнаты.
   bool get isSurface => kind == ItemKind.wallpaper || kind == ItemKind.floor;
 
+  /// Продаётся ли сейчас: есть картинка, а стены и пол — только когда их
+  /// выбор открыт ([kRoomSurfacesShown]).
+  bool get onSale => photo && (!isSurface || kRoomSurfacesShown);
+
   /// Слой стены или пола поверх картинки игровой. У нынешних (с них малыш
   /// начинает) слоя нет — это сама картинка. См. tool/room_surfaces.py.
   String? get surfaceLayer => switch (kind) {
@@ -154,6 +158,15 @@ class ShopItem {
     };
   }
 }
+
+/// Выбор стен и пола игровой открыт.
+///
+/// ⚠ Спрятан до новой базы игровой в 3D (заказчик 09.10: «вкладки пока
+/// убери», `docs/room-structure-plan.md`): перекраска поверх нынешней
+/// картинки оставляла розовыми потолок, плинтусы, откосы и тюль. Пока
+/// `false` — нет вкладок «Стены» и «Пол», стены и пол не продаются, а
+/// комната рисуется своей картинкой, что бы ни было выбрано раньше.
+const bool kRoomSurfacesShown = false;
 
 /// Каталог игровых предметов.
 abstract final class ItemCatalog {

@@ -317,7 +317,7 @@ enum _ShopTab {
   /// продаёт пустое место.
   List<ShopItem> get items => [
     for (final item in _all)
-      if (item.photo) item,
+      if (item.onSale) item,
   ];
 
   /// Есть ли что показать: вкладка без единой картинки не рисуется.
