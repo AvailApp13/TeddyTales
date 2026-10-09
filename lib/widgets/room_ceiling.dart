@@ -38,10 +38,13 @@ class RoomCeiling extends StatelessWidget {
   /// Снято с самих картинок (усреднение по верхним шести строкам): потолок
   /// должен встретиться с ними без шва, иначе на стыке появится ступенька.
   static const Map<RoomKind, Color> _edge = {
-    RoomKind.nursery: Color(0xFFE9CCBA),
+    RoomKind.nursery: kNursery3d ? _nursery3dEdge : Color(0xFFE9CCBA),
     RoomKind.kitchen: Color(0xFFE5DABD),
     RoomKind.bath: Color(0xFFC1D2D9),
   };
+
+  /// Верх кадра игровой из 3D — белый потолок (tool/nursery3d/compose.py).
+  static const Color _nursery3dEdge = Color(0xFFF4F1EC);
 
   @override
   Widget build(BuildContext context) {

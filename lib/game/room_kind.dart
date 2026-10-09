@@ -35,8 +35,17 @@ RoomKind? roomForAction(BearAction action) => switch (action) {
   BearAction.decorate => null,
 };
 
+/// Игровая из 3D (заказчик 09.10, `docs/room-structure-plan.md`): комната
+/// построена в Blender по меркам прежней картинки и собрана слоями — стена,
+/// пол, отделка (потолок, карниз, плинтусы, окно), тюль. Потолок, плинтусы,
+/// рама и тюль белые при любых стенах. ⚠ Пробная, ждёт решения заказчика:
+/// `false` — прежняя картинка `nursery.jpg`.
+const bool kNursery3d = true;
+
 enum RoomKind {
-  nursery('assets/rooms/nursery.jpg'),
+  nursery(
+    kNursery3d ? 'assets/rooms/nursery3d.jpg' : 'assets/rooms/nursery.jpg',
+  ),
   bedroom('assets/rooms/bedroom.jpg'),
   kitchen('assets/rooms/kitchen.jpg'),
   bath('assets/rooms/bath.jpg');
