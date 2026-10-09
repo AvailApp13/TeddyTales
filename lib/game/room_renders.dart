@@ -7,7 +7,7 @@
 import 'room_render.dart';
 
 const Map<String, RoomRender> roomRenders = {
-  'nursery.floor_left/armchair': RoomRender(0.00106, 0.33852, 0.88948, 0.26854),
+  'nursery.floor_left/armchair': RoomRender(0.00000, 0.30203, 0.88204, 0.53828),
   'nursery.rug/rug': RoomRender(0.12859, 0.71591, 0.75877, 0.14713),
   'nursery.wall_pic_left/pic_bear': RoomRender(
     0.40170,
