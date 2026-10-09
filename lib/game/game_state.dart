@@ -345,7 +345,9 @@ class GameState extends ChangeNotifier {
   /// рубль.
   bool buy(String id) {
     final item = ItemCatalog.byId(id);
-    if (isOwned(id) || !spend(item.price)) return false;
+    if (isOwned(id)) return false;
+    // Бесплатное (стены и пол, 09.10) берётся без списания: spend(0) — отказ.
+    if (item.price > 0 && !spend(item.price)) return false;
     _owned.add(id);
     notifyListeners();
 

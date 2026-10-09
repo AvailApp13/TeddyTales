@@ -129,17 +129,14 @@ class _FurnishBarState extends State<FurnishBar> {
               children: [
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(
-                    switch (tab) {
-                      _Tab.walls => l10n.furnishPickWall,
-                      _Tab.floor => l10n.furnishPickFloor,
-                      _Tab.items =>
-                        picked == null
-                            ? l10n.furnishPickItem
-                            : l10n.furnishPickSlot,
-                    },
-                    style: sceneText(size: 13, weight: 700),
-                  ),
+                  child: Text(switch (tab) {
+                    _Tab.walls => l10n.furnishPickWall,
+                    _Tab.floor => l10n.furnishPickFloor,
+                    _Tab.items =>
+                      picked == null
+                          ? l10n.furnishPickItem
+                          : l10n.furnishPickSlot,
+                  }, style: sceneText(size: 13, weight: 700)),
                 ),
                 TextButton(
                   onPressed: widget.onDone,
@@ -303,10 +300,7 @@ class _SurfaceCard extends StatelessWidget {
       badge = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${item.price}',
-            style: sceneText(size: 11, weight: 800),
-          ),
+          Text('${item.price}', style: sceneText(size: 11, weight: 800)),
           const SizedBox(width: 3),
           Container(
             width: 11,

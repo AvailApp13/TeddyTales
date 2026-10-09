@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/bear/bear.dart';
+import 'package:teddy_tales/game/game_state.dart';
+import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 import 'package:teddy_tales/widgets/furnish_bar.dart';
 
@@ -37,5 +40,28 @@ void main() {
 
   test('снятый с продажи id в сохранении не роняет каталог', () {
     expect(ItemCatalog.byIdOrNull('wall_sage'), isNull);
+  });
+
+  test('бесплатная стена берётся без монет и встаёт вместо прежней', () {
+    final bear = BearController();
+    final game = GameState(
+      bear: bear,
+      profile: PetProfile(
+        name: PetProfile.defaultName,
+        birthAt: DateTime(2026, 9, 26),
+        skin: BearSkin.girl,
+        zodiac: BearZodiac.libra,
+        birthHeightCm: 16.6,
+        birthWeightG: 186,
+      ),
+    );
+    addTearDown(game.dispose);
+    addTearDown(bear.dispose);
+    final coins = game.coins;
+    expect(game.buy('wall_mint'), isTrue);
+    expect(game.coins, coins);
+    game.togglePlaced('wall_mint');
+    expect(game.isPlaced('wall_mint'), isTrue);
+    expect(game.isPlaced('wall_rose'), isFalse);
   });
 }
