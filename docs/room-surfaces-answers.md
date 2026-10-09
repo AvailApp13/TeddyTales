@@ -159,47 +159,40 @@ App Store и китайских магазинов это риск жалобы 
 
 ## Сделано 09.10
 
-- **Сборка слоёв** — `tool/room_surfaces.py`:
-  - маски стен и пола по `nursery.jpg`;
-  - перекраска со светом комнаты, тюль просвечивает новым цветом;
-  - узоры в перспективе.
-- **Образцы обоев** — `tool/surface_tiles/`: 5 штук из Higgsfield, по
-  1,5 кредита. Швы у горошка и облаков убраны подрезкой по периоду узора.
-- **Каталог** — `lib/game/shop_items.dart`: 10 стен и 10 полов. Сейчас в
-  приложении 10 стен и 6 полов; особые полы с `photo: false` ждут
-  образцов.
-- **Сцена.** Слой — `lib/widgets/room_surfaces.dart`. Лента обустройства
-  получила вкладки «Вещи · Стены · Пол» (`lib/widgets/furnish_bar.dart`):
-  - свои и бесплатные варианты ставятся сразу;
-  - платный сначала примеряется на комнате, потом окно покупки.
-- **Сервер.** Цены — миграция `0029_room_surfaces.sql` (применена),
-  `wall_sage` с продажи снят.
+**Первая попытка — перекраска прежней картинки — снята**: потолок, плинтусы,
+откосы и тюль оставались розовыми (`docs/room-structure-plan.md`).
 
-## Осталось: 4 особых пола (лимит Higgsfield 09.10)
+**Итог — игровая из 3D** (заказчик 09.10: «Да, делай все 10 стен и 10
+полов»), артефакт версии 184:
 
-Те же настройки: `gpt_image_2_5`, 1:1, `quality: high`, 1,5 кредита за
-картинку, всего ≈ 6. Общее начало промта:
+- Комната в Blender по меркам прежней картинки (`tool/nursery3d/scene.py`),
+  слои — `tool/nursery3d/compose.py --build`:
+  - `assets/rooms/nursery/walls/<id>.webp` — 10 стен (непрозрачные);
+  - `floors/<id>.webp` — 10 полов (с прозрачностью);
+  - `trim.webp` — потолок, карниз, плинтусы, рама, вид за окном;
+  - `curtains.webp` — тюль;
+  - `swatches/<id>.webp` — образцы для ленты;
+  - `assets/rooms/nursery3d.jpg` — комната по умолчанию.
+- Обои — пять образцов Higgsfield (`tool/surface_tiles/`). Сторона
+  плитки на стене:
 
-> Seamless tileable floor texture seen straight from above, flat, no
-> perspective, no room, no furniture, no shadows, no light spots, no text,
-> fills the whole square edge to edge and repeats seamlessly on all four
-> sides. Soft illustrated matte style for a cozy pastel children's room
-> game. Floor: …
+  | Обои | Сторона плитки |
+  |---|---|
+  | Горошек | 0,80 м |
+  | Лесные звери | 1,60 м |
+  | Облака | 1,15 м |
+  | Веточки | 0,70 м |
+  | Зайцы | 0,75 м |
 
-| Файл `tool/surface_tiles/` | Хвост промта |
-|---|---|
-| `floor-laminate.webp` | light premium wide-plank laminate, planks run vertically, exactly 4 planks across the image, plank edges aligned with the left and right image borders, staggered end joints, very subtle fine wood grain, light warm natural oak color, thin soft seams, uniform even lighting. |
-| `floor-checker.webp` | checkerboard tiles alternating soft cream and powder pink, exactly 6 by 6 square tiles, tile edges aligned with the image borders, thin light grout lines, subtle satin matte finish, uniform even lighting. |
-| `floor-carpet.webp` | soft plush wall-to-wall carpet, short dense velvety pile, warm light oatmeal-cream color, very subtle uniform fibre texture, no pattern, uniform even lighting. |
-| `floor-puzzle.webp` | soft foam puzzle play mat made of interlocking square tiles with puzzle-piece tabs on their edges, exactly 4 by 4 tiles, tile grid aligned with the image borders, soft pastel colors alternating mint, powder pink, butter yellow and pale sky blue, fine foam texture, matte, uniform even lighting. |
+- Особые полы сделаны кодом в размер комнаты, без Higgsfield:
 
-Дальше по шагам:
+  | Пол | Как устроен |
+  |---|---|
+  | Ламинат | доска 27 см |
+  | «Шахматка» | плитка 30 см |
+  | Ковролин | мелкий ворс |
+  | Пол-пазл | квадраты 60 см с замками, мята / пудра / ваниль / голубой |
 
-1. Скачать через `tool/fetch-media.json`.
-2. Проверить швы (2 × 2 плитки) и при нужде подрезать по периоду узора.
-3. Положить в `tool/surface_tiles/`.
-4. Запустить `python3 tool/room_surfaces.py --only floor_laminate,floor_checker,floor_carpet,floor_puzzle --preview <папка>`.
-5. Проверить на шахматке, что плитки на полу выглядят квадратными; если
-   нет — подобрать фокус `F` в скрипте.
-6. Включить `photo: true` у четырёх полов.
-7. Тесты, сборка, артефакт.
+- Вкладки «Стены» и «Пол» вернулись. На них нет крестиков мест; платный
+  вариант сначала примеряется на комнате.
+- Цены на сервере — миграция `0029_room_surfaces.sql` (применена).
