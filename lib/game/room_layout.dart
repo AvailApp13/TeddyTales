@@ -216,7 +216,6 @@ RoomPlacement? placementOf(String id) {
 /// зависел от Flutter-типов (файл без импортов, тестируется как чистый Dart).
 const Map<String, (int, int)> roomSurfaces = {
   'wall_rose': (0xFFF6E3DC, 0xFFF0D5CC),
-  'wall_sage': (0xFFE4EDDC, 0xFFD6E4CC),
   'wall_sky': (0xFFE0EAF2, 0xFFD0DEEA),
   'floor_wood': (0xFFE8CBA8, 0xFFDDBC94),
   'floor_light': (0xFFF1E3CD, 0xFFE8D7BC),

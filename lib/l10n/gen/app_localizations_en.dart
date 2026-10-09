@@ -769,13 +769,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemDuck => 'Rubber Duck';
 
   @override
-  String get itemFloorCarpet => 'Carpet Floor';
+  String get itemFloorCarpet => 'Soft carpet';
 
   @override
-  String get itemFloorLight => 'Light Floor';
+  String get itemFloorLight => 'Bleached oak';
 
   @override
-  String get itemFloorWood => 'Wooden Floor';
+  String get itemFloorWood => 'Light wood';
 
   @override
   String get itemGarland => 'Fairy Lights';
@@ -865,13 +865,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemTrain => 'Toy Train';
 
   @override
-  String get itemWallRose => 'Pink Wallpaper';
+  String get itemWallRose => 'Powder pink';
 
   @override
-  String get itemWallSage => 'Green Wallpaper';
-
-  @override
-  String get itemWallSky => 'Sky Wallpaper';
+  String get itemWallSky => 'Sky blue';
 
   @override
   String get itemWardrobe => 'Wardrobe';
@@ -2359,4 +2356,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingredientBlueberries => 'Blueberries';
+
+  @override
+  String get itemWallCream => 'Cream';
+
+  @override
+  String get itemWallMint => 'Mint';
+
+  @override
+  String get itemWallDots => 'Polka dots';
+
+  @override
+  String get itemWallForest => 'Forest friends';
+
+  @override
+  String get itemWallClouds => 'Clouds & rainbows';
+
+  @override
+  String get itemWallSprigs => 'Leafy sprigs';
+
+  @override
+  String get itemWallBunnies => 'Bunnies & bows';
+
+  @override
+  String get itemWallLavender => 'Lavender';
+
+  @override
+  String get itemFloorHoney => 'Honey wood';
+
+  @override
+  String get itemFloorGreige => 'Greige oak';
+
+  @override
+  String get itemFloorLaminate => 'Wide-plank laminate';
+
+  @override
+  String get itemFloorDarkOak => 'Dark oak';
+
+  @override
+  String get itemFloorChecker => 'Checkerboard';
+
+  @override
+  String get itemFloorPuzzle => 'Puzzle mat';
+
+  @override
+  String get itemFloorPowder => 'Powder pink';
+
+  @override
+  String get furnishTabItems => 'Things';
+
+  @override
+  String get furnishTabWalls => 'Walls';
+
+  @override
+  String get furnishTabFloor => 'Floor';
+
+  @override
+  String get furnishPickWall => 'Pick the walls';
+
+  @override
+  String get furnishPickFloor => 'Pick the floor';
+
+  @override
+  String get furnishFree => 'Free';
+
+  @override
+  String get furnishCurrent => 'Now';
 }

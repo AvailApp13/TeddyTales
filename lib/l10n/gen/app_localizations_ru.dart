@@ -778,13 +778,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get itemDuck => 'Уточка';
 
   @override
-  String get itemFloorCarpet => 'Пол ковролин';
+  String get itemFloorCarpet => 'Ковролин';
 
   @override
-  String get itemFloorLight => 'Пол светлый';
+  String get itemFloorLight => 'Беленый дуб';
 
   @override
-  String get itemFloorWood => 'Пол дерево';
+  String get itemFloorWood => 'Светлое дерево';
 
   @override
   String get itemGarland => 'Гирлянда';
@@ -874,13 +874,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get itemTrain => 'Паровозик';
 
   @override
-  String get itemWallRose => 'Обои розовые';
+  String get itemWallRose => 'Пудровая';
 
   @override
-  String get itemWallSage => 'Обои зелёные';
-
-  @override
-  String get itemWallSky => 'Обои небо';
+  String get itemWallSky => 'Небесная';
 
   @override
   String get itemWardrobe => 'Шкаф';
@@ -2365,4 +2362,70 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ingredientBlueberries => 'Голубика';
+
+  @override
+  String get itemWallCream => 'Сливочная';
+
+  @override
+  String get itemWallMint => 'Мятная';
+
+  @override
+  String get itemWallDots => 'Горошек';
+
+  @override
+  String get itemWallForest => 'Лесные звери';
+
+  @override
+  String get itemWallClouds => 'Облака и радуги';
+
+  @override
+  String get itemWallSprigs => 'Веточки';
+
+  @override
+  String get itemWallBunnies => 'Зайцы и бантики';
+
+  @override
+  String get itemWallLavender => 'Лавандовая';
+
+  @override
+  String get itemFloorHoney => 'Медовое дерево';
+
+  @override
+  String get itemFloorGreige => 'Серо-бежевый дуб';
+
+  @override
+  String get itemFloorLaminate => 'Ламинат';
+
+  @override
+  String get itemFloorDarkOak => 'Тёмный дуб';
+
+  @override
+  String get itemFloorChecker => 'Шахматка';
+
+  @override
+  String get itemFloorPuzzle => 'Пол-пазл';
+
+  @override
+  String get itemFloorPowder => 'Пудровый';
+
+  @override
+  String get furnishTabItems => 'Вещи';
+
+  @override
+  String get furnishTabWalls => 'Стены';
+
+  @override
+  String get furnishTabFloor => 'Пол';
+
+  @override
+  String get furnishPickWall => 'Выбери стены';
+
+  @override
+  String get furnishPickFloor => 'Выбери пол';
+
+  @override
+  String get furnishFree => 'Бесплатно';
+
+  @override
+  String get furnishCurrent => 'Сейчас';
 }

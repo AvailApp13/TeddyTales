@@ -15,7 +15,8 @@ import 'package:teddy_tales/game/shop_items.dart';
 void main() {
   test('у каждой вещи с картинкой есть размер', () {
     for (final item in ItemCatalog.all) {
-      if (!item.photo) continue;
+      // Стены и пол — не вещь в слоте, а слой на всю комнату: размера нет.
+      if (!item.photo || item.isSurface) continue;
       expect(metricsOf(item.id), isNotNull, reason: 'нет размера у ${item.id}');
     }
   });

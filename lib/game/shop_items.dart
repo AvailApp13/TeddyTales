@@ -104,7 +104,23 @@ class ShopItem {
   ///
   /// Имя файла выводится из [id], а не хранится отдельно: два источника
   /// правды разъехались бы при первом же переименовании.
-  String? get image => photo ? 'assets/shop/items/$id.webp' : null;
+  String? get image => !photo
+      ? null
+      : isSurface
+      ? 'assets/rooms/nursery/swatches/$id.webp'
+      : 'assets/shop/items/$id.webp';
+
+  /// Стена или пол игровой: не вещь в слоте, а слой поверх всей комнаты.
+  bool get isSurface => kind == ItemKind.wallpaper || kind == ItemKind.floor;
+
+  /// Слой стены или пола поверх картинки игровой. У нынешних (с них малыш
+  /// начинает) слоя нет — это сама картинка. См. tool/room_surfaces.py.
+  String? get surfaceLayer => switch (kind) {
+    _ when id == 'wall_rose' || id == 'floor_wood' => null,
+    ItemKind.wallpaper => 'assets/rooms/nursery/walls/$id.webp',
+    ItemKind.floor => 'assets/rooms/nursery/floors/$id.webp',
+    _ => null,
+  };
 
   /// Применяет предмет к образу мишки.
   BearOutfit applyTo(BearOutfit outfit) {
@@ -317,46 +333,165 @@ abstract final class ItemCatalog {
       photo: true,
       kind: ItemKind.decor,
     ),
+    // Стены и пол игровой — по 10 (заказчик 09.10, раскладка —
+    // docs/room-surfaces-answers.md): 4 бесплатно, 6 за монеты. Первые в
+    // каждом ряду — нынешние, с них малыш начинает. ⚠ Цены ждут
+    // согласования (КП 10.9), меняются из панели. Особые полы без
+    // `photo` — их образцы ещё не нарисованы (лимит Higgsfield 09.10).
     ShopItem(
       id: 'wall_rose',
       group: ItemGroup.walls,
-      title: 'Обои розовые',
-      price: 40,
+      title: 'Пудровая',
+      price: 0,
+      photo: true,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
-      id: 'wall_sage',
+      id: 'wall_cream',
       group: ItemGroup.walls,
-      title: 'Обои зелёные',
+      title: 'Сливочная',
+      price: 0,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_mint',
+      group: ItemGroup.walls,
+      title: 'Мятная',
+      price: 0,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_dots',
+      group: ItemGroup.walls,
+      title: 'Обои «Горошек»',
+      price: 0,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_forest',
+      group: ItemGroup.walls,
+      title: 'Обои «Лесные звери»',
+      price: 60,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_clouds',
+      group: ItemGroup.walls,
+      title: 'Обои «Облака и радуги»',
+      price: 60,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_sprigs',
+      group: ItemGroup.walls,
+      title: 'Обои «Веточки»',
+      price: 60,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_bunnies',
+      group: ItemGroup.walls,
+      title: 'Обои «Зайцы и бантики»',
+      price: 60,
+      photo: true,
+      kind: ItemKind.wallpaper,
+    ),
+    ShopItem(
+      id: 'wall_lavender',
+      group: ItemGroup.walls,
+      title: 'Лавандовая',
       price: 40,
+      photo: true,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'wall_sky',
       group: ItemGroup.walls,
-      title: 'Обои небо',
+      title: 'Небесная',
       price: 40,
+      photo: true,
       kind: ItemKind.wallpaper,
     ),
     ShopItem(
       id: 'floor_wood',
       group: ItemGroup.floors,
-      title: 'Пол дерево',
-      price: 35,
+      title: 'Светлое дерево',
+      price: 0,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(
-      id: 'floor_light',
+      id: 'floor_honey',
       group: ItemGroup.floors,
-      title: 'Пол светлый',
-      price: 35,
+      title: 'Медовое дерево',
+      price: 0,
+      photo: true,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_greige',
+      group: ItemGroup.floors,
+      title: 'Серо-бежевый дуб',
+      price: 0,
+      photo: true,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_laminate',
+      group: ItemGroup.floors,
+      title: 'Ламинат широкой доской',
+      price: 0,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_dark_oak',
+      group: ItemGroup.floors,
+      title: 'Тёмный дуб',
+      price: 40,
+      photo: true,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_checker',
+      group: ItemGroup.floors,
+      title: 'Плитка «шахматка»',
+      price: 50,
       kind: ItemKind.floor,
     ),
     ShopItem(
       id: 'floor_carpet',
       group: ItemGroup.floors,
-      title: 'Пол ковролин',
-      price: 35,
+      title: 'Мягкий ковролин',
+      price: 50,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_puzzle',
+      group: ItemGroup.floors,
+      title: 'Пол-пазл',
+      price: 50,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_powder',
+      group: ItemGroup.floors,
+      title: 'Пудровый',
+      price: 40,
+      photo: true,
+      kind: ItemKind.floor,
+    ),
+    ShopItem(
+      id: 'floor_light',
+      group: ItemGroup.floors,
+      title: 'Беленый дуб',
+      price: 40,
+      photo: true,
       kind: ItemKind.floor,
     ),
     ShopItem(
@@ -787,6 +922,15 @@ abstract final class ItemCatalog {
   ];
 
   static ShopItem byId(String id) => all.firstWhere((i) => i.id == id);
+
+  /// Как [byId], но `null` для id, которого в каталоге больше нет
+  /// (например, снятый с продажи вариант стен в старом сохранении).
+  static ShopItem? byIdOrNull(String id) {
+    for (final i in all) {
+      if (i.id == id) return i;
+    }
+    return null;
+  }
 
   static List<ShopItem> ofKind(ItemKind kind) =>
       all.where((i) => i.kind == kind).toList();

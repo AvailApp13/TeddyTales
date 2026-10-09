@@ -1,0 +1,41 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:teddy_tales/game/shop_items.dart';
+import 'package:teddy_tales/widgets/furnish_bar.dart';
+
+/// Стены и пол игровой — по 10, 4 бесплатно (заказчик 09.10,
+/// docs/room-surfaces-answers.md).
+void main() {
+  for (final kind in [ItemKind.wallpaper, ItemKind.floor]) {
+    group(kind.name, () {
+      final all = ItemCatalog.ofKind(kind);
+
+      test('10 вариантов, 4 бесплатно, 6 за монеты', () {
+        expect(all, hasLength(10));
+        expect(all.where((i) => i.price == 0), hasLength(4));
+        expect(all.where((i) => i.price > 0), hasLength(6));
+      });
+
+      test('у показанных есть образец и слой', () {
+        for (final item in FurnishBar.surfaces(kind)) {
+          expect(File(item.image!).existsSync(), isTrue, reason: item.id);
+          final layer = item.surfaceLayer;
+          if (layer != null) {
+            expect(File(layer).existsSync(), isTrue, reason: item.id);
+          }
+        }
+      });
+    });
+  }
+
+  test('нынешние стена и пол — сама картинка комнаты, без слоя', () {
+    expect(ItemCatalog.byId('wall_rose').surfaceLayer, isNull);
+    expect(ItemCatalog.byId('floor_wood').surfaceLayer, isNull);
+    expect(ItemCatalog.byId('wall_mint').surfaceLayer, isNotNull);
+  });
+
+  test('снятый с продажи id в сохранении не роняет каталог', () {
+    expect(ItemCatalog.byIdOrNull('wall_sage'), isNull);
+  });
+}

@@ -1363,19 +1363,19 @@ abstract class AppLocalizations {
   /// No description provided for @itemFloorCarpet.
   ///
   /// In ru, this message translates to:
-  /// **'Пол ковролин'**
+  /// **'Ковролин'**
   String get itemFloorCarpet;
 
   /// No description provided for @itemFloorLight.
   ///
   /// In ru, this message translates to:
-  /// **'Пол светлый'**
+  /// **'Беленый дуб'**
   String get itemFloorLight;
 
   /// No description provided for @itemFloorWood.
   ///
   /// In ru, this message translates to:
-  /// **'Пол дерево'**
+  /// **'Светлое дерево'**
   String get itemFloorWood;
 
   /// No description provided for @itemGarland.
@@ -1555,19 +1555,13 @@ abstract class AppLocalizations {
   /// No description provided for @itemWallRose.
   ///
   /// In ru, this message translates to:
-  /// **'Обои розовые'**
+  /// **'Пудровая'**
   String get itemWallRose;
-
-  /// No description provided for @itemWallSage.
-  ///
-  /// In ru, this message translates to:
-  /// **'Обои зелёные'**
-  String get itemWallSage;
 
   /// No description provided for @itemWallSky.
   ///
   /// In ru, this message translates to:
-  /// **'Обои небо'**
+  /// **'Небесная'**
   String get itemWallSky;
 
   /// No description provided for @itemWardrobe.
@@ -4167,6 +4161,138 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Голубика'**
   String get ingredientBlueberries;
+
+  /// No description provided for @itemWallCream.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сливочная'**
+  String get itemWallCream;
+
+  /// No description provided for @itemWallMint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мятная'**
+  String get itemWallMint;
+
+  /// No description provided for @itemWallDots.
+  ///
+  /// In ru, this message translates to:
+  /// **'Горошек'**
+  String get itemWallDots;
+
+  /// No description provided for @itemWallForest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лесные звери'**
+  String get itemWallForest;
+
+  /// No description provided for @itemWallClouds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Облака и радуги'**
+  String get itemWallClouds;
+
+  /// No description provided for @itemWallSprigs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Веточки'**
+  String get itemWallSprigs;
+
+  /// No description provided for @itemWallBunnies.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зайцы и бантики'**
+  String get itemWallBunnies;
+
+  /// No description provided for @itemWallLavender.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лавандовая'**
+  String get itemWallLavender;
+
+  /// No description provided for @itemFloorHoney.
+  ///
+  /// In ru, this message translates to:
+  /// **'Медовое дерево'**
+  String get itemFloorHoney;
+
+  /// No description provided for @itemFloorGreige.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серо-бежевый дуб'**
+  String get itemFloorGreige;
+
+  /// No description provided for @itemFloorLaminate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ламинат'**
+  String get itemFloorLaminate;
+
+  /// No description provided for @itemFloorDarkOak.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёмный дуб'**
+  String get itemFloorDarkOak;
+
+  /// No description provided for @itemFloorChecker.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шахматка'**
+  String get itemFloorChecker;
+
+  /// No description provided for @itemFloorPuzzle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол-пазл'**
+  String get itemFloorPuzzle;
+
+  /// No description provided for @itemFloorPowder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пудровый'**
+  String get itemFloorPowder;
+
+  /// No description provided for @furnishTabItems.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вещи'**
+  String get furnishTabItems;
+
+  /// No description provided for @furnishTabWalls.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стены'**
+  String get furnishTabWalls;
+
+  /// No description provided for @furnishTabFloor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get furnishTabFloor;
+
+  /// No description provided for @furnishPickWall.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери стены'**
+  String get furnishPickWall;
+
+  /// No description provided for @furnishPickFloor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери пол'**
+  String get furnishPickFloor;
+
+  /// No description provided for @furnishFree.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бесплатно'**
+  String get furnishFree;
+
+  /// No description provided for @furnishCurrent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас'**
+  String get furnishCurrent;
 }
 
 class _AppLocalizationsDelegate

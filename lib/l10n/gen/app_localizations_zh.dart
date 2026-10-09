@@ -706,13 +706,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get itemDuck => '小鸭子';
 
   @override
-  String get itemFloorCarpet => '地毯地板';
+  String get itemFloorCarpet => '柔软地毯';
 
   @override
-  String get itemFloorLight => '浅色地板';
+  String get itemFloorLight => '白橡木';
 
   @override
-  String get itemFloorWood => '木地板';
+  String get itemFloorWood => '浅色木地板';
 
   @override
   String get itemGarland => '彩灯串';
@@ -802,13 +802,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get itemTrain => '小火车';
 
   @override
-  String get itemWallRose => '粉色壁纸';
+  String get itemWallRose => '粉色';
 
   @override
-  String get itemWallSage => '绿色壁纸';
-
-  @override
-  String get itemWallSky => '天空壁纸';
+  String get itemWallSky => '天蓝色';
 
   @override
   String get itemWardrobe => '衣柜';
@@ -2235,4 +2232,70 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingredientBlueberries => '蓝莓';
+
+  @override
+  String get itemWallCream => '奶油色';
+
+  @override
+  String get itemWallMint => '薄荷绿';
+
+  @override
+  String get itemWallDots => '波点';
+
+  @override
+  String get itemWallForest => '森林动物';
+
+  @override
+  String get itemWallClouds => '云朵彩虹';
+
+  @override
+  String get itemWallSprigs => '枝叶';
+
+  @override
+  String get itemWallBunnies => '兔子蝴蝶结';
+
+  @override
+  String get itemWallLavender => '薰衣草紫';
+
+  @override
+  String get itemFloorHoney => '蜂蜜色木地板';
+
+  @override
+  String get itemFloorGreige => '灰米色橡木';
+
+  @override
+  String get itemFloorLaminate => '宽板地板';
+
+  @override
+  String get itemFloorDarkOak => '深色橡木';
+
+  @override
+  String get itemFloorChecker => '棋盘格地砖';
+
+  @override
+  String get itemFloorPuzzle => '拼图地垫';
+
+  @override
+  String get itemFloorPowder => '粉色地板';
+
+  @override
+  String get furnishTabItems => '物品';
+
+  @override
+  String get furnishTabWalls => '墙面';
+
+  @override
+  String get furnishTabFloor => '地板';
+
+  @override
+  String get furnishPickWall => '选择墙面';
+
+  @override
+  String get furnishPickFloor => '选择地板';
+
+  @override
+  String get furnishFree => '免费';
+
+  @override
+  String get furnishCurrent => '当前';
 }

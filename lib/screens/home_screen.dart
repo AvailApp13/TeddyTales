@@ -54,6 +54,8 @@ import '../widgets/room_item_sheet.dart';
 import '../widgets/room_ceiling.dart';
 import '../widgets/room_slot_layer.dart';
 import '../widgets/room_scene_backdrop.dart';
+import '../widgets/purchase_confirm.dart';
+import '../widgets/room_surfaces.dart';
 import '../widgets/sleep_zzz.dart';
 import '../widgets/section_sheet.dart';
 import 'care_screen.dart';
@@ -354,6 +356,34 @@ class _HomeScreenState extends State<HomeScreen>
   /// примерка.
   bool _furnishing = false;
   ShopItem? _picked;
+
+  /// Стены или пол, которые примеряют, пока открыто окно покупки.
+  ShopItem? _surfacePreview;
+
+  /// Выбор стен или пола в ленте обустройства. Свои и бесплатные ставятся
+  /// сразу; платные сначала примеряются — комната уже в новом цвете, пока
+  /// человек решает в окне покупки, — и остаются, только если купили.
+  Future<void> _pickSurface(ShopItem item) async {
+    final game = widget.game;
+    if (game.isPlaced(item.id)) return;
+    if (!game.isOwned(item.id)) {
+      if (item.price == 0) {
+        if (!game.buy(item.id)) return;
+      } else {
+        setState(() => _surfacePreview = item);
+        final ok = await buyItemConfirmed(
+          context: context,
+          game: game,
+          item: item,
+        );
+        if (!mounted) return;
+        setState(() => _surfacePreview = null);
+        if (!ok) return;
+      }
+    }
+    game.togglePlaced(item.id);
+    setState(() {});
+  }
 
   void _startFurnishing() => setState(() {
     // Обставляется только детская: кухня и ванная — снятые кадры, мест в них
@@ -1042,6 +1072,7 @@ class _HomeScreenState extends State<HomeScreen>
                   onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
                   furnishing: _furnishing,
                   picked: _picked,
+                  surfacePreview: _surfacePreview,
                   room: _room,
                   onRoomChanged: _showRoom,
                   asleep: _asleep,
@@ -1177,6 +1208,7 @@ class _HomeScreenState extends State<HomeScreen>
                     room: _room,
                     picked: _picked,
                     onPick: (item) => setState(() => _picked = item),
+                    onSurface: _pickSurface,
                     onShop: () {
                       _stopFurnishing();
                       _openSheet(ShopScreen(game: widget.game));
@@ -1222,6 +1254,7 @@ class _RoomScene extends StatelessWidget {
     required this.onSlotTap,
     required this.furnishing,
     required this.picked,
+    this.surfacePreview,
     required this.room,
     required this.onRoomChanged,
     required this.asleep,
@@ -1282,6 +1315,9 @@ class _RoomScene extends StatelessWidget {
 
   /// Вещь в руках: подсвечиваются только те места, куда она встанет.
   final ShopItem? picked;
+
+  /// Стены или пол, которые примеряют до покупки (лента «Стены» / «Пол»).
+  final ShopItem? surfacePreview;
 
   /// Какая комната показана и что делать при переключении.
   final RoomKind room;
@@ -1388,6 +1424,12 @@ class _RoomScene extends StatelessWidget {
           rect: frame.rect,
           child: RoomSceneBackdrop(room: room),
         ),
+        // Игровая: выбранные стены и пол — слои поверх картинки (09.10).
+        if (room == RoomKind.nursery)
+          Positioned.fromRect(
+            rect: frame.rect,
+            child: RoomSurfaces(game: game, preview: surfacePreview),
+          ),
         // Спальня живая: мишка лежит отдельным слоем поверх комнаты, дышит
         // и моргает, а передний край одеяла и свет ночника идут над ним.
         // Буквы z рисуются последними — они выше всего, в просвете стены.

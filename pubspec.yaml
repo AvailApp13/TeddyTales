@@ -61,6 +61,11 @@ flutter:
     # блюда, которых нет среди готовых, — мясное и овощное.
     - assets/rooms/kitchen/ingredients/
     - assets/rooms/kitchen/recipes/
+    # Игровая: сменные стены и пол — слои поверх картинки и образцы для
+    # выбора (tool/room_surfaces.py, заказчик 09.10).
+    - assets/rooms/nursery/walls/
+    - assets/rooms/nursery/floors/
+    - assets/rooms/nursery/swatches/
     - assets/ui/
     # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.

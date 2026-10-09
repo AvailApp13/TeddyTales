@@ -21,7 +21,7 @@ import 'scene_label.dart';
 /// Поэтому здесь нет ни цен, ни покупки: только то, что уже куплено. А если
 /// нужного нет, последней в ленте стоит карточка «Купить ещё» — она и ведёт
 /// в магазин, в тот самый раздел.
-class FurnishBar extends StatelessWidget {
+class FurnishBar extends StatefulWidget {
   const FurnishBar({
     super.key,
     required this.game,
@@ -30,6 +30,7 @@ class FurnishBar extends StatelessWidget {
     required this.onPick,
     required this.onShop,
     required this.onDone,
+    this.onSurface,
   });
 
   final GameState game;
@@ -41,6 +42,10 @@ class FurnishBar extends StatelessWidget {
   final ValueChanged<ShopItem> onPick;
   final VoidCallback onShop;
   final VoidCallback onDone;
+
+  /// Выбрали стены или пол (вкладки «Стены» и «Пол», только в игровой).
+  /// `null` — вкладок нет.
+  final ValueChanged<ShopItem>? onSurface;
 
   /// Купленные вещи, которым в этой комнате есть куда встать.
   ///
@@ -67,10 +72,40 @@ class FurnishBar extends StatelessWidget {
     ];
   }
 
+  /// Все варианты стен или пола — и свои, и в продаже (заказчик 09.10:
+  /// 10 стен и 10 полов). Стены и пол не вещь в слоте, а вся комната:
+  /// выбрать их вслепую в магазине нельзя, поэтому здесь видны все, с ценой,
+  /// и платный вариант сначала примеряется на комнате.
+  static List<ShopItem> surfaces(ItemKind kind) => [
+    for (final item in ItemCatalog.ofKind(kind))
+      if (item.photo) item,
+  ];
+
+  @override
+  State<FurnishBar> createState() => _FurnishBarState();
+}
+
+enum _Tab { items, walls, floor }
+
+class _FurnishBarState extends State<FurnishBar> {
+  _Tab _tab = _Tab.items;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final mine = items;
+    final game = widget.game;
+    final picked = widget.picked;
+    final mine = widget.items;
+    final tabs = widget.onSurface != null && widget.room == RoomKind.nursery;
+    final tab = tabs ? _tab : _Tab.items;
+    final surfaceKind = switch (tab) {
+      _Tab.walls => ItemKind.wallpaper,
+      _Tab.floor => ItemKind.floor,
+      _Tab.items => null,
+    };
+    final surfaces = surfaceKind == null
+        ? const <ShopItem>[]
+        : FurnishBar.surfaces(surfaceKind);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -95,14 +130,19 @@ class FurnishBar extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    picked == null
-                        ? l10n.furnishPickItem
-                        : l10n.furnishPickSlot,
+                    switch (tab) {
+                      _Tab.walls => l10n.furnishPickWall,
+                      _Tab.floor => l10n.furnishPickFloor,
+                      _Tab.items =>
+                        picked == null
+                            ? l10n.furnishPickItem
+                            : l10n.furnishPickSlot,
+                    },
                     style: sceneText(size: 13, weight: 700),
                   ),
                 ),
                 TextButton(
-                  onPressed: onDone,
+                  onPressed: widget.onDone,
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.sageDark,
                   ),
@@ -117,28 +157,207 @@ class FurnishBar extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            if (tabs) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  for (final t in _Tab.values) ...[
+                    if (t != _Tab.items) const SizedBox(width: 8),
+                    _TabChip(
+                      label: switch (t) {
+                        _Tab.items => l10n.furnishTabItems,
+                        _Tab.walls => l10n.furnishTabWalls,
+                        _Tab.floor => l10n.furnishTabFloor,
+                      },
+                      chosen: t == tab,
+                      onTap: () => setState(() => _tab = t),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
             SizedBox(
               height: 104,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: mine.length + 1,
-                separatorBuilder: (context, _) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  if (index == mine.length) {
-                    return _ShopCard(onTap: onShop);
-                  }
+              child: surfaceKind != null
+                  ? ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: surfaces.length,
+                      separatorBuilder: (context, _) =>
+                          const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final item = surfaces[index];
+                        return _SurfaceCard(
+                          item: item,
+                          current: game.isPlaced(item.id),
+                          owned: game.isOwned(item.id),
+                          onTap: () => widget.onSurface?.call(item),
+                        );
+                      },
+                    )
+                  : ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: mine.length + 1,
+                      separatorBuilder: (context, _) =>
+                          const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        if (index == mine.length) {
+                          return _ShopCard(onTap: widget.onShop);
+                        }
 
-                  final item = mine[index];
+                        final item = mine[index];
 
-                  return _ItemCard(
-                    item: item,
-                    chosen: item.id == picked?.id,
-                    onTap: () => onPick(item),
-                  );
-                },
+                        return _ItemCard(
+                          item: item,
+                          chosen: item.id == picked?.id,
+                          onTap: () => widget.onPick(item),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Вкладка ленты: «Вещи», «Стены», «Пол».
+class _TabChip extends StatelessWidget {
+  const _TabChip({
+    required this.label,
+    required this.chosen,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool chosen;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: chosen ? AppColors.sageSoft : AppColors.background,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: chosen ? AppColors.sage : AppColors.outline,
+            width: chosen ? 1.6 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: sceneText(
+            size: 12,
+            weight: chosen ? 800 : 600,
+            color: chosen ? AppColors.sageDark : AppColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Вариант стен или пола: образец, название, цена или «Сейчас».
+class _SurfaceCard extends StatelessWidget {
+  const _SurfaceCard({
+    required this.item,
+    required this.current,
+    required this.owned,
+    required this.onTap,
+  });
+
+  final ShopItem item;
+
+  /// Стоит в комнате сейчас.
+  final bool current;
+  final bool owned;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final Widget badge;
+    if (current) {
+      badge = Text(
+        l10n.furnishCurrent,
+        style: sceneText(size: 10, weight: 800, color: AppColors.sageDark),
+      );
+    } else if (owned) {
+      badge = const Icon(
+        Icons.check_rounded,
+        size: 14,
+        color: AppColors.textSecondary,
+      );
+    } else if (item.price == 0) {
+      badge = Text(
+        l10n.furnishFree,
+        style: sceneText(size: 10, weight: 700, color: AppColors.sageDark),
+      );
+    } else {
+      badge = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${item.price}',
+            style: sceneText(size: 11, weight: 800),
+          ),
+          const SizedBox(width: 3),
+          Container(
+            width: 11,
+            height: 11,
+            decoration: const BoxDecoration(
+              color: AppColors.coin,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 92,
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
+        decoration: BoxDecoration(
+          color: current ? AppColors.sageSoft : AppColors.background,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: current ? AppColors.sage : AppColors.outline,
+            width: current ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: ItemPicture(item: item),
+                ),
               ),
             ),
+            const SizedBox(height: 2),
+            Text(
+              shopItemName(l10n, item.id),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: sceneText(
+                size: 10,
+                weight: current ? 800 : 600,
+                color: current ? AppColors.sageDark : AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 14, child: Center(child: badge)),
           ],
         ),
       ),

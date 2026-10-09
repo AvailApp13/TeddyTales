@@ -14,7 +14,12 @@ void main() {
       for (final item in ItemCatalog.all) {
         expect(
           item.image,
-          item.photo ? 'assets/shop/items/${item.id}.webp' : isNull,
+          !item.photo
+              ? isNull
+              // Стены и пол показываются образцом из игровой.
+              : item.isSurface
+              ? 'assets/rooms/nursery/swatches/${item.id}.webp'
+              : 'assets/shop/items/${item.id}.webp',
           reason: item.id,
         );
       }
