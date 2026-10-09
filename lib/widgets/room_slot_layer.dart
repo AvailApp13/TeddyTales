@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/game_state.dart';
 import '../game/item_metrics.dart';
 import '../game/room_kind.dart';
+import '../game/room_render.dart';
 import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
@@ -182,10 +183,23 @@ class RoomSlotLayer extends StatelessWidget {
         ? null
         : ItemCatalog.byId(itemId);
 
+    // Вещь, посчитанная в 3D на этом месте, лежит готовым слоем вместе со
+    // своей тенью — ровно там, где её посчитали (room_render.dart).
+    final render = item == null ? null : roomRenderOf(slot.id, item.id);
+
     // Размер занятой вещи — её собственный, с поправкой на глубину; пустого
     // места — по тому, что здесь ожидается. Иначе рамка пустого места
     // прыгала бы в зависимости от того, что в неё поставят.
-    final box = item == null ? boxOfHint(slot) : boxOf(slot, item);
+    final SlotBox box = render != null
+        ? (
+            left: render.left,
+            top: render.top,
+            width: render.width,
+            height: render.height,
+          )
+        : item == null
+        ? boxOfHint(slot)
+        : boxOf(slot, item);
 
     return Positioned(
       left: box.left * width,
@@ -197,6 +211,9 @@ class RoomSlotLayer extends StatelessWidget {
         child: item != null
             ? _FilledSlot(
                 item: item,
+                layer: render == null
+                    ? null
+                    : roomRenderAsset(slot.id, item.id),
                 // Занятое место, куда выбранная вещь тоже встанет, обводится
                 // пунктиром: иначе человек с кроваткой в руках не видит на
                 // экране ни одной подсказки — единственное место, где она
@@ -221,10 +238,18 @@ class _FilledSlot extends StatelessWidget {
   const _FilledSlot({
     required this.item,
     required this.onTap,
+    this.layer,
     this.replaceable = false,
   });
 
   final ShopItem item;
+
+  /// Слой вещи, посчитанной в 3D на этом месте; `null` — картинка магазина.
+  final String? layer;
+
+  Widget _picture() => layer == null
+      ? ItemPicture(item: item)
+      : Image.asset(layer!, fit: BoxFit.fill, gaplessPlayback: true);
 
   /// Сюда встанет и то, что сейчас в руках: тап заменит одно другим.
   final bool replaceable;
@@ -244,9 +269,9 @@ class _FilledSlot extends StatelessWidget {
         child: replaceable
             ? CustomPaint(
                 foregroundPainter: _DashedFrame(fill: false),
-                child: ItemPicture(item: item),
+                child: _picture(),
               )
-            : ItemPicture(item: item),
+            : _picture(),
       ),
     );
   }

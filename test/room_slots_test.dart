@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
 import 'package:teddy_tales/game/game_state.dart';
@@ -5,6 +7,8 @@ import 'package:teddy_tales/game/pet_profile.dart';
 import 'package:teddy_tales/game/item_metrics.dart';
 import 'package:teddy_tales/game/room_camera.dart';
 import 'package:teddy_tales/game/room_kind.dart';
+import 'package:teddy_tales/game/room_render.dart';
+import 'package:teddy_tales/game/room_renders.dart';
 import 'package:teddy_tales/game/room_slots.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 
@@ -56,7 +60,11 @@ void main() {
       // срезается. Самый вытянутый ходовой экран (19.5:9) оставляет от кадра
       // 0.09–0.91 по ширине — за этой полосой вещь начнёт обрезаться.
       // Заказчик 20.09 поймал это первым: кресло-цветок ушло за левый край.
-      for (final slot in roomSlots) {
+      //
+      // Это про картинки-наклейки на плоской детской. В 3D-комнате вещь
+      // ставится готовым слоем (room_render.dart) — его проверка ниже;
+      // наклейки там — временно, до перевода вещи в 3D.
+      for (final slot in nurseryFlatSlots) {
         for (final item in ItemCatalog.all.where(slot.takes)) {
           final box = boxOf(slot, item);
           expect(box.left, greaterThan(0.085), reason: '${slot.id}/${item.id}');
@@ -72,6 +80,37 @@ void main() {
             reason: '${slot.id}/${item.id}',
           );
         }
+      }
+    });
+
+    test('в 3D-комнате места и готовые слои — в кадре телефона', () {
+      // Места размечены в 3D (docs/room-furniture-plan.md) так, чтобы вещи
+      // стояли вокруг мишки и были видны на iPhone и Android.
+      for (final slot in nursery3dSlots) {
+        expect(slot.x, inInclusiveRange(0.09, 0.91), reason: slot.id);
+        expect(slot.y, inInclusiveRange(0.15, 0.80), reason: slot.id);
+      }
+      for (final entry in roomRenders.entries) {
+        final r = entry.value;
+        expect(r.left, greaterThanOrEqualTo(0.0), reason: entry.key);
+        expect(r.top, greaterThanOrEqualTo(0.0), reason: entry.key);
+        expect(r.left + r.width, lessThanOrEqualTo(1.0), reason: entry.key);
+        expect(r.top + r.height, lessThanOrEqualTo(1.0), reason: entry.key);
+      }
+    });
+
+    test('у каждого готового слоя есть файл, место и вещь', () {
+      expect(roomRenders, isNotEmpty);
+      for (final key in roomRenders.keys) {
+        final [slotId, itemId] = key.split('/');
+        final slot = slotById(slotId);
+        expect(slot, isNotNull, reason: key);
+        expect(slot!.takes(ItemCatalog.byId(itemId)), isTrue, reason: key);
+        expect(
+          File(roomRenderAsset(slotId, itemId)).existsSync(),
+          isTrue,
+          reason: key,
+        );
       }
     });
 
@@ -91,8 +130,9 @@ void main() {
       // Сверка с картинкой, которую заказчик прислал обставленной: кресло на
       // ней занимает 0.34 ширины кадра и стоит на линии 0.598. Это и есть
       // «ровно так, как смотрелось, когда фон уже был готовый с мебелью».
+      // Про плоскую детскую: в 3D-комнате кресло — готовый слой.
       final box = boxOf(
-        slotById('nursery.floor_left')!,
+        nurseryFlatSlots.firstWhere((s) => s.id == 'nursery.floor_left'),
         ItemCatalog.byId('armchair'),
       );
 
@@ -175,6 +215,18 @@ void main() {
       final corner = slotById('nursery.corner_right')!;
       expect(corner.takes(ItemCatalog.byId('bed')), isFalse);
       expect(corner.takes(ItemCatalog.byId('plant')), isTrue);
+    });
+
+    test('у задней стены справа — ни кресла, ни кроватки', () {
+      // Заказчик 09.10: «там максимум должны становиться тумбочки, которые
+      // у нас есть, какие-то шкафчики, цветы, пальмы».
+      final right = slotById('nursery.floor_right')!;
+      for (final id in ['armchair', 'armchair_bean', 'swing', 'bed']) {
+        expect(right.takes(ItemCatalog.byId(id)), isFalse, reason: id);
+      }
+      for (final id in ['dresser', 'table', 'plant', 'flowers_daisy']) {
+        expect(right.takes(ItemCatalog.byId(id)), isTrue, reason: id);
+      }
     });
 
     test('вещь без картинки в комнату не ставится', () {

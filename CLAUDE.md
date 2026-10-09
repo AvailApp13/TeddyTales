@@ -47,6 +47,12 @@ flutter build web --release --base-href /TeddyTales/ --dart-define=RIVE_NATIVE_W
 как пересобрать и добавить вариант — `docs/room-structure-plan.md`.
 Переключатель `kNursery3d` (`lib/game/room_kind.dart`).
 
+Мебель — тоже из 3D (заказчик 09.10): вещь считается на своём месте той же
+камерой и светом, слой с тенью кладётся поверх комнаты
+(`tool/nursery3d/items.py`, `lib/game/room_renders.dart`). Места и план —
+`docs/room-furniture-plan.md`. Пока в 3D проба: ковёр, две картины, полка,
+розовое кресло; остальное — картинкой, до оценки пробы.
+
 ## Ролики снов в облаке — формат, чтобы не переделывать
 
 Полная сетка и почему так — `docs/living-scene.md`, раздел 6. Коротко:

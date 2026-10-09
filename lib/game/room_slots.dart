@@ -43,6 +43,7 @@
 /// ширине — за этой полосой вещь начнёт обрезаться на вытянутых экранах.
 library;
 
+import 'item_groups.dart';
 import 'item_metrics.dart';
 import 'room_camera.dart';
 import 'room_kind.dart';
@@ -59,6 +60,7 @@ class RoomSlot {
     required this.metres,
     required this.maxMetres,
     this.depth = 1,
+    this.groups,
   });
 
   /// Устойчивый ключ места: под ним хранится, что игрок сюда поставил.
@@ -84,10 +86,15 @@ class RoomSlot {
   /// дальними и ближними местами (см. [slotDepth]).
   final int depth;
 
-  /// Встанет ли вещь сюда: держится так же и не шире места.
+  /// Какие роды вещей здесь встают; `null` — любые, что держатся так же и
+  /// помещаются.
+  final Set<ItemGroup>? groups;
+
+  /// Встанет ли вещь сюда: держится так же, не шире места и своего рода.
   bool takes(ShopItem item) {
     final size = metricsOf(item.id);
     if (size == null) return false;
+    if (groups != null && !groups!.contains(item.group)) return false;
     return size.fit == fit && size.metres <= maxMetres + 0.001;
   }
 }
@@ -106,7 +113,126 @@ class RoomSlot {
 /// комод у задней стены, растение в углу, ковёр под ногами, две игрушки по
 /// бокам, полка и две картины на стене. Тридцать мест дали бы витрину
 /// склада, а не комнату.
-const List<RoomSlot> roomSlots = [
+const List<RoomSlot> roomSlots = kNursery3d ? nursery3dSlots : nurseryFlatSlots;
+
+/// Места детской в 3D-комнате (`tool/nursery3d/scene.py`, заказчик 09.10).
+///
+/// Те же девять мест и та же механика (ТЗ 10.7), но размечены в метрах
+/// 3D-комнаты по обставленной детской заказчика от 20.09 —
+/// `docs/room-furniture-plan.md`, схема `docs/room-furniture-layout.jpg`.
+/// На прежних местах окно сдвинулось, и картина слева висела на тюле.
+///
+/// Вещи вокруг мишки: кресло у окна, комод у задней стены, растение справа,
+/// ковёр под мишкой, игрушки по бокам, полка и две картины над головой.
+/// x — середина места, y — линия пола под передом вещи (у настенных — центр).
+/// Точки — проекция 3D-мест той же камерой, что и комната; вещь, посчитанная
+/// в 3D (`room_render.dart`), лежит ровно здесь.
+const List<RoomSlot> nursery3dSlots = [
+  // Кресло у окна (заказчик 09.10): спинкой к окну, вплотную к левой
+  // стене, сиденьем в комнату; середина — против середины окна, 4,35 м
+  // вглубь. x — середина кресла, y — его ближний к нам край на полу.
+  RoomSlot(
+    id: 'nursery.floor_left',
+    room: RoomKind.nursery,
+    x: 0.313,
+    y: 0.572,
+    fit: ItemFit.floor,
+    metres: 0.85,
+    maxMetres: 1.0,
+    depth: 3,
+  ),
+  // Задняя стена справа от мишки. Заказчик 09.10: «ни кресло, ни кровать
+  // не должны установиться — максимум тумбочки, шкафчики, цветы, пальмы».
+  RoomSlot(
+    id: 'nursery.floor_right',
+    room: RoomKind.nursery,
+    x: 0.799,
+    y: 0.545,
+    fit: ItemFit.floor,
+    metres: 1.10,
+    maxMetres: 1.3,
+    depth: 2,
+    groups: {
+      ItemGroup.tables,
+      ItemGroup.dressers,
+      ItemGroup.wardrobes,
+      ItemGroup.plants,
+      ItemGroup.flowers,
+    },
+  ),
+  // Справа перед комодом: растение, корзина, цветы.
+  RoomSlot(
+    id: 'nursery.corner_right',
+    room: RoomKind.nursery,
+    x: 0.852,
+    y: 0.636,
+    fit: ItemFit.floor,
+    metres: 0.45,
+    maxMetres: 0.52,
+    depth: 4,
+  ),
+  RoomSlot(
+    id: 'nursery.rug',
+    room: RoomKind.nursery,
+    x: 0.523,
+    y: 0.776,
+    fit: ItemFit.rug,
+    metres: 0.95,
+    maxMetres: 1.1,
+    depth: 1,
+  ),
+  RoomSlot(
+    id: 'nursery.toy_left',
+    room: RoomKind.nursery,
+    x: 0.181,
+    y: 0.737,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.40,
+    depth: 5,
+  ),
+  RoomSlot(
+    id: 'nursery.toy_right',
+    room: RoomKind.nursery,
+    x: 0.804,
+    y: 0.737,
+    fit: ItemFit.floor,
+    metres: 0.36,
+    maxMetres: 0.40,
+    depth: 5,
+  ),
+  // Задняя стена над комодом и над головой мишки.
+  RoomSlot(
+    id: 'nursery.wall_shelf',
+    room: RoomKind.nursery,
+    x: 0.804,
+    y: 0.297,
+    fit: ItemFit.wall,
+    metres: 0.90,
+    maxMetres: 1.0,
+  ),
+  RoomSlot(
+    id: 'nursery.wall_pic_left',
+    room: RoomKind.nursery,
+    x: 0.467,
+    y: 0.249,
+    fit: ItemFit.wall,
+    metres: 0.55,
+    maxMetres: 0.7,
+  ),
+  RoomSlot(
+    id: 'nursery.wall_pic_right',
+    room: RoomKind.nursery,
+    x: 0.644,
+    y: 0.249,
+    fit: ItemFit.wall,
+    metres: 0.55,
+    maxMetres: 0.7,
+  ),
+];
+
+/// Места детской на прежней плоской картинке (`kNursery3d = false`).
+const List<RoomSlot> nurseryFlatSlots = [
   // --- Детская ------------------------------------------------------------
   //
   // Размечено 21.09 по двум картинкам сразу: по пустой комнате (где мерены

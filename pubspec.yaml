@@ -67,6 +67,9 @@ flutter:
     - assets/rooms/nursery/walls/
     - assets/rooms/nursery/floors/
     - assets/rooms/nursery/swatches/
+    # Вещи игровой, посчитанные в 3D на своих местах: слой вещи с тенью
+    # (tool/nursery3d/items.py, заказчик 09.10).
+    - assets/rooms/nursery/items/
     - assets/ui/
     # Картинки товаров магазина: заказчик прислал их 20.09, инструмент
     # tool/pack_shop.py обрезает поля и ужимает в WebP по 512 точек.
