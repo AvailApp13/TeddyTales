@@ -195,12 +195,41 @@ def wood_planks(color_srgb, plank=0.19, length=2.4, seed=7):
     return fn
 
 
+def tile(path, metres):
+    """Бесшовный образец (обои, особый пол): плитка `metres` м по стороне."""
+    img = np.asarray(Image.open(path).convert('RGB'), dtype=np.float64)
+    lin = srgb_to_lin(img)
+    h, w = lin.shape[:2]
+
+    def fn(s, z):
+        fx = np.mod(s / metres, 1.0) * w
+        fy = np.mod(-z / metres, 1.0) * h
+        x0 = np.floor(fx).astype(int) % w
+        y0 = np.floor(fy).astype(int) % h
+        x1 = (x0 + 1) % w
+        y1 = (y0 + 1) % h
+        ax = (fx - np.floor(fx))[..., None]
+        ay = (fy - np.floor(fy))[..., None]
+        return ((lin[y0, x0] * (1 - ax) + lin[y0, x1] * ax) * (1 - ay)
+                + (lin[y1, x0] * (1 - ax) + lin[y1, x1] * ax) * ay)
+    return fn
+
+
+def stack(layers):
+    comp = layers[0]
+    for lay in layers[1:]:
+        comp = Image.alpha_composite(comp, lay)
+    return comp.convert('RGB')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--render', required=True)
     ap.add_argument('--out', required=True)
     ap.add_argument('--trial', action='store_true')
     ap.add_argument('--flat', help='куда сохранить собранную комнату (jpg) для приложения')
+    ap.add_argument('--demo', action='store_true',
+                    help='несколько стен и полов на одних слоях — для показа')
     args = ap.parse_args()
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -239,6 +268,9 @@ def main():
         sheet.paste(comp, (comp.width + 20, 0))
         sheet.save(out / 'compare.jpg', quality=90)
 
+    if args.demo:
+        demo(r, out)
+
 
 def srgb_lin_to_srgb8(lin):
     return lin_to_srgb8(np.asarray(lin, dtype=np.float64))
@@ -246,6 +278,37 @@ def srgb_lin_to_srgb8(lin):
 
 def room_image():
     return pathlib.Path(__file__).resolve().parents[2] / 'assets/rooms/nursery.jpg'
+
+
+def demo(r, out):
+    root = pathlib.Path(__file__).resolve().parents[2]
+    tiles = root / 'tool/surface_tiles'
+    trim = r.trim_layer()
+    curtains = r.curtain_layer() if r.curtains is not None else None
+    fl = r.median_floor_light()
+
+    def floor(color):
+        return r.floor_layer(wood_planks(srgb_lin_to_srgb8(srgb_to_lin(color) / fl)))
+
+    variants = [
+        ('Мятная + медовое дерево', r.wall_layer(flat((191, 220, 207))), floor((217, 180, 140))),
+        ('Обои «Облака» + тёмный дуб', r.wall_layer(tile(tiles / 'wall-clouds.webp', 0.95)),
+         floor((156, 118, 86))),
+        ('Лавандовая + беленый дуб', r.wall_layer(flat((203, 191, 221))), floor((241, 227, 205))),
+        ('Обои «Лесные звери» + светлое дерево', r.wall_layer(tile(tiles / 'wall-forest.webp', 1.15)),
+         floor((236, 186, 148))),
+    ]
+    shots = []
+    for name, wall, fl_layer in variants:
+        layers = [wall, fl_layer, trim] + ([curtains] if curtains else [])
+        img = stack(layers)
+        img.save(out / f'demo_{len(shots)}.jpg', quality=90)
+        shots.append(img)
+    w, h = shots[0].size
+    sheet = Image.new('RGB', (w * len(shots) + 20 * (len(shots) - 1), h), 'white')
+    for i, im in enumerate(shots):
+        sheet.paste(im, (i * (w + 20), 0))
+    sheet.save(out / 'demo.jpg', quality=88)
 
 
 if __name__ == '__main__':
