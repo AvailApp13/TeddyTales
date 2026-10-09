@@ -50,7 +50,8 @@ FRONT = -1.6                  # стена за камерой — за кадр
 
 BASEBOARD = (892.0 - 861.0) / K        # высота плинтуса, ~0,127 м
 CORNICE = CEIL - (EYE + (VP[1] - 250.0) / K)  # высота карниза, ~0,07 м
-WALL_T = 0.16                 # толщина стены у окна (откосы)
+WALL_T = 0.05                 # глубина откосов: окно видно почти вдоль стены,
+                              # толстые откосы закрыли бы стекло
 
 NEUTRAL = 0.75                # альбедо стен и пола при расчёте света
 
@@ -194,41 +195,48 @@ def view_material(path):
 
 
 def make_view_texture(path):
-    """Небо с облаками и зелень внизу — мягко, как на нынешней картинке."""
+    """Вид за окном: голубое небо с облаком, ниже — кроны деревьев.
+
+    Картинка ровно на ту часть плоскости, что видна сквозь окно (см.
+    VIEW_Y, VIEW_Z): небо сверху, зелень в нижних двух пятых.
+    """
     from PIL import Image, ImageFilter
-    w, h = 1024, 1024
+    w, h = 512, 1024
     yy, xx = np.mgrid[0:h, 0:w] / np.array([h, w])[:, None, None]
-    top = np.array([0.55, 0.76, 0.95])
-    low = np.array([0.86, 0.93, 0.98])
     t = yy[..., None]
-    sky = top * (1 - t) + low * t
-    rng = np.random.default_rng(3)
+    sky = np.array([0.40, 0.66, 0.94]) * (1 - t) + np.array([0.78, 0.89, 0.99]) * t
+    img = sky.copy()
+    rng = np.random.default_rng(5)
     clouds = np.zeros((h, w))
-    for _ in range(9):
-        cx, cy = rng.uniform(0, 1), rng.uniform(0.15, 0.6)
-        rx, ry = rng.uniform(0.08, 0.18), rng.uniform(0.03, 0.06)
-        clouds += np.exp(-(((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2))
-    clouds = np.clip(clouds, 0, 1)[..., None]
-    img = sky * (1 - clouds * 0.9) + clouds * 0.9 * np.array([1.0, 1.0, 1.0])
-    bush = np.zeros((h, w))
-    for _ in range(40):
-        cx, cy = rng.uniform(-0.05, 1.05), rng.uniform(0.66, 0.98)
-        r = rng.uniform(0.07, 0.16)
-        bush = np.maximum(bush, np.clip(1.6 - (((xx - cx) ** 2 + (yy - cy) ** 2) ** 0.5) / r, 0, 1))
-    shade = 0.75 + 0.25 * np.sin(xx * 40 + yy * 25)
-    green = np.stack([0.55 + 0.25 * shade, 0.78 + 0.12 * shade, 0.30 + 0.1 * shade], -1)
-    b = np.clip(bush, 0, 1)[..., None]
-    img = img * (1 - b) + green * b
+    for cx, cy, r in ((0.3, 0.16, 0.16), (0.55, 0.13, 0.12), (0.75, 0.2, 0.14),
+                      (0.15, 0.34, 0.10), (0.45, 0.36, 0.12), (0.85, 0.40, 0.09)):
+        clouds += np.exp(-(((xx - cx) / r) ** 2 + ((yy - cy) / (r * 0.35)) ** 2) * 2.5)
+    c = np.clip(clouds, 0, 1)[..., None] * 0.95
+    img = img * (1 - c) + c
+    crown = np.zeros((h, w))
+    tone = np.zeros((h, w))
+    for _ in range(26):
+        cx, cy = rng.uniform(-0.1, 1.1), rng.uniform(0.58, 1.02)
+        r = rng.uniform(0.10, 0.22)
+        d = np.sqrt(((xx - cx) / r) ** 2 + ((yy - cy) / (r * 0.55)) ** 2)
+        m = np.clip((1.0 - d) * 6, 0, 1)
+        lit = np.clip(0.5 + (cx - xx) / r * 0.5 + (cy - yy) / r * 0.6, 0, 1)
+        tone = np.where(m > crown, lit, tone)
+        crown = np.maximum(crown, m)
+    green_dark = np.array([0.42, 0.66, 0.24])
+    green_lit = np.array([0.72, 0.86, 0.36])
+    green = green_dark * (1 - tone[..., None]) + green_lit * tone[..., None]
+    k = crown[..., None]
+    img = img * (1 - k) + green * k
     im = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
-    im = im.filter(ImageFilter.GaussianBlur(3))
-    im.save(path)
+    im.filter(ImageFilter.GaussianBlur(2.5)).save(path)
 
 
 def build(view_png):
     reset()
-    white = material('white', srgb_to_linear((246, 241, 233)), rough=0.6, spec=0.3)
+    white = material('white', srgb_to_linear((240, 236, 228)), rough=0.6, spec=0.3)
     neutral = material('neutral', (NEUTRAL,) * 3)
-    ceiling = material('ceiling', srgb_to_linear((248, 244, 238)))
+    ceiling = material('ceiling', srgb_to_linear((236, 232, 225)))
     shell = material('shell', (0.8, 0.78, 0.75))
 
     # Стены и пол — белые (альбедо NEUTRAL): их свет потом умножается на
@@ -258,27 +266,36 @@ def build(view_png):
     box('jamb_near', 'trim', (x0, WIN_Y0, WIN_Z0), (x1, WIN_Y0 + lt, WIN_Z1), white)
     box('jamb_far', 'trim', (x0, WIN_Y1 - lt, WIN_Z0), (x1, WIN_Y1, WIN_Z1), white)
     box('sill', 'trim', (x0, WIN_Y0 - 0.05, WIN_Z0 - 0.04), (x1 + 0.07, WIN_Y1 + 0.05, WIN_Z0), white, 0.008)
-    fx0, fx1 = x1 - 0.085, x1 - 0.03      # рама — ближе к комнате, стекло видно
+    fx0, fx1 = x0 + 0.005, x0 + 0.04      # рама в проёме
     fw = 0.06
-    box('frame_bottom', 'trim', (fx0, WIN_Y0, WIN_Z0), (fx1, WIN_Y1, WIN_Z0 + fw), white)
-    box('frame_top', 'trim', (fx0, WIN_Y0, WIN_Z1 - fw), (fx1, WIN_Y1, WIN_Z1), white)
-    box('frame_near', 'trim', (fx0, WIN_Y0, WIN_Z0), (fx1, WIN_Y0 + fw, WIN_Z1), white)
-    box('frame_far', 'trim', (fx0, WIN_Y1 - fw, WIN_Z0), (fx1, WIN_Y1, WIN_Z1), white)
+    # Рама из брусков встык, без перекрытий: в перекрытиях свет не доходит
+    # до граней, и на углах получались чёрные точки. Бруски чуть заходят
+    # в откосы, чтобы не было щелей на небо.
+    e = 0.004
+    zb, zt = WIN_Z0 + fw, WIN_Z1 - fw
+    box('frame_bottom', 'trim', (fx0, WIN_Y0 - e, WIN_Z0 - e), (fx1, WIN_Y1 + e, zb), white)
+    box('frame_top', 'trim', (fx0, WIN_Y0 - e, zt), (fx1, WIN_Y1 + e, WIN_Z1 + e), white)
+    box('frame_near', 'trim', (fx0, WIN_Y0 - e, zb), (fx1, WIN_Y0 + fw, zt), white)
+    box('frame_far', 'trim', (fx0, WIN_Y1 - fw, zb), (fx1, WIN_Y1 + e, zt), white)
     mid = (WIN_Y0 + WIN_Y1) / 2
-    box('mullion', 'trim', (fx0, mid - 0.025, WIN_Z0), (fx1, mid + 0.025, WIN_Z1), white)
     tz = WIN_Z0 + (WIN_Z1 - WIN_Z0) * 0.68
-    box('transom', 'trim', (fx0, WIN_Y0, tz - 0.025), (fx1, WIN_Y1, tz + 0.025), white)
+    i = 0.003                              # переплёт чуть тоньше рамы
+    box('transom', 'trim', (fx0 + i, WIN_Y0 + fw, tz - 0.025), (fx1 - i, WIN_Y1 - fw, tz + 0.025), white)
+    box('mullion_low', 'trim', (fx0 + i, mid - 0.025, zb), (fx1 - i, mid + 0.025, tz - 0.025), white)
+    box('mullion_high', 'trim', (fx0 + i, mid - 0.025, tz + 0.025), (fx1 - i, mid + 0.025, zt), white)
     # Короб карниза для штор над окном.
     box('pelmet', 'trim', (-WL, CURTAIN_NEAR[0] - 0.15, ROD_Z - 0.03),
         (-WL + 0.15, CURTAIN_MAIN[1] + 0.08, CEIL - CORNICE), white, 0.01)
 
     # Вид за окном.
     view = bpy.data.objects.new('view', bpy.data.meshes.new('view'))
-    # Окно видно под острым углом: взгляд уходит далеко вглубь, поэтому
-    # картинка вида — большая и близко за стеной.
+    # Окно видно под острым углом: сквозь него видна полоса плоскости
+    # y 4,6…6,2 м, z 0,5…3,5 м (на 1,2 м за стеной). Картинка вида
+    # растянута ровно на неё, с запасом.
     vx = -WL - 1.2
-    view.data.from_pydata([(vx, WIN_Y0 - 2, -2.0), (vx, WIN_Y1 + 16, -2.0),
-                           (vx, WIN_Y1 + 16, 7.0), (vx, WIN_Y0 - 2, 7.0)], [], [(0, 1, 2, 3)])
+    y0, y1, z0, z1 = 4.2, 6.6, 0.0, 4.0
+    view.data.from_pydata([(vx, y0, z0), (vx, y1, z0), (vx, y1, z1), (vx, y0, z1)],
+                          [], [(0, 1, 2, 3)])
     uv = view.data.uv_layers.new(name='UVMap')
     corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
     for loop in view.data.loops:
@@ -303,8 +320,8 @@ def lights():
 
     # Солнце через окно: пятна рам на полу, как на нынешней картинке.
     sun = bpy.data.lights.new('sun', 'SUN')
-    sun.energy = 3.2
-    sun.angle = math.radians(1.6)
+    sun.energy = 4.2
+    sun.angle = math.radians(1.0)
     sun.color = (1.0, 0.92, 0.80)
     ob = bpy.data.objects.new('sun', sun)
     # Пятна — как на картинке: от окна к центру пола, ближе к камере.
@@ -352,6 +369,18 @@ def lights():
     sc.collection.objects.link(ob)
 
     world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.12
+    # В щели рамы камера видит небо, а не темноту: для лучей камеры фон
+    # светлый, для освещения комнаты — слабый.
+    nt = world.node_tree
+    bright = nt.nodes.new('ShaderNodeBackground')
+    bright.inputs['Color'].default_value = (0.78, 0.88, 0.98, 1)
+    bright.inputs['Strength'].default_value = 1.0
+    path = nt.nodes.new('ShaderNodeLightPath')
+    mix = nt.nodes.new('ShaderNodeMixShader')
+    nt.links.new(path.outputs['Is Camera Ray'], mix.inputs[0])
+    nt.links.new(nt.nodes['Background'].outputs[0], mix.inputs[1])
+    nt.links.new(bright.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], nt.nodes['World Output'].inputs['Surface'])
 
 
 def camera():
@@ -476,8 +505,7 @@ def main():
     jobs = set(args.only.split(','))
 
     view_png = out / 'view_texture.png'
-    if not view_png.exists():
-        make_view_texture(view_png)
+    make_view_texture(view_png)
     build(view_png)
     lights()
     cam = camera()

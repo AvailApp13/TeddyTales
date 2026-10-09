@@ -44,7 +44,7 @@ class RoomCeiling extends StatelessWidget {
   };
 
   /// Верх кадра игровой из 3D — белый потолок (tool/nursery3d/compose.py).
-  static const Color _nursery3dEdge = Color(0xFFF4F1EC);
+  static const Color _nursery3dEdge = Color(0xFFF9F8F5);
 
   @override
   Widget build(BuildContext context) {
