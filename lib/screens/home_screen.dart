@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../bear/bear.dart';
 import '../bear/rive_bear_trial.dart';
@@ -358,6 +359,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// В ленте открыты «Стены» или «Пол»: крестиков мест нет, тапы по местам
   /// ничего не делают (заказчик 09.10: крестики — только когда ставят вещи).
   bool _surfaceTab = false;
+
+  /// Высота ленты обустройства: комната приподнимается над ней, чтобы
+  /// нижние места (ковёр) не прятались под лентой (заказчик 10.10).
+  double _furnishBarHeight = 0;
 
   /// Выбор стен или пола в ленте обустройства. Свои и бесплатные ставятся
   /// сразу; платные сначала примеряются — комната уже в новом цвете, пока
@@ -1078,6 +1083,9 @@ class _HomeScreenState extends State<HomeScreen>
                     onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
                     furnishing: _furnishing,
                     slotHints: _furnishing && !_surfaceTab,
+                    furnishBarHeight: _furnishing && !_surfaceTab
+                        ? _furnishBarHeight
+                        : 0,
                     picked: _picked,
                     surfacePreview: _surfacePreview,
                     room: _room,
@@ -1214,18 +1222,24 @@ class _HomeScreenState extends State<HomeScreen>
                 if (_furnishing)
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: FurnishBar(
-                      game: widget.game,
-                      room: _room,
-                      picked: _picked,
-                      onPick: (item) => setState(() => _picked = item),
-                      onSurface: _pickSurface,
-                      onSurfaceTab: (on) => setState(() => _surfaceTab = on),
-                      onShop: () {
-                        _stopFurnishing();
-                        _openShop();
+                    child: _HeightReport(
+                      onHeight: (h) {
+                        if ((h - _furnishBarHeight).abs() < 0.5) return;
+                        setState(() => _furnishBarHeight = h);
                       },
-                      onDone: _stopFurnishing,
+                      child: FurnishBar(
+                        game: widget.game,
+                        room: _room,
+                        picked: _picked,
+                        onPick: (item) => setState(() => _picked = item),
+                        onSurface: _pickSurface,
+                        onSurfaceTab: (on) => setState(() => _surfaceTab = on),
+                        onShop: () {
+                          _stopFurnishing();
+                          _openShop();
+                        },
+                        onDone: _stopFurnishing,
+                      ),
                     ),
                   ),
               ],
@@ -1243,6 +1257,44 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+  }
+}
+
+/// Сообщает высоту ребёнка после раскладки — для ленты обустройства.
+class _HeightReport extends SingleChildRenderObjectWidget {
+  const _HeightReport({required this.onHeight, required super.child});
+
+  final ValueChanged<double> onHeight;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderHeightReport(onHeight);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderHeightReport renderObject,
+  ) {
+    renderObject.onHeight = onHeight;
+  }
+}
+
+class _RenderHeightReport extends RenderProxyBox {
+  _RenderHeightReport(this.onHeight);
+
+  ValueChanged<double> onHeight;
+  double? _reported;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final height = size.height;
+    if (height == _reported) return;
+    _reported = height;
+    // Не посреди раскладки: setState сейчас запрещён.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (attached) onHeight(height);
+    });
   }
 }
 
@@ -1272,6 +1324,7 @@ class _RoomScene extends StatelessWidget {
     required this.onSlotTap,
     required this.furnishing,
     required this.slotHints,
+    this.furnishBarHeight = 0,
     required this.picked,
     this.surfacePreview,
     required this.room,
@@ -1335,6 +1388,11 @@ class _RoomScene extends StatelessWidget {
   /// Подсвечивать ли места крестиками: в обустройстве, но не на вкладках
   /// «Стены» и «Пол».
   final bool slotHints;
+
+  /// Высота ленты обустройства внизу экрана; 0 — ленты нет. Комната
+  /// приподнимается над ней ровно настолько, чтобы места, куда встанет вещь
+  /// в руках, вышли из-под ленты ([furnishLift]).
+  final double furnishBarHeight;
 
   /// Вещь в руках: подсвечиваются только те места, куда она встанет.
   final ShopItem? picked;
@@ -1418,7 +1476,29 @@ class _RoomScene extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final frame = RoomFrame.of(Size(c.maxWidth, c.maxHeight), room);
-        return ClipRect(child: _build(context, frame));
+        final held = picked;
+        final lift = furnishBarHeight <= 0
+            ? 0.0
+            : furnishLift(
+                game: game,
+                slots: [
+                  for (final slot in slotsOf(room))
+                    if (held == null || slot.takes(held)) slot,
+                ],
+                frame: frame.rect,
+                barTop: c.maxHeight - furnishBarHeight,
+                topInset: MediaQuery.paddingOf(context).top,
+              );
+        return ClipRect(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: lift),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            builder: (context, dy, child) =>
+                Transform.translate(offset: Offset(0, -dy), child: child),
+            child: _build(context, frame),
+          ),
+        );
       },
     );
   }
@@ -1770,11 +1850,14 @@ class _RoomScene extends StatelessWidget {
             ),
           ),
         // ⚠ Проверка показателей живого мишки — снять перед публикацией.
+        // Одной строкой над лентой эмоций, под ногами мишки (заказчик
+        // 10.10: столбиком справа закрывала шкаф и полку).
         if (room == RoomKind.nursery && !asleep && !furnishing)
           Positioned(
-            right: 8,
-            top: frame.bearTop + frame.bearHeight * 0.08,
-            child: StatsTestPanel(controller: controller),
+            left: 12,
+            right: 12,
+            bottom: _stripBottom + EmotionTestStrip.height + 6,
+            child: Center(child: StatsTestPanel(controller: controller)),
           ),
         // ⚠ Проверочная лента всех 33 эмоций под мишкой — снять перед
         // публикацией (заказчик 30.09: пронумеровать, подписать, листать

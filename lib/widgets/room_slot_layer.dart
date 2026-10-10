@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -44,6 +46,68 @@ SlotDepth slotDepth(RoomSlot slot) =>
 /// поэтому обставить комнату можно и сейчас, просто без пунктира на виду.
 /// Вернуть — поменять на `true`.
 const bool showSlotHints = false;
+
+/// Вещь, которая стоит в месте и которую есть чем нарисовать.
+///
+/// Вещь без картинки нарисовать нечем: в комнате она не стоит, хотя в
+/// сохранении может остаться — каталог держит такие позиции до отрисовки.
+ShopItem? _standing(GameState game, RoomSlot slot) {
+  final itemId = game.itemInSlot(slot.id);
+  return itemId == null || metricsOf(itemId) == null
+      ? null
+      : ItemCatalog.byId(itemId);
+}
+
+/// Где место на кадре комнаты, в долях кадра.
+///
+/// Вещь, посчитанная в 3D на этом месте, лежит готовым слоем вместе со
+/// своей тенью — ровно там, где её посчитали (room_render.dart). Размер
+/// другой занятой вещи — её собственный, с поправкой на глубину; пустого
+/// места — по тому, что здесь ожидается. Иначе рамка пустого места прыгала
+/// бы в зависимости от того, что в неё поставят.
+SlotBox slotBoxIn(GameState game, RoomSlot slot) {
+  final item = _standing(game, slot);
+  final render = item == null ? null : roomRenderOf(slot.id, item.id);
+  if (render != null) {
+    return (
+      left: render.left,
+      top: render.top,
+      width: render.width,
+      height: render.height,
+    );
+  }
+  return item == null ? boxOfHint(slot) : boxOf(slot, item);
+}
+
+/// На сколько точек приподнять комнату в обустройстве, чтобы места [slots]
+/// вышли из-под ленты.
+///
+/// Заказчик 10.10: место ковра лежит внизу, под лентой обустройства, — ни
+/// рамки, ни самого ковра не видно, и заменить ковёр было нечем. Теперь
+/// середина каждого нужного места с запасом [margin] стоит над лентой
+/// ([barTop]); но самое верхнее не уходит под статус-бар ([topInset]) —
+/// если на всё сразу высоты не хватает, верх важнее: картины и полку
+/// снизу не достать вовсе, а ковёр и наполовину виден. [frame] — кадр
+/// комнаты на экране.
+double furnishLift({
+  required GameState game,
+  required Iterable<RoomSlot> slots,
+  required Rect frame,
+  required double barTop,
+  required double topInset,
+  double margin = 28,
+}) {
+  var need = 0.0;
+  var room = double.infinity;
+  for (final slot in slots) {
+    final box = slotBoxIn(game, slot);
+    final y = frame.top + (box.top + box.height / 2) * frame.height;
+    need = math.max(need, y + margin - barTop);
+    room = math.min(room, y - margin - topInset);
+  }
+  if (room == double.infinity) return 0;
+  return need.clamp(0.0, math.max(0.0, room));
+}
 
 /// Комната по местам: что где стоит и куда можно поставить.
 ///
@@ -179,30 +243,9 @@ class RoomSlotLayer extends StatelessWidget {
     required void Function(RoomSlot, ShopItem) onTapItem,
     required ValueChanged<RoomSlot> onTapEmpty,
   }) {
-    final itemId = game.itemInSlot(slot.id);
-    // Вещь без картинки нарисовать нечем: в комнате она не стоит, хотя в
-    // сохранении может остаться — каталог держит такие позиции до отрисовки.
-    final item = itemId == null || metricsOf(itemId) == null
-        ? null
-        : ItemCatalog.byId(itemId);
-
-    // Вещь, посчитанная в 3D на этом месте, лежит готовым слоем вместе со
-    // своей тенью — ровно там, где её посчитали (room_render.dart).
+    final item = _standing(game, slot);
     final render = item == null ? null : roomRenderOf(slot.id, item.id);
-
-    // Размер занятой вещи — её собственный, с поправкой на глубину; пустого
-    // места — по тому, что здесь ожидается. Иначе рамка пустого места
-    // прыгала бы в зависимости от того, что в неё поставят.
-    final SlotBox box = render != null
-        ? (
-            left: render.left,
-            top: render.top,
-            width: render.width,
-            height: render.height,
-          )
-        : item == null
-        ? boxOfHint(slot)
-        : boxOf(slot, item);
+    final box = slotBoxIn(game, slot);
 
     return Positioned(
       left: box.left * width,

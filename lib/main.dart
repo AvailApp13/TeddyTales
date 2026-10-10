@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
+import 'package:flutter/services.dart';
 import 'package:rive/rive.dart' show RiveNative;
 
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -39,6 +40,16 @@ import 'widgets/top_toast.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Только вертикально — на телефонах и планшетах (заказчик 10.10: лёжа
+  // комната и лента эмоций разъезжаются). То же в Info.plist и манифесте
+  // Android: там — до первого кадра, здесь — для самого движка. В вебе
+  // повернуть вкладку браузера нельзя, там не просим.
+  if (!kIsWeb) {
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+    ]);
+  }
 
   // Обязательно для rive >= 0.14: инициализация нативного рантайма до runApp.
   //

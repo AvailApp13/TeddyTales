@@ -6,6 +6,11 @@ import '../bear/bear_controller.dart';
 /// 27.09: «живой мишка»). Показатели закреплены заглушками, сами не
 /// падают; кнопки роняют их по −25, «Всё ↑» возвращает — так за минуту
 /// видно всю цепочку: сытый → просит → голодный → покормили → рад.
+///
+/// Заказчик 10.10: столбиком справа кнопки закрывали шкаф и полку — теперь
+/// одной строкой внизу, под ногами мишки, прямо над «листайте
+/// влево-вправо». На узком экране строка чуть уменьшается, а не
+/// переносится.
 class StatsTestPanel extends StatelessWidget {
   const StatsTestPanel({super.key, required this.controller});
 
@@ -17,37 +22,39 @@ class StatsTestPanel extends StatelessWidget {
       listenable: controller,
       builder: (context, _) {
         final s = controller.state.stats;
-        return Column(
-          key: const ValueKey('stats-test-panel'),
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _Btn(
-              'Еда ↓ ${s.food.round()}',
-              () => controller.nudgeStats(food: -25),
-            ),
-            _Btn(
-              'Сон ↓ ${s.sleep.round()}',
-              () => controller.nudgeStats(sleep: -25),
-            ),
-            _Btn(
-              'Гигиена ↓ ${s.hygiene.round()}',
-              () => controller.nudgeStats(hygiene: -25),
-            ),
-            _Btn(
-              'Игра ↓ ${s.play.round()}',
-              () => controller.nudgeStats(play: -25),
-            ),
-            _Btn(
-              'Всё ↑',
-              () => controller.nudgeStats(
-                food: 100,
-                sleep: 100,
-                hygiene: 100,
-                play: 100,
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            key: const ValueKey('stats-test-panel'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _Btn(
+                'Еда ↓ ${s.food.round()}',
+                () => controller.nudgeStats(food: -25),
               ),
-            ),
-          ],
+              _Btn(
+                'Сон ↓ ${s.sleep.round()}',
+                () => controller.nudgeStats(sleep: -25),
+              ),
+              _Btn(
+                'Гигиена ↓ ${s.hygiene.round()}',
+                () => controller.nudgeStats(hygiene: -25),
+              ),
+              _Btn(
+                'Игра ↓ ${s.play.round()}',
+                () => controller.nudgeStats(play: -25),
+              ),
+              _Btn(
+                'Всё ↑',
+                () => controller.nudgeStats(
+                  food: 100,
+                  sleep: 100,
+                  hygiene: 100,
+                  play: 100,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -63,7 +70,7 @@ class _Btn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: GestureDetector(
         key: ValueKey('stats-test-$label'),
         behavior: HitTestBehavior.opaque,

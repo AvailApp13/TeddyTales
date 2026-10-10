@@ -55,19 +55,19 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- Только вертикально, на iPhone и iPad (заказчик 10.10: лёжа экран
+	     разъезжается). На iPad без UIRequiresFullScreen App Store требует
+	     все четыре положения. -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<!-- Приложение не использует нестандартное шифрование. Без этого
 	     ключа TestFlight на каждой сборке спрашивает про экспортный
 	     контроль и держит билд, пока не ответишь руками. -->

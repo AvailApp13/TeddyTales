@@ -11,10 +11,17 @@
         android:label="Teddy Tales"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Только вертикально (заказчик 10.10). Android 16 на планшетах
+             и раскладушках (от 600dp) для targetSdk 36 запрет поворота
+             игнорирует — это свойство его возвращает. -->
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:screenOrientation="portrait"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
