@@ -322,10 +322,17 @@ class RiveBearTrial extends StatefulWidget {
     this.trait = BearTrait.active,
     this.mood = BearMood.normal,
     this.seated = false,
+    this.asleep = false,
     this.reachBottom,
     this.paws,
     this.onTap,
   });
+
+  /// Уложили спать («Сон», заказчик 10.10): сначала сонное настроение —
+  /// тяжёлые веки, медленное моргание, — потом засыпает: петля сна
+  /// `idle_asleep`, глаза закрыты. Сняли — глаза открываются быстро, покой
+  /// возвращается. Пока спит, эмоции и разбивки покоя не идут.
+  final bool asleep;
 
   /// Лапы на столе (кухня): сюда каждый кадр пишется, где кисти рига и
   /// как стоит корпус — лапы рисуются отдельным слоем поверх скатерти.
@@ -363,7 +370,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
   File? _file;
   late final _TrialPainter _painter = _TrialPainter()
     ..seated = widget.seated
-    ..paws = widget.paws;
+    ..paws = widget.paws
+    ..setAsleep(widget.asleep, instant: true);
 
   /// Реакция корпуса на эмоцию — длиной с саму эмоцию.
   late final AnimationController _body = AnimationController(vsync: this);
@@ -371,6 +379,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
   /// Эмоция целиком: лицо из файла и поза корпуса.
   void _react(BearFace face) {
+    // спящий не смеётся и не машет ушами по кнопкам
+    if (widget.asleep) return;
     final trait = face.trait;
     if (trait != null) {
       _painter.setTrait(trait);
@@ -513,6 +523,9 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     }
     if (oldWidget.mood != widget.mood) {
       _painter.setMood('mood_${widget.mood.name}', real: true);
+    }
+    if (oldWidget.asleep != widget.asleep) {
+      _painter.setAsleep(widget.asleep);
     }
   }
 
@@ -808,6 +821,87 @@ final class _TrialPainter extends BasicArtboardPainter {
     _cheeks.kick(_cheekUp * dvy);
   }
 
+  // --- Сон («Сон», заказчик 10.10; ТЗ idle_asleep) -------------------------
+  // Уложили: 2,6 с сонного настроения (тяжёлые веки, медленное моргание),
+  // потом петля сна `idle_asleep` подмешивается к покою за 1,2 с: голова
+  // склоняется, дыхание медленное и глубокое, оглядывания гаснут. Глаза
+  // закрываются как в моргании покоя: бусины сплющиваются в черту
+  // (`pose_eyes_squash`), и когда они черта — разом закрытые глаза с
+  // ресничками (`pose_eyes_shut`). Плавно проявлять закрытые глаза поверх
+  // открытых бусин нельзя — видно оба. Разбудили — за 0,3 с обратно.
+  // Засыпание целиком 3,8 с: облако мыслей спальни ждёт 4 с.
+  static const double _dozeHold = 2.6;
+  static const double _dozeIn = 1.2;
+  static const double _wakeOut = 0.3;
+
+  bool _asleep = false;
+  double _dozeT = 0;
+  double _sleepW = 0;
+  double _sleepT = 0;
+  Animation? _sleepIdle;
+  Animation? _eyesSquash;
+  Animation? _eyesShut;
+
+  bool get _deepSleep => _asleep && _dozeT >= _dozeHold;
+
+  /// [instant] — сразу спит (открыли «Сон», а мишку уже уложили).
+  void setAsleep(bool value, {bool instant = false}) {
+    if (value == _asleep) return;
+    _asleep = value;
+    _dozeT = value && instant ? _dozeHold : 0;
+    if (instant) _sleepW = value ? 1 : 0;
+    if (value) {
+      petCancel();
+      _rest(_clip);
+      _clip = null;
+      _face = null;
+    }
+    _loopTo(_loopName());
+    scheduleRepaint();
+  }
+
+  void _advanceSleep(double dt) {
+    if (_asleep) {
+      final was = _dozeT;
+      _dozeT += dt;
+      // заснул — сонное настроение сменяется покоем без настроения
+      if (was < _dozeHold && _dozeT >= _dozeHold) _loopTo(_loopName());
+    }
+    final target = _deepSleep ? 1.0 : 0.0;
+    if (_sleepW < target) {
+      _sleepW = math.min(target, _sleepW + dt / _dozeIn);
+    } else if (_sleepW > target) {
+      _sleepW = math.max(target, _sleepW - dt / _wakeOut);
+    }
+  }
+
+  /// Петля сна поверх покоя — по тем же каналам костей.
+  void _applySleepIdle(double dt) {
+    final loop = _sleepIdle;
+    if (loop == null || _sleepW <= 0) return;
+    _sleepT += dt;
+    loop
+      ..time = _sleepT % loop.duration
+      ..apply(mix: Curves.easeInOut.transform(_sleepW));
+  }
+
+  /// Глаза сплющиваются, пока петля сна набирает силу, и закрываются разом,
+  /// когда бусины — черта. Проснулся — покой сам вернёт бусины и снимет
+  /// закрытые глаза: он ставит их в каждом кадре.
+  void _applySleepEyes() {
+    final squash = ((_sleepW - 0.4) / 0.5).clamp(0.0, 1.0);
+    if (squash <= 0) return;
+    if (squash >= 1) {
+      _eyesShut
+        ?..time = 0
+        ..apply(mix: 1);
+    } else {
+      _eyesSquash
+        ?..time = 0
+        ..apply(mix: Curves.easeIn.transform(squash));
+    }
+  }
+
   void _seatOff() {
     if (!_seatOn) return;
     _seatOn = false;
@@ -1063,6 +1157,11 @@ final class _TrialPainter extends BasicArtboardPainter {
   }
 
   String _loopName() {
+    // засыпает — сонное настроение; спит — петля спящего лица (полуулыбка)
+    if (_asleep) {
+      if (!_deepSleep) return 'mood_sleepy';
+      return _moods.containsKey('mood_asleep') ? 'mood_asleep' : 'mood_normal';
+    }
     if (_moodPick != 'mood_normal') return _moodPick;
     final name = 'idle_trait_${_trait.name}';
     return _moods.containsKey(name) ? name : 'mood_normal';
@@ -1137,7 +1236,13 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   void _advanceBonus(double dt) {
     final busy =
-        _clip != null || _face != null || _petting || _outOn || _script != null;
+        _clip != null ||
+        _face != null ||
+        _petting ||
+        _outOn ||
+        _script != null ||
+        _asleep ||
+        _sleepW > 0;
     if (busy) {
       _bonusWait = null;
       return;
@@ -1297,7 +1402,9 @@ final class _TrialPainter extends BasicArtboardPainter {
         _petting ||
         _outOn ||
         _script != null ||
-        _moodW < 1;
+        _moodW < 1 ||
+        _asleep ||
+        _sleepW > 0;
     if (busy) {
       _spontWait = null;
       return;
@@ -1379,6 +1486,12 @@ final class _TrialPainter extends BasicArtboardPainter {
     _petFace = artboard.animationNamed('pet_face');
     _petPass = artboard.animationNamed('pet_pass');
     _petOut = artboard.animationNamed('pet_out');
+    _sleepIdle?.dispose();
+    _eyesSquash?.dispose();
+    _eyesShut?.dispose();
+    _sleepIdle = artboard.animationNamed('idle_asleep');
+    _eyesSquash = artboard.animationNamed('pose_eyes_squash');
+    _eyesShut = artboard.animationNamed('pose_eyes_shut');
     for (final clip in _moods.values) {
       clip.dispose();
     }
@@ -1390,6 +1503,7 @@ final class _TrialPainter extends BasicArtboardPainter {
       'mood_hungry',
       'mood_sleepy',
       'mood_dirty',
+      'mood_asleep',
       for (final trait in BearTrait.values) 'idle_trait_${trait.name}',
     ]) {
       final animation = artboard.animationNamed(name);
@@ -1445,11 +1559,13 @@ final class _TrialPainter extends BasicArtboardPainter {
     // Руки на столе: снять прошлые смещения, пока клипы не записали новые.
     _seatOff();
     _jiggleOff();
+    _advanceSleep(elapsedSeconds);
     // Разбивку покоя запускаем до петли: сброс в покой при запуске
     // (`play` → `petCancel`) петля в этом же кадре перекроет.
     _advanceBonus(elapsedSeconds);
     _advanceSpont(elapsedSeconds);
     _idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
+    _applySleepIdle(elapsedSeconds);
     // Кончилась анимация — вернуть её кости в покой до петли настроения,
     // а не после: иначе на один кадр мишка вставал в «чистый» покой поверх
     // позы характера и дёргался (заказчик 27.09, кнопки 32, 33).
@@ -1495,6 +1611,7 @@ final class _TrialPainter extends BasicArtboardPainter {
     }
     _advancePet(elapsedSeconds);
     _resolveMouths();
+    _applySleepEyes();
     final hips = _eHips;
     if (seated && hips != null) hips.y = _hipsRestY;
     _seatApply();
@@ -1517,6 +1634,9 @@ final class _TrialPainter extends BasicArtboardPainter {
     _petFace?.dispose();
     _petPass?.dispose();
     _petOut?.dispose();
+    _sleepIdle?.dispose();
+    _eyesSquash?.dispose();
+    _eyesShut?.dispose();
     _mouthZero?.dispose();
     for (final clip in [
       ..._moods.values,

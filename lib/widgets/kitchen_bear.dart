@@ -255,7 +255,7 @@ class _KitchenBearState extends State<KitchenBear>
                   child: ColorFiltered(
                     colorFilter: KitchenBear.warm,
                     child: CustomPaint(
-                      painter: _TablePawsPainter(
+                      painter: TablePawsPainter(
                         paws: _paws,
                         pat: _pat,
                         left: _pawLeft!,
@@ -275,8 +275,8 @@ class _KitchenBearState extends State<KitchenBear>
 /// Манжета и лапа на столе поверх скатерти. Координаты — px артборда
 /// мишки (1024), картинки лежат в мире покоя там, где их вырезал
 /// `tool/cut_table_paws.py`, и едут за кистью рига.
-class _TablePawsPainter extends CustomPainter {
-  _TablePawsPainter({
+class TablePawsPainter extends CustomPainter {
+  TablePawsPainter({
     required this.paws,
     required this.pat,
     required this.left,
@@ -394,6 +394,6 @@ class _TablePawsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TablePawsPainter old) =>
+  bool shouldRepaint(TablePawsPainter old) =>
       old.left != left || old.right != right || old.paws != paws;
 }

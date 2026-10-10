@@ -723,6 +723,107 @@ def breathing(B, rest):
     return ch
 
 
+# --- Сон (заказчик 10.10: «во сне поменять мишку на того, что в главной
+# комнате»; ТЗ idle_asleep) -------------------------------------------------
+# Петля по тем же каналам костей, что покой: приложение подмешивает её
+# поверх покоя, когда мишку уложили, — оглядывания гаснут, мишка дышит
+# медленно и глубоко, голова склонилась, изредка дёргается ухо. Глаза
+# закрывают два кадра-позы — как в моргании покоя: бусины сплющены в черту,
+# а потом разом спрятаны под слоем закрытых глаз с ресничками. Плавно
+# проявлять закрытые глаза поверх открытых нельзя — видно оба.
+SLEEP_T = 528          # петля сна: два вдоха по 4,4 с — как одеяло в спальне
+SLEEP_BREATH = 264
+
+
+def asleep_motion():
+    """{(кость, ключ): fn(t)} — смещение от покоя кости в кадре t."""
+    def w(t):
+        return math.sin(2 * math.pi * t / SLEEP_BREATH)
+
+    def up(t):
+        return (w(t) + 1) / 2
+
+    R, SX, SY, X, Y = 15, 16, 17, 90, 91
+    m = {
+        ('hips', Y): lambda t: -2.0 * w(t),
+        ('breath', SY): lambda t: 0.06 * up(t),
+        ('breath', SX): lambda t: 0.035 * up(t - 20),
+        ('belly', R): lambda t: -0.008 * w(t),
+        ('chest', R): lambda t: 0.01 * w(t - 10),
+        # плечи поднимаются на вдохе — ключицы
+        ('clav_l', R): lambda t: 0.025 * up(t - 10),
+        ('clav_r', R): lambda t: -0.025 * up(t - 10),
+        ('neck', R): lambda t: -0.01 * w(t - 20),
+        # голова склонилась: наклон и лицо ниже в капюшоне (как кивок
+        # сонного настроения), чуть ходит с дыханием
+        ('head', R): lambda t: 0.04 + 0.008 * w(t - 30),
+        ('face', X): lambda t: -5.0 + 0.6 * w(t - 30),
+        ('hood1', R): lambda t: -0.01 * w(t - 40),
+        ('hood2', R): lambda t: -0.02 * w(t - 60),
+        # уши расслаблены; левое раз за петлю вздрагивает
+        ('ear_l1', R): lambda t: 0.05 + 0.07 * twitch(t, 330),
+        ('ear_l2', R): lambda t: 0.04 + 0.1 * twitch(t - 3, 330),
+        ('ear_r1', R): lambda t: -0.05,
+        ('ear_r2', R): lambda t: -0.04,
+        # рот на выдохе чуть расслабляется, мордочка дышит
+        ('jaw', X): lambda t: -0.9 * (1 - up(t)),
+        ('muzzle', X): lambda t: 0.3 * w(t),
+        ('nose', X): lambda t: 0.3 * w(t),
+    }
+    for s, sg in (('l', 1), ('r', -1)):
+        for bone, amp, lag in ((f'arm_{s}1', 0.006, 8), (f'side_{s}', 0.006, 8), (f'arm_{s}2', 0.004, 15),
+                               (f'arm_{s}3', 0.004, 22), (f'hand_{s}', 0.006, 32)):
+            m[(bone, R)] = (lambda a, g: lambda t: a * w(t - g))(amp * sg, lag)
+    return m
+
+
+def sleep_clips(ab, idle, B):
+    """`idle_asleep` — петля сна по каналам костей покоя; `pose_eyes_squash`
+    и `pose_eyes_shut` — бусины сплющены / глаза закрыты (кадры пика
+    моргания покоя)."""
+    name_of = {b['id']: n for n, b in B.items()}
+    el_of = {e.get('id'): e for e in ab.iter() if e.get('id')}
+    attr = {13: 'x', 14: 'y', 90: 'x', 91: 'y', 15: 'rotation', 16: 'scaleX', 17: 'scaleY', 18: 'opacity'}
+    motion = asleep_motion()
+    anim = ET.Element('LinearAnimation', {'duration': str(SLEEP_T), 'loopValue': '1', 'name': 'idle_asleep'})
+    for ko in idle.findall('KeyedObject'):
+        oid = ko.get('objectId')
+        if oid not in name_of:          # глаза, уши-картинки, накладки — от покоя
+            continue
+        for kp in ko.findall('KeyedProperty'):
+            key = int(kp.get('propertyKey'))
+            rest = float(el_of[oid].get(attr[key], 1.0 if key in (16, 17, 18) else 0.0))
+            fn = motion.get((name_of[oid], key))
+            nko = ET.SubElement(anim, 'KeyedObject', {'objectId': oid})
+            nkp = ET.SubElement(nko, 'KeyedProperty', {'propertyKey': str(key)})
+            for fr in (range(0, SLEEP_T + 1, 4) if fn else (0, SLEEP_T)):
+                ET.SubElement(nkp, 'KeyFrameDouble', {'value': fmt(rest + (fn(fr) if fn else 0.0)),
+                                                      'frame': str(fr), 'interpolationType': 'linear'})
+    ab.insert(list(ab).index(idle) + 1, anim)
+
+    # пик моргания покоя: бусина сплющена в черту и спрятана, поверх —
+    # слой закрытых глаз
+    ids = {e.get('name'): e.get('id') for e in ab.iter() if e.get('name')}
+    beads = [ids['gaze_bead_l_img'], ids['gaze_bead_r_img']]
+    flat = {}
+    for ko in idle.findall('KeyedObject'):
+        if ko.get('objectId') not in beads:
+            continue
+        for kp in ko.findall('KeyedProperty'):
+            if kp.get('propertyKey') == '17':
+                flat[ko.get('objectId')] = min(float(k.get('value', 0)) for k in kp)
+    for name, shut in (('pose_eyes_squash', False), ('pose_eyes_shut', True)):
+        pose = ET.Element('LinearAnimation', {'duration': '1', 'loopValue': '0', 'name': name})
+        chans = [(oid, 17, flat[oid]) for oid in beads]
+        if shut:
+            chans += [(oid, 18, 0.0) for oid in beads] + [(ids['fx_eyes_closed'], 18, 1.0)]
+        for oid, key, value in chans:
+            pko = ET.SubElement(pose, 'KeyedObject', {'objectId': oid})
+            pkp = ET.SubElement(pko, 'KeyedProperty', {'propertyKey': str(key)})
+            ET.SubElement(pkp, 'KeyFrameDouble', {'value': fmt(value), 'frame': '0', 'interpolationType': 'hold'})
+        ab.insert(list(ab).index(anim) + 1, pose)
+
+
 # --- Мимика -------------------------------------------------------------------
 BEAD_L, BEAD_R = '0:112404', '0:277344'   # бусины глаз
 BEAD_REST = {BEAD_L: 0.63041645, BEAD_R: 0.63351262}
@@ -1849,8 +1950,21 @@ def mood_dirty():
     return sp
 
 
+def mood_asleep():
+    """Спит («Сон», заказчик 10.10): безмятежная полуулыбка, как у
+    спокойного характера, уши расслаблены. Без неё во сне виден вышитый
+    рот игрушки — «галочка» вниз, и спящий кажется недовольным. Голову,
+    дыхание и глаза ведут петля сна `idle_asleep` и позы закрытых глаз."""
+    sp = {}
+    sp[('ear_l1', Emo.R)] = lambda t: 0.04
+    sp[('ear_r1', Emo.R)] = lambda t: -0.04
+    _pair(sp, 'mouth', Emo.X, lambda t: 1.5)
+    _mood_mouth(sp, 'content', lambda t: 0.6, lambda t: 0.35)
+    return sp
+
+
 MOODS = {'mood_happy': mood_happy, 'mood_sad': mood_sad, 'mood_hungry': mood_hungry,
-         'mood_sleepy': mood_sleepy, 'mood_dirty': mood_dirty}
+         'mood_sleepy': mood_sleepy, 'mood_dirty': mood_dirty, 'mood_asleep': mood_asleep}
 
 
 # --- Характер (ТЗ idle_trait_*; заказчик 27.09: «делай всё сразу») --------
@@ -2970,6 +3084,8 @@ def main(project):
         for fr, val in frames:
             ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(val), 'frame': str(fr),
                                                  'interpolationType': 'linear'})
+    # 7б. Сон: петля `idle_asleep` и позы закрытых глаз (заказчик 10.10).
+    sleep_clips(ab, idle, B)
 
     # 8. Эмоции на новых костях: emo_smile заново, остальные — новые.
     anims = {a.attrib.get('name'): a for a in root.iter('LinearAnimation')}

@@ -1547,9 +1547,16 @@ class _RoomScene extends StatelessWidget {
         if (room == RoomKind.bedroom) ...[
           // Окно живёт под мишкой: луна и звёзды мерцают, звёзды падают.
           Positioned.fromRect(rect: frame.rect, child: const NightWindow()),
+          // С 10.10 в кровати тот же Rive-мишка, что в игровой (заказчик:
+          // «во сне поменять мишку на того, что в главной комнате»).
           Positioned.fromRect(
             rect: frame.rect,
-            child: BedroomScene(asleep: asleep),
+            child: BedroomScene(
+              asleep: asleep,
+              cue: faceCue,
+              mood: mood,
+              trait: controller.state.trait,
+            ),
           ),
           // Буквы z и облако мыслей ждут одного момента: мишку уложили и
           // он закрыл глаза.
