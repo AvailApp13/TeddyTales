@@ -13,6 +13,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/purchase_confirm.dart';
 import '../widgets/kitchen_scene.dart';
+import '../widgets/top_toast.dart';
 
 /// Две вкладки экрана кормления (КП 8.1).
 ///
@@ -198,26 +199,17 @@ class _FeedScreenState extends State<FeedScreen> {
 
   // --- Служебное -----------------------------------------------------------
 
-  void _toast(String text) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
-      );
-  }
+  void _toast(String text) => showTopToast(context, text);
 
   /// Покормили — экран закрывается, а результат показывается поверх комнаты:
   /// мишка ест именно там, смотреть надо на него. [mood] уходит наружу
   /// результатом листа: по нему сцена кухни играет еду и эмоцию.
   void _closeWith(String text, KitchenMood mood) {
-    // Мессенджер берём до pop: сам экран к этому моменту уже уходит со стека.
-    final messenger = ScaffoldMessenger.of(context);
+    // Очередь уведомлений берём до pop: сам экран к этому моменту уже
+    // уходит со стека.
+    final toasts = topToasts(context);
     Navigator.maybePop(context, mood);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
-      );
+    toasts.show(text);
   }
 
   @override

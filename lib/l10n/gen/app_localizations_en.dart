@@ -1398,6 +1398,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopTitle => 'Shop';
 
   @override
+  String shopBoughtInRoom(String name) {
+    return '$name purchased — it\'s in the room';
+  }
+
+  @override
+  String shopCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '$count item',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get signInAlipay => 'Sign in with Alipay';
 
   @override

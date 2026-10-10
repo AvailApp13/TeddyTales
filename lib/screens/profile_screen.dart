@@ -17,6 +17,7 @@ import '../theme/app_theme.dart';
 import '../widgets/daily_sheet.dart';
 import '../widgets/rename_pet_dialog.dart';
 import '../widgets/sign_out_dialog.dart';
+import '../widgets/top_toast.dart';
 
 /// Профиль питомца (КП 14.1): карточка рождения, характер, история стадий.
 ///
@@ -90,14 +91,7 @@ class ProfileScreen extends StatelessWidget {
     );
 
     if (name == null || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.nameChanged(name)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showTopToast(context, l10n.nameChanged(name));
   }
 
   static String _date(BuildContext context, DateTime at) => DateFormat.yMMMMd(

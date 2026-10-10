@@ -4,6 +4,7 @@ import '../bear/bear.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/top_toast.dart';
 
 /// Товар каталога физических мишек (КП 12.2).
 ///
@@ -406,16 +407,7 @@ class _OrderScreenState extends State<OrderScreen> {
     super.dispose();
   }
 
-  void _pay() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.catalogPayStub),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-  }
+  void _pay() => showTopToast(context, context.l10n.catalogPayStub);
 
   @override
   Widget build(BuildContext context) {

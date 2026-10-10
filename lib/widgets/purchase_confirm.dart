@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import 'glass_panel.dart';
 import 'item_picture.dart';
 import 'scene_label.dart';
+import 'top_toast.dart';
 
 /// Окно подтверждения покупки.
 ///
@@ -47,7 +48,7 @@ Future<bool> confirmPurchase({
 /// Купить вещь магазина с подтверждением. `true` — куплено.
 ///
 /// Общая дорожка для витрины, просмотра и комнаты: окно → покупка →
-/// подсказка внизу «Куплено». Сервер проводит покупку следом по своей цене
+/// уведомление сверху «Куплено». Сервер проводит покупку следом по своей цене
 /// (КП 11.1), отказ откатывает её в [GameState.buy].
 Future<bool> buyItemConfirmed({
   required BuildContext context,
@@ -58,7 +59,7 @@ Future<bool> buyItemConfirmed({
   if (game.isOwned(item.id)) return true;
   final l10n = context.l10n;
   final name = shopItemName(l10n, item.id);
-  final messenger = ScaffoldMessenger.maybeOf(context);
+  final toasts = topToasts(context);
 
   final ok = await confirmPurchase(
     context: context,
@@ -70,14 +71,7 @@ Future<bool> buyItemConfirmed({
   if (!ok || !game.buy(item.id)) return false;
 
   if (showToast) {
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.roomItemBought(name)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    toasts.show(l10n.roomItemBought(name), icon: Icons.check_circle_rounded);
   }
   return true;
 }

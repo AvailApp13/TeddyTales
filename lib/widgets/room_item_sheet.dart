@@ -10,6 +10,7 @@ import 'glass_panel.dart';
 import 'item_picture.dart';
 import 'purchase_confirm.dart';
 import 'scene_label.dart';
+import 'top_toast.dart';
 
 /// Что можно сделать с местом в комнате.
 ///
@@ -40,13 +41,8 @@ class _SlotSheet extends StatelessWidget {
   final GameState game;
   final RoomSlot slot;
 
-  void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
-  }
+  void _toast(BuildContext context, String message) =>
+      showTopToast(context, message);
 
   void _clear(BuildContext context, String itemId) {
     final name = shopItemName(context.l10n, itemId);

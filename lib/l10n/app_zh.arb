@@ -466,6 +466,8 @@
   "shopTabFurniture": "家具",
   "shopTabToys": "玩具",
   "shopTitle": "商店",
+  "shopBoughtInRoom": "已购买「{name}」，已摆进房间",
+  "shopCategoryCount": "{count}件",
   "signInAlipay": "通过支付宝登录",
   "signInApple": "通过 Apple 登录",
   "signInGoogle": "通过 Google 登录",

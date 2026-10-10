@@ -5,6 +5,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import 'glass_panel.dart';
+import 'top_toast.dart';
 
 /// Подтверждение выхода из аккаунта (КП 14.2).
 ///
@@ -87,10 +88,8 @@ Future<void> confirmDeleteAccount(BuildContext context, GameState game) async {
     },
   );
   if (ok != true || !context.mounted) return;
-  final messenger = ScaffoldMessenger.maybeOf(context);
+  final toasts = topToasts(context);
   final failed = context.l10n.deleteAccountFailed;
   if (await delete()) return;
-  messenger?.showSnackBar(
-    SnackBar(content: Text(failed), behavior: SnackBarBehavior.floating),
-  );
+  toasts.show(failed);
 }

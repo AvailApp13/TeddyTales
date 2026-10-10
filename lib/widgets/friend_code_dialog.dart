@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import 'gift_reveal.dart' show showCoinReward;
 import 'glass_panel.dart';
 import 'share_card.dart' show redeemMessage;
+import 'top_toast.dart';
 
 /// «Тебя пригласил друг?» — после имени мишки при первом запуске
 /// (заказчик 26.09).
@@ -98,11 +99,9 @@ class _FriendCodeDialogState extends State<_FriendCodeDialog> {
       return;
     }
     if (result == RedeemResult.alreadyUsed || result == RedeemResult.tooLate) {
-      final messenger = ScaffoldMessenger.maybeOf(context);
+      final toasts = topToasts(context);
       Navigator.of(context).pop();
-      messenger?.showSnackBar(
-        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-      );
+      toasts.show(message);
       return;
     }
     setState(() {

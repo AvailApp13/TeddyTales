@@ -9,6 +9,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import 'scene_label.dart';
+import 'top_toast.dart';
 
 /// Кнопка-лапа и разлетающиеся из неё разделы.
 ///
@@ -129,17 +130,11 @@ class _PawMenuState extends State<PawMenu> with SingleTickerProviderStateMixin {
 
   void _explainLock(AppSection section) {
     final l10n = context.l10n;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '${sectionTitle(l10n, section)}. '
-            '${sectionLockReason(l10n, section)}',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showTopToast(
+      context,
+      '${sectionTitle(l10n, section)}. '
+      '${sectionLockReason(l10n, section)}',
+    );
   }
 
   @override

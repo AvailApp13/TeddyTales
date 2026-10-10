@@ -35,6 +35,7 @@ import 'screens/email_auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/top_toast.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -528,7 +529,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   /// «Войти через Apple» на стартовой странице (КП 1.3).
   Future<void> _signInWithApple(BuildContext context) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final toasts = topToasts(context);
     final failed = context.l10n.signInAppleFailed;
     try {
       if (await widget.boot.auth!.signInWithApple()) {
@@ -536,9 +537,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       }
     } on Object catch (error) {
       debugPrint('[TeddyTales] Apple: $error');
-      messenger?.showSnackBar(
-        SnackBar(content: Text(failed), behavior: SnackBarBehavior.floating),
-      );
+      toasts.show(failed);
     }
   }
 

@@ -1,7 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../game/game_state.dart';
 import '../game/item_groups.dart';
+import '../game/room_slots.dart';
 import '../game/shop_items.dart';
 import '../l10n/catalog_l10n.dart';
 import '../l10n/l10n.dart';
@@ -11,47 +14,145 @@ import '../widgets/item_picture.dart';
 import '../widgets/item_preview.dart';
 import '../widgets/purchase_confirm.dart';
 import '../widgets/scene_label.dart';
+import '../widgets/top_toast.dart';
+
+/// Магазин — стеклянной панелью снизу, которую можно тянуть вверх.
+///
+/// Заказчик 10.10: панель открывается на [ShopScreen.half] высоты — комната
+/// видна сверху, и купленное встаёт в ней прямо на глазах; вверх тянется до
+/// [ShopScreen.full]. Фон — матовое стекло. Закрывается только свайпом вниз
+/// или крестиком: тап мимо панели её не прячет.
+///
+/// [onApplied] — купленное уже в комнате: экран показывает игровую, чтобы
+/// вещь было видно.
+Future<void> showShopSheet(
+  BuildContext context, {
+  required GameState game,
+  String? focusItemId,
+  ValueChanged<ShopItem>? onApplied,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    // Тянет панель сама панель (шапка и витрина), а не лист вокруг неё.
+    enableDrag: false,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    // Комната за панелью почти не затемнена: в ней сейчас встанет покупка.
+    barrierColor: AppColors.textPrimary.withValues(alpha: 0.08),
+    builder: (context) =>
+        _ShopSheet(game: game, focusItemId: focusItemId, onApplied: onApplied),
+  );
+}
+
+class _ShopSheet extends StatefulWidget {
+  const _ShopSheet({required this.game, this.focusItemId, this.onApplied});
+
+  final GameState game;
+  final String? focusItemId;
+  final ValueChanged<ShopItem>? onApplied;
+
+  @override
+  State<_ShopSheet> createState() => _ShopSheetState();
+}
+
+class _ShopSheetState extends State<_ShopSheet> {
+  final DraggableScrollableController _sheet = DraggableScrollableController();
+
+  @override
+  void dispose() {
+    _sheet.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      controller: _sheet,
+      initialChildSize: ShopScreen.half,
+      // Дотянули до низа — панель закрывается сама (лист под ней ловит
+      // это и уходит).
+      minChildSize: ShopScreen.closeAt,
+      maxChildSize: ShopScreen.full,
+      snap: true,
+      snapSizes: const [ShopScreen.half],
+      expand: false,
+      builder: (context, scroll) => ShopScreen(
+        game: widget.game,
+        focusItemId: widget.focusItemId,
+        scrollController: scroll,
+        sheet: _sheet,
+        onApplied: widget.onApplied,
+      ),
+    );
+  }
+}
 
 /// Магазин предметов (КП 11.2).
 ///
-/// Четыре вкладки — по четырём разделам каталога КП 10: одежда (10.5), мебель
-/// (10.2), декор (10.3), игрушки (10.4). Обои и полы здесь не выделены в
-/// отдельные вкладки, в отличие от экрана комнаты: покупателю они такой же
-/// товар, как картина или подушка, а разное поведение у них начинается только
-/// при расстановке.
+/// Два уровня (заказчик 10.10): сначала — список категорий; в категории —
+/// вкладки категорий, подкатегории и витрина. «Назад» поднимает на уровень
+/// вверх, а не закрывает магазин.
 ///
-/// Покупка идёт через корзину: тап по карточке кладёт предмет в корзину и
-/// вынимает обратно, платят один раз кнопкой внизу. Купленное не нажимается —
-/// повторно продавать то же самое некуда, а «уже моё» должно читаться сразу.
+/// Вкладки — по разделам каталога КП 10: мебель (10.2), декор (10.3),
+/// игрушки (10.4), одежда (10.5) — когда у неё будут картинки. Обои и полы
+/// здесь не выделены в отдельные вкладки, в отличие от экрана комнаты:
+/// покупателю они такой же товар, как картина или подушка.
 ///
-/// **ДОПУЩЕНИЕ:** самой корзины в КП нет — она пришла с макета и отнесена ко
-/// второй версии. Собрана, потому что без неё непонятно, как выглядит покупка
-/// набора вещей; об этом сказано подписью внизу экрана, чтобы заказчик видел
-/// границу договорённостей. Разовая покупка мимо корзины живёт на экране
-/// комнаты и опирается на тот же `GameState`.
+/// Покупка — по одной вещи, с подтверждением (заказчик 24.09). Купленное не
+/// закрывает магазин: вещь сразу встаёт в комнату (стены и пол — сразу
+/// вместо прежних, вещь — на подходящее место), а человек остаётся в той же
+/// категории (заказчик 10.10). Купленное не нажимается — повторно продавать
+/// то же самое некуда, а «уже моё» должно читаться сразу.
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key, required this.game, this.focusItemId});
+  const ShopScreen({
+    super.key,
+    required this.game,
+    this.focusItemId,
+    this.scrollController,
+    this.sheet,
+    this.onApplied,
+  });
 
   /// Кошелёк и инвентарь — один источник правды на все экраны:
   /// купленное здесь должно тут же появиться в комнате и в гардеробе.
   final GameState game;
 
-  /// Открыть магазин на вкладке этого предмета.
+  /// Открыть магазин сразу в категории этого предмета.
   ///
   /// Нужен для подсказок в комнате: человек тапнул по пустому месту под
   /// кроватку и должен увидеть кроватку, а не одежду. Высыпать его в
   /// магазин «куда-то» — значит заставить искать то, на что он уже показал.
   final String? focusItemId;
 
+  /// Прокрутка витрины — от панели: дотянули витрину до верха, и тянется
+  /// уже сама панель.
+  final ScrollController? scrollController;
+
+  /// Высота панели: шапку тоже можно тянуть.
+  final DraggableScrollableController? sheet;
+
+  /// Купленное уже стоит в комнате.
+  final ValueChanged<ShopItem>? onApplied;
+
+  /// Высота панели при открытии: комната видна над ней.
+  static const double half = 0.45;
+
+  /// Панель, вытянутая вверх.
+  static const double full = 0.9;
+
+  /// Ниже — панель закрывается.
+  static const double closeAt = 0.2;
+
   @override
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
 class _ShopScreenState extends State<ShopScreen> {
-  /// Первой открывается одежда — так же, как в прототипе: это самый крупный и
-  /// самый понятный ребёнку раздел каталога. Если пришли за конкретной
-  /// вещью, открывается её вкладка.
-  late _ShopTab _tab = _tabOf(widget.focusItemId) ?? _ShopTab.furniture;
+  /// Открытая категория. `null` — список категорий. Если пришли за
+  /// конкретной вещью, открывается её категория.
+  late _ShopTab? _tab = _tabOf(widget.focusItemId);
 
   /// Выбранная подкатегория внутри вкладки. `null` — показываем всё.
   ///
@@ -68,6 +169,12 @@ class _ShopScreenState extends State<ShopScreen> {
     _group = null;
   });
 
+  /// «Назад»: из категории — к списку категорий.
+  void _up() => setState(() {
+    _tab = null;
+    _group = null;
+  });
+
   /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
   /// продаётся в магазине.
   static _ShopTab? _tabOf(String? itemId) {
@@ -78,121 +185,422 @@ class _ShopScreenState extends State<ShopScreen> {
     return null;
   }
 
+  /// Купить и сразу поставить в комнату (заказчик 10.10). Магазин при этом
+  /// остаётся открытым на той же категории.
+  Future<bool> _buy(ShopItem item) async {
+    final game = widget.game;
+    final l10n = context.l10n;
+    final toasts = topToasts(context);
+    final bought = await buyItemConfirmed(
+      context: context,
+      game: game,
+      item: item,
+      showToast: false,
+    );
+    if (!bought) return false;
+    final name = shopItemName(l10n, item.id);
+
+    var placed = false;
+    if (item.isSurface) {
+      // Стены и пол — сразу вместо прежних.
+      game.togglePlaced(item.id);
+      placed = true;
+    } else {
+      final slot = slotForBought(item, game.itemInSlot);
+      if (slot != null) {
+        game.placeInSlot(slot.id, item.id);
+        placed = true;
+      }
+    }
+    if (placed) widget.onApplied?.call(item);
+    toasts.show(
+      placed ? l10n.shopBoughtInRoom(name) : l10n.roomItemBought(name),
+      icon: Icons.check_circle_rounded,
+    );
+    return true;
+  }
+
+  /// Тянуть панель за шапку: вниз — до половины и до закрытия, вверх — во
+  /// весь рост.
+  void _drag(DragUpdateDetails d) {
+    final sheet = widget.sheet;
+    if (sheet == null || !sheet.isAttached) return;
+    sheet.jumpTo(
+      (sheet.size - sheet.pixelsToSize(d.delta.dy)).clamp(
+        ShopScreen.closeAt,
+        ShopScreen.full,
+      ),
+    );
+  }
+
+  void _release(DragEndDetails d) {
+    final sheet = widget.sheet;
+    if (sheet == null || !sheet.isAttached) return;
+    final v = d.primaryVelocity ?? 0;
+    final size = sheet.size;
+    double to;
+    if (v > 700) {
+      to = size > ShopScreen.half + 0.04 ? ShopScreen.half : ShopScreen.closeAt;
+    } else if (v < -700) {
+      to = ShopScreen.full;
+    } else {
+      to = const [
+        ShopScreen.closeAt,
+        ShopScreen.half,
+        ShopScreen.full,
+      ].reduce((a, b) => (a - size).abs() < (b - size).abs() ? a : b);
+    }
+    sheet.animateTo(
+      to,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Лист магазина не плоское полотно: кремовый уходит вниз в тёплый
-      // песочный, как потолок комнаты к полу. Плоская заливка рядом с
-      // фотографическими комнатами и читалась как чужая страница.
-      backgroundColor: Colors.transparent,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.surface,
-              AppColors.background,
-              Color(0xFFF3E7D2),
-            ],
-            stops: [0, 0.55, 1],
-          ),
-        ),
-        child: SafeArea(
-          child: AnimatedBuilder(
-            // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
-            // переход может случиться прямо на этом экране.
-            animation: Listenable.merge([widget.game, widget.game.bear]),
-            builder: (context, _) {
-              final game = widget.game;
-              final stage = game.bear.state.stage;
-
-              // Витрина делится надвое: сначала то, что малышу нужно сейчас,
-              // ниже — то, что пригодится потом. Замков здесь нет и быть не
-              // должно (КП 11.2 не знает никаких ограничений на покупку) —
-              // купить можно всё, но человеку с новорождённым первым должен
-              // попадаться ночник, а не письменный стол.
-              // Внутри каждой группы вперёд идут вещи со своей картинкой.
-              // Позиции, на которые картинок ещё не прислали, показываются
-              // значком, и вперемешку с фотографиями это читается как брак —
-              // а собранные внизу они выглядят просто как «ещё не завезли».
-              // Подкатегории вкладки — в том порядке, в каком они объявлены в
-              // каталоге: сначала крупное, потом мелочь.
-              final groups = _tab.groups;
-              final shown = [
-                for (final i in _tab.items)
-                  if (_group == null || i.group == _group) i,
-              ];
-              final now = [
-                for (final i in shown)
-                  if (i.suitsAt(stage)) i,
-              ];
-              final later = [
-                for (final i in shown)
-                  if (!i.suitsAt(stage)) i,
-              ];
-              // Порядок показа раздела целиком: по нему листают в просмотре.
-              final showcase = [...now, ...later];
-
-              return Column(
+    final tab = _tab;
+    return PopScope(
+      // Системное «назад» из категории — к списку категорий, а не вон.
+      canPop: tab == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _up();
+      },
+      child: _GlassSheet(
+        child: AnimatedBuilder(
+          // Мишку слушаем ради стадии: от неё зависит порядок витрины, и
+          // переход может случиться прямо на этом экране.
+          animation: Listenable.merge([widget.game, widget.game.bear]),
+          builder: (context, _) {
+            final game = widget.game;
+            final header = GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: _drag,
+              onVerticalDragEnd: _release,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Полоска-ручка: знак, что панель тянется.
+                  Center(
+                    child: Container(
+                      width: 46,
+                      height: 5,
+                      margin: const EdgeInsets.only(top: 10, bottom: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.textPrimary.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
                   _SheetHeader(
-                    title: context.l10n.shopTitle,
+                    title: tab == null
+                        ? context.l10n.shopTitle
+                        : tab.title(context.l10n),
                     coins: game.coins,
+                    onBack: tab == null ? null : _up,
                   ),
-                  _TabsRow(current: _tab, onSelected: _openTab),
-                  // Второй ряд — подкатегории этой вкладки. Один род вещей
-                  // делить не на что, поэтому ряд появляется от двух.
-                  if (groups.length > 1)
-                    _GroupsRow(
-                      groups: groups,
-                      current: _group,
-                      onSelected: (group) => setState(() => _group = group),
-                    ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppDimens.pagePadding,
-                        0,
-                        AppDimens.pagePadding,
-                        AppDimens.pagePadding,
+                  if (tab != null) ...[
+                    _TabsRow(current: tab, onSelected: _openTab),
+                    // Второй ряд — подкатегории этой вкладки. Один род вещей
+                    // делить не на что, поэтому ряд появляется от двух.
+                    if (tab.groups.length > 1)
+                      _GroupsRow(
+                        groups: tab.groups,
+                        current: _group,
+                        onSelected: (group) => setState(() => _group = group),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Заголовки появляются только когда есть что
-                          // разделять: на взрослой стадии подходит всё, и
-                          // подпись «малышу сейчас» над единственной сеткой
-                          // читалась бы как насмешка.
-                          if (later.isNotEmpty && now.isNotEmpty) ...[
-                            _GroupTitle(context.l10n.shopGroupNow),
-                            _ItemGrid(
-                              items: now,
-                              showcase: showcase,
-                              game: game,
-                            ),
-                            _GroupTitle(context.l10n.shopGroupLater),
-                            _ItemGrid(
-                              items: later,
-                              showcase: showcase,
-                              game: game,
-                            ),
-                          ] else
-                            _ItemGrid(
-                              items: now.isEmpty ? later : now,
-                              showcase: showcase,
-                              game: game,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
-              );
-            },
+              ),
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 240),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    // Витрина — во всю панель: иначе короткий раздел
+                    // (две картины) сжимается и повисает посередине, а
+                    // пустое место над ним не тянет панель.
+                    layoutBuilder: (current, previous) => Stack(
+                      fit: StackFit.expand,
+                      children: [...previous, ?current],
+                    ),
+                    child: tab == null
+                        ? _CategoryList(
+                            key: const ValueKey('shop.categories'),
+                            controller: widget.scrollController,
+                            onOpen: _openTab,
+                          )
+                        : _Showcase(
+                            key: ValueKey('shop.${tab.name}'),
+                            controller: widget.scrollController,
+                            tab: tab,
+                            group: _group,
+                            game: game,
+                            onBuy: _buy,
+                          ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Подложка панели: матовое стекло — размытая комната сквозь
+/// полупрозрачную заливку, тонкая светлая кромка сверху.
+class _GlassSheet extends StatelessWidget {
+  const _GlassSheet({required this.child});
+
+  final Widget child;
+
+  static const double _radius = 30;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(_radius),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(_radius),
+        ),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(_radius),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  width: 1.2,
+                ),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: 0.62),
+                  AppColors.surface.withValues(alpha: 0.72),
+                  AppColors.background.withValues(alpha: 0.8),
+                ],
+              ),
+            ),
+            child: Material(type: MaterialType.transparency, child: child),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Список категорий — первый уровень магазина.
+class _CategoryList extends StatelessWidget {
+  const _CategoryList({super.key, this.controller, required this.onOpen});
+
+  final ScrollController? controller;
+  final ValueChanged<_ShopTab> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final tabs = [
+      for (final tab in _ShopTab.values)
+        if (!tab.isEmpty) tab,
+    ];
+    return GridView.builder(
+      controller: controller,
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.pagePadding,
+        6,
+        AppDimens.pagePadding,
+        AppDimens.pagePadding,
+      ),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        mainAxisExtent: 150,
+      ),
+      itemCount: tabs.length,
+      itemBuilder: (context, index) =>
+          _CategoryTile(tab: tabs[index], onTap: () => onOpen(tabs[index])),
+    );
+  }
+}
+
+/// Плитка категории: две вещи из неё, название и сколько всего.
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({required this.tab, required this.onTap});
+
+  final _ShopTab tab;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = tab.items;
+    final radius = BorderRadius.circular(22);
+    return Semantics(
+      button: true,
+      label: tab.title(context.l10n),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, AppColors.surface],
+            ),
+            border: Border.all(color: AppColors.outline),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.tan.withValues(alpha: 0.22),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    if (items.length > 1)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        width: 44,
+                        height: 44,
+                        child: ItemPicture(item: items[1]),
+                      ),
+                    Positioned.fill(
+                      top: 10,
+                      right: items.length > 1 ? 16 : 0,
+                      child: Center(child: ItemPicture(item: items.first)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                tab.title(context.l10n),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: sceneText(size: 13.5, weight: 800),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                context.l10n.shopCategoryCount(items.length),
+                style: sceneText(
+                  size: 11,
+                  weight: 600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Витрина категории: «подходит сейчас» и «пригодится потом».
+class _Showcase extends StatelessWidget {
+  const _Showcase({
+    super.key,
+    this.controller,
+    required this.tab,
+    required this.group,
+    required this.game,
+    required this.onBuy,
+  });
+
+  final ScrollController? controller;
+  final _ShopTab tab;
+  final ItemGroup? group;
+  final GameState game;
+  final Future<bool> Function(ShopItem item) onBuy;
+
+  @override
+  Widget build(BuildContext context) {
+    final stage = game.bear.state.stage;
+
+    // Витрина делится надвое: сначала то, что малышу нужно сейчас, ниже —
+    // то, что пригодится потом. Замков здесь нет и быть не должно (КП 11.2
+    // не знает никаких ограничений на покупку) — купить можно всё, но
+    // человеку с новорождённым первым должен попадаться ночник, а не
+    // письменный стол.
+    final shown = [
+      for (final i in tab.items)
+        if (group == null || i.group == group) i,
+    ];
+    final now = [
+      for (final i in shown)
+        if (i.suitsAt(stage)) i,
+    ];
+    final later = [
+      for (final i in shown)
+        if (!i.suitsAt(stage)) i,
+    ];
+    // Порядок показа раздела целиком: по нему листают в просмотре.
+    final showcase = [...now, ...later];
+
+    return SingleChildScrollView(
+      controller: controller,
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.pagePadding,
+        0,
+        AppDimens.pagePadding,
+        AppDimens.pagePadding,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Заголовки появляются только когда есть что разделять: на
+          // взрослой стадии подходит всё, и подпись «малышу сейчас» над
+          // единственной сеткой читалась бы как насмешка.
+          if (later.isNotEmpty && now.isNotEmpty) ...[
+            _GroupTitle(context.l10n.shopGroupNow),
+            _ItemGrid(items: now, showcase: showcase, game: game, onBuy: onBuy),
+            _GroupTitle(context.l10n.shopGroupLater),
+            _ItemGrid(
+              items: later,
+              showcase: showcase,
+              game: game,
+              onBuy: onBuy,
+            ),
+          ] else
+            _ItemGrid(
+              items: now.isEmpty ? later : now,
+              showcase: showcase,
+              game: game,
+              onBuy: onBuy,
+            ),
+        ],
       ),
     );
   }
@@ -228,6 +636,7 @@ class _ItemGrid extends StatelessWidget {
     required this.items,
     required this.showcase,
     required this.game,
+    required this.onBuy,
   });
 
   /// Что показывает эта сетка: «подходит сейчас» или «пригодится потом».
@@ -238,6 +647,9 @@ class _ItemGrid extends StatelessWidget {
   final List<ShopItem> showcase;
 
   final GameState game;
+
+  /// Купить и сразу поставить в комнату.
+  final Future<bool> Function(ShopItem item) onBuy;
 
   @override
   Widget build(BuildContext context) {
@@ -264,13 +676,13 @@ class _ItemGrid extends StatelessWidget {
           owned: game.isOwned(item.id),
           // Корзины нет (заказчик 24.09): нажал — окно «Купить?», и каждая
           // вещь покупается отдельно.
-          onTap: () =>
-              buyItemConfirmed(context: context, game: game, item: item),
+          onTap: () => onBuy(item),
           onZoom: () => showItemPreview(
             context: context,
             items: showcase,
             index: showcase.indexOf(item),
             game: game,
+            onBuy: onBuy,
           ),
         );
       },
@@ -732,15 +1144,25 @@ class _ZoomButton extends StatelessWidget {
   }
 }
 
-/// Шапка листа: круглая кнопка «назад», заголовок по центру, кошелёк справа.
+/// Шапка панели: «назад» (в категории), заголовок по центру, кошелёк и
+/// крестик справа.
 ///
+/// «Назад» поднимает на уровень вверх — из категории к списку категорий, —
+/// а закрывает магазин только крестик или свайп вниз (заказчик 10.10).
 /// Кошелёк на этом экране обязателен: здесь тратят монеты (КП 11.1), и остаток
 /// должен быть перед глазами в тот момент, когда выбирают покупку.
 class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.title, required this.coins});
+  const _SheetHeader({
+    required this.title,
+    required this.coins,
+    required this.onBack,
+  });
 
   final String title;
   final int coins;
+
+  /// `null` — уровень верхний, «назад» некуда: кнопки нет.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -753,38 +1175,84 @@ class _SheetHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Material(
-            color: AppColors.surface,
-            clipBehavior: Clip.antiAlias,
-            shape: const CircleBorder(
-              side: BorderSide(color: AppColors.outline),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: const SizedBox(
-                width: 32,
-                height: 32,
-                child: Center(
-                  child: Icon(
-                    Icons.chevron_left,
-                    size: 20,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
+          // Место под «назад» держится и без кнопки: заголовок не прыгает.
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: onBack == null
+                  ? const SizedBox.shrink()
+                  : _RoundButton(
+                      key: const ValueKey('shop.back'),
+                      icon: Icons.chevron_left,
+                      label: MaterialLocalizations.of(
+                        context,
+                      ).backButtonTooltip,
+                      onTap: onBack!,
+                    ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: sceneText(size: 17, weight: 800),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                title,
+                key: ValueKey(title),
+                textAlign: TextAlign.center,
+                style: sceneText(size: 17, weight: 800),
+              ),
             ),
           ),
           const SizedBox(width: 10),
           _Purse(coins: coins),
+          const SizedBox(width: 8),
+          _RoundButton(
+            key: const ValueKey('shop.close'),
+            icon: Icons.close_rounded,
+            label: MaterialLocalizations.of(context).closeButtonLabel,
+            // Закрыть совсем — с любого уровня.
+            onTap: () => Navigator.of(context).pop(),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Круглая кнопка шапки: «назад» и крестик.
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: AppColors.surface,
+        clipBehavior: Clip.antiAlias,
+        shape: const CircleBorder(side: BorderSide(color: AppColors.outline)),
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 32,
+            height: 32,
+            child: Center(
+              child: Icon(icon, size: 20, color: AppColors.textPrimary),
+            ),
+          ),
+        ),
       ),
     );
   }

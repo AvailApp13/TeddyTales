@@ -9,6 +9,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import 'item_picture.dart';
 import 'scene_label.dart';
+import 'top_toast.dart';
 
 /// Лента своих вещей внизу экрана: что можно поставить в эту комнату.
 ///
@@ -198,14 +199,8 @@ class _FurnishBarState extends State<FurnishBar> {
                       const SizedBox(width: 8),
                       _SoonChip(
                         label: soon,
-                        onTap: () => ScaffoldMessenger.maybeOf(context)
-                          ?..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.furnishSoonToast(soon)),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          ),
+                        onTap: () =>
+                            showTopToast(context, l10n.furnishSoonToast(soon)),
                       ),
                     ],
                   ],

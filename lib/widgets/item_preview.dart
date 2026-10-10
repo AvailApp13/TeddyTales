@@ -27,6 +27,7 @@ Future<void> showItemPreview({
   required List<ShopItem> items,
   required int index,
   required GameState game,
+  Future<bool> Function(ShopItem item)? onBuy,
 }) {
   return Navigator.of(context).push(
     PageRouteBuilder<void>(
@@ -36,7 +37,12 @@ Future<void> showItemPreview({
       reverseTransitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (context, animation, _) => FadeTransition(
         opacity: animation,
-        child: _ItemPreview(items: items, index: index, game: game),
+        child: _ItemPreview(
+          items: items,
+          index: index,
+          game: game,
+          onBuy: onBuy,
+        ),
       ),
     ),
   );
@@ -47,6 +53,7 @@ class _ItemPreview extends StatefulWidget {
     required this.items,
     required this.index,
     required this.game,
+    this.onBuy,
   });
 
   /// Весь раздел витрины в том же порядке, что на её экране: из просмотра
@@ -54,6 +61,10 @@ class _ItemPreview extends StatefulWidget {
   final List<ShopItem> items;
   final int index;
   final GameState game;
+
+  /// Покупка магазина: купить и сразу поставить в комнату. `null` — просто
+  /// купить.
+  final Future<bool> Function(ShopItem item)? onBuy;
 
   @override
   State<_ItemPreview> createState() => _ItemPreviewState();
@@ -175,11 +186,13 @@ class _ItemPreviewState extends State<_ItemPreview> {
                       _PreviewAction(
                         item: item,
                         owned: owned,
-                        onTap: () => buyItemConfirmed(
-                          context: context,
-                          game: widget.game,
-                          item: item,
-                        ),
+                        onTap: () =>
+                            widget.onBuy?.call(item) ??
+                            buyItemConfirmed(
+                              context: context,
+                              game: widget.game,
+                              item: item,
+                            ),
                       ),
                     ],
                   ),

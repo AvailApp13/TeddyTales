@@ -5,6 +5,7 @@ import '../game/app_section.dart';
 import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
+import 'top_toast.dart';
 
 /// Нижняя навигация с замками по стадии роста (КП 3.5).
 class AppBottomNav extends StatelessWidget {
@@ -48,16 +49,10 @@ class AppBottomNav extends StatelessWidget {
 
   void _explainLock(BuildContext context, AppSection section) {
     final l10n = context.l10n;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '${sectionTitle(l10n, section)}. ${sectionLockReason(l10n, section)}',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showTopToast(
+      context,
+      '${sectionTitle(l10n, section)}. ${sectionLockReason(l10n, section)}',
+    );
   }
 }
 

@@ -826,6 +826,22 @@
   "shopTabFurniture": "Мебель",
   "shopTabToys": "Игрушки",
   "shopTitle": "Магазин",
+  "@shopBoughtInRoom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopBoughtInRoom": "Куплено — {name} уже в комнате",
+  "@shopCategoryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopCategoryCount": "{count, plural, one{{count} вещь} few{{count} вещи} other{{count} вещей}}",
   "signInAlipay": "Войти через Alipay",
   "signInApple": "Войти через Apple",
   "signInGoogle": "Войти через Google",

@@ -11,6 +11,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../widgets/top_toast.dart';
 
 /// Категория обучения: три штуки, названия из КП 9.1.
 ///
@@ -259,14 +260,7 @@ class _LearningScreenState extends State<LearningScreen> {
     _closeTimer = Timer(const Duration(milliseconds: 700), () {
       if (!mounted) return;
       _closeLevel();
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.learnCorrectToast(_levelReward)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      showTopToast(context, context.l10n.learnCorrectToast(_levelReward));
     });
   }
 
@@ -488,14 +482,7 @@ class _LearningScreenState extends State<LearningScreen> {
       MaterialPageRoute<void>(
         builder: (_) => category.builder(level, () {
           widget.game.completeLevel(category.id, level, reward: _levelReward);
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(context.l10n.learnLevelDoneToast(_levelReward)),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+          showTopToast(context, context.l10n.learnLevelDoneToast(_levelReward));
         }),
       ),
     );
@@ -902,16 +889,10 @@ class _CategoryTile extends StatelessWidget {
 
   void _explainLock(BuildContext context) {
     final l10n = context.l10n;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.learnCatLocked(stageTitle(l10n, category.minStage)),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showTopToast(
+      context,
+      l10n.learnCatLocked(stageTitle(l10n, category.minStage)),
+    );
   }
 }
 

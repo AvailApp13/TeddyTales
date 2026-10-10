@@ -397,6 +397,36 @@ RoomSlot? slotById(String id) {
   return null;
 }
 
+/// Куда встанет только что купленная вещь [item].
+///
+/// Заказчик 10.10: «купленный предмет сразу применяется к комнате» — из
+/// магазина видно, как вещь встаёт. Из подходящих мест вперёд то, что
+/// ближе по размеру к самой вещи: картина — на место картины, а не полки;
+/// растение — в угол, а не к стене вместо комода. Сначала — свободное;
+/// свободных нет — первое подходящее, и то, что там стояло, возвращается
+/// в инвентарь. `null` — места этой вещи в комнате нет.
+RoomSlot? slotForBought(
+  ShopItem item,
+  String? Function(String slotId) itemInSlot,
+) {
+  final metres = metricsOf(item.id)?.metres;
+  if (metres == null) return null;
+  final fits = [
+    for (final slot in roomSlots)
+      if (slot.takes(item)) slot,
+  ];
+  if (fits.isEmpty) return null;
+  // Сортировка устойчивая: при равном размере — по порядку мест.
+  final byFit = [...fits]
+    ..sort(
+      (a, b) => (a.metres - metres).abs().compareTo((b.metres - metres).abs()),
+    );
+  for (final slot in byFit) {
+    if (itemInSlot(slot.id) == null) return slot;
+  }
+  return byFit.first;
+}
+
 /// Прямоугольник в долях кадра: где и каким размером рисовать.
 typedef SlotBox = ({double left, double top, double width, double height});
 

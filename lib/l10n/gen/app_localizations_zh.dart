@@ -1325,6 +1325,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shopTitle => '商店';
 
   @override
+  String shopBoughtInRoom(String name) {
+    return '已购买「$name」，已摆进房间';
+  }
+
+  @override
+  String shopCategoryCount(int count) {
+    return '$count件';
+  }
+
+  @override
   String get signInAlipay => '通过支付宝登录';
 
   @override

@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../l10n/sections_l10n.dart';
 import '../theme/app_colors.dart';
 import 'glass_panel.dart';
+import 'top_toast.dart';
 
 /// «Напоминать о малыше?» — мягкий вопрос перед системным (КП 13.1;
 /// заказчик 26.09).
@@ -45,11 +46,9 @@ Future<void> maybeAskNotifications(
   final l10n = context.l10n;
   final granted = yes == true && await game.enableCareReminders();
   if (granted || !context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(yes == true ? l10n.notifyDenied : l10n.notifyAskLaterHint),
-      behavior: SnackBarBehavior.floating,
-    ),
+  showTopToast(
+    context,
+    yes == true ? l10n.notifyDenied : l10n.notifyAskLaterHint,
   );
 }
 

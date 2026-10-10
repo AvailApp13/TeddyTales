@@ -1408,6 +1408,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shopTitle => 'Магазин';
 
   @override
+  String shopBoughtInRoom(String name) {
+    return 'Куплено — $name уже в комнате';
+  }
+
+  @override
+  String shopCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count вещей',
+      few: '$count вещи',
+      one: '$count вещь',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get signInAlipay => 'Войти через Alipay';
 
   @override

@@ -7,6 +7,7 @@ import '../theme/app_colors.dart';
 import 'gift_reveal.dart';
 import 'glass_panel.dart';
 import 'scene_label.dart';
+import 'top_toast.dart';
 
 /// «Сегодня»: подарок дня, задания дня и задание недели (заказчик 25.09,
 /// миграция 0017; КП 11.1 — монеты за вход и достижения, КП 13.1 —
@@ -43,21 +44,16 @@ class _DailySheetState extends State<DailySheet> {
   /// Вчера пропущен день — выкупить серию за монеты (миграция 0023).
   Future<void> _restore() async {
     final l10n = context.l10n;
-    final messenger = ScaffoldMessenger.of(context);
+    final toasts = topToasts(context);
     setState(() => _restoring = true);
     final result = await widget.game.restoreStreak();
     if (!mounted) return;
     setState(() => _restoring = false);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(switch (result) {
-          RestoreResult.ok => l10n.dailyStreakRestored,
-          RestoreResult.noCoins => l10n.dailyStreakNoCoins,
-          RestoreResult.failed => l10n.dailyGiftFailed,
-        }),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    toasts.show(switch (result) {
+      RestoreResult.ok => l10n.dailyStreakRestored,
+      RestoreResult.noCoins => l10n.dailyStreakNoCoins,
+      RestoreResult.failed => l10n.dailyGiftFailed,
+    });
   }
 
   Future<void> _claim() async {
@@ -79,14 +75,7 @@ class _DailySheetState extends State<DailySheet> {
     );
     if (!mounted) return;
     setState(() => _claiming = false);
-    if (failed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.dailyGiftFailed),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    if (failed) showTopToast(context, context.l10n.dailyGiftFailed);
   }
 
   @override

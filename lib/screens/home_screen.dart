@@ -67,6 +67,7 @@ import 'learning_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
+import '../widgets/top_toast.dart';
 
 /// Главный экран — комната с питомцем (КП 3).
 ///
@@ -225,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen>
     _toastWake(outcome, picked, previous, alarm);
   }
 
-  /// Что стало с будильником — одной строкой внизу экрана.
+  /// Что стало с будильником — уведомлением сверху.
   void _toastWake(
     WakeAlarmOutcome outcome,
     TimeOfDay time,
@@ -250,24 +251,18 @@ class _HomeScreenState extends State<HomeScreen>
       WakeAlarmOutcome.denied => l10n.wakeAlarmDenied,
       WakeAlarmOutcome.failed => l10n.wakeAlarmFailed,
     };
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(text),
-          behavior: SnackBarBehavior.floating,
-          // Над кнопками на ковре: «Разбудить» и будильник остаются под
-          // рукой, пока строка висит.
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 150),
-          duration: const Duration(seconds: 6),
-          action: outcome == WakeAlarmOutcome.clock
-              ? SnackBarAction(
-                  label: l10n.wakeAlarmOpenClock,
-                  onPressed: alarm.openClock,
-                )
-              : null,
-        ),
-      );
+    // Сверху, а не над кнопками на ковре: «Разбудить» и будильник
+    // остаются под рукой, пока строка висит. Текст длинный — держится дольше.
+    showTopToast(
+      context,
+      text,
+      icon: Icons.alarm_rounded,
+      duration: const Duration(seconds: 5),
+      actionLabel: outcome == WakeAlarmOutcome.clock
+          ? l10n.wakeAlarmOpenClock
+          : null,
+      onAction: outcome == WakeAlarmOutcome.clock ? alarm.openClock : null,
+    );
   }
 
   @override
@@ -433,13 +428,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {});
   }
 
-  void _toastFurnish(String text) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
-      );
-  }
+  void _toastFurnish(String text) => showTopToast(context, text);
 
   void _openSection(AppSection section) {
     switch (section) {
@@ -447,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen>
       case AppSection.room:
         _startFurnishing();
       case AppSection.shop:
-        _openSheet(ShopScreen(game: widget.game));
+        _openShop();
       case AppSection.learning:
         _openSheet(LearningScreen(game: widget.game));
       case AppSection.catalog:
@@ -460,6 +449,15 @@ class _HomeScreenState extends State<HomeScreen>
         break;
     }
   }
+
+  /// Магазин — стеклянной панелью на полэкрана (заказчик 10.10): над ней
+  /// видна комната, и купленное встаёт в ней прямо на глазах. Вещь для
+  /// игровой — сразу показываем игровую, где бы ни стоял человек.
+  Future<void> _openShop() => showShopSheet(
+    context,
+    game: widget.game,
+    onApplied: (_) => _showRoom(RoomKind.nursery),
+  );
 
   /// Профиль — единственный экран с ветвлением: из него открываются рост,
   /// дневник и настройки (КП 14.1, 14.2).
@@ -527,17 +525,17 @@ class _HomeScreenState extends State<HomeScreen>
   /// Сообщение «этого ещё нет». Нарочно одинаковое для всех недоделок:
   /// тестировщик по нему сразу понимает, что нажатие обработано, а работы
   /// ещё идут.
-  void _soon(String text, {SnackBarAction? action}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(text),
-          behavior: SnackBarBehavior.floating,
-          action: action,
-        ),
+  void _soon(String text, {String? actionLabel, VoidCallback? onAction}) =>
+      showTopToast(
+        context,
+        text,
+        actionLabel: actionLabel,
+        onAction: onAction,
+        // С кнопкой — дольше: чтобы успеть нажать.
+        duration: onAction == null
+            ? TopToasts.defaultDuration
+            : const Duration(seconds: 5),
       );
-  }
 
   /// Последнее кормление: по нему мишка на кухне ест и радуется.
   KitchenMeal? _meal;
@@ -589,6 +587,10 @@ class _HomeScreenState extends State<HomeScreen>
   /// кружок «Еда», монеты делают «у-у» в момент удара. Заменил строку
   /// «Пирог · еда +40, −15 монет» внизу экрана.
   final FeedFx _fx = FeedFx();
+
+  /// Касание где угодно на главном экране (заказчик 10.10): кольца
+  /// показателей начинают отсчёт бездействия заново.
+  final _Activity _activity = _Activity();
 
   /// Готовка засчитана, а пузырь ещё не вылетел: мишка ест.
   Recipe? _cookPending;
@@ -709,14 +711,12 @@ class _HomeScreenState extends State<HomeScreen>
           stageTitle(l10n, stage),
         ),
         // Сверх ТЗ (заказчик 25.09): «подрос!» — карточкой в соцсети.
-        action: SnackBarAction(
-          label: l10n.shareAction,
-          onPressed: () => showShareCard(
-            context,
-            game: widget.game,
-            stage: stage,
-            grown: true,
-          ),
+        actionLabel: l10n.shareAction,
+        onAction: () => showShareCard(
+          context,
+          game: widget.game,
+          stage: stage,
+          grown: true,
         ),
       );
     }
@@ -804,6 +804,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     widget.game.removeListener(_onGame);
+    _activity.dispose();
     _closeGap.dispose();
     _hungerTimer?.cancel();
     _lifeTimer?.cancel();
@@ -1035,16 +1036,8 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _meal = KitchenMeal(id: ++_meals, mood: mood));
   }
 
-  void _notImplemented(BearAction action) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.homeScreenNotReady(action.name)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-  }
+  void _notImplemented(BearAction action) =>
+      showTopToast(context, context.l10n.homeScreenNotReady(action.name));
 
   @override
   Widget build(BuildContext context) {
@@ -1060,172 +1053,183 @@ class _HomeScreenState extends State<HomeScreen>
           // (решение заказчика 20.09). Шапка и показатели лежат поверх неё
           // отдельными слоями, а не делят с ней высоту колонкой.
           extendBody: true,
-          // StackFit.expand обязателен: слой управления — колонка по высоте
-          // содержимого, и без него стек сжался бы до её высоты, а комната
-          // вместе с ним.
-          body: Stack(
-            fit: StackFit.expand,
-            children: [
-              Positioned.fill(
-                child: _RoomScene(
-                  controller: widget.controller,
-                  mood: _life.mood,
-                  forgotten: _life.forgotten,
-                  showBubble: _showSpeechBubble,
-                  language: widget.language,
-                  onAcceptInitiative: _runAction,
-                  riveAssetPath: widget.riveAssetPath,
-                  game: widget.game,
-                  onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
-                  furnishing: _furnishing,
-                  slotHints: _furnishing && !_surfaceTab,
-                  picked: _picked,
-                  surfacePreview: _surfacePreview,
-                  room: _room,
-                  onRoomChanged: _showRoom,
-                  asleep: _asleep,
-                  meal: _meal,
-                  pets: _pets,
-                  onPet: _petBear,
-                  onPutToBed: _putToBed,
-                  onWake: _wake,
-                  alarm: _alarm,
-                  onPickAlarm: _pickAlarm,
-                  onOpenFeed: _openFeed,
-                  dishesShown: _dishesShown,
-                  craving: _craving,
-                  dishArc: _dishArc,
-                  dishes: _table,
-                  onToggleDishes: _toggleDishes,
-                  onHideDishes: _hideDishes,
-                  onBuyDish: _buyDish,
-                  recipesShown: _recipesShown,
-                  recipeArc: _recipeArc,
-                  cooking: _cooking,
-                  cookRun: _cookRun,
-                  refusals: _refusals,
-                  onToggleRecipes: _toggleRecipes,
-                  onHideRecipes: _hideRecipes,
-                  onStartCooking: _startCooking,
-                  cookCallbacks: (
-                    onClose: _stopCooking,
-                    onWrong: _wrongIngredient,
-                    onCooked: _cooked,
-                    onServe: _serveCooked,
-                    onEaten: _cookEaten,
-                    onFinished: _finishCooking,
-                  ),
-                  onWash: _wash,
-                  onToilet: _toilet,
-                  onBottle: _bottle,
-                  onDiaper: _diaper,
-                  faceCue: _faceCue,
-                  onOpenCare: () => _open(
-                    CareScreen(
-                      controller: widget.controller,
-                      onOpenFeed: () => _openSheet(
-                        FeedScreen(
-                          controller: widget.controller,
-                          game: widget.game,
+          // Любое касание экрана — «человек здесь»: кольца показателей не
+          // сворачиваются, пока им пользуются (заказчик 10.10). Слушатель
+          // касания не забирает — оно идёт дальше, куда шло.
+          body: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => _activity.ping(),
+            // StackFit.expand обязателен: слой управления — колонка по высоте
+            // содержимого, и без него стек сжался бы до её высоты, а комната
+            // вместе с ним.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned.fill(
+                  child: _RoomScene(
+                    controller: widget.controller,
+                    mood: _life.mood,
+                    forgotten: _life.forgotten,
+                    showBubble: _showSpeechBubble,
+                    language: widget.language,
+                    onAcceptInitiative: _runAction,
+                    riveAssetPath: widget.riveAssetPath,
+                    game: widget.game,
+                    onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
+                    furnishing: _furnishing,
+                    slotHints: _furnishing && !_surfaceTab,
+                    picked: _picked,
+                    surfacePreview: _surfacePreview,
+                    room: _room,
+                    onRoomChanged: _showRoom,
+                    asleep: _asleep,
+                    meal: _meal,
+                    pets: _pets,
+                    onPet: _petBear,
+                    onPutToBed: _putToBed,
+                    onWake: _wake,
+                    alarm: _alarm,
+                    onPickAlarm: _pickAlarm,
+                    onOpenFeed: _openFeed,
+                    dishesShown: _dishesShown,
+                    craving: _craving,
+                    dishArc: _dishArc,
+                    dishes: _table,
+                    onToggleDishes: _toggleDishes,
+                    onHideDishes: _hideDishes,
+                    onBuyDish: _buyDish,
+                    recipesShown: _recipesShown,
+                    recipeArc: _recipeArc,
+                    cooking: _cooking,
+                    cookRun: _cookRun,
+                    refusals: _refusals,
+                    onToggleRecipes: _toggleRecipes,
+                    onHideRecipes: _hideRecipes,
+                    onStartCooking: _startCooking,
+                    cookCallbacks: (
+                      onClose: _stopCooking,
+                      onWrong: _wrongIngredient,
+                      onCooked: _cooked,
+                      onServe: _serveCooked,
+                      onEaten: _cookEaten,
+                      onFinished: _finishCooking,
+                    ),
+                    onWash: _wash,
+                    onToilet: _toilet,
+                    onBottle: _bottle,
+                    onDiaper: _diaper,
+                    faceCue: _faceCue,
+                    onOpenCare: () => _open(
+                      CareScreen(
+                        controller: widget.controller,
+                        onOpenFeed: () => _openSheet(
+                          FeedScreen(
+                            controller: widget.controller,
+                            game: widget.game,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              // Слой управления: шапка и кольца показателей вверху, над
-              // потолком. Пустота под ними касания не ловит — погладить
-              // мишку можно прямо через неё.
-              //
-              // В режиме обустройства его не видно: комната должна быть
-              // видна целиком, иначе не разглядеть, что получается.
-              if (!_furnishing)
-                SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimens.pagePadding,
-                      8,
-                      AppDimens.pagePadding,
-                      0,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PetHeader(
-                          profile: profile,
-                          age: age,
-                          fx: _fx,
-                          onOpenProfile: () => _openGlass(_profileScreen()),
-                          onShare: () => showShareCard(
-                            context,
-                            game: widget.game,
-                            stage: state.stage,
+                // Слой управления: шапка и кольца показателей вверху, над
+                // потолком. Пустота под ними касания не ловит — погладить
+                // мишку можно прямо через неё.
+                //
+                // В режиме обустройства его не видно: комната должна быть
+                // видна целиком, иначе не разглядеть, что получается.
+                if (!_furnishing)
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.pagePadding,
+                            ),
+                            child: PetHeader(
+                              profile: profile,
+                              age: age,
+                              fx: _fx,
+                              onOpenProfile: () => _openGlass(_profileScreen()),
+                              onShare: () => showShareCard(
+                                context,
+                                game: widget.game,
+                                stage: state.stage,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        CareStatsPanel(
-                          stats: state.stats,
-                          stage: state.stage,
-                          onAction: _runAction,
-                          fx: _fx,
-                        ),
-                        const SizedBox(height: 10),
-                        // Реплика идёт следом за кольцами в одной колонке, а
-                        // не висит на своей высоте поверх них. Раньше высота
-                        // была числом (178), а подписи колец занимают разное
-                        // место: на телефоне с высоким вырезом пузырь ложился
-                        // прямо на «Еда» и «Гигиена» — заказчик 20.09: «здесь
-                        // у нас идут наложения, это никак не катит».
-                        //
-                        // Справа оставлено место под кнопку профиля и лапу.
-                        //
-                        // В спальне реплики нет вовсе: заказчик 22.09 — «во
-                        // время сна они не должны присутствовать, убрать с
-                        // комнаты сон». Нужна ли она там потом и в каком
-                        // виде — решение отдельное.
-                        //
-                        // Заказчик 26.09: реплику пока убрать из всех
-                        // комнат — вернём, когда решим, с какой логикой.
-                        // С 27.09 пузырь — над головой мишки, в сцене
-                        // (`_RoomScene`), не здесь.
-                      ],
+                          const SizedBox(height: 14),
+                          // Во всю ширину: свёрнутый круг уезжает к самому краю
+                          // экрана «язычком» и должен нажиматься и там.
+                          CareStatsPanel(
+                            stats: state.stats,
+                            stage: state.stage,
+                            onAction: _runAction,
+                            fx: _fx,
+                            activity: _activity,
+                            edgePadding: AppDimens.pagePadding,
+                          ),
+                          const SizedBox(height: 10),
+                          // Реплика идёт следом за кольцами в одной колонке, а
+                          // не висит на своей высоте поверх них. Раньше высота
+                          // была числом (178), а подписи колец занимают разное
+                          // место: на телефоне с высоким вырезом пузырь ложился
+                          // прямо на «Еда» и «Гигиена» — заказчик 20.09: «здесь
+                          // у нас идут наложения, это никак не катит».
+                          //
+                          // Справа оставлено место под кнопку профиля и лапу.
+                          //
+                          // В спальне реплики нет вовсе: заказчик 22.09 — «во
+                          // время сна они не должны присутствовать, убрать с
+                          // комнаты сон». Нужна ли она там потом и в каком
+                          // виде — решение отдельное.
+                          //
+                          // Заказчик 26.09: реплику пока убрать из всех
+                          // комнат — вернём, когда решим, с какой логикой.
+                          // С 27.09 пузырь — над головой мишки, в сцене
+                          // (`_RoomScene`), не здесь.
+                        ],
+                      ),
+                    ),
+                  ),
+                // Пузырь сытости летит над комнатой и кольцами. Касаний не
+                // ловит.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: FeedBurstLayer(
+                      fx: _fx,
+                      liveFood: () => widget.controller.stats.food,
+                      liveCoins: () => widget.game.profile.coins,
                     ),
                   ),
                 ),
-              // Пузырь сытости летит над комнатой и кольцами. Касаний не
-              // ловит.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: FeedBurstLayer(
-                    fx: _fx,
-                    liveFood: () => widget.controller.stats.food,
-                    liveCoins: () => widget.game.profile.coins,
+                // Разделы. Лежат выше всего: разлетевшиеся кружки должны
+                // перекрывать и комнату, и кольца показателей.
+                if (!_furnishing)
+                  PawMenu(stage: state.stage, onSelected: _openSection),
+                if (_furnishing)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FurnishBar(
+                      game: widget.game,
+                      room: _room,
+                      picked: _picked,
+                      onPick: (item) => setState(() => _picked = item),
+                      onSurface: _pickSurface,
+                      onSurfaceTab: (on) => setState(() => _surfaceTab = on),
+                      onShop: () {
+                        _stopFurnishing();
+                        _openShop();
+                      },
+                      onDone: _stopFurnishing,
+                    ),
                   ),
-                ),
-              ),
-              // Разделы. Лежат выше всего: разлетевшиеся кружки должны
-              // перекрывать и комнату, и кольца показателей.
-              if (!_furnishing)
-                PawMenu(stage: state.stage, onSelected: _openSection),
-              if (_furnishing)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: FurnishBar(
-                    game: widget.game,
-                    room: _room,
-                    picked: _picked,
-                    onPick: (item) => setState(() => _picked = item),
-                    onSurface: _pickSurface,
-                    onSurfaceTab: (on) => setState(() => _surfaceTab = on),
-                    onShop: () {
-                      _stopFurnishing();
-                      _openSheet(ShopScreen(game: widget.game));
-                    },
-                    onDone: _stopFurnishing,
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
           // Дев-панель уехала влево: справа внизу теперь лапа.
           floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -1240,6 +1244,11 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+}
+
+/// Касание где угодно на главном экране — сигнал «человек здесь».
+class _Activity extends ChangeNotifier {
+  void ping() => notifyListeners();
 }
 
 /// Характер для кухни. Заглушка `kTestKitchenTrait` — снять любую
@@ -1307,7 +1316,7 @@ class _RoomScene extends StatelessWidget {
   /// Нужда ниже 15 — «Ты про меня забыл?».
   final bool forgotten;
 
-  /// Пузырь-реплика над головой мишки (заказчик 27.09).
+  /// Облачко-реплика слева от мишки (заказчик 27.09, место — 10.10).
   final bool showBubble;
   final BearLanguage language;
   final ValueChanged<BearAction> onAcceptInitiative;
@@ -1590,23 +1599,10 @@ class _RoomScene extends StatelessWidget {
               onTap: controller.petBear,
             ),
           ),
-        // Пузырь-реплика над головой (заказчик 27.09): всплывает и
-        // печатается; хвостик — к макушке капюшона.
+        // Облачко-реплика слева от мишки, у окна, на уровне головы
+        // (заказчик 10.10): над головой оно закрывало картины на стене.
         if (showBubble && room == RoomKind.nursery && !asleep && !furnishing)
-          Positioned(
-            left: 16,
-            right: 16,
-            top: frame.bearTop - 50,
-            child: Center(
-              child: PetSpeechBubble(
-                mood: mood,
-                forgotten: forgotten,
-                initiative: controller.initiative,
-                language: language,
-                onTap: onAcceptInitiative,
-              ),
-            ),
-          ),
+          _bubble(context, frame),
         // Ближние места — поверх мишки. Слой занимает только площадь мест,
         // остальное прозрачно для касаний: погладить мишку по-прежнему
         // можно где угодно.
@@ -1805,6 +1801,46 @@ class _RoomScene extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  /// Облачко-реплика: слева от капюшона, между низом картин и спинкой
+  /// кресла, правым краем к голове, хвостик — к уху.
+  ///
+  /// Меры — доли роста мишки от его макушки и середины, снятые с силуэта
+  /// мишки в игровой: у макушки капюшон узкий (до 0,11 роста от середины
+  /// на высоте облачка), у ушей — 0,19, у щёк — 0,22. Картины кончаются
+  /// чуть выше макушки, спинка кресла начинается на четверти роста.
+  /// Поэтому на любом экране облачко встаёт на то же место относительно
+  /// головы и не залезает ни на картины, ни на кресло, ни на кольца и
+  /// кнопки.
+  Widget _bubble(BuildContext context, RoomFrame frame) {
+    final h = frame.bearHeight;
+    final left = MediaQuery.paddingOf(context).left + 8;
+    final right = frame.bearCenterX - 0.14 * h;
+    final top = frame.bearTop + 0.035 * h;
+    final width = math.max(96.0, right - left);
+    // Хвостик — от правого верхнего угла облачка к левому боку капюшона,
+    // на уровне ушей.
+    final tail = Offset(
+      frame.bearCenterX - 0.195 * h - (left + width),
+      frame.bearTop + 0.24 * h - top,
+    );
+    return Positioned(
+      left: left,
+      top: top,
+      width: width,
+      child: Align(
+        alignment: Alignment.topRight,
+        child: PetSpeechBubble(
+          mood: mood,
+          forgotten: forgotten,
+          initiative: controller.initiative,
+          language: language,
+          onTap: onAcceptInitiative,
+          tailTo: tail,
+        ),
+      ),
     );
   }
 

@@ -17,6 +17,7 @@ import '../l10n/zodiac_l10n.dart';
 import 'gift_reveal.dart' show showCoinReward;
 import 'glass_panel.dart';
 import '../theme/app_colors.dart';
+import 'top_toast.dart';
 
 /// «Поделиться» (сверх ТЗ, заказчик 25.09): одно окно на карточку мишки и
 /// приглашение друга. Карточка — фото мишки, имя, стадия, возраст, знак,
@@ -90,13 +91,7 @@ class _ShareDialogState extends State<_ShareDialog> {
     if (mounted) setState(() => _info = info);
   }
 
-  void _say(String text) {
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
-      );
-  }
+  void _say(String text) => showTopToast(context, text);
 
   Future<void> _share() async {
     final l10n = context.l10n;

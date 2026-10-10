@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../backend/email_auth.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
+import '../widgets/top_toast.dart';
 
 /// Регистрация и вход по почте (КП 1.3).
 ///
@@ -163,16 +164,14 @@ class _EmailAuthScreenState extends State<EmailAuthScreen> {
     final email = _sentTo;
     final auth = widget.auth;
     if (email == null || auth == null) return;
-    final messenger = ScaffoldMessenger.of(context);
+    final toasts = topToasts(context);
     final l10n = context.l10n;
     _startResendPause();
     try {
       await auth.resendConfirmation(email);
-      messenger.showSnackBar(SnackBar(content: Text(l10n.emailCodeSent)));
+      toasts.show(l10n.emailCodeSent);
     } on EmailAuthException catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(_errorText(l10n, error.error))),
-      );
+      toasts.show(_errorText(l10n, error.error));
     }
   }
 

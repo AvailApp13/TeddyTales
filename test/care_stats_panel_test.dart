@@ -11,10 +11,11 @@ import 'package:teddy_tales/widgets/care_stats_panel.dart';
 ///
 /// «Вместо любви мы делаем эту кнопку, она будет прятать все». С 21.09 ряд
 /// открыт с запуска: «при открытии приложения это меню должно быть всегда
-/// раскрыто, по желанию человек нажимает крестик, тогда оно только
-/// прячется». Здесь проверяется само поведение: что при запуске показатели
-/// на виду, что прячет их только крестик, что любви среди них больше нет и
-/// что её показатель не потерялся — он в общем проценте на кнопке.
+/// раскрыто». С 10.10 ряд сам сворачивается через 3 с без касаний, а общий
+/// круг ещё через 5 с уезжает к краю «язычком»; тап по нему раскрывает ряд
+/// и подсвечивает самый низкий показатель. Здесь проверяется само
+/// поведение, а ещё — что любви среди колец больше нет и что её показатель
+/// не потерялся: он в общем проценте на кнопке.
 // Полоски и крест на кнопке рисуются кистью, а не иконкой, — ищем её по
 // ключу. Открыта она или нет, видно по самим кольцам.
 final button = find.byKey(const ValueKey('care.toggle'));
@@ -26,6 +27,7 @@ void main() {
     WidgetTester tester, {
     required List<BearAction> tapped,
     BearCareStats stats = const BearCareStats(),
+    Listenable? activity,
   }) {
     return tester.pumpWidget(
       MaterialApp(
@@ -40,6 +42,7 @@ void main() {
             stats: stats,
             stage: BearStage.adult,
             onAction: tapped.add,
+            activity: activity,
           ),
         ),
       ),
@@ -70,15 +73,73 @@ void main() {
       expect(food, findsOneWidget);
     });
 
-    testWidgets('сам ряд не сворачивается — только по нажатию', (tester) async {
-      // В отличие от лапы внизу, у этой кнопки таймера нет: так решил
-      // заказчик. Если однажды заведут авто-сбор, тест об этом скажет.
+    testWidgets('ряд сам сворачивается через 3 с без касаний', (tester) async {
+      // Заказчик 10.10: «ряд из 4 кругов при бездействии ~3 сек
+      // сворачивается анимацией обратно в один общий круг».
       await pump(tester, tapped: []);
 
-      await tester.pump(const Duration(seconds: 10));
-      await tester.pumpAndSettle();
-
+      await tester.pump(const Duration(seconds: 2));
       expect(food, findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
+      await tester.pumpAndSettle();
+      expect(food, findsNothing);
+      expect(button, findsOneWidget);
+    });
+
+    testWidgets('любое касание экрана откладывает сворачивание', (
+      tester,
+    ) async {
+      final activity = ChangeNotifier();
+      addTearDown(activity.dispose);
+      await pump(tester, tapped: [], activity: activity);
+
+      await tester.pump(const Duration(seconds: 2));
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      activity.notifyListeners();
+      await tester.pump(const Duration(seconds: 2));
+      expect(food, findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
+      await tester.pumpAndSettle();
+      expect(food, findsNothing);
+    });
+
+    testWidgets('свёрнутый круг уезжает к краю, тап раскрывает ряд', (
+      tester,
+    ) async {
+      // Заказчик 10.10: общий круг перекрывал картины и потолок — через
+      // 5 с он уменьшается и уезжает наполовину за край; тап по нему —
+      // выезжает и раскрывает показатели, самый низкий подсвечен.
+      await pump(
+        tester,
+        tapped: [],
+        stats: const BearCareStats(food: 70, hygiene: 20, sleep: 90, play: 60),
+      );
+      await tester.pump(const Duration(milliseconds: 3100));
+      await tester.pumpAndSettle();
+      final before = tester.getCenter(button).dx;
+
+      await tester.pump(const Duration(milliseconds: 5100));
+      await tester.pumpAndSettle();
+      final width = tester.getSize(find.byType(Scaffold)).width;
+      expect(tester.getCenter(button).dx, greaterThan(before));
+      expect(tester.getCenter(button).dx, closeTo(width, 1));
+
+      // Видна половина — по ней и жмём.
+      await tester.tapAt(tester.getCenter(button) - const Offset(12, 0));
+      await tester.pumpAndSettle();
+      expect(food, findsOneWidget);
+      expect(tester.getCenter(button).dx, closeTo(before, 1));
+      // Подсвечен самый низкий — гигиена.
+      final lit = find.byWidgetPredicate(
+        (w) => w is AnimatedScale && w.scale > 1,
+      );
+      expect(lit, findsOneWidget);
+      expect(
+        find.descendant(of: lit, matching: find.byIcon(Icons.bathtub_outlined)),
+        findsOneWidget,
+      );
     });
 
     testWidgets('выбор показателя уводит в комнату, но ряд остаётся', (
@@ -86,12 +147,12 @@ void main() {
     ) async {
       // До 21.09 ряд после выбора уезжал. Заказчик: «как он поел, сколько
       // ему нужно поесть ещё — должно быть видно сразу», а видеть это можно
-      // только по тем самым кольцам.
+      // только по тем самым кольцам. Сворачивается он сам — через 3 с.
       final tapped = <BearAction>[];
       await pump(tester, tapped: tapped);
 
       await tester.tap(food);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(tapped, [BearAction.feed]);
       expect(food, findsOneWidget);

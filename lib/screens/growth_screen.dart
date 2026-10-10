@@ -8,6 +8,7 @@ import '../game/pet_profile.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
+import '../widgets/top_toast.dart';
 
 /// Экран «Рост и развитие» — пять стадий взросления (КП 5).
 ///
@@ -70,18 +71,12 @@ class GrowthScreen extends StatelessWidget {
     // погашена, но проверку не убираем: она дешевле, чем ложный тост.
     if (!controller.growUp()) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.growthNewStage(
-              stageTitle(context.l10n, controller.state.stage),
-            ),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    showTopToast(
+      context,
+      context.l10n.growthNewStage(
+        stageTitle(context.l10n, controller.state.stage),
+      ),
+    );
   }
 
   @override

@@ -466,6 +466,8 @@
   "shopTabFurniture": "Furniture",
   "shopTabToys": "Toys",
   "shopTitle": "Shop",
+  "shopBoughtInRoom": "{name} purchased — it's in the room",
+  "shopCategoryCount": "{count, plural, one{{count} item} other{{count} items}}",
   "signInAlipay": "Sign in with Alipay",
   "signInApple": "Sign in with Apple",
   "signInGoogle": "Sign in with Google",

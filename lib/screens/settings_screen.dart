@@ -10,6 +10,7 @@ import '../theme/app_colors.dart';
 import '../widgets/glass_panel.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sign_out_dialog.dart';
+import '../widgets/top_toast.dart';
 
 /// Настройки (КП 14.2): язык интерфейса и уведомления.
 ///
@@ -55,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _linkApple(BuildContext context) async {
     final link = game.onLinkApple;
     if (link == null) return;
-    final messenger = ScaffoldMessenger.of(context);
+    final toasts = topToasts(context);
     final l10n = context.l10n;
     String? message;
     try {
@@ -67,9 +68,7 @@ class SettingsScreen extends StatelessWidget {
       message = l10n.signInAppleFailed;
     }
     if (message == null) return;
-    messenger.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
+    toasts.show(message);
   }
 
   @override
@@ -119,12 +118,7 @@ class SettingsScreen extends StatelessWidget {
                                   if (ok || !context.mounted) return;
                                   // Телефон не разрешил — без подсказки
                                   // переключатель просто «не включается».
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.notifyDenied),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  showTopToast(context, l10n.notifyDenied);
                                 },
                               ),
                             // Тихие часы (КП 13.2) стоят в той же карточке, а не
@@ -233,15 +227,9 @@ class SettingsScreen extends StatelessWidget {
                                       size: 20,
                                     ),
                                     onTap: () {
-                                      ScaffoldMessenger.of(
+                                      showTopToast(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            l10n.restorePurchasesStarted,
-                                          ),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
+                                        l10n.restorePurchasesStarted,
                                       );
                                       restore();
                                     },

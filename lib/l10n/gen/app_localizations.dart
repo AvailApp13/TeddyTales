@@ -2488,6 +2488,18 @@ abstract class AppLocalizations {
   /// **'Магазин'**
   String get shopTitle;
 
+  /// No description provided for @shopBoughtInRoom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Куплено — {name} уже в комнате'**
+  String shopBoughtInRoom(String name);
+
+  /// No description provided for @shopCategoryCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} вещь} few{{count} вещи} other{{count} вещей}}'**
+  String shopCategoryCount(int count);
+
   /// No description provided for @signInAlipay.
   ///
   /// In ru, this message translates to:
