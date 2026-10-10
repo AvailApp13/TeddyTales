@@ -161,6 +161,12 @@ WRAPS = {'bead_l': '0:112404', 'bead_r': '0:277344',
          'sock_l': '0:277340', 'sock_r': '0:277342'}
 # 290+: кости эмоций занимают 200 + номер кости, и с 10.10 их больше 60.
 WRAP_IDS = {k: ident(290 + i) for i, k in enumerate(WRAPS)}
+# Обёртки — Node, а не кости: сдвиг у Node — ключи 13/14 (x/y), у кости —
+# 90/91. Эмоции пишут сдвиг бусин «костяным» ключом, как у всех, а при
+# записи он переводится. До 10.10 не переводился, и рантайм молча
+# пропускал ключ: в улыбке и смехе глаза не поднимались, в грусти не
+# опускались (заказчик 10.10: «включить»). Ловит check_keys.
+NODE_XY = {90: 13, 91: 14}
 
 # Где сгущать сетку лица: (x, y, радиус, во сколько приёмов)
 FACE_REFINE = [(514, 508, 18, 2), (513, 522, 11, 1), (513, 470, 30, 1),
@@ -2658,6 +2664,25 @@ def couple_moods(moods):
     return out
 
 
+def check_keys(root):
+    """Сдвиг x/y у Node и картинок — ключи 13/14, у корневой кости — 90/91.
+    Чужой ключ рантайм молча пропускает — движение просто не происходит
+    (так до 10.10 стояли глаза в улыбке, NODE_XY). Иначе — ошибка сборки."""
+    ab = root.find('Artboard')
+    tag = {e.get('id'): e.tag for e in ab.iter() if e.get('id')}
+    bad = set()
+    for an in ab.iter('LinearAnimation'):
+        for ko in an.iter('KeyedObject'):
+            t = tag.get(ko.get('objectId'))
+            for kp in ko.iter('KeyedProperty'):
+                k = int(kp.get('propertyKey'))
+                if (k in (90, 91) and t != 'RootBone') or (k in (13, 14) and t in ('Bone', 'RootBone')):
+                    bad.add((an.get('name'), t, ko.get('objectId'), k))
+    if bad:
+        raise SystemExit('ключ сдвига не того типа (клип, тип, id, ключ): '
+                         + ', '.join(map(str, sorted(bad)[:12])) + f' — всего {len(bad)}')
+
+
 def check_mouths(root):
     """Два рта — никогда: в каждом кадре каждого клипа ротик покоя и любой
     другой рот не видны оба больше чем наполовину. Иначе — ошибка сборки."""
@@ -2945,12 +2970,15 @@ def main(project):
         emo.set('duration', str(dur))
         for (target, key), frames in ch.items():
             oid = target
+            if oid in WRAP_IDS.values():
+                key = NODE_XY.get(key, key)
             ko = ET.SubElement(emo, 'KeyedObject', {'objectId': oid})
             kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': str(key)})
             for fr, val, ease in frames:
                 cubic_key(kp, fr, val, ease)
 
     check_mouths(root)
+    check_keys(root)
     ET.indent(tree, space='    ')
     tree.write(path, encoding='unicode')
     print('bones', len(B), 'followers', len(followers))

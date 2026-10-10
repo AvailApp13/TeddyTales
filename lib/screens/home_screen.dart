@@ -1854,8 +1854,12 @@ class _RoomScene extends StatelessWidget {
           ),
         // ⚠ Проверка показателей живого мишки — снять перед публикацией.
         // Одной строкой над лентой эмоций, под ногами мишки (заказчик
-        // 10.10: столбиком справа закрывала шкаф и полку).
-        if (room == RoomKind.nursery && !asleep && !furnishing)
+        // 10.10: столбиком справа закрывала шкаф и полку). С 10.10
+        // спрятана, пока отрабатываем мимику ([kShowStatsTestPanel]).
+        if (kShowStatsTestPanel &&
+            room == RoomKind.nursery &&
+            !asleep &&
+            !furnishing)
           Positioned(
             left: 12,
             right: 12,
