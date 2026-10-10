@@ -49,7 +49,7 @@ CHAIN = [
     ('neck',    'chest',  None,         (517, 530)),
     ('head',    'neck',   None,         (517, 330)),
     ('hood1',   'head',   None,         (517, 185)),
-    ('hood2',   'hood1',  None,         (517, 42)),
+    ('hood2',   'hood1',  None,         (517, 110)),     # кончик — hood3 (10.10)
     ('breath',  'belly',  (517, 700),   (517, 600)),
     # лицо смещается внутри капюшона — поворот головы, взгляд вверх-вниз
     ('face',    'head',   (512, 430),   (512, 370)),
@@ -63,19 +63,26 @@ CHAIN = [
     ('hood_sl', 'head',   (338, 330),   (318, 530)),
     ('hood_sr', 'head',   (696, 330),   (716, 530)),
     ('ear_l1',  'head',   (420, 322),   (388, 290)),
-    ('ear_l2',  'ear_l1', None,         (340, 238)),
+    ('ear_l2',  'ear_l1', None,         (362, 261)),     # кончик — ear_l3 (10.10)
     ('ear_r1',  'head',   (605, 322),   (637, 290)),
-    ('ear_r2',  'ear_r1', None,         (688, 236)),
+    ('ear_r2',  'ear_r1', None,         (665, 260)),     # кончик — ear_r3 (10.10)
     # руки (27.09, «три звена»): плечо → середина → предплечье до манжеты,
     # кисть — в конце списка (hand_l/r), за ней едет лапа
     # ось плеча — в середине толщины руки у корня (между верхом рукава и
     # подмышкой), как центр круглого сустава в Live2D/перекладке
-    ('arm_l1',  'chest',  (368, 556),   (342, 591)),
+    # ключицы (10.10): плечи поднимаются и опускаются — вдох, вздох, смех,
+    # зевок, грусть; рука держится за ключицу
+    ('clav_l',  'chest',  (470, 548),   (368, 556)),
+    ('clav_r',  'chest',  (564, 548),   (656, 556)),
+    ('arm_l1',  'clav_l', (368, 556),   (342, 591)),
     ('arm_l2',  'arm_l1', None,         (316, 626)),
-    ('arm_r1',  'chest',  (656, 556),   (682, 591)),
+    ('arm_r1',  'clav_r', (656, 556),   (682, 591)),
     ('arm_r2',  'arm_r1', None,         (708, 626)),
-    ('leg_l',   None,     (430, 790),   (430, 930)),
-    ('leg_r',   None,     (607, 790),   (607, 930)),
+    # ноги (10.10): бедро держится за таз, колено — с небольшим запасом
+    # изгиба наружу (KNEE_OUT), иначе прямая нога не знала бы, куда гнуться;
+    # стопы — свои кости в конце списка, стоят на полу (leg_ik)
+    ('leg_l',   'hips',   (430, 790),   (430 - 16, 872)),
+    ('leg_r',   'hips',   (607, 790),   (607 + 16, 872)),
     # мимика тоньше (26.09, «живые эмоции»): уголки рта, подбородок, нос,
     # нижние веки, брови — в конце списка, чтобы id прежних костей не менялись
     ('mouth_l', 'face',   (502, 510),   (502, 500)),
@@ -91,17 +98,20 @@ CHAIN = [
     # колени (26.09, топот в «Обиде»): голень от колена под шортами до
     # пятки; ступня держится за голень. Корневая кость внутри бедра — её
     # можно поднять целиком, спереди это читается как согнутое колено.
-    ('shin_l',  'leg_l',  (430, 872),   (430, 952)),
-    ('shin_r',  'leg_r',  (607, 872),   (607, 952)),
+    ('shin_l',  'leg_l',  None,         (430, 952)),
+    ('shin_r',  'leg_r',  None,         (607, 952)),
     ('arm_l3',  'arm_l2', None,         (290, 662)),
     ('hand_l',  'arm_l3', None,         (258, 703)),
     ('arm_r3',  'arm_r2', None,         (734, 662)),
     ('hand_r',  'arm_r3', None,         (766, 703)),
     # бок кофты под рукой (поправочная кость, как в Spine/Live2D): пока
     # рука поднята немного, низ бока идёт за ней — рука не «отлипает»
-    # трещиной; дальше кость упирается (SIDE_CAP), подмышка раскрывается
-    ('side_l',  'chest',  (368, 556),   (340, 700)),
-    ('side_r',  'chest',  (656, 556),   (684, 700)),
+    # трещиной; дальше кость упирается (SIDE_CAP), подмышка раскрывается.
+    # Держится за ключицу, как и рука: плечо поднимается — бок под рукой
+    # поднимается вместе с рукавом (10.10: за грудью он оставался на месте,
+    # и в смехе и зевке под мышкой открывалась щель)
+    ('side_l',  'clav_l', (368, 556),   (340, 700)),
+    ('side_r',  'clav_r', (656, 556),   (684, 700)),
     # рот раскрывается масштабом этих костей (mouth.py): горизонтальные,
     # в покое сжаты до щёлочки (mouth.CAVITIES); open — смех и улыбка,
     # yawn — зевок, chew — жевание
@@ -111,6 +121,29 @@ CHAIN = [
     # нижняя челюсть жевания и зевка: низ полости (mouth.py)
     (f'jaw_{n}', f'mouth_{n}', mouth.rows(n)[::2], (mouth.rows(n)[0] + 20, mouth.rows(n)[2]))
     for n in mouth.JAW
+] + [
+    # Живое лицо (заказчик 10.10: «двигается только кусочек лица — лоб,
+    # щёки, подбородок как будто стоят»): лоб — середина и бока, «яблочки»
+    # щёк под глазами, скулы у края капюшона, челюсть под ротиком, кончик
+    # носа. Все — дети лица, как прежняя мимика; ведут их связки COUPLE.
+    ('fore_c',  'face',   (512, 343),   (512, 333)),
+    ('fore_l',  'face',   (452, 354),   (452, 344)),
+    ('fore_r',  'face',   (573, 354),   (573, 344)),
+    ('apple_l', 'face',   (450, 457),   (450, 447)),
+    ('apple_r', 'face',   (575, 457),   (575, 447)),
+    ('zyg_l',   'face',   (404, 448),   (404, 438)),
+    ('zyg_r',   'face',   (621, 448),   (621, 438)),
+    ('jaw',     'face',   (513, 534),   (513, 524)),
+    ('nose',    'face',   (513, 468),   (513, 458)),
+    # стопы (10.10): стоят на полу, за ними едут лапы ног; притоп и шаг —
+    # подъём стопы, колено сгибается само (leg_ik)
+    ('foot_l',  None,     (430, 952),   (430, 982)),
+    ('foot_r',  None,     (607, 952),   (607, 982)),
+    # кончики ушей и капюшона (10.10): их докачивает пружина в приложении
+    # (rive_bear_trial.dart, «Докачка») — по настоящему движению головы
+    ('ear_l3',  'ear_l2', None,         (340, 238)),
+    ('ear_r3',  'ear_r2', None,         (688, 236)),
+    ('hood3',   'hood2',  None,         (517, 42)),
 ]
 
 # Кость эмоции: у каждой кости родитель нулевой длины `e_<имя>` в той же
@@ -126,7 +159,8 @@ E_IDS = {}    # имя → id кости эмоции / обёртки
 # Обёртки бусин и глазниц (id картинок из исходника)
 WRAPS = {'bead_l': '0:112404', 'bead_r': '0:277344',
          'sock_l': '0:277340', 'sock_r': '0:277342'}
-WRAP_IDS = {k: ident(260 + i) for i, k in enumerate(WRAPS)}
+# 290+: кости эмоций занимают 200 + номер кости, и с 10.10 их больше 60.
+WRAP_IDS = {k: ident(290 + i) for i, k in enumerate(WRAPS)}
 
 # Где сгущать сетку лица: (x, y, радиус, во сколько приёмов)
 FACE_REFINE = [(514, 508, 18, 2), (513, 522, 11, 1), (513, 470, 30, 1),
@@ -374,15 +408,25 @@ def _weights_for(layer, x, y, B):
         d = math.hypot((x - 512) / 118, (y - 425) / 108)
         k = 1 - smooth(0.8, 1.22, d)
         w = {'face': k, 'head': 1 - k} if k < 1 else {'face': 1.0}
+        # Зоны влияния мимики. С 10.10 лицо покрыто почти целиком: лоб,
+        # «яблочки» под глазами, скулы, челюсть и нос — свои зоны, брови и
+        # подбородок шире; соседние зоны перекрываются, и ткань лица
+        # тянется целиком, а не пятнами вокруг точек.
         zones = [('eye_l', 456, 416, 42, 34), ('eye_r', 568, 416, 42, 34),
                  ('cheek_l', 440, 470, 50, 38), ('cheek_r', 584, 470, 50, 38),
-                 ('brow_l', 457, 377, 42, 12), ('brow_r', 568, 377, 42, 12),
+                 ('brow_l', 457, 377, 46, 16), ('brow_r', 568, 377, 46, 16),
                  ('ulid_l', 457, 392, 34, 10), ('ulid_r', 568, 392, 34, 10),
                  ('lid_l', 457, 443, 34, 13), ('lid_r', 568, 443, 34, 13),
                  ('muzzle', 513, 470, 34, 26),
                  ('mouth', 514, 504, 11, 8),
                  ('mouth_l', 501, 511, 11, 10), ('mouth_r', 526, 513, 11, 10),
-                 ('chin', 513, 523, 32, 12)]
+                 ('chin', 513, 523, 38, 16),
+                 ('fore_c', 512, 340, 74, 30),
+                 ('fore_l', 452, 352, 46, 26), ('fore_r', 573, 352, 46, 26),
+                 ('apple_l', 450, 458, 34, 18), ('apple_r', 575, 458, 34, 18),
+                 ('zyg_l', 402, 448, 36, 58), ('zyg_r', 623, 448, 36, 58),
+                 ('jaw', 513, 536, 84, 24),
+                 ('nose', 513, 468, 26, 18)]
         gs = {}
         for bone, cx, cy, rx, ry in zones:
             g = 1 - smooth(0.45, 1.0, math.hypot((x - cx) / rx, (y - cy) / ry))
@@ -398,7 +442,7 @@ def _weights_for(layer, x, y, B):
     if layer in ('hood_img', 'hood_back_img'):
         # конус вверх: голова → капюшон1 → капюшон2; низ, лежащий на плечах, —
         # за грудью, чтобы не отрывался от кофты при наклоне головы.
-        w = chain_weights(y, [('head', 318), ('hood1', 185), ('hood2', -1e9)], blend=58)
+        w = chain_weights(y, [('head', 318), ('hood1', 185), ('hood2', 110), ('hood3', -1e9)], blend=58)
         side = smooth(125, 195, abs(x - 517)) * smooth(300, 370, y)
         if side > 0:
             bone = 'hood_sl' if x < 517 else 'hood_sr'
@@ -408,12 +452,13 @@ def _weights_for(layer, x, y, B):
         # в weights_for (раньше — «драпировкой» к груди только по бокам, и
         # мордочка рядом ходила за головой — у скул был разрыв)
         return w
-    if layer.startswith('ear_l'):
-        t = along((x, y), B['ear_l1']['start'], B['ear_l2']['end'])
-        return blend3(t, 'head', 'ear_l1', 'ear_l2', a=0.22, b=0.5, c=0.58, d=0.88)
-    if layer.startswith('ear_r'):
-        t = along((x, y), B['ear_r1']['start'], B['ear_r2']['end'])
-        return blend3(t, 'head', 'ear_r1', 'ear_r2', a=0.22, b=0.5, c=0.58, d=0.88)
+    if layer.startswith('ear_l') or layer.startswith('ear_r'):
+        # голова → основание → середина → кончик (кончик с 10.10 — своё
+        # звено, его докачивает пружина)
+        s_ = layer[4]
+        t = along((x, y), B[f'ear_{s_}1']['start'], B[f'ear_{s_}3']['end'])
+        return {b: v for b, v in blend_chain(t, ['head', f'ear_{s_}1', f'ear_{s_}2', f'ear_{s_}3'],
+                                             [(0.22, 0.5), (0.58, 0.88), (0.82, 0.98)]).items() if v > 1e-4}
     if layer in ('shirt_img', 'shirt_flat_l_img', 'shirt_flat_r_img'):
         side = 'l' if x < 512 else 'r'
         w = stretch(torso_weights(x, y), arm_weights(side, x, y, B), armness('shirt', x, y))
@@ -565,6 +610,16 @@ def twitch(t, at, dur=16):
 
 # Осмотрелся: (начало, конец, сдвиг лица по горизонтали, по вертикали, наклон)
 LOOKS = [(150, 260, -1, 0, -1), (430, 540, 1, 0, 1), (600, 660, 0, 1, 0)]
+
+# Объёмный поворот головы (заказчик 10.10). Лицо в капюшоне сдвигается
+# вбок (y кости лица) или вверх (x) — детали ближе к зрителю уходят дальше,
+# дальние отстают: нос дальше всех, мордочка — меньше, лоб, скулы и челюсть
+# отстают, уши поворачиваются в обратную сторону. (кость, ключ, от какого
+# сдвига лица — 'y' вбок / 'x' вверх, доля).
+TURN = [('nose', 91, 'y', 0.35), ('muzzle', 91, 'y', 0.18), ('fore_c', 91, 'y', -0.12),
+        ('zyg_l', 91, 'y', -0.15), ('zyg_r', 91, 'y', -0.15), ('jaw', 91, 'y', -0.08),
+        ('nose', 90, 'x', 0.3), ('fore_c', 90, 'x', -0.15), ('jaw', 90, 'x', -0.1)]
+EAR_TURN = -0.004   # рад на пиксель сдвига лица вбок: 13 px — ~3° против поворота
 EAR_TWITCH = [('l', 120), ('r', 380), ('l', 560), ('r', 566)]
 
 
@@ -582,10 +637,19 @@ def breathing(B, rest):
         return sum(twitch(t, at) for s_, at in EAR_TWITCH if s_ == side)
 
     R, SX, SY, X, Y = 15, 16, 17, 90, 91
-    # корпус: заметный вдох, на выдохе присел
+    # корпус: заметный вдох, на выдохе присел — колени чуть сгибаются (leg_ik)
     add('hips', Y, lambda t: rest['hips']['y'] - 5.0 * wave(t))
+    for side in ('l', 'r'):
+        add(f'leg_{side}', R, lambda t, s_=side: rest[f'leg_{s_}']['rotation']
+            + leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[0])
+        add(f'shin_{side}', R, lambda t, s_=side: rest[f'shin_{s_}']['rotation']
+            + leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[1])
+        add(f'leg_{side}', SX, lambda t, s_=side: leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[2])
     add('belly', R, lambda t: rest['belly']['rotation'] - 0.012 * wave(t, 4))
     add('breath', SY, lambda t: 1 + 0.065 * (wave(t) + 1) / 2)              # грудь шире
+    # плечи на вдохе чуть поднимаются — ключицы (10.10)
+    add('clav_l', R, lambda t: rest['clav_l']['rotation'] + 0.5 * 0.065 * (wave(t, 6) + 1) / 2)
+    add('clav_r', R, lambda t: rest['clav_r']['rotation'] - 0.5 * 0.065 * (wave(t, 6) + 1) / 2)
     add('breath', SX, lambda t: 1 + 0.04 * (wave(t, 3) + 1) / 2)
     add('chest', R, lambda t: rest['chest']['rotation'] + 0.02 * wave(t, 6))
     add('neck', R, lambda t: rest['neck']['rotation'] - 0.014 * wave(t, 10))
@@ -595,6 +659,38 @@ def breathing(B, rest):
     # лицо внутри капюшона: поворот влево-вправо, взгляд вверх
     add('face', Y, lambda t: rest['face']['y'] + 13 * look(t)[0])
     add('face', X, lambda t: rest['face']['x'] + 7 * look(t)[1] + 1.2 * wave(t, 12))
+    # Живое лицо в покое (заказчик 10.10: «лоб, щёки, подбородок будто
+    # стоят»). Объёмный поворот: нос — ближе всех к зрителю — уходит дальше
+    # лица, лоб, скулы и челюсть отстают (доли TURN, те же, что у эмоций).
+    # И лицо дышит вместе с мишкой: брови и лоб чуть поднимаются на вдохе и
+    # когда он смотрит вверх, мордочка и нос приподнимаются, челюсть на
+    # выдохе мягко опускается, дважды за петлю он принюхивается.
+    life = {}
+
+    def more(name, key, fn):
+        life.setdefault((name, key), []).append(fn)
+
+    for name, key, src, k in TURN:
+        more(name, key, lambda t, i=src, kk=k: kk * (13 * look(t)[0] if i == 'y' else 7 * look(t)[1]))
+
+    def brow(t):
+        return 0.6 * wave(t, 40) + 1.6 * look(t)[1]
+
+    for side in ('l', 'r'):
+        more(f'brow_{side}', X, brow)
+        more(f'fore_{side}', X, brow)
+    more('fore_c', X, brow)
+    more('muzzle', X, lambda t: 0.35 * wave(t, 10))
+    sniffs = [(300, 1.4), (318, 1.0), (640, 1.2)]
+    more('nose', X, lambda t: 0.35 * wave(t, 10)
+         + sum(a * max(0.0, 1 - abs(t - c) / 7) ** 2 for c, a in sniffs))
+    more('jaw', X, lambda t: -0.9 * (1 - wave(t, 24)) / 2)
+    more('zyg_l', X, lambda t: 0.45 * 0.6 * wave(t, 18))
+    more('zyg_r', X, lambda t: 0.45 * 0.6 * wave(t, 18))
+    for (name, key), fns in life.items():
+        if name in rest:
+            add(name, key, lambda t, n=name, ky=key, fs=fns:
+                rest[n].get({X: 'x', Y: 'y', R: 'rotation'}[ky], 0.0) + sum(fn(t) for fn in fs))
     # капюшон: кончик и боковины догоняют и перелетают
     add('hood1', R, lambda t: rest['hood1']['rotation'] - 0.018 * wave(t, 22)
         - 0.015 * math.sin(2 * math.pi * (t - 30) / SWAY) - 0.015 * look(t)[2])
@@ -604,10 +700,12 @@ def breathing(B, rest):
     add('hood_sl', R, lambda t: rest['hood_sl']['rotation'] + 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
     add('hood_sr', R, lambda t: rest['hood_sr']['rotation'] - 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
     # уши: по диагонали к капюшону и складываются к основанию; иногда вздрагивают
-    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.06 * wave(t, 26) + 0.07 * ear(t, 'l'))
+    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.06 * wave(t, 26) + 0.07 * ear(t, 'l')
+        + EAR_TURN * 13 * look(t)[0])
     add('ear_l2', R, lambda t: rest['ear_l2']['rotation'] + 0.09 * wave(t, 38) + 0.12 * ear(t - 3, 'l'))
     add('ear_l1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.06 * ear(t, 'l'))
-    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wave(t, 26) - 0.07 * ear(t, 'r'))
+    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wave(t, 26) - 0.07 * ear(t, 'r')
+        + EAR_TURN * 13 * look(t)[0])
     add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.09 * wave(t, 38) - 0.12 * ear(t - 3, 'r'))
     add('ear_r1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.06 * ear(t, 'r'))
     # плечи поднимаются на вдохе, лапы отходят; звенья руки догоняют друг
@@ -623,13 +721,76 @@ def breathing(B, rest):
 BEAD_L, BEAD_R = '0:112404', '0:277344'   # бусины глаз
 BEAD_REST = {BEAD_L: 0.63041645, BEAD_R: 0.63351262}
 FX_LOVE = '0:107294'                      # глаза-дуги + румянец
-# моргания в idle_life (кадр, когда бусины сплющены сильнее всего; 12 с)
-BLINKS = [63, 223, 255, 455, 588]
+# моргания в idle_life (кадр, когда бусины сплющены сильнее всего; 12 с);
+# 603 — второе, быстрое, сразу за 588: двойное моргание (10.10)
+BLINKS = [63, 223, 255, 455, 588, 603]
+DOUBLE_BLINK = (588, 15)     # какое моргание повторить и через сколько кадров
+
+# Быстрые движения глаз (10.10, «мелочи живости»): бусины чуть
+# перескакивают по горизонтали и держатся, раз в 1–3 с; перед поворотом
+# головы глаза уходят туда первыми. (кадр, сдвиг px)
+SACCADES = [(0, 0.0), (44, 1.2), (128, -0.9), (300, 0.7), (352, -1.1), (470, 0.9),
+            (612, -0.6), (690, 0.0)]
+EYES_LEAD = 10        # на сколько кадров глаза опережают поворот головы
+EYES_TURN = 2.6       # px сдвига бусин при полном повороте
 
 EI = '0.42 0 0.58 1'
 EO = '0 0 0.58 1'
 EIN = '0.42 0 1 1'
 BACK = '0.34 1.56 0.64 1'
+
+
+def saccades():
+    """Бусины по горизонтали в покое: скачки SACCADES (переход за 4 кадра) и
+    упреждение поворота головы."""
+    def look_x(t):
+        return sum(v * pulse(t, a, b, 40) for a, b, v, *_ in LOOKS)
+
+    def jump(t):
+        prev = SACCADES[0][1]
+        for (f0, v0), (f1, v1) in zip(SACCADES, SACCADES[1:]):
+            if t < f1:
+                return v0
+            if t < f1 + 4:
+                return v0 + (v1 - v0) * smooth(f1, f1 + 4, t)
+            prev = v1
+        return prev
+
+    out = {}
+    for wrap in ('bead_l', 'bead_r'):
+        x0 = E_REST[wrap]['x']
+        out[wrap] = [(t, x0 + jump(t) + EYES_TURN * look_x(t + EYES_LEAD)) for t in range(0, DUR + 1, 2)]
+    return out
+
+
+def double_blink(idle):
+    """Повторить моргание DOUBLE_BLINK через несколько кадров — двойное.
+    Ключи бусин в покое плотные (из исходника): новое значение — меньшее из
+    своего и сдвинутого."""
+    at, lag = DOUBLE_BLINK
+    for bead in (BEAD_L, BEAD_R):
+        ko = next((k for k in idle.findall('KeyedObject') if k.get('objectId') == bead), None)
+        if ko is None:
+            continue
+        for kp in ko.findall('KeyedProperty'):
+            if kp.get('propertyKey') not in ('17', '18'):
+                continue
+            keys = sorted(((int(k.get('frame', '0')), float(k.get('value', '0'))) for k in kp))
+
+            def val(fr):
+                for (f0, v0), (f1, v1) in zip(keys, keys[1:]):
+                    if f0 <= fr <= f1:
+                        return v0 + (v1 - v0) * (fr - f0) / max(1, f1 - f0)
+                return keys[-1][1] if fr > keys[-1][0] else keys[0][1]
+            lo, hi = at - 12, at + 12
+            new = {fr: v for fr, v in keys}
+            for fr in range(lo + lag, hi + lag + 1):
+                new[fr] = min(val(fr), val(fr - lag))
+            for k in list(kp):
+                kp.remove(k)
+            for fr, v in sorted(new.items()):
+                ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(v), 'frame': str(fr),
+                                                     'interpolationType': 'linear'})
 
 
 def blink_face(rest):
@@ -643,8 +804,14 @@ def blink_face(rest):
 
     for eye in ('eye_l', 'eye_r'):
         ch[(eye, SX)] = [(t, 1 - bump(t, 0.1)) for t in range(0, DUR + 1, 2)]
+    # щёки на вдохе чуть приподнимаются (10.10: «щёки будто стоят»),
+    # «яблочки» под глазами — вместе с ними (связка COUPLE)
     for cheek in ('cheek_l', 'cheek_r'):
-        ch[(cheek, X)] = [(t, rest[cheek]['x'] + bump(t, 1.6)) for t in range(0, DUR + 1, 2)]
+        ch[(cheek, X)] = [(t, rest[cheek]['x'] + bump(t, 1.6) + 0.6 * wave(t, 18))
+                          for t in range(0, DUR + 1, 2)]
+    for apple in ('apple_l', 'apple_r'):
+        ch[(apple, X)] = [(t, rest[apple]['x'] + 0.7 * (bump(t, 1.6) + 0.6 * wave(t, 18)))
+                          for t in range(0, DUR + 1, 2)]
     return ch
 
 
@@ -1308,14 +1475,13 @@ def emo_upset():
     for at, side in stomps:
         out = 1 if side == 'l' else -1        # наружу: у левой — влево
         # голень: подъём (спереди — колено к нам), носок наружу, удар
-        legs.setdefault((f'shin_{side}', Emo.X), []).extend(
+        # стопа вверх (колено сгибается само, leg_ik), носок наружу, удар
+        legs.setdefault((f'foot_{side}', Emo.Y), []).extend(
             [(at, 0), (at + 10, -17, EO), (at + 13, -17), (at + 20, 0.5), (at + 24, 0)])
-        legs.setdefault((f'shin_{side}', Emo.R), []).extend(
+        legs.setdefault((f'foot_{side}', Emo.R), []).extend(
             [(at, 0), (at + 10, 0.035 * out, EO), (at + 13, 0.035 * out), (at + 19, 0.0)])
-        legs.setdefault((f'shin_{side}', Emo.SY), []).extend(
+        legs.setdefault((f'foot_{side}', Emo.SY), []).extend(
             [(at, 0), (at + 10, 0.05, EO), (at + 19, 0.0)])
-        legs.setdefault((f'leg_{side}', Emo.R), []).extend(
-            [(at, 0), (at + 10, 0.045 * out, EO), (at + 19, 0.0)])
         # вес — на другую ногу; при подъёме чуть вверх, удар — осел
         hips_x += [(at + 7, -2 * out, EO), (at + 23, 0.0)]
         hips_y += [(at + 10, -0.8, EO), (at + 20, 1.0), (at + 26, 0.0)]
@@ -1634,6 +1800,9 @@ def mood_sleepy():
     sp = {}
     nod = lambda t: mbump(t, 300, 70)
     yawn = lambda t: mbump(t, 540, 72)
+    # медленное сонное моргание (10.10): веки тяжело опускаются до конца,
+    # чуть задерживаются и нехотя поднимаются
+    slow = lambda t: mbump(t, 150, 38) + mbump(t, 440, 44)
     sway = lambda t: mwave(t, 2)
     sp[('hips', Emo.X)] = lambda t: 1.5 * sway(t)
     sp[('head', Emo.R)] = lambda t: 0.03 * mwave(t, 2, -0.3) + 0.03 * nod(t)
@@ -1643,7 +1812,7 @@ def mood_sleepy():
     sp[('chest', Emo.R)] = lambda t: -0.015 * yawn(t)
     sp[('ear_l1', Emo.R)] = lambda t: 0.06 + 0.04 * nod(t - 8)
     sp[('ear_r1', Emo.R)] = lambda t: -0.06 - 0.04 * nod(t - 8)
-    _mood_eyes(sp, lambda t: 0.0, lambda t: 0.45 + 0.35 * nod(t) + 0.55 * yawn(t))
+    _mood_eyes(sp, lambda t: 0.0, lambda t: min(1.0, 0.45 + 0.35 * nod(t) + 0.55 * yawn(t) + 0.55 * slow(t)))
     _pair(sp, 'ulid', Emo.X, lambda t: -4.0 - 3.0 * nod(t))
     _pair(sp, 'brow', Emo.X, lambda t: -0.8 + 3.0 * yawn(t))
     _mood_mouth(sp, 'sleepy', lambda t: 1.0 - yawn(t), lambda t: 1.0 - yawn(t))
@@ -1955,8 +2124,8 @@ def idle_bonus_4():
     e.track('hips', Emo.Y, [(16, -1.5), (26, -2.0), (36, 0.0), (64, -1.5), (74, -2.0), (84, 0.0)])
     e.track('chest', Emo.R, [(10, 0.025, EO), (46, 0.025), (58, -0.025, EI), (92, -0.025), (110, 0.0)])
     e.track('head', Emo.R, [(12, -0.02), (46, -0.02), (60, 0.02), (92, 0.02), (112, 0.0)])
-    e.track('shin_r', Emo.X, [(14, 0.0), (24, -22.0, EO), (30, -22.0), (40, 0.0, EI)])
-    e.track('shin_l', Emo.X, [(62, 0.0), (72, -22.0, EO), (78, -22.0), (88, 0.0, EI)])
+    e.track('foot_r', Emo.Y, [(14, 0.0), (24, -22.0, EO), (30, -22.0), (40, 0.0, EI)])
+    e.track('foot_l', Emo.Y, [(62, 0.0), (72, -22.0, EO), (78, -22.0), (88, 0.0, EI)])
     e.track('face', Emo.Y, [(16, 1.5), (60, -1.5), (100, 0.0)])
     e.track('hood2', Emo.R, [(20, -0.05), (32, 0.02), (64, 0.05), (80, -0.02), (104, 0.0)])
     e.track('ear_l1', Emo.R, [(24, -0.06), (36, 0.03), (72, -0.06), (84, 0.03), (100, 0.0)])
@@ -2254,6 +2423,241 @@ def assets_by_id(root):
     return {a.attrib['id']: a for a in root.iter('ImageAsset')}
 
 
+# --- Живое лицо: связки мимики (заказчик 10.10) ------------------------------
+# «Двигается только кусочек лица, а лоб, щёки, подбородок будто стоят».
+# Каждая эмоция, которая трогает бровь, щёку, подбородок, мордочку или
+# сдвигает лицо, сама тянет за собой соседние зоны: брови — лоб (внутренние
+# концы бровей вверх — лоб «домиком»), щёки и нижние веки — «яблочки» и
+# скулы, подбородок — челюсть, мордочка — нос; сдвиг лица — объёмный
+# поворот (TURN). Так все прежние эмоции, настроения и реакции оживают
+# разом, без переписывания каждой.
+# (цель, ключ, [(источник, ключ, доля)]): смещение цели от покоя — сумма
+# долей смещений источников.
+_R, _SX, _SY, _X, _Y = 15, 16, 17, 90, 91
+COUPLE = [
+    # брови чуть заметнее, лоб — целиком за ними, середина лба — «домиком»,
+    # когда внутренние концы бровей поднимаются
+    ('brow_l', _X, [('brow_l', _X, 0.25)]),
+    ('brow_r', _X, [('brow_r', _X, 0.25)]),
+    ('fore_l', _X, [('brow_l', _X, 1.0)]),
+    ('fore_r', _X, [('brow_r', _X, 1.0)]),
+    ('fore_c', _X, [('brow_l', _X, 0.5), ('brow_r', _X, 0.5),
+                    ('brow_l', _R, -14.0), ('brow_r', _R, 14.0)]),
+    ('apple_l', _X, [('cheek_l', _X, 0.7), ('lid_l', _X, 0.25)]),
+    ('apple_r', _X, [('cheek_r', _X, 0.7), ('lid_r', _X, 0.25)]),
+    ('apple_l', _SY, [('cheek_l', _SY, 0.6)]),
+    ('apple_r', _SY, [('cheek_r', _SY, 0.6)]),
+    ('zyg_l', _X, [('cheek_l', _X, 0.45)]),
+    ('zyg_r', _X, [('cheek_r', _X, 0.45)]),
+    ('jaw', _X, [('chin', _X, 0.7)]),
+    ('jaw', _Y, [('chin', _Y, 0.7)]),
+    ('jaw', _SX, [('chin', _SX, 0.8)]),
+    ('nose', _X, [('muzzle', _X, 1.0), ('cheek_l', _X, 0.08), ('cheek_r', _X, 0.08)]),
+    ('nose', _SX, [('muzzle', _SX, 0.6)]),
+    ('ear_l1', _R, [('face', _Y, EAR_TURN)]),
+    ('ear_r1', _R, [('face', _Y, EAR_TURN)]),
+    # плечи поднимаются на глубоком вдохе (зевок, вздох, смех) — ключицы
+    ('clav_l', _R, [('breath', _SY, 0.5)]),
+    ('clav_r', _R, [('breath', _SY, -0.5)]),
+] + [(name, key, [('face', _Y if src == 'y' else _X, k)]) for name, key, src, k in TURN]
+
+
+def _merged_couple():
+    """Связки по цели: у одной цели может быть несколько строк (нос — от
+    мордочки и от поворота лица), их источники складываются."""
+    by = {}
+    for name, key, sources in COUPLE:
+        by.setdefault((name, key), []).extend(sources)
+    return [(name, key, sources) for (name, key), sources in by.items()]
+
+# Точность упрощения выведенных дорожек: точка, которую соседи и так дают с
+# такой погрешностью, не нужна.
+_TOL = {_R: 0.0005, _X: 0.05, _Y: 0.05, _SX: 0.0005, _SY: 0.0005}
+
+
+def _bezier_y(ease, u):
+    """CSS cubic-bezier(x1 y1 x2 y2): y при x = u."""
+    x1, y1, x2, y2 = (float(v) for v in ease.split())
+    lo, hi = 0.0, 1.0
+    for _ in range(40):
+        t = (lo + hi) / 2
+        x = 3 * (1 - t) ** 2 * t * x1 + 3 * (1 - t) * t * t * x2 + t ** 3
+        lo, hi = (t, hi) if x < u else (lo, t)
+    t = (lo + hi) / 2
+    return 3 * (1 - t) ** 2 * t * y1 + 3 * (1 - t) * t * t * y2 + t ** 3
+
+
+def track_at(frames, fr):
+    """Значение дорожки [(кадр, значение, кривая)] в кадре fr — как в Rive:
+    кривая ключа ведёт отрезок до следующего, None — держит значение."""
+    if fr <= frames[0][0]:
+        return frames[0][1]
+    for (f0, v0, e0), (f1, v1, _) in zip(frames, frames[1:]):
+        if f0 <= fr <= f1:
+            if fr == f1:
+                return v1
+            if e0 is None:
+                return v0
+            return v0 + (v1 - v0) * _bezier_y(e0, (fr - f0) / (f1 - f0))
+    return frames[-1][1]
+
+
+def _rest_of(name, key):
+    r = E_REST[name]
+    return {_R: r.get('rotation', 0.0), _X: r.get('x', 0.0), _Y: r.get('y', 0.0)}.get(key, 1.0)
+
+
+def _simplify(pts, tol):
+    """Убрать точки, которые линейная интерполяция соседей даёт и так."""
+    keep = list(pts)
+    changed = True
+    while changed and len(keep) > 2:
+        changed = False
+        out = [keep[0]]
+        i = 1
+        while i < len(keep) - 1:
+            (f0, v0), (f1, v1), (f2, v2) = out[-1], keep[i], keep[i + 1]
+            lin = v0 + (v2 - v0) * (f1 - f0) / (f2 - f0)
+            if abs(lin - v1) < tol:
+                changed = True
+            else:
+                out.append(keep[i])
+            i += 1
+        out.append(keep[-1])
+        keep = out
+    return keep
+
+
+def couple(dur, ch):
+    """Добавить к клипу дорожки связок COUPLE (см. выше). Своя дорожка у
+    цели, если есть, складывается со связкой."""
+    names = {v: k for k, v in E_IDS.items()}
+    src = {}
+    for (oid, key), frames in ch.items():
+        n = names.get(oid)
+        if n is not None and frames:
+            src[(n, key)] = frames
+    out = dict(ch)
+    for tname, tkey, sources in _merged_couple():
+        live = [(src[(sn, sk)], _rest_of(sn, sk), k) for sn, sk, k in sources if (sn, sk) in src]
+        if not live or tname not in E_IDS:
+            continue
+        tid = E_IDS[tname]
+        base = _rest_of(tname, tkey)
+        own = src.get((tname, tkey))
+        frs = set(range(0, dur + 1, 2))
+        for frames, _, _ in live:
+            frs |= {fr for fr, *_ in frames if 0 <= fr <= dur}
+        pts = []
+        for fr in sorted(frs):
+            v = base if own is None else track_at(own, fr)
+            for frames, b, k in live:
+                v += k * (track_at(frames, fr) - b)
+            pts.append((fr, v))
+        if own is None and max(abs(v - base) for _, v in pts) < _TOL.get(tkey, 1e-3):
+            continue
+        pts = _simplify(pts, _TOL.get(tkey, 1e-3) / 2)
+        out[(tid, tkey)] = [(fr, v, LIN) for fr, v in pts]
+    legs_ik(dur, out, src)
+    return out
+
+
+# --- Колени (заказчик 10.10: «сгиб в коленях») ------------------------------
+# Бедро держится за таз, стопа стоит на полу; таз опустился — колено само
+# сгибается наружу, как у плюшевого мишки спереди, поднялась стопа (притоп,
+# шаг) — сгибается сильнее. Изгиб считается здесь, при сборке, по законам
+# двухзвенного IK и ложится обычными ключами: в самом Rive решатель IK у
+# прямой ноги разводил бы колени «лягушкой» от каждого вдоха. Укорочение
+# ноги делят колено (доля bend) и мягкое сжатие плюша; таз выше покоя —
+# нога просто вытягивается, изгиб не меняется (рисунок ног прямой).
+KNEE_BEND = 0.5        # эмоции: таз опустился — присел
+KNEE_BEND_LIFT = 0.15  # стопа поднялась (притоп, шаг): спереди нога в основном
+#                        укорачивается — колено идёт к зрителю, а не вбок
+KNEE_BEND_BREATH = 0.2  # дыхание: колено едва-едва
+
+
+def _leg_geom(side):
+    by = {n: (p, st, en) for n, p, st, en in CHAIN if n in (f'leg_{side}', f'shin_{side}')}
+    hip, knee = by[f'leg_{side}'][1], by[f'leg_{side}'][2]
+    ankle = by[f'shin_{side}'][2]
+    return hip, knee, ankle
+
+
+def leg_ik(side, dx=0.0, dy=0.0, fx=0.0, fy=0.0, bend=KNEE_BEND):
+    """Сдвиг таза (dx, dy) и стопы (fx, fy), px мира → смещения от покоя:
+    поворот бедра, поворот голени относительно бедра, масштаб бедра."""
+    hip, knee, ankle = _leg_geom(side)
+    L1 = math.hypot(knee[0] - hip[0], knee[1] - hip[1])
+    L2 = math.hypot(ankle[0] - knee[0], ankle[1] - knee[1])
+    th0 = math.atan2(knee[1] - hip[1], knee[0] - hip[0])
+    sh0 = math.atan2(ankle[1] - knee[1], ankle[0] - knee[0])
+    D0 = math.hypot(ankle[0] - hip[0], ankle[1] - hip[1])
+    hx, hy = hip[0] + dx, hip[1] + dy
+    ax, ay = ankle[0] + fx, ankle[1] + fy
+    D = math.hypot(ax - hx, ay - hy)
+    if D >= D0:
+        sc = D / D0                               # выше покоя — только вытянуться
+    else:
+        sc = 1 - (1 - bend) * (D0 - D) / D0
+    l1, l2 = sc * L1, sc * L2
+    cos_a = max(-1.0, min(1.0, (l1 * l1 + D * D - l2 * l2) / (2 * l1 * D)))
+    a = math.acos(cos_a)
+    base = math.atan2(ay - hy, ax - hx)
+    out = -1 if knee[0] < hip[0] else 1           # колено наружу: левое — влево
+    th = base + (a if out < 0 else -a)
+    kx, ky = hx + l1 * math.cos(th), hy + l1 * math.sin(th)
+    sh = math.atan2(ay - ky, ax - kx)
+    return th - th0, (sh - th) - (sh0 - th0), sc
+
+
+def legs_ik(dur, out, src):
+    """Колени для клипа: по сдвигам таза и стоп — ключи бедра и голени."""
+    hx = src.get(('hips', _X))
+    hy = src.get(('hips', _Y))
+    for side in ('l', 'r'):
+        fx = src.get((f'foot_{side}', _X))
+        fy = src.get((f'foot_{side}', _Y))
+        tracks = [t for t in (hx, hy, fx, fy) if t]
+        if not tracks:
+            continue
+        frs = set(range(0, dur + 1, 2))
+        for t in tracks:
+            frs |= {fr for fr, *_ in t if 0 <= fr <= dur}
+        th, sh, sc = [], [], []
+        for fr in sorted(frs):
+            def off(t, name, key):
+                return 0.0 if t is None else track_at(t, fr) - _rest_of(name, key)
+            dyh, dyf = off(hy, 'hips', _Y), off(fy, f'foot_{side}', _Y)
+            drop, lift = max(0.0, dyh), max(0.0, -dyf)
+            bend = ((KNEE_BEND * drop + KNEE_BEND_LIFT * lift) / (drop + lift)
+                    if drop + lift > 1e-6 else KNEE_BEND)
+            r1, r2, k = leg_ik(side, off(hx, 'hips', _X), dyh,
+                               off(fx, f'foot_{side}', _X), dyf, bend=bend)
+            th.append((fr, _rest_of(f'leg_{side}', _R) + r1))
+            sh.append((fr, _rest_of(f'shin_{side}', _R) + r2))
+            sc.append((fr, k))
+        for name, key, pts in ((f'leg_{side}', _R, th), (f'shin_{side}', _R, sh), (f'leg_{side}', _SX, sc)):
+            base = _rest_of(name, key)
+            if max(abs(v - base) for _, v in pts) < _TOL[key]:
+                continue
+            out[(E_IDS[name], key)] = [(fr, v, LIN) for fr, v in _simplify(pts, _TOL[key] / 2)]
+
+
+def couple_moods(moods):
+    """Связки для петель настроения: у всех петель — один набор каналов
+    (приложение смешивает их между собой, и канал, которого нет в одной из
+    петель, при переходе застрял бы в прошлой позе)."""
+    out = {n: (d, couple(d, ch)) for n, (d, ch) in moods.items()}
+    keys = set().union(*(ch.keys() for _, ch in out.values()))
+    names = {v: k for k, v in E_IDS.items()}
+    for n, (d, ch) in out.items():
+        for oid, key in keys - ch.keys():
+            name = names[oid]
+            base = 1.0 if name == 'mouth_rest_img' else _mood_base(name, key)
+            ch[(oid, key)] = [(0, base, LIN), (d, base, LIN)]
+    return out
+
+
 def check_mouths(root):
     """Два рта — никогда: в каждом кадре каждого клипа ротик покоя и любой
     другой рот не видны оба больше чем наполовину. Иначе — ошибка сборки."""
@@ -2330,7 +2734,7 @@ def main(project):
     followers = {  # контейнер → новая кость
         'head': 'face', 'hood_lining': 'head',
         'forearm_left': 'hand_l', 'forearm_right': 'hand_r',
-        'leg_left': 'shin_l', 'leg_right': 'shin_r',
+        'leg_left': 'foot_l', 'leg_right': 'foot_r',
     }
     follow_world = {n: W[byname[n]] for n in followers}
 
@@ -2503,6 +2907,13 @@ def main(project):
                 continue
             seen.add(fr)
             k.set('frame', str(fr))
+    double_blink(idle)
+    for wrap, frames in saccades().items():
+        ko = ET.SubElement(idle, 'KeyedObject', {'objectId': WRAP_IDS[wrap]})
+        kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': '13'})
+        for fr, val in frames:
+            ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(val), 'frame': str(fr),
+                                                 'interpolationType': 'linear'})
     rest = {name: dict(b['local']) for name, b in B.items()}
     for (bname, key), frames in {**breathing(B, rest), **blink_face(rest)}.items():
         ko = ET.SubElement(idle, 'KeyedObject', {'objectId': B[bname]['id']})
@@ -2513,8 +2924,10 @@ def main(project):
 
     # 8. Эмоции на новых костях: emo_smile заново, остальные — новые.
     anims = {a.attrib.get('name'): a for a in root.iter('LinearAnimation')}
-    builders = dict(EMOTION_ANIMS)
-    for n, dc in build_moods().items():       # петли настроения (loop)
+    # Живое лицо (10.10): связки мимики ко всем эмоциям, реакциям и петлям.
+    builders = {n: (lambda fn: lambda: (lambda d, c: (d, couple(d, c)))(*fn()))(fn)
+                for n, fn in EMOTION_ANIMS.items()}
+    for n, dc in couple_moods(build_moods()).items():       # петли настроения (loop)
         builders[n] = (lambda dc: lambda: dc)(dc)
     # прозрачности ртов для приложения: mop_zero гасит все, mop_<вид> — один на 1
     layers = ['rest'] + list(mouth.KINDS)

@@ -615,6 +615,36 @@ class _RiveBearTrialState extends State<RiveBearTrial>
 
 /// Покой `idle_life` всё время, поверх — отрезок `face_demo` с плавным
 /// входом и выходом.
+/// Пружина с затуханием: [kick] — толчок скорости, [step] — шаг времени.
+/// Частота — сколько раз в секунду качается, затухание — доля от
+/// критического (меньше — дольше качается).
+class _Spring {
+  _Spring({required double freq, required double damping, required this.limit})
+    : _k = math.pow(2 * math.pi * freq, 2).toDouble(),
+      _c = 2 * damping * 2 * math.pi * freq;
+
+  final double _k;
+  final double _c;
+
+  /// Дальше этого кончик не уходит.
+  final double limit;
+
+  double x = 0;
+  double v = 0;
+
+  void kick(double dv) => v += dv;
+
+  void step(double dt) {
+    var left = math.min(dt, 0.1);
+    while (left > 0) {
+      final h = math.min(left, 1 / 120);
+      v += (-_k * x - _c * v) * h;
+      x = (x + v * h).clamp(-limit, limit);
+      left -= h;
+    }
+  }
+}
+
 final class _TrialPainter extends BasicArtboardPainter {
   _TrialPainter() : super(fit: Fit.contain, alignment: Alignment.bottomCenter);
 
@@ -679,6 +709,104 @@ final class _TrialPainter extends BasicArtboardPainter {
   Component? _handL;
   Component? _handR;
   bool _seatOn = false;
+
+  // Докачка (заказчик 10.10: «чтобы мишка был живым»). Кончики ушей и
+  // капюшона — свои звенья рига (`ear_l3`, `ear_r3`, `hood3`), щёки — кости
+  // лица; их раскачивают пружины от настоящего движения головы, а не
+  // нарисованные кривые: резко повернулся — уши качнулись сильнее, плавно —
+  // едва, подпрыгнул — щёки вздрогнули. Затухают сами.
+  Component? _bHead;
+  Component? _eEarL3;
+  Component? _eEarR3;
+  Component? _eHood3;
+  Component? _eCheekL;
+  Component? _eCheekR;
+  double _earL3Rest = 0;
+  double _earR3Rest = 0;
+  double _hood3Rest = 0;
+  final _Spring _earL = _Spring(freq: 4.2, damping: 0.22, limit: 0.3);
+  final _Spring _earR = _Spring(freq: 3.9, damping: 0.22, limit: 0.3);
+  final _Spring _hoodTip = _Spring(freq: 2.6, damping: 0.18, limit: 0.3);
+  final _Spring _cheeks = _Spring(freq: 6.0, damping: 0.3, limit: 3);
+
+  /// Голова в прошлом кадре: положение (px артборда), угол и их скорости.
+  double? _headX;
+  double? _headY;
+  double? _headA;
+  double _headVx = 0;
+  double _headVy = 0;
+  double _headVa = 0;
+
+  /// Сколько прибавлено к щекам в прошлом кадре — снимается до клипов.
+  double _cheekOn = 0;
+
+  // Чувствительность: на сколько толкает пружину перемена скорости головы
+  // (px/с — вбок и вверх-вниз, рад/с — поворот).
+  static const double _earSide = 0.088;
+  static const double _earUp = 0.05;
+  static const double _earTurn = 5.3;
+  static const double _hoodSide = 0.072;
+  static const double _hoodTurn = 4.9;
+  static const double _cheekUp = 1.26;
+
+  void _jiggleOff() {
+    if (_cheekOn == 0) return;
+    _eCheekL?.x -= _cheekOn;
+    _eCheekR?.x -= _cheekOn;
+    _cheekOn = 0;
+  }
+
+  /// Пружины — на кадр вперёд, кончики — на место.
+  void _jiggleApply(double dt) {
+    for (final s in [_earL, _earR, _hoodTip, _cheeks]) {
+      s.step(dt);
+    }
+    _eEarL3?.rotation = _earL3Rest + _earL.x;
+    _eEarR3?.rotation = _earR3Rest + _earR.x;
+    _eHood3?.rotation = _hood3Rest + _hoodTip.x;
+    // у костей лица ось x смотрит вверх
+    _cheekOn = _cheeks.x;
+    _eCheekL?.x += _cheekOn;
+    _eCheekR?.x += _cheekOn;
+  }
+
+  /// Как двинулась голова за кадр — толчок пружинам. Голова разогналась
+  /// вправо — кончики отстают влево; пошла вверх — уши и щёки опускаются.
+  void _jiggleMeasure(double dt) {
+    final m = _bHead?.worldTransform;
+    if (m == null || dt <= 0) return;
+    final x = m[4];
+    final y = m[5];
+    final a = math.atan2(m[1], m[0]);
+    final px = _headX;
+    final py = _headY;
+    final pa = _headA;
+    _headX = x;
+    _headY = y;
+    _headA = a;
+    if (px == null || py == null || pa == null) return;
+    var da = a - pa;
+    while (da > math.pi) {
+      da -= 2 * math.pi;
+    }
+    while (da < -math.pi) {
+      da += 2 * math.pi;
+    }
+    final vx = (x - px) / dt;
+    final vy = (y - py) / dt;
+    final va = da / dt;
+    // Скачок (переход комнаты, первый кадр после паузы) — не толчок.
+    final dvx = (vx - _headVx).clamp(-400.0, 400.0);
+    final dvy = (vy - _headVy).clamp(-400.0, 400.0);
+    final dva = (va - _headVa).clamp(-8.0, 8.0);
+    _headVx = vx;
+    _headVy = vy;
+    _headVa = va;
+    _earL.kick(-_earSide * dvx + _earUp * dvy - _earTurn * dva);
+    _earR.kick(-_earSide * dvx - _earUp * dvy - _earTurn * dva);
+    _hoodTip.kick(-_hoodSide * dvx - _hoodTurn * dva);
+    _cheeks.kick(_cheekUp * dvy);
+  }
 
   void _seatOff() {
     if (!_seatOn) return;
@@ -1283,6 +1411,17 @@ final class _TrialPainter extends BasicArtboardPainter {
     _eArmR2 = artboard.component('e_arm_r2');
     _handL = artboard.component('b_hand_l');
     _handR = artboard.component('b_hand_r');
+    _bHead = artboard.component('b_head');
+    _eEarL3 = artboard.component('e_ear_l3');
+    _eEarR3 = artboard.component('e_ear_r3');
+    _eHood3 = artboard.component('e_hood3');
+    _eCheekL = artboard.component('e_cheek_l');
+    _eCheekR = artboard.component('e_cheek_r');
+    _earL3Rest = _eEarL3?.rotation ?? 0;
+    _earR3Rest = _eEarR3?.rotation ?? 0;
+    _hood3Rest = _eHood3?.rotation ?? 0;
+    _cheekOn = 0;
+    _headX = null;
     _mouthSignal.clear();
     for (final op in _mouthOp.values) {
       op.dispose();
@@ -1305,6 +1444,7 @@ final class _TrialPainter extends BasicArtboardPainter {
   bool advance(double elapsedSeconds) {
     // Руки на столе: снять прошлые смещения, пока клипы не записали новые.
     _seatOff();
+    _jiggleOff();
     // Разбивку покоя запускаем до петли: сброс в покой при запуске
     // (`play` → `petCancel`) петля в этом же кадре перекроет.
     _advanceBonus(elapsedSeconds);
@@ -1358,7 +1498,9 @@ final class _TrialPainter extends BasicArtboardPainter {
     final hips = _eHips;
     if (seated && hips != null) hips.y = _hipsRestY;
     _seatApply();
+    _jiggleApply(elapsedSeconds);
     super.advance(0);
+    _jiggleMeasure(elapsedSeconds);
     final paws = this.paws;
     final l = _handL;
     final r = _handR;

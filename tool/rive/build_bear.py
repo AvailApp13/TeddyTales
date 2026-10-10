@@ -97,7 +97,19 @@ def emo_smile():
 EMOTIONS = {'emo_smile': emo_smile}
 
 
+def tidy(keep=3):
+    """Прошлые сборки остаются во временной папке (по ним `preview.py`
+    снимает кадры) — свежие `keep` оставить, остальные убрать: каждая весит
+    ~200 МБ, и за день проверок их набирались гигабайты."""
+    tmp = tempfile.gettempdir()
+    old = sorted((os.path.join(tmp, d) for d in os.listdir(tmp) if d.startswith('rive_bear_')),
+                 key=os.path.getmtime, reverse=True)
+    for path in old[keep:]:
+        shutil.rmtree(path, ignore_errors=True)
+
+
 def main():
+    tidy()
     work = tempfile.mkdtemp(prefix='rive_bear_')
     shutil.copy(SRC, os.path.join(work, 'bear.rev'))
     env = dict(os.environ, RIVE_NO_TUI='1')
