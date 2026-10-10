@@ -989,7 +989,9 @@ class Emo:
                 self.track(name, self.SY, pts)
                 continue
             self.track(name, self.SY, [(p[0], -p[1], *p[2:]) for p in pts])
-            shift = {'low': -BEAD_H, 'top': BEAD_H, 'both': 0}[lid]
+            # нижнее веко глаз не поднимает — бусина сплющивается к середине
+            # (заказчик 10.10, увидев подъём: «это ужас»); верхнее — опускает
+            shift = {'low': 0, 'top': BEAD_H, 'both': 0}[lid]
             if shift:
                 self.track(name, self.Y, [(p[0], shift * p[1], *p[2:]) for p in pts])
             # закрытый глаз — бусина сплющена в тёмную черту, как в моргании
@@ -1703,10 +1705,12 @@ def _mood_mouth(spec, kind, w, h):
 
 
 def _mood_eyes(spec, low, top):
-    """Бусины: low — нижнее веко вверх (улыбка), top — верхнее вниз."""
+    """Бусины: low — прищур улыбки, top — верхнее веко вниз. Сдвиг — как
+    задуман (top − low), но вверх бусина не уходит: нижнее веко глаз не
+    поднимает (заказчик 10.10: «это ужас»)."""
     for side in ('l', 'r'):
         spec[(f'bead_{side}', Emo.SY)] = lambda t: -(low(t) + top(t))
-        spec[(f'bead_{side}', Emo.Y)] = lambda t: BEAD_H * (top(t) - low(t))
+        spec[(f'bead_{side}', Emo.Y)] = lambda t: BEAD_H * max(0.0, top(t) - low(t))
 
 
 def _pair(spec, name, key, fn, mirror=False):
@@ -2683,6 +2687,26 @@ def check_keys(root):
                          + ', '.join(map(str, sorted(bad)[:12])) + f' — всего {len(bad)}')
 
 
+def check_eyes(root):
+    """Бусины глаз в клипах вверх не уходят — нижнее веко не поднимается
+    (заказчик 10.10: «это ужас»). Иначе — ошибка сборки."""
+    ab = root.find('Artboard')
+    rest = {WRAP_IDS[k]: E_REST[k]['y'] for k in ('bead_l', 'bead_r')}
+    bad = set()
+    for an in ab.iter('LinearAnimation'):
+        for ko in an.iter('KeyedObject'):
+            if ko.get('objectId') not in rest:
+                continue
+            for kp in ko.iter('KeyedProperty'):
+                if kp.get('propertyKey') != '14':
+                    continue
+                if any(float(k.get('value')) < rest[ko.get('objectId')] - 0.05
+                       for k in kp.iter('KeyFrameDouble')):
+                    bad.add(an.get('name'))
+    if bad:
+        raise SystemExit('глаза уходят вверх (нижнее веко): ' + ', '.join(sorted(bad)))
+
+
 def check_mouths(root):
     """Два рта — никогда: в каждом кадре каждого клипа ротик покоя и любой
     другой рот не видны оба больше чем наполовину. Иначе — ошибка сборки."""
@@ -2979,6 +3003,7 @@ def main(project):
 
     check_mouths(root)
     check_keys(root)
+    check_eyes(root)
     ET.indent(tree, space='    ')
     tree.write(path, encoding='unicode')
     print('bones', len(B), 'followers', len(followers))
