@@ -11,9 +11,10 @@ import 'package:teddy_tales/widgets/care_stats_panel.dart';
 ///
 /// «Вместо любви мы делаем эту кнопку, она будет прятать все». С 21.09 ряд
 /// открыт с запуска: «при открытии приложения это меню должно быть всегда
-/// раскрыто». С 10.10 ряд сам сворачивается через 3 с без касаний, а общий
-/// круг ещё через 5 с уезжает к краю «язычком»; тап по нему раскрывает ряд
-/// и подсвечивает самый низкий показатель. Здесь проверяется само
+/// раскрыто». С 10.10 ряд сам сворачивается через 3 с без касаний и
+/// раскрывается при входе в комнату; общий круг стоит на месте всегда, тап
+/// по нему раскрывает ряд и подсвечивает самый низкий показатель. Здесь
+/// проверяется само
 /// поведение, а ещё — что любви среди колец больше нет и что её показатель
 /// не потерялся: он в общем проценте на кнопке.
 // Полоски и крест на кнопке рисуются кистью, а не иконкой, — ищем её по
@@ -28,6 +29,7 @@ void main() {
     required List<BearAction> tapped,
     BearCareStats stats = const BearCareStats(),
     Listenable? activity,
+    Object? revealKey,
   }) {
     return tester.pumpWidget(
       MaterialApp(
@@ -43,6 +45,7 @@ void main() {
             stage: BearStage.adult,
             onAction: tapped.add,
             activity: activity,
+            revealKey: revealKey,
           ),
         ),
       ),
@@ -105,12 +108,12 @@ void main() {
       expect(food, findsNothing);
     });
 
-    testWidgets('свёрнутый круг уезжает к краю, тап раскрывает ряд', (
+    testWidgets('свёрнутый круг стоит на месте, тап раскрывает ряд', (
       tester,
     ) async {
-      // Заказчик 10.10: общий круг перекрывал картины и потолок — через
-      // 5 с он уменьшается и уезжает наполовину за край; тап по нему —
-      // выезжает и раскрывает показатели, самый низкий подсвечен.
+      // Заказчик 10.10, повторно: общий круг «двигать никак не нужно» — ни
+      // к краю, ни меньше. Тап по нему раскрывает показатели, самый низкий
+      // подсвечен, и через 3 с ряд снова прячется.
       await pump(
         tester,
         tapped: [],
@@ -118,19 +121,16 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 3100));
       await tester.pumpAndSettle();
-      final before = tester.getCenter(button).dx;
+      final before = tester.getRect(button);
 
-      await tester.pump(const Duration(milliseconds: 5100));
+      // Сколько ни жди — круг там же и того же размера.
+      await tester.pump(const Duration(seconds: 10));
       await tester.pumpAndSettle();
-      final width = tester.getSize(find.byType(Scaffold)).width;
-      expect(tester.getCenter(button).dx, greaterThan(before));
-      expect(tester.getCenter(button).dx, closeTo(width, 1));
+      expect(tester.getRect(button), before);
 
-      // Видна половина — по ней и жмём.
-      await tester.tapAt(tester.getCenter(button) - const Offset(12, 0));
+      await tester.tap(button);
       await tester.pumpAndSettle();
       expect(food, findsOneWidget);
-      expect(tester.getCenter(button).dx, closeTo(before, 1));
       // Подсвечен самый низкий — гигиена.
       final lit = find.byWidgetPredicate(
         (w) => w is AnimatedScale && w.scale > 1,
@@ -140,6 +140,27 @@ void main() {
         find.descendant(of: lit, matching: find.byIcon(Icons.bathtub_outlined)),
         findsOneWidget,
       );
+
+      await tester.pump(const Duration(milliseconds: 3100));
+      await tester.pumpAndSettle();
+      expect(food, findsNothing);
+    });
+
+    testWidgets('вход в другую комнату снова показывает ряд на 3 с', (
+      tester,
+    ) async {
+      await pump(tester, tapped: [], revealKey: 'игровая');
+      await tester.pump(const Duration(milliseconds: 3100));
+      await tester.pumpAndSettle();
+      expect(food, findsNothing);
+
+      await pump(tester, tapped: [], revealKey: 'кухня');
+      await tester.pumpAndSettle();
+      expect(food, findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 3100));
+      await tester.pumpAndSettle();
+      expect(food, findsNothing);
     });
 
     testWidgets('выбор показателя уводит в комнату, но ряд остаётся', (

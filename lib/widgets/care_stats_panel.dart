@@ -60,14 +60,17 @@ const bool kStageLocksOnStats = false;
 /// строками, как раньше, ряд получался громоздким.
 ///
 /// **Сам сворачивается** (заказчик 10.10). Ряд открыт при запуске, как
-/// просили 21.09, но через [collapseAfter] без касаний сворачивается
-/// обратно в общий круг. Общий круг висел поверх картин и потолка — ещё
-/// через [tuckAfter] он уменьшается и уезжает к правому краю, наполовину
-/// за край экрана, «язычком». Тап по нему — выезжает и раскрывает ряд, самый
-/// низкий показатель подсвечен. Любое касание экрана ([activity])
-/// начинает отсчёт заново. Если какой-то показатель ниже [lowThreshold],
-/// свёрнутый круг раз в несколько секунд покачивается, а кольцо у него —
-/// цвета самого низкого показателя.
+/// просили 21.09, и при каждом входе в комнату ([revealKey]), но через
+/// [collapseAfter] без касаний сворачивается обратно в общий круг: кольца
+/// не висят поверх комнаты. Тап по общему кругу раскрывает ряд, самый
+/// низкий показатель подсвечен, и через те же 3 с ряд снова прячется.
+/// Любое касание экрана ([activity]) начинает отсчёт заново. Если какой-то
+/// показатель ниже [lowThreshold], свёрнутый круг раз в несколько секунд
+/// покачивается, а кольцо у него — цвета самого низкого показателя.
+///
+/// Сам общий круг стоит на своём месте и своего размера всегда (заказчик
+/// 10.10, повторно: «его двигать никак не нужно») — к краю «язычком» он
+/// больше не уезжает.
 class CareStatsPanel extends StatefulWidget {
   const CareStatsPanel({
     super.key,
@@ -76,6 +79,7 @@ class CareStatsPanel extends StatefulWidget {
     this.onAction,
     this.fx,
     this.activity,
+    this.revealKey,
     this.edgePadding = 0,
   });
 
@@ -90,8 +94,12 @@ class CareStatsPanel extends StatefulWidget {
   /// Касания по всему экрану: каждое начинает отсчёт бездействия заново.
   final Listenable? activity;
 
-  /// Отступ ряда от краёв экрана. Сама панель — во всю ширину: свёрнутый
-  /// круг уезжает к самому краю и должен нажиматься и там.
+  /// Что показано сейчас — например, комната. Сменилось — ряд раскрывается
+  /// и через [collapseAfter] снова прячется: зашёл в комнату — увидел, как
+  /// там дела у мишки.
+  final Object? revealKey;
+
+  /// Отступ ряда от краёв экрана.
   final double edgePadding;
 
   /// Высота панели: кольцо и подпись под ним.
@@ -99,9 +107,6 @@ class CareStatsPanel extends StatefulWidget {
 
   /// Через сколько без касаний ряд сворачивается в общий круг.
   static const Duration collapseAfter = Duration(seconds: 3);
-
-  /// Через сколько без касаний свёрнутый круг уезжает к краю.
-  static const Duration tuckAfter = Duration(seconds: 5);
 
   /// Как часто свёрнутый круг напоминает о себе, если показатель низкий.
   static const Duration pulseEvery = Duration(seconds: 4);
@@ -133,13 +138,6 @@ class _CareStatsPanelState extends State<CareStatsPanel>
     reverseDuration: const Duration(milliseconds: 260),
   );
 
-  /// Общий круг уезжает к краю «язычком» и возвращается.
-  late final AnimationController _tuck = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 320),
-    reverseDuration: const Duration(milliseconds: 280),
-  );
-
   /// Покачивание свёрнутого круга, когда показатель низкий.
   late final AnimationController _pulse = AnimationController(
     vsync: this,
@@ -155,9 +153,6 @@ class _CareStatsPanelState extends State<CareStatsPanel>
   /// всегда раскрыто». С 10.10 он сам сворачивается через
   /// [CareStatsPanel.collapseAfter] без касаний.
   bool _open = true;
-
-  /// Свёрнутый круг уехал к краю.
-  bool _tucked = false;
 
   /// Какой показатель подсвечен после тапа по свёрнутому кругу — самый
   /// низкий. `null` — никакой.
@@ -188,6 +183,10 @@ class _CareStatsPanelState extends State<CareStatsPanel>
       oldWidget.fx?.removeListener(_onFx);
       widget.fx?.addListener(_onFx);
     }
+    // Зашли в другую комнату — показать, как там дела.
+    if (oldWidget.revealKey != widget.revealKey && !_open) {
+      _expand(highlight: false);
+    }
     // Показатель мог упасть ниже порога или подняться.
     _syncPulse();
   }
@@ -199,7 +198,6 @@ class _CareStatsPanelState extends State<CareStatsPanel>
     widget.activity?.removeListener(_onActivity);
     widget.fx?.removeListener(_onFx);
     _slide.dispose();
-    _tuck.dispose();
     _pulse.dispose();
     super.dispose();
   }
@@ -211,8 +209,8 @@ class _CareStatsPanelState extends State<CareStatsPanel>
   bool get _low =>
       _lowest(_tiles(context.l10n)).value < CareStatsPanel.lowThreshold;
 
-  /// Человек коснулся экрана — отсчёт бездействия заново. Уехавший к краю
-  /// круг от этого не возвращается: его достают тапом по нему самому.
+  /// Человек коснулся экрана — отсчёт бездействия заново. Свёрнутый ряд от
+  /// этого не раскрывается: его раскрывают тапом по общему кругу.
   void _onActivity() => _armIdle();
 
   /// Пока летит пузырь сытости, ряд раскрыт — пузырю нужно кольцо «Еда».
@@ -221,7 +219,7 @@ class _CareStatsPanelState extends State<CareStatsPanel>
     if (fx == null || !mounted) return;
     if (fx.busy) {
       _idle?.cancel();
-      if (!_open || _tucked) _expand(highlight: false);
+      if (!_open) _expand(highlight: false);
     } else {
       _armIdle();
     }
@@ -229,12 +227,9 @@ class _CareStatsPanelState extends State<CareStatsPanel>
 
   void _armIdle() {
     _idle?.cancel();
+    _idle = null;
     if (widget.fx?.busy ?? false) return;
-    if (_open) {
-      _idle = Timer(CareStatsPanel.collapseAfter, _collapse);
-    } else if (!_tucked) {
-      _idle = Timer(CareStatsPanel.tuckAfter, _tuckAway);
-    }
+    if (_open) _idle = Timer(CareStatsPanel.collapseAfter, _collapse);
   }
 
   void _collapse() {
@@ -248,29 +243,20 @@ class _CareStatsPanelState extends State<CareStatsPanel>
     _syncPulse();
   }
 
-  void _tuckAway() {
-    if (!mounted || _open || _tucked) return;
-    setState(() => _tucked = true);
-    _tuck.forward();
-    _syncPulse();
-  }
-
   void _expand({required bool highlight}) {
     setState(() {
-      _tucked = false;
       _open = true;
       _highlight = highlight ? _lowest(_tiles(context.l10n)).action : null;
     });
-    _tuck.reverse();
     _slide.forward();
     _armIdle();
     _syncPulse();
   }
 
-  /// Тап по общему кругу: свёрнутый — выезжает и раскрывает ряд, самый
-  /// низкий показатель подсвечен; раскрытый — крестиком сворачивает.
+  /// Тап по общему кругу: свёрнутый — раскрывает ряд, самый низкий
+  /// показатель подсвечен; раскрытый — крестиком сворачивает.
   void _toggle() {
-    if (_open && !_tucked) {
+    if (_open) {
       _collapse();
     } else {
       _expand(highlight: true);
@@ -355,13 +341,10 @@ class _CareStatsPanelState extends State<CareStatsPanel>
           final pad = widget.edgePadding;
           final slot = (constraints.maxWidth - 2 * pad) / 5;
           final closed = pad + slot * 4;
-          // Язычок: центр общего круга — ровно на краю экрана.
-          final tuckShift = pad + slot / 2;
 
           return AnimatedBuilder(
-            animation: Listenable.merge([_slide, _tuck, _pulse]),
+            animation: Listenable.merge([_slide, _pulse]),
             builder: (context, _) {
-              final tuck = Curves.easeInOutCubic.transform(_tuck.value);
               final p = _pulse.value;
               // Покачивание: лёгкий вдох и пара наклонов, затихающих к концу.
               final pulseScale = 1 + 0.12 * math.sin(math.pi * p);
@@ -376,25 +359,22 @@ class _CareStatsPanelState extends State<CareStatsPanel>
                     left: closed,
                     width: slot,
                     top: 0,
-                    child: Transform.translate(
-                      offset: Offset(tuckShift * tuck, 0),
-                      child: Transform.rotate(
-                        angle: wobble,
-                        child: Transform.scale(
-                          scale: (1 - 0.25 * tuck) * pulseScale,
-                          child: Center(
-                            child: _TotalButton(
-                              key: const ValueKey('care.toggle'),
-                              value: CareStatsPanel.totalCare(widget.stats),
-                              open: _open && !_tucked,
-                              // Низкий показатель — кольцо его цвета.
-                              color: low && !_open
-                                  ? lowest.color
-                                  : AppColors.sageDark,
-                              labelOpacity: 1 - tuck,
-                              squash: math.sin(_slide.value * math.pi) * 0.12,
-                              onTap: _toggle,
-                            ),
+                    // Покачивание — на месте: круг никуда не уезжает.
+                    child: Transform.rotate(
+                      angle: wobble,
+                      child: Transform.scale(
+                        scale: pulseScale,
+                        child: Center(
+                          child: _TotalButton(
+                            key: const ValueKey('care.toggle'),
+                            value: CareStatsPanel.totalCare(widget.stats),
+                            open: _open,
+                            // Низкий показатель — кольцо его цвета.
+                            color: low && !_open
+                                ? lowest.color
+                                : AppColors.sageDark,
+                            squash: math.sin(_slide.value * math.pi) * 0.12,
+                            onTap: _toggle,
                           ),
                         ),
                       ),
@@ -497,7 +477,6 @@ class _TotalButton extends StatelessWidget {
     required this.value,
     required this.open,
     required this.color,
-    required this.labelOpacity,
     required this.squash,
     required this.onTap,
   });
@@ -507,9 +486,6 @@ class _TotalButton extends StatelessWidget {
 
   /// Цвет кольца: обычный зелёный или цвет самого низкого показателя.
   final Color color;
-
-  /// Подпись с процентом гаснет, когда круг уезжает к краю.
-  final double labelOpacity;
 
   /// Приседание: в начале нажатия кнопка уходит вниз и сжимается, потом
   /// возвращается. Считается от того же хода, что и вылет колец, поэтому
@@ -566,16 +542,10 @@ class _TotalButton extends StatelessWidget {
             const SizedBox(height: 5),
             // Общий уход стоит подписью под кнопкой — на одной строке с
             // подписями колец, мелко и без слова «всего».
-            Opacity(
-              opacity: labelOpacity.clamp(0.0, 1.0),
-              child: SceneLabel(
-                text: '${value.round()}%',
-                size: 10,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2.5,
-                ),
-              ),
+            SceneLabel(
+              text: '${value.round()}%',
+              size: 10,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
             ),
           ],
         ),

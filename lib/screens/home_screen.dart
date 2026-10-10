@@ -1179,6 +1179,9 @@ class _HomeScreenState extends State<HomeScreen>
                             onAction: _runAction,
                             fx: _fx,
                             activity: _activity,
+                            // Вошли в комнату — ряд показан, через 3 с
+                            // спрячется (заказчик 10.10).
+                            revealKey: _room,
                             edgePadding: AppDimens.pagePadding,
                           ),
                           const SizedBox(height: 10),
