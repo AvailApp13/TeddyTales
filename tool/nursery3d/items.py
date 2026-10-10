@@ -68,9 +68,12 @@ SPOTS = {
     'nursery.corner_right': dict(kind='floor', x=0.05, y=4.10, face=-100),
     'nursery.rug': dict(kind='rug', x=-0.33, y=1.62),
     # Игрушки — по бокам от мишки, на ковре, на той же глубине, что и он:
-    # слева игрушка больше не заслоняет низ кресла (проверка 09.10).
-    'nursery.toy_left': dict(kind='floor', x=-0.67, y=1.62, face=-70),
-    'nursery.toy_right': dict(kind='floor', x=-0.03, y=1.62, face=-110),
+    # слева игрушка больше не заслоняет низ кресла (проверка 09.10). В 3D
+    # игрушки на 7 % крупнее прежних картинок (прежняя камера мерила
+    # неточно), и край уха срезался экраном Android 20:9 — места сдвинуты к
+    # мишке на 1,2 и 0,6 см (10.10).
+    'nursery.toy_left': dict(kind='floor', x=-0.658, y=1.62, face=-70),
+    'nursery.toy_right': dict(kind='floor', x=-0.036, y=1.62, face=-110),
     # Полка выше на 15 см — комод до неё не достаёт; левее на 9 см — не
     # срезается краем экрана. Картины сдвинуты влево за ней — над мишкой.
     'nursery.wall_shelf': dict(kind='wall', x=-0.09, z=1.77),
@@ -93,18 +96,63 @@ JOBS = [
     ('nursery.floor_left', 'armchair'),
 ]
 
+# Остальные вещи (заказчик 10.10: «мне всё понравилось, можно переводить
+# остальное») — пары «место/вещь» те же, что принимает место в приложении
+# (`RoomSlot.takes`, `nursery3dSlots`).
+JOBS += [
+    ('nursery.floor_left', 'armchair_sage'),
+    ('nursery.floor_left', 'armchair_bean'),
+    ('nursery.floor_left', 'armchair_flower'),
+    ('nursery.floor_left', 'armchair_wing'),
+    ('nursery.floor_left', 'swing'),
+    ('nursery.wall_shelf', 'shelf_house'),
+    ('nursery.wall_shelf', 'shelf_moon'),
+] + [
+    ('nursery.floor_right', i) for i in (
+        'dresser', 'table', 'plant', 'plant_ivy', 'plant_bear',
+        'flowers_daisy', 'flowers_orchid', 'flowers_euc', 'dollhouse', 'house_felt')
+] + [
+    ('nursery.corner_right', i) for i in (
+        'table', 'basket', 'basket_star', 'pillow_star', 'plant', 'plant_ivy', 'plant_bear',
+        'flowers_daisy', 'flowers_orchid', 'flowers_euc',
+        'teddy', 'teddy_cream', 'bunny', 'bunny_pink', 'cubes', 'pyramid')
+] + [
+    (slot, i) for slot in ('nursery.toy_left', 'nursery.toy_right') for i in (
+        'teddy', 'teddy_cream', 'bunny', 'bunny_pink', 'cubes', 'pyramid')
+]
+
 # Ширина вещей — из lib/game/item_groups.dart (с исключениями item_metrics).
 WIDTH = {
     'rug': 0.945, 'rug_cloud': 0.945, 'rug_heart': 0.945,
     'pic_bear': 0.55, 'pic_heart': 0.55,
     'shelf': 0.85, 'shelf_moon': 0.85, 'shelf_house': 0.72,
-    'armchair': 0.88,
+    'armchair': 0.88, 'armchair_sage': 0.88, 'armchair_flower': 0.88,
+    'armchair_bean': 0.95, 'armchair_wing': 0.75, 'swing': 0.88,
+    'dresser': 1.20, 'table': 0.50, 'basket': 0.45, 'basket_star': 0.45,
+    'pillow_star': 0.45, 'plant': 0.45, 'plant_ivy': 0.45, 'plant_bear': 0.45,
+    'flowers_daisy': 0.30, 'flowers_orchid': 0.30, 'flowers_euc': 0.30,
+    'teddy': 0.35, 'teddy_cream': 0.35, 'bunny': 0.35, 'bunny_pink': 0.35,
+    'cubes': 0.30, 'pyramid': 0.30, 'dollhouse': 0.66, 'house_felt': 0.66,
 }
 
 # Вещи в настоящий размер комнаты, без поправки на мишку. Заказчик 09.10:
 # кресло «не может быть ниже подоконника» — на обставленной детской от 20.09
-# оно около 0,82 × 0,76 м, спинка выше подоконника.
-REAL_SIZE = {'armchair'}
+# оно около 0,82 × 0,76 м, спинка выше подоконника. Остальные кресла того же
+# места — так же, иначе после розового они вдруг мельче.
+REAL_SIZE = {'armchair', 'armchair_sage', 'armchair_flower', 'armchair_bean',
+             'armchair_wing', 'swing'}
+
+# Вещи-картинки (build_standee): глубина невидимого силуэта, отбрасывающего
+# тень, — в долях ширины вещи (комод неглубокий, игрушки и горшки круглые).
+DEPTH = {
+    'dresser': 0.37, 'table': 0.9, 'basket': 0.9, 'basket_star': 0.9,
+    'pillow_star': 0.35, 'plant': 0.8, 'plant_ivy': 0.8, 'plant_bear': 0.8,
+    'flowers_daisy': 0.6, 'flowers_orchid': 0.6, 'flowers_euc': 0.6,
+    'teddy': 0.7, 'teddy_cream': 0.7, 'bunny': 0.7, 'bunny_pink': 0.7,
+    'cubes': 0.8, 'pyramid': 0.8, 'dollhouse': 0.6, 'house_felt': 0.7,
+    'armchair_sage': 0.85, 'armchair_flower': 0.85, 'armchair_bean': 0.85,
+    'armchair_wing': 0.9, 'swing': 0.9,
+}
 
 
 def item_scale(item_id):
@@ -140,7 +188,12 @@ def prepare_texture(item_id, tex_dir, unsquash=1.0, single=False):
     Возвращает путь к PNG, пропорцию (высота / ширина) и контур вещи в долях
     картинки (для ковра — форма основы)."""
     import cv2
-    im = Image.open(shop_source(item_id)).convert('RGBA')
+    from clean_cut import cleaned_image
+    # Та же чистка, что у картинок магазина в приложении (tool/pack_shop.py):
+    # в вырезку с листа попадают клочки соседних вещей. Без неё у плюща в
+    # комнате стояли полоска чужих листьев и обрывок цветов, а размер вещи
+    # считался по краям вместе с клочками — плющ выходил на 12 % мельче.
+    im = cleaned_image(Image.open(shop_source(item_id)))[0]
     a = np.asarray(im)[..., 3]
     if single:
         n, lab, st, _ = cv2.connectedComponentsWithStats((a > 200).astype(np.uint8))
@@ -468,6 +521,73 @@ def build_armchair(item_id='armchair'):
     return parts
 
 
+def picture_material(name, path):
+    """Картинка как есть: свой свет и цвет утверждённого рисунка, прозрачное —
+    насквозь. Свет комнаты на неё не ложится — от него только тень вокруг."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new('ShaderNodeOutputMaterial')
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(str(path))
+    tex.interpolation = 'Cubic'
+    em = nt.nodes.new('ShaderNodeEmission')
+    em.inputs['Strength'].default_value = 1.0
+    clear = nt.nodes.new('ShaderNodeBsdfTransparent')
+    mix = nt.nodes.new('ShaderNodeMixShader')
+    nt.links.new(tex.outputs['Color'], em.inputs['Color'])
+    nt.links.new(tex.outputs['Alpha'], mix.inputs['Fac'])
+    nt.links.new(clear.outputs['BSDF'], mix.inputs[1])
+    nt.links.new(em.outputs['Emission'], mix.inputs[2])
+    nt.links.new(mix.outputs['Shader'], out.inputs['Surface'])
+    return m
+
+
+def build_standee(item_id, tex_dir):
+    """Вещь — сама утверждённая картинка (заказчик 10.10: «можно переводить
+    остальное»). Так в играх с неподвижной камерой ставят нарисованные вещи в
+    3D-сцену: вид — рисунок, размер, место и тень — из сцены. Картинка стоит
+    на полу в настоящем размере (ширина рода вещи), лицом к камере (`place`),
+    свет и цвет — свои: игрушки, растения и домики, вылепленные в Blender,
+    вышли бы проще утверждённых рисунков. Тень на пол и стены отбрасывает
+    невидимый силуэт вещи — контур картинки, вытянутый назад на глубину
+    вещи (DEPTH); сама картинка тени не бросает."""
+    path, aspect, contour = prepare_texture(item_id, tex_dir)
+    w = WIDTH[item_id] * item_scale(item_id)
+    h = w * aspect
+    me = bpy.data.meshes.new(item_id)
+    me.from_pydata([(-w / 2, 0, 0), (w / 2, 0, 0), (w / 2, 0, h), (-w / 2, 0, h)], [],
+                   [(0, 1, 2, 3)])
+    uv = me.uv_layers.new()
+    for loop, co in zip(uv.data, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        loop.uv = co
+    card = link(bpy.data.objects.new(item_id, me))
+    card.data.materials.append(picture_material(item_id, path))
+    card.visible_shadow = False
+    card['standee'] = True
+    # силуэт для тени: контур картинки, вытянутый назад (от камеры)
+    d = DEPTH[item_id] * w
+    bm = bmesh.new()
+    verts = [bm.verts.new(((u - 0.5) * w, 0.004, (1 - v) * h)) for u, v in contour]
+    face = bm.faces.new(verts)
+    ext = bmesh.ops.extrude_face_region(bm, geom=[face])
+    back = [e for e in ext['geom'] if isinstance(e, bmesh.types.BMVert)]
+    bmesh.ops.translate(bm, verts=back, vec=(0, d, 0))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    sme = bpy.data.meshes.new(f'{item_id}_shadow')
+    bm.to_mesh(sme)
+    bm.free()
+    shadow = link(bpy.data.objects.new(f'{item_id}_shadow', sme))
+    grey = bpy.data.materials.new(f'{item_id}_grey')
+    grey.diffuse_color = (0.5, 0.5, 0.5, 1)
+    shadow.data.materials.append(grey)
+    shadow.visible_camera = False
+    shadow.visible_glossy = False
+    shadow.visible_transmission = False
+    return [card, shadow]
+
+
 def build_item(item_id, tex_dir):
     if item_id.startswith('rug'):
         return build_rug(item_id, tex_dir)
@@ -477,7 +597,15 @@ def build_item(item_id, tex_dir):
         return build_card(item_id, tex_dir, 0.05)
     if item_id == 'armchair':
         return build_armchair(item_id)
+    if item_id in DEPTH:
+        return build_standee(item_id, tex_dir)
     raise SystemExit(f'нет модели для {item_id}')
+
+
+def facing_camera(x, y):
+    """Поворот вокруг z, при котором перед вещи (−y) смотрит на камеру,
+    стоящую в начале координат."""
+    return math.atan2(-x, y)
 
 
 def footprint_depth(objs):
@@ -509,9 +637,25 @@ def place(objs, slot_id):
     for ob in objs:
         if ob.parent is None:
             ob.parent = root
+    standee = bool(objs[0].get('standee'))
     if s['kind'] == 'wall':
         depth = objs[0].get('wall_depth', 0.03)
         root.location = (s['x'], room.D - depth, s['z'])
+    elif standee and s['kind'] == 'left':
+        # картинка лицом к камере, задним краем силуэта — к левой стене
+        w = WIDTH[objs[0].name] * item_scale(objs[0].name)
+        root.rotation_euler = (0, 0, facing_camera(-room.WL + 0.035 + w / 2, s['y']))
+        bpy.context.view_layer.update()
+        x0, _ = footprint_x(objs)
+        root.location = (-room.WL + 0.035 - x0, s['y'], 0.0)
+    elif standee and s['kind'] == 'back':
+        root.rotation_euler = (0, 0, facing_camera(s['x'], room.D - 0.5))
+        bpy.context.view_layer.update()
+        y0, y1 = footprint_depth(objs)
+        root.location = (s['x'], room.D - 0.035 - y1, 0.0)
+    elif standee:
+        root.rotation_euler = (0, 0, facing_camera(s['x'], s['y']))
+        root.location = (s['x'], s['y'], 0.0)
     elif s['kind'] == 'left':
         root.rotation_euler = (0, 0, math.radians(s['face'] + 90))
         bpy.context.view_layer.update()
@@ -592,6 +736,17 @@ def setup_job(samples, scale):
     return fo
 
 
+def card_corners(cam, card):
+    """Углы картинки-стойки в кадре (px полного кадра): низ-лево, низ-право,
+    верх-право, верх-лево — как вершины в build_standee."""
+    sc = bpy.context.scene
+    pts = []
+    for v in card.data.vertices:
+        c = world_to_camera_view(sc, cam, card.matrix_world @ v.co)
+        pts.append([c.x * room.W_PX, (1 - c.y) * room.H_PX])
+    return pts
+
+
 def render_job(slot_id, item_id, out, samples, scale):
     room.build()
     room.lights()
@@ -599,6 +754,28 @@ def render_job(slot_id, item_id, out, samples, scale):
     tex_dir = out / 'tex'
     objs = build_item(item_id, tex_dir)
     place(objs, slot_id)
+    standee = bool(objs[0].get('standee'))
+    corners = None
+    if standee:
+        # Картинку вклеивает compose_job по точной перспективе плоскости —
+        # в полном разрешении и без шума. Blender считает только тень: она
+        # мягкая, ей хватает половины разрешения и 64 сэмплов (в 15–20 раз
+        # быстрее: кресло целиком считалось 12–17 мин).
+        corners = card_corners(cam, objs[0])
+        objs[0].visible_camera = False
+        samples, scale = min(samples, 64), 0.5
+        # Свет «от пола» (bounce) — подделка отражённого света: лампа у
+        # самого пола светит вверх. Сплошной силуэт у стены заслонял её, и над
+        # домиком или комодом на стене вставал тёмный ореол — грязное пятно,
+        # а не тень. Тень дают окно, солнце и свет от стены за камерой.
+        bpy.data.objects['bounce'].data.use_shadow = False
+        if SPOTS[slot_id]['kind'] == 'left':
+            # У окна вещь стоит на пути солнца, а силуэт сплошной до пола:
+            # он гасил всё солнечное пятно, и на полу оставалось тёмное
+            # «окно» с перекрестьем рамы (пятно на картинке комнаты и так
+            # приглушено, тень выходила темнее пола вокруг). Здесь тень —
+            # только от неба и комнаты: мягкая, под вещью и за ней.
+            bpy.data.objects['sun'].hide_render = True
     fo = setup_job(samples, scale)
     wall = SPOTS[slot_id]['kind'] == 'wall'
     u0, u1, v0, v1 = (screen_bbox(cam, objs, margin=0.25, pad=36, sun_shadow=False)
@@ -617,6 +794,9 @@ def render_job(slot_id, item_id, out, samples, scale):
     sc.frame_set(1)
     bpy.ops.render.render(write_still=False)
     (job_dir / 'border.json').write_text(json.dumps([u0, u1, v0, v1]))
+    if corners is not None:
+        (job_dir / 'card.json').write_text(json.dumps(
+            {'corners': corners, 'texture': str(tex_dir / f'{item_id}.png')}))
     print(f'{name}: кадр u {u0:.0f}–{u1:.0f}, v {v0:.0f}–{v1:.0f}')
     return job_dir
 
@@ -628,16 +808,17 @@ def load_exr(path):
     return exr.load(path)
 
 
-def compose_job(job_dir, r, floor_like):
+def compose_job(job_dir, r, floor_like, standee=False):
     """Слой вещи с тенью: RGBA, обрезан по содержимому. Цвет — как у слоёв
-    комнаты: тот же баланс белого и экспозиция (compose.Room)."""
+    комнаты: тот же баланс белого и экспозиция (compose.Room); у вещи-картинки
+    (build_standee) — цвет самой утверждённой картинки."""
     import compose
     item = load_exr(next(job_dir.glob('item*.exr')))
     shadow = load_exr(next(job_dir.glob('shadow*.exr')))
     h, w = item.shape[:2]
     a = np.clip(item[..., 3], 0, 1)
     rgb = item[..., :3] / np.maximum(a, 1e-4)[..., None]
-    lin = rgb * r.wb * r.exposure
+    lin = rgb.copy() if standee else rgb * r.wb * r.exposure
     if floor_like:
         knee, top = 0.68, 0.30
         over = lin > knee
@@ -661,6 +842,32 @@ def compose_job(job_dir, r, floor_like):
     # И к краю рамки тень сходит на нет.
     edge = cv2.GaussianBlur(inside.astype(np.float32), (0, 0), 10 * k)
     sa *= np.clip((edge - 0.5) * 2, 0, 1)
+    card = job_dir / 'card.json'
+    if standee and card.exists():
+        # Тень считалась в половинном разрешении — сгладить шум сильнее и
+        # растянуть до полного кадра; картинку — по углам плоскости.
+        sa = cv2.GaussianBlur(sa, (0, 0), 1.5)
+        w, h = room.W_PX, room.H_PX
+        sa = cv2.resize(sa, (w, h), interpolation=cv2.INTER_LINEAR)
+        info = json.loads(card.read_text())
+        dst = np.float32(info['corners'])
+        pic = Image.open(info['texture']).convert('RGBA')
+        # сначала уменьшить по-хорошему (перспектива её почти не искажает),
+        # потом положить по углам — иначе края рваные
+        span = float(np.ptp(dst[:, 0]))
+        if pic.width > 1.5 * span:
+            pic = pic.resize((max(2, round(span * 1.5)), max(2, round(pic.height * span * 1.5 / pic.width))),
+                             Image.LANCZOS)
+        tex = np.asarray(pic).astype(np.float32) / 255
+        th, tw = tex.shape[:2]
+        tex[..., :3] *= tex[..., 3:4]          # без тёмной каймы по краю
+        src = np.float32([[0, th], [tw, th], [tw, 0], [0, 0]])
+        warped = cv2.warpPerspective(tex, cv2.getPerspectiveTransform(src, dst), (w, h),
+                                     flags=cv2.INTER_CUBIC,
+                                     borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        warped = np.clip(warped, 0, 1)
+        a = warped[..., 3]
+        col = warped[..., :3] / np.maximum(a, 1e-4)[..., None] * 255
     out_a = a + sa * (1 - a)
     out_rgb = col * (a / np.maximum(out_a, 1e-4))[..., None]
     rgba = np.dstack([np.clip(out_rgb, 0, 255), out_a * 255]).astype(np.uint8)
@@ -731,7 +938,8 @@ def main():
     layer_dir.mkdir(parents=True, exist_ok=True)
     for slot_id, item_id in jobs:
         name = f'{slot_id.split(".")[1]}__{item_id}'
-        img, rect, hit = compose_job(out / name, r, floor_like=item_id.startswith('rug'))
+        img, rect, hit = compose_job(out / name, r, floor_like=item_id.startswith('rug'),
+                                     standee=item_id in DEPTH)
         img.save(layer_dir / f'{name}.webp', quality=90, alpha_quality=100, method=6)
         entries[f'{slot_id}/{item_id}'] = {'rect': [round(v, 5) for v in rect], 'hit': hit}
         print(f'{name}: {img.width}×{img.height}, '

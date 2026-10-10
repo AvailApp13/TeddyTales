@@ -202,10 +202,13 @@ const List<RoomSlot> nursery3dSlots = [
   // Проверка 09.10: игрушка слева стояла прямо перед креслом и закрывала
   // его низ — теперь она ниже кресла и левее мишки. Заказчик 09.10: здесь
   // только игрушки — цветы в вазах встают у задней стены и справа.
+  // 10.10: игрушки в 3D на 7 % крупнее прежних картинок, и ухо крайней
+  // срезалось экраном Android 20:9 — места чуть ближе к мишке (как в
+  // tool/nursery3d/items.py).
   RoomSlot(
     id: 'nursery.toy_left',
     room: RoomKind.nursery,
-    x: 0.230,
+    x: 0.240,
     y: 0.775,
     fit: ItemFit.floor,
     metres: 0.36,
@@ -216,7 +219,7 @@ const List<RoomSlot> nursery3dSlots = [
   RoomSlot(
     id: 'nursery.toy_right',
     room: RoomKind.nursery,
-    x: 0.780,
+    x: 0.774,
     y: 0.775,
     fit: ItemFit.floor,
     metres: 0.36,
