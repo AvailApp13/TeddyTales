@@ -61,11 +61,19 @@ class BedroomScene extends StatefulWidget {
     0.157297,
   );
 
-  /// Коробка Rive-мишки (артборд 1024 × 1024) в долях кадра: глаза — на
-  /// месте глаз нарисованного (между глазами 57 px кадра против 110 px
-  /// артборда → масштаб 0,52; середина глаз — (474, 854) кадра).
+  /// Коробка Rive-мишки (артборд 1024 × 1024) в долях кадра: размер —
+  /// по глазам нарисованного (между глазами 57 px кадра против 110 px
+  /// артборда → масштаб 0,52).
+  ///
+  /// Поднят на [bearRaise] над глазами прежнего (заказчик 11.10: «одеяло
+  /// прикрывает его бороду… чуть-чуть повыше»): у нашего от глаз до низа
+  /// подбородка 68 px кадра, у прежнего 53, и с глазами на прежнем месте
+  /// (854) подбородок уходил под край одеяла (913) на 8 px. Теперь глаза —
+  /// 834, подбородок — 901, под ним виден край капюшона, как у прежнего
+  /// (у того подбородок 906).
   static const double bearLeft = 208.4 / 941;
-  static const double bearTop = 638.0 / 1672;
+  static const double bearRaise = 20 / 1672;
+  static const double bearTop = 638.0 / 1672 - bearRaise;
   static const double bearSide = 532.1 / 941;
 
   static const Rect blanket = Rect.fromLTWH(0, 0.544258, 1, 0.310407);
@@ -124,9 +132,13 @@ class BedroomScene extends StatefulWidget {
   /// там же, где левая, на 89 px.
   static const double pawRightShift = 14 / 941;
 
+  /// Лапы чуть выше прежнего места — вслед за поднятым мишкой (доля
+  /// высоты кадра): держат край одеяла по бокам подбородка.
+  static const double pawRaise = 6 / 1672;
+
   /// Середины лап (доли кадра) — по ним лапы поднимаются с одеялом.
-  static const Offset pawLeftAt = Offset(387 / 941, 921 / 1672);
-  static const Offset pawRightAt = Offset((548 + 14) / 941, 921 / 1672);
+  static const Offset pawLeftAt = Offset(387 / 941, 915 / 1672);
+  static const Offset pawRightAt = Offset((548 + 14) / 941, 915 / 1672);
 
   /// Лапы нарисованы под свет спальни и светлее нашего мишка под
   /// [night]: замер 11.10 — лапы (238, 213, 197), щека (218, 197, 178).
@@ -294,11 +306,15 @@ class _BedroomSceneState extends State<BedroomScene>
         builder: (context, _) {
           final lift =
               BedroomScene.chestRise * _rise * BedroomScene.blanket.height * h;
+          final raise = BedroomScene.pawRaise * h;
           return CustomPaint(
             painter: _BedPaws(
               image: image,
-              liftLeft: lift * BedroomScene.blanketBump(BedroomScene.pawLeftAt),
+              liftLeft:
+                  raise +
+                  lift * BedroomScene.blanketBump(BedroomScene.pawLeftAt),
               liftRight:
+                  raise +
                   lift * BedroomScene.blanketBump(BedroomScene.pawRightAt),
               shiftRight: BedroomScene.pawRightShift / BedroomScene.bear.width,
             ),
