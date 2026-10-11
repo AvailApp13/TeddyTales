@@ -14,6 +14,7 @@
 5. idle_life — новое дыхание всем телом (моргание прежнее), из остальных
    анимаций убраны ключи старых костей.
 """
+import copy
 import math
 import os
 
@@ -593,6 +594,14 @@ FPS = 60
 DUR = 720          # петля 12 с
 PERIOD = 180       # вдох-выдох 3,0 с (было 3,6), четыре за петлю
 SWAY = 360         # покачивание головы 6 с, два за петлю
+# За столом и в кровати мишка дышит вдвое медленнее (заказчик 11.10: «на
+# кухне и в спальне дыхание намного медленнее, в основной комнате
+# оставь»): петля `idle_calm` — тот же покой, вдох-выдох 6 с, два за петлю,
+# и мельче (AMP_CALM от размаха игровой): на кухне под капюшоном лежит
+# неподвижная кофта прежнего мишка, голова не должна ходить над ней.
+# Моргание, осмотр и уши — как в `idle_life`.
+PERIOD_CALM = 360
+AMP_CALM = 0.6
 
 
 def wave(t, lag=0.0, period=PERIOD):
@@ -629,9 +638,14 @@ EAR_TURN = -0.004   # рад на пиксель сдвига лица вбок:
 EAR_TWITCH = [('l', 120), ('r', 380), ('l', 560), ('r', 566)]
 
 
-def breathing(B, rest):
-    """{(bone, propertyKey): [(frame, value)]}."""
+def breathing(B, rest, period=PERIOD, amp=1.0):
+    """{(bone, propertyKey): [(frame, value)]}. period — вдох-выдох в
+    кадрах, amp — размах: в игровой PERIOD и 1, за столом и в кровати —
+    PERIOD_CALM и AMP_CALM (средняя поза та же)."""
     ch = {}
+
+    def wv(t, lag=0.0):
+        return amp * wave(t, lag, period)
 
     def add(bone, key, fn):
         ch[(bone, key)] = [(t, fn(t)) for t in range(0, DUR + 1, 4)]
@@ -644,27 +658,27 @@ def breathing(B, rest):
 
     R, SX, SY, X, Y = 15, 16, 17, 90, 91
     # корпус: заметный вдох, на выдохе присел — колени чуть сгибаются (leg_ik)
-    add('hips', Y, lambda t: rest['hips']['y'] - 5.0 * wave(t))
+    add('hips', Y, lambda t: rest['hips']['y'] - 5.0 * wv(t))
     for side in ('l', 'r'):
         add(f'leg_{side}', R, lambda t, s_=side: rest[f'leg_{s_}']['rotation']
-            + leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[0])
+            + leg_ik(s_, dy=-5.0 * wv(t), bend=KNEE_BEND_BREATH)[0])
         add(f'shin_{side}', R, lambda t, s_=side: rest[f'shin_{s_}']['rotation']
-            + leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[1])
-        add(f'leg_{side}', SX, lambda t, s_=side: leg_ik(s_, dy=-5.0 * wave(t), bend=KNEE_BEND_BREATH)[2])
-    add('belly', R, lambda t: rest['belly']['rotation'] - 0.012 * wave(t, 4))
-    add('breath', SY, lambda t: 1 + 0.065 * (wave(t) + 1) / 2)              # грудь шире
+            + leg_ik(s_, dy=-5.0 * wv(t), bend=KNEE_BEND_BREATH)[1])
+        add(f'leg_{side}', SX, lambda t, s_=side: leg_ik(s_, dy=-5.0 * wv(t), bend=KNEE_BEND_BREATH)[2])
+    add('belly', R, lambda t: rest['belly']['rotation'] - 0.012 * wv(t, 4))
+    add('breath', SY, lambda t: 1 + 0.065 * (wv(t) + 1) / 2)              # грудь шире
     # плечи на вдохе чуть поднимаются — ключицы (10.10)
-    add('clav_l', R, lambda t: rest['clav_l']['rotation'] + 0.5 * 0.065 * (wave(t, 6) + 1) / 2)
-    add('clav_r', R, lambda t: rest['clav_r']['rotation'] - 0.5 * 0.065 * (wave(t, 6) + 1) / 2)
-    add('breath', SX, lambda t: 1 + 0.04 * (wave(t, 3) + 1) / 2)
-    add('chest', R, lambda t: rest['chest']['rotation'] + 0.02 * wave(t, 6))
-    add('neck', R, lambda t: rest['neck']['rotation'] - 0.014 * wave(t, 10))
+    add('clav_l', R, lambda t: rest['clav_l']['rotation'] + 0.5 * 0.065 * (wv(t, 6) + 1) / 2)
+    add('clav_r', R, lambda t: rest['clav_r']['rotation'] - 0.5 * 0.065 * (wv(t, 6) + 1) / 2)
+    add('breath', SX, lambda t: 1 + 0.04 * (wv(t, 3) + 1) / 2)
+    add('chest', R, lambda t: rest['chest']['rotation'] + 0.02 * wv(t, 6))
+    add('neck', R, lambda t: rest['neck']['rotation'] - 0.014 * wv(t, 10))
     # голова: вдох + медленное покачивание + наклон, когда осматривается
-    add('head', R, lambda t: rest['head']['rotation'] + 0.03 * wave(t, 14)
+    add('head', R, lambda t: rest['head']['rotation'] + 0.03 * wv(t, 14)
         + 0.016 * math.sin(2 * math.pi * t / SWAY) + 0.07 * look(t)[2])
     # лицо внутри капюшона: поворот влево-вправо, взгляд вверх
     add('face', Y, lambda t: rest['face']['y'] + 13 * look(t)[0])
-    add('face', X, lambda t: rest['face']['x'] + 7 * look(t)[1] + 1.2 * wave(t, 12))
+    add('face', X, lambda t: rest['face']['x'] + 7 * look(t)[1] + 1.2 * wv(t, 12))
     # Живое лицо в покое (заказчик 10.10: «лоб, щёки, подбородок будто
     # стоят»). Объёмный поворот: нос — ближе всех к зрителю — уходит дальше
     # лица, лоб, скулы и челюсть отстают (доли TURN, те же, что у эмоций).
@@ -680,46 +694,46 @@ def breathing(B, rest):
         more(name, key, lambda t, i=src, kk=k: kk * (13 * look(t)[0] if i == 'y' else 7 * look(t)[1]))
 
     def brow(t):
-        return 0.6 * wave(t, 40) + 1.6 * look(t)[1]
+        return 0.6 * wv(t, 40) + 1.6 * look(t)[1]
 
     for side in ('l', 'r'):
         more(f'brow_{side}', X, brow)
         more(f'fore_{side}', X, brow)
     more('fore_c', X, brow)
-    more('muzzle', X, lambda t: 0.35 * wave(t, 10))
+    more('muzzle', X, lambda t: 0.35 * wv(t, 10))
     sniffs = [(300, 1.4), (318, 1.0), (640, 1.2)]
-    more('nose', X, lambda t: 0.35 * wave(t, 10)
+    more('nose', X, lambda t: 0.35 * wv(t, 10)
          + sum(a * max(0.0, 1 - abs(t - c) / 7) ** 2 for c, a in sniffs))
-    more('jaw', X, lambda t: -0.9 * (1 - wave(t, 24)) / 2)
-    more('zyg_l', X, lambda t: 0.45 * 0.6 * wave(t, 18))
-    more('zyg_r', X, lambda t: 0.45 * 0.6 * wave(t, 18))
+    more('jaw', X, lambda t: -0.9 * (1 - wv(t, 24)) / 2)
+    more('zyg_l', X, lambda t: 0.45 * 0.6 * wv(t, 18))
+    more('zyg_r', X, lambda t: 0.45 * 0.6 * wv(t, 18))
     for (name, key), fns in life.items():
         if name in rest:
             add(name, key, lambda t, n=name, ky=key, fs=fns:
                 rest[n].get({X: 'x', Y: 'y', R: 'rotation'}[ky], 0.0) + sum(fn(t) for fn in fs))
     # капюшон: кончик и боковины догоняют и перелетают
-    add('hood1', R, lambda t: rest['hood1']['rotation'] - 0.018 * wave(t, 22)
+    add('hood1', R, lambda t: rest['hood1']['rotation'] - 0.018 * wv(t, 22)
         - 0.015 * math.sin(2 * math.pi * (t - 30) / SWAY) - 0.015 * look(t)[2])
-    add('hood2', R, lambda t: rest['hood2']['rotation'] - 0.08 * wave(t, 34)
-        - 0.025 * math.sin(2 * math.pi * (t - 45) / SWAY) + 0.015 * wave(t * 2, 60)
+    add('hood2', R, lambda t: rest['hood2']['rotation'] - 0.08 * wv(t, 34)
+        - 0.025 * math.sin(2 * math.pi * (t - 45) / SWAY) + 0.015 * wv(t * 2, 60)
         - 0.05 * look(t - 12)[2])
-    add('hood_sl', R, lambda t: rest['hood_sl']['rotation'] + 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
-    add('hood_sr', R, lambda t: rest['hood_sr']['rotation'] - 0.03 * wave(t, 20) - 0.025 * look(t - 8)[2])
+    add('hood_sl', R, lambda t: rest['hood_sl']['rotation'] + 0.03 * wv(t, 20) - 0.025 * look(t - 8)[2])
+    add('hood_sr', R, lambda t: rest['hood_sr']['rotation'] - 0.03 * wv(t, 20) - 0.025 * look(t - 8)[2])
     # уши: по диагонали к капюшону и складываются к основанию; иногда вздрагивают
-    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.06 * wave(t, 26) + 0.07 * ear(t, 'l')
+    add('ear_l1', R, lambda t: rest['ear_l1']['rotation'] + 0.06 * wv(t, 26) + 0.07 * ear(t, 'l')
         + EAR_TURN * 13 * look(t)[0])
-    add('ear_l2', R, lambda t: rest['ear_l2']['rotation'] + 0.09 * wave(t, 38) + 0.12 * ear(t - 3, 'l'))
-    add('ear_l1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.06 * ear(t, 'l'))
-    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wave(t, 26) - 0.07 * ear(t, 'r')
+    add('ear_l2', R, lambda t: rest['ear_l2']['rotation'] + 0.09 * wv(t, 38) + 0.12 * ear(t - 3, 'l'))
+    add('ear_l1', SX, lambda t: 1 - 0.07 * (wv(t, 30) + 1) / 2 - 0.06 * ear(t, 'l'))
+    add('ear_r1', R, lambda t: rest['ear_r1']['rotation'] - 0.06 * wv(t, 26) - 0.07 * ear(t, 'r')
         + EAR_TURN * 13 * look(t)[0])
-    add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.09 * wave(t, 38) - 0.12 * ear(t - 3, 'r'))
-    add('ear_r1', SX, lambda t: 1 - 0.07 * (wave(t, 30) + 1) / 2 - 0.06 * ear(t, 'r'))
+    add('ear_r2', R, lambda t: rest['ear_r2']['rotation'] - 0.09 * wv(t, 38) - 0.12 * ear(t - 3, 'r'))
+    add('ear_r1', SX, lambda t: 1 - 0.07 * (wv(t, 30) + 1) / 2 - 0.06 * ear(t, 'r'))
     # плечи поднимаются на вдохе, лапы отходят; звенья руки догоняют друг
     # друга с запаздыванием — рука мягкая, как у плюшевой игрушки
     for s, sg in (('l', 1), ('r', -1)):
-        for bone, amp, lag in ((f'arm_{s}1', 0.02, 8), (f'side_{s}', 0.02, 8), (f'arm_{s}2', 0.014, 15),
-                               (f'arm_{s}3', 0.014, 22), (f'hand_{s}', 0.03, 32)):
-            add(bone, R, lambda t, b=bone, a=amp * sg, g=lag: rest[b]['rotation'] + a * wave(t, g))
+        for bone, size, lag in ((f'arm_{s}1', 0.02, 8), (f'side_{s}', 0.02, 8), (f'arm_{s}2', 0.014, 15),
+                                (f'arm_{s}3', 0.014, 22), (f'hand_{s}', 0.03, 32)):
+            add(bone, R, lambda t, b=bone, a=size * sg, g=lag: rest[b]['rotation'] + a * wv(t, g))
     return ch
 
 
@@ -731,8 +745,11 @@ def breathing(B, rest):
 # закрывают два кадра-позы — как в моргании покоя: бусины сплющены в черту,
 # а потом разом спрятаны под слоем закрытых глаз с ресничками. Плавно
 # проявлять закрытые глаза поверх открытых нельзя — видно оба.
-SLEEP_T = 528          # петля сна: два вдоха по 4,4 с — как одеяло в спальне
-SLEEP_BREATH = 264
+# Петля сна: два вдоха по 6,4 с (заказчик 11.10: «в спальне дыхание
+# намного медленнее»; было 4,4 с). Одеяло спальни поднимается от
+# дыхания самого мишка — темп общий.
+SLEEP_T = 768
+SLEEP_BREATH = 384
 
 
 def asleep_motion():
@@ -775,6 +792,11 @@ def asleep_motion():
                                (f'arm_{s}3', 0.004, 22), (f'hand_{s}', 0.006, 32)):
             m[(bone, R)] = (lambda a, g: lambda t: a * w(t - g))(amp * sg, lag)
     return m
+
+
+# Картинки тела рига: на кухне их прячет поза `pose_body_off`.
+BODY_IMAGES = ('shirt_img', 'shirt_flat_l_img', 'shirt_flat_r_img', 'sleeve_left_img', 'sleeve_right_img',
+               'paw_left_img', 'paw_right_img', 'shorts_img', 'foot_left_img', 'foot_right_img')
 
 
 def sleep_clips(ab, idle, B):
@@ -900,7 +922,7 @@ def double_blink(idle):
                                                      'interpolationType': 'linear'})
 
 
-def blink_face(rest):
+def blink_face(rest, period=PERIOD, amp=1.0):
     """Мех вокруг глаз прищуривается и щёки чуть поднимаются вместе с
     морганием — веко «мягкое», а не только сплющенная бусина."""
     ch = {}
@@ -914,10 +936,10 @@ def blink_face(rest):
     # щёки на вдохе чуть приподнимаются (10.10: «щёки будто стоят»),
     # «яблочки» под глазами — вместе с ними (связка COUPLE)
     for cheek in ('cheek_l', 'cheek_r'):
-        ch[(cheek, X)] = [(t, rest[cheek]['x'] + bump(t, 1.6) + 0.6 * wave(t, 18))
+        ch[(cheek, X)] = [(t, rest[cheek]['x'] + bump(t, 1.6) + 0.6 * amp * wave(t, 18, period))
                           for t in range(0, DUR + 1, 2)]
     for apple in ('apple_l', 'apple_r'):
-        ch[(apple, X)] = [(t, rest[apple]['x'] + 0.7 * (bump(t, 1.6) + 0.6 * wave(t, 18)))
+        ch[(apple, X)] = [(t, rest[apple]['x'] + 0.7 * (bump(t, 1.6) + 0.6 * amp * wave(t, 18, period)))
                           for t in range(0, DUR + 1, 2)]
     return ch
 
@@ -3086,6 +3108,38 @@ def main(project):
                                                  'interpolationType': 'linear'})
     # 7б. Сон: петля `idle_asleep` и позы закрытых глаз (заказчик 10.10).
     sleep_clips(ab, idle, B)
+
+    # 7в. Спокойный покой за столом и в кровати (заказчик 11.10): копия
+    # `idle_life` — моргание, осмотр, уши, глаза те же, а кости дышат вдвое
+    # медленнее и мельче (PERIOD_CALM, AMP_CALM). Приложение играет её
+    # вместо `idle_life`, когда мишка сидит (кухня, «Сон»).
+    calm = copy.deepcopy(idle)
+    calm.set('name', 'idle_calm')
+    for el in calm.iter():                  # id в файле должны быть разными
+        el.attrib.pop('id', None)
+    bone_ids = {b['id'] for b in B.values()}
+    for ko in list(calm.findall('KeyedObject')):
+        if ko.attrib['objectId'] in bone_ids:
+            calm.remove(ko)
+    for (bname, key), frames in {**breathing(B, rest, PERIOD_CALM, AMP_CALM), **blink_face(rest, PERIOD_CALM, AMP_CALM)}.items():
+        ko = ET.SubElement(calm, 'KeyedObject', {'objectId': B[bname]['id']})
+        kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': str(key)})
+        for fr, val in frames:
+            ET.SubElement(kp, 'KeyFrameDouble', {'value': fmt(val), 'frame': str(fr),
+                                                 'interpolationType': 'linear'})
+    ab.insert(list(ab).index(idle) + 1, calm)
+
+    # 7г. Тело спрятано (кухня, заказчик 11.10: «возьми предыдущего мишку, его
+    # одежду… наложи»): кофта, рукава, лапы, шорты и стопы рига гаснут —
+    # остаётся голова в капюшоне, под ней приложение кладёт тело прежнего
+    # мишка. Поза из одного кадра, приложение ставит её поверх всего.
+    names = {e.get('name'): e.get('id') for e in ab.iter() if e.get('name')}
+    body_off = ET.Element('LinearAnimation', {'duration': '1', 'loopValue': '0', 'name': 'pose_body_off'})
+    for name in BODY_IMAGES:
+        ko = ET.SubElement(body_off, 'KeyedObject', {'objectId': names[name]})
+        kp = ET.SubElement(ko, 'KeyedProperty', {'propertyKey': '18'})
+        ET.SubElement(kp, 'KeyFrameDouble', {'value': '0', 'frame': '0', 'interpolationType': 'hold'})
+    ab.insert(list(ab).index(calm) + 1, body_off)
 
     # 8. Эмоции на новых костях: emo_smile заново, остальные — новые.
     anims = {a.attrib.get('name'): a for a in root.iter('LinearAnimation')}

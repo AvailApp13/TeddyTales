@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -11,16 +10,24 @@ import '../game/room_kind.dart';
 import 'kitchen_scene.dart' show KitchenMeal, KitchenMood, KitchenScene;
 
 /// Мишка на кухне — тот же анимированный Rive-мишка, что в игровой
-/// (заказчик 27.09: «переноси мишку на кухню»). Плоский мишка из частей
-/// (`KitchenScene`) и его ножки под столом больше не рисуются — наши ноги
-/// целиком под скатертью.
+/// (заказчик 27.09: «переноси мишку на кухню»), за столом — с телом
+/// прежнего нарисованного мишка (заказчик 11.10: «возьми предыдущего
+/// мишку, его одежду, сопоставь цвет и наложи на него… идеально ровный
+/// вид, как был ранее. Расположение рук. Плечи поджаты»).
 ///
-/// Поставлен по замерам старого: расстояние между глазами 70 px кадра
-/// кухни 941 × 1672 против 112 px артборда → масштаб 0,625; артборд
-/// 1024 → 640 px, левый верхний угол — (146, 611). Верх капюшона — y 636
-/// (у старого 639), глаза — точно на месте старых. Поверх — полоса
-/// скатерти из самого фона кухни ([KitchenScene.tableFront]): она прячет
-/// всё ниже края стола.
+/// Голова в капюшоне — Rive-мишка, поставлен по замерам старого:
+/// расстояние между глазами 70 px кадра кухни 941 × 1672 против 112 px
+/// артборда → масштаб 0,625; артборд 1024 → 640 px, левый верхний угол —
+/// (146, 611). Верх капюшона — y 636 (у старого 639), глаза — точно на
+/// месте старых. Тело рига за столом спрятано
+/// ([RiveBearTrial.headOnly]): его рукава, сплющенные до стола, давали
+/// «крылышки» и заломы на кофте.
+///
+/// Тело — части прежнего мишка на их прежних местах
+/// (`tool/cut_kitchen_seat.py`): кофта с рукавами и лапы на кромке стола,
+/// цвет ткани и меха подогнан под нашего мишка. Капюшон лежит поверх
+/// кофты. Кофта дышит вместе с мишкой — от кромки стола, по вдоху самой
+/// кости рига ([RiveBearTrial.breath]); лапы лежат на столе.
 ///
 /// События кухни — в клипы мишки:
 /// - поел → «Жуёт», потом по настроению: любимое — «Любовь», приготовил
@@ -32,16 +39,9 @@ import 'kitchen_scene.dart' show KitchenMeal, KitchenMood, KitchenScene;
 ///   ведут по голове — ласка, по животу над столом — щекотка (заказчик
 ///   27.09: «включи поглаживание на кухне»).
 ///
-/// Лапы на столе (заказчик 27.09, как у прежнего мишки): руки рига
-/// чуть внутрь и укорочены — идут вперёд, к зрителю; манжета и лапа —
-/// отдельной картинкой из текстур самого рига поверх скатерти
-/// (`tool/cut_table_paws.py`), ровно там, где кончается рукав: картинка
-/// едет за костью кисти ([TablePaws]). Под лапами мягкая тень на скатерти.
-/// Пока жуёт — лапы по очереди похлопывают по столу (кивок кисти, рука не
-/// поднимается).
-///
+/// Пока жуёт — лапы по очереди похлопывают по столу (кивок у запястья).
 /// За столом мишка сидит: вертикальные подскоки корпуса гасятся
-/// ([RiveBearTrial.seated]). Цвет чуть теплее и темнее — под свет
+/// ([RiveBearTrial.seated]). Цвет головы чуть теплее и темнее — под свет
 /// иллюстрации кухни (замер по шерсти и капюшону старого мишки).
 class KitchenBear extends StatefulWidget {
   const KitchenBear({
@@ -82,6 +82,56 @@ class KitchenBear extends StatefulWidget {
     0, 0, 0, 1, 0, //
   ]);
 
+  /// Тело прежнего мишка — доли кадра (печатает `tool/cut_kitchen_seat.py`):
+  /// кофта с рукавами и лапы на их прежних местах.
+  static const Rect body = Rect.fromLTWH(
+    0.340064,
+    0.540670,
+    0.306057,
+    0.067584,
+  );
+  static const Rect pawLeft = Rect.fromLTWH(
+    0.335648,
+    0.579427,
+    0.092593,
+    0.037760,
+  );
+  static const Rect pawRight = Rect.fromLTWH(
+    0.562500,
+    0.579427,
+    0.086806,
+    0.037760,
+  );
+
+  static const String _dir = 'assets/rooms/kitchen';
+  static const List<String> assets = [
+    '$_dir/seat_body.png',
+    '$_dir/seat_paw_left.png',
+    '$_dir/seat_paw_right.png',
+  ];
+
+  /// Заранее раскодировать тело — иначе за столом на долю секунды
+  /// показалась бы одна голова.
+  static Future<void> warmUp(BuildContext context) => Future.wait([
+    for (final asset in assets) precacheImage(AssetImage(asset), context),
+  ]);
+
+  /// Вдох кофты на единицу дыхания мишка (вдох рига за столом ±0,6):
+  /// подъём — доля высоты кадра, растяжение от кромки стола — как у
+  /// прежнего мишка (`KitchenScene.chestSwell`).
+  static const double breathLift = 1.5 / 1672;
+  static const double breathSwell = 0.012;
+
+  /// Похлопывание: кивок лапы у запястья до 14° и подъём на 6 px кадра.
+  static const double patTurn = 0.24;
+  static const double patLift = 6 / 1672;
+
+  /// Когда каждая лапа хлопает (доли [_KitchenBearState._patTime]) — по
+  /// очереди, как «вкусно!» на каждое жевание.
+  static const List<double> patsLeft = [0.04, 0.30, 0.56];
+  static const List<double> patsRight = [0.17, 0.43, 0.69];
+  static const double patLen = 0.12;
+
   @override
   State<KitchenBear> createState() => _KitchenBearState();
 }
@@ -89,7 +139,9 @@ class KitchenBear extends StatefulWidget {
 class _KitchenBearState extends State<KitchenBear>
     with SingleTickerProviderStateMixin {
   final List<Timer> _later = [];
-  final TablePaws _paws = TablePaws();
+
+  /// Вдох мишка — пишет сам риг каждый кадр, кофта дышит с ним.
+  final ValueNotifier<double> _breath = ValueNotifier(0);
 
   /// Похлопывание лапами, пока жуёт: 0…1 за [_patTime].
   late final AnimationController _pat = AnimationController(
@@ -97,27 +149,6 @@ class _KitchenBearState extends State<KitchenBear>
     duration: _patTime,
   );
   static const Duration _patTime = Duration(milliseconds: 3800);
-  ui.Image? _pawLeft;
-  ui.Image? _pawRight;
-  final List<(ImageStream, ImageStreamListener)> _streams = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _load('left', (i) => _pawLeft = i);
-    _load('right', (i) => _pawRight = i);
-  }
-
-  void _load(String side, void Function(ui.Image) done) {
-    final stream = AssetImage(
-      'assets/rooms/kitchen/table_paw_$side.png',
-    ).resolve(ImageConfiguration.empty);
-    final listener = ImageStreamListener((info, _) {
-      if (mounted) setState(() => done(info.image));
-    });
-    stream.addListener(listener);
-    _streams.add((stream, listener));
-  }
 
   /// Идёт еда — касания и «не то» её не перебивают.
   bool _eating = false;
@@ -173,16 +204,24 @@ class _KitchenBearState extends State<KitchenBear>
 
   @override
   void dispose() {
-    for (final (stream, listener) in _streams) {
-      stream.removeListener(listener);
-    }
     _pat.dispose();
-    _paws.dispose();
+    _breath.dispose();
     for (final t in _later) {
       t.cancel();
     }
     if (_eating) Sounds.stop(Sfx.chew);
     super.dispose();
+  }
+
+  /// Кивок лапы сейчас: 0 — лежит, 1 — на вершине хлопка.
+  double _bump(List<double> at) {
+    final t = _pat.value;
+    if (!_pat.isAnimating && t >= 1) return 0;
+    for (final a in at) {
+      final u = (t - a) / KitchenBear.patLen;
+      if (u > 0 && u < 1) return math.sin(math.pi * u);
+    }
+    return 0;
   }
 
   @override
@@ -195,29 +234,7 @@ class _KitchenBearState extends State<KitchenBear>
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned(
-              left: KitchenBear.left * w,
-              top: KitchenBear.top * h,
-              width: KitchenBear.side * w,
-              height: KitchenBear.side * w,
-              child: ColorFiltered(
-                colorFilter: KitchenBear.warm,
-                child: RiveBearTrial(
-                  cue: widget.cue,
-                  trait: widget.trait,
-                  mood: widget.mood,
-                  seated: true,
-                  paws: _paws,
-                  // кромка стола в координатах артборда: ниже — скатерть
-                  reachBottom:
-                      (table.top * h - KitchenBear.top * h) /
-                      (KitchenBear.side * w) *
-                      1024,
-                  onTap: widget.onTap,
-                ),
-              ),
-            ),
-            // Скатерть и край стола — кусок самого фона поверх мишки.
+            // Скатерть и край стола — кусок самого фона: лапы лежат на ней.
             Positioned(
               left: 0,
               top: table.top * h,
@@ -244,181 +261,124 @@ class _KitchenBearState extends State<KitchenBear>
                 ),
               ),
             ),
-            // Лапы на столе — над скатертью, в той же коробке, что мишка.
-            if (_pawLeft != null && _pawRight != null)
-              Positioned(
-                left: KitchenBear.left * w,
-                top: KitchenBear.top * h,
-                width: KitchenBear.side * w,
-                height: KitchenBear.side * w,
-                child: IgnorePointer(
-                  child: ColorFiltered(
-                    colorFilter: KitchenBear.warm,
-                    child: CustomPaint(
-                      painter: TablePawsPainter(
-                        paws: _paws,
-                        pat: _pat,
-                        left: _pawLeft!,
-                        right: _pawRight!,
-                      ),
-                    ),
+            // Тело прежнего мишка: лапы под рукавами, кофта поверх.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([_breath, _pat]),
+                  builder: (context, _) => Stack(
+                    children: [
+                      _paw(w, h, KitchenBear.pawLeft, 'left', 1),
+                      _paw(w, h, KitchenBear.pawRight, 'right', -1),
+                      _body(w, h, table.top),
+                    ],
                   ),
                 ),
               ),
+            ),
+            // Голова в капюшоне — над кофтой.
+            Positioned(
+              left: KitchenBear.left * w,
+              top: KitchenBear.top * h,
+              width: KitchenBear.side * w,
+              height: KitchenBear.side * w,
+              child: ColorFiltered(
+                colorFilter: KitchenBear.warm,
+                child: RiveBearTrial(
+                  cue: widget.cue,
+                  trait: widget.trait,
+                  mood: widget.mood,
+                  seated: true,
+                  headOnly: true,
+                  breath: _breath,
+                  // кромка стола в координатах артборда: ниже — скатерть
+                  reachBottom:
+                      (table.top * h - KitchenBear.top * h) /
+                      (KitchenBear.side * w) *
+                      1024,
+                  onTap: widget.onTap,
+                ),
+              ),
+            ),
           ],
         );
       },
     );
   }
-}
 
-/// Манжета и лапа на столе поверх скатерти. Координаты — px артборда
-/// мишки (1024), картинки лежат в мире покоя там, где их вырезал
-/// `tool/cut_table_paws.py`, и едут за кистью рига.
-class TablePawsPainter extends CustomPainter {
-  TablePawsPainter({
-    required this.paws,
-    required this.pat,
-    required this.left,
-    required this.right,
-  }) : super(repaint: Listenable.merge([paws, pat]));
-
-  final TablePaws paws;
-  final Animation<double> pat;
-  final ui.Image left;
-  final ui.Image right;
-
-  /// Где лежат картинки в мире покоя (печатает `tool/cut_table_paws.py`).
-  static const Rect boxLeft = Rect.fromLTWH(220.1, 589.5, 138.6, 146.1);
-  static const Rect boxRight = Rect.fromLTWH(667.3, 588.8, 140.4, 143.0);
-
-  /// Тень: под низом лапы, на скатерти (центр и размер в мире покоя).
-  static const Offset shadowLeft = Offset(262, 722);
-  static const Offset shadowRight = Offset(764, 720);
-  static const Size shadowSize = Size(118, 30);
-
-  /// Насколько лапа выше конца рукава рига, px артборда: манжета
-  /// заходит на рукав, лапа ложится на кромку, а не свисает перед ней.
-  ///
-  /// 11.10: на кромку стола лапу ставит сама рука — укороченная за столом
-  /// ([RiveBearTrial.seated]); картинка лишь чуть выше конца рукава.
-  static const double seatLift = 14;
-
-  /// Манжета картинки гаснет выше запястья: с короткой рукой (11.10) она
-  /// торчала бы над плечом полупрозрачным краем. Оставлено [cuffKeep] px
-  /// артборда над запястьем — на шов с рукавом рига, и [cuffFeather] — на
-  /// растушёвку.
-  static const double cuffKeep = 10;
-  static const double cuffFeather = 16;
-
-  /// Похлопывание: кивок кисти до 14° и лапа чуть над столом.
-  static const double patTurn = 0.24;
-  static const double patLift = 9;
-
-  /// Когда каждая лапа хлопает (доли [_KitchenBearState._patTime]) — по
-  /// очереди, как «вкусно!» на каждое жевание.
-  static const List<double> patsLeft = [0.04, 0.30, 0.56];
-  static const List<double> patsRight = [0.17, 0.43, 0.69];
-  static const double patLen = 0.12;
-
-  double _bump(List<double> at) {
-    final t = pat.value;
-    if (!pat.isAnimating && t >= 1) return 0;
-    for (final a in at) {
-      final u = (t - a) / patLen;
-      if (u > 0 && u < 1) return math.sin(math.pi * u);
-    }
-    return 0;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (!paws.ready) return;
-    canvas.save();
-    canvas.transform(paws.body.storage);
-    canvas.scale(size.width / 1024);
-    _paw(
-      canvas,
-      left,
-      boxLeft,
-      paws.left,
-      TablePaws.restLeft,
-      shadowLeft,
-      _bump(patsLeft),
-      1,
-    );
-    _paw(
-      canvas,
-      right,
-      boxRight,
-      paws.right,
-      TablePaws.restRight,
-      shadowRight,
-      _bump(patsRight),
-      -1,
-    );
-    canvas.restore();
-  }
-
-  void _paw(
-    Canvas canvas,
-    ui.Image image,
-    Rect box,
-    Matrix4 at,
-    Offset wrist,
-    Offset shadow,
-    double bump,
-    double sign,
-  ) {
-    // тень лежит на столе ровно, как бы ни была повёрнута кисть: при
-    // хлопке лапа отрывается — тень бледнее и шире
-    final shadowAt =
-        MatrixUtils.transformPoint(at, shadow) +
-        // под лапу: замер по кадрам 28.09 (тень выглядывала снизу); лапа
-        // поднята на [seatLift] — и тень с ней
-        Offset(sign < 0 ? 8 : 0, -seatLift);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: shadowAt,
-        width: shadowSize.width * (1 + 0.12 * bump),
-        height: shadowSize.height * (1 + 0.12 * bump),
-      ),
-      Paint()
-        ..color = Color.fromRGBO(70, 60, 40, 0.28 * (1 - 0.45 * bump))
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
-    );
-    canvas.save();
-    // лапа заходит на кромку, как у прежнего мишки: чуть выше конца рукава
-    canvas.translate(0, -seatLift);
-    canvas.transform(at.storage);
-    // кивок кисти: поворот вокруг запястья, кончик лапы вверх
-    canvas.translate(wrist.dx, wrist.dy - patLift * bump);
-    canvas.rotate(sign * patTurn * bump);
-    canvas.translate(-wrist.dx, -wrist.dy);
-    final layer = box.inflate(2);
-    canvas.saveLayer(layer, Paint());
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      box,
-      Paint()..filterQuality = FilterQuality.medium,
-    );
-    final top = wrist.dy - cuffKeep;
-    canvas.drawRect(
-      layer,
-      Paint()
-        ..blendMode = BlendMode.dstIn
-        ..shader = ui.Gradient.linear(
-          Offset(0, top - cuffFeather),
-          Offset(0, top),
-          const [Color(0x00000000), Color(0xFF000000)],
+  /// Кофта с рукавами: на вдохе чуть растёт от кромки стола и поднимается
+  /// — вместе с головой, которая дышит в риге.
+  Widget _body(double w, double h, double tableTop) {
+    final b = _breath.value.clamp(-1.6, 1.6);
+    final box = KitchenBear.body;
+    return Positioned(
+      left: box.left * w,
+      top: box.top * h - KitchenBear.breathLift * b * h,
+      width: box.width * w,
+      height: box.height * h,
+      child: Transform.scale(
+        scaleY: 1 + KitchenBear.breathSwell * b,
+        scaleX: 1 + KitchenBear.breathSwell * 0.3 * b,
+        // опора — кромка стола
+        alignment: Alignment(0, (tableTop - box.top) / box.height * 2 - 1),
+        child: Image.asset(
+          '${KitchenBear._dir}/seat_body.png',
+          fit: BoxFit.fill,
         ),
+      ),
     );
-    canvas.restore();
-    canvas.restore();
   }
 
-  @override
-  bool shouldRepaint(TablePawsPainter old) =>
-      old.left != left || old.right != right || old.paws != paws;
+  /// Лапа на кромке стола с мягкой тенью на скатерти; пока жуёт —
+  /// кивает у запястья (верх лапы под манжетой) и чуть приподнимается.
+  Widget _paw(double w, double h, Rect box, String side, double sign) {
+    final bump = _bump(sign > 0 ? KitchenBear.patsLeft : KitchenBear.patsRight);
+    final rect = Rect.fromLTWH(
+      box.left * w,
+      box.top * h,
+      box.width * w,
+      box.height * h,
+    );
+    return Positioned.fromRect(
+      rect: rect,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // тень лежит на столе ровно; при хлопке бледнее и шире
+          Positioned(
+            left: rect.width * (0.12 - 0.04 * bump),
+            right: rect.width * (0.12 - 0.04 * bump),
+            top: rect.height * 0.78,
+            height: rect.height * 0.32,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.elliptical(rect.width, rect.height),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromRGBO(70, 60, 40, 0.30 * (1 - 0.45 * bump)),
+                    blurRadius: rect.height * 0.18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Transform.translate(
+              offset: Offset(0, -KitchenBear.patLift * h * bump),
+              child: Transform.rotate(
+                angle: sign * KitchenBear.patTurn * bump,
+                alignment: Alignment.topCenter,
+                child: Image.asset(
+                  '${KitchenBear._dir}/seat_paw_$side.png',
+                  fit: BoxFit.fill,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

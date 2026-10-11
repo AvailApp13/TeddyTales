@@ -259,62 +259,6 @@ class BearFaceCue extends ChangeNotifier {
   }
 }
 
-/// Лапы на столе (кухня, заказчик 27.09): где сейчас кисти рига и как
-/// стоит корпус. Художник мишки пишет сюда каждый кадр, слой лап над
-/// скатертью ([KitchenBear]) по этим данным кладёт картинки «манжета +
-/// лапа» (`tool/cut_table_paws.py`) ровно туда, где кончаются рукава рига.
-class TablePaws extends ChangeNotifier {
-  /// Кисть в покое (кости `b_hand_l/r`, `hand_l/r` в `tool/rive/rebuild_rig.py`):
-  /// начало кости и её направление, px артборда 1024.
-  static const Offset restLeft = Offset(290, 662);
-  static const Offset restRight = Offset(734, 662);
-  static final double _angleLeft = math.atan2(703 - 662, 258 - 290);
-  static final double _angleRight = math.atan2(703 - 662, 766 - 734);
-
-  /// Из покоя кисти в её текущее положение, px артборда. Масштаб кости
-  /// (рука укорочена) убран: картинка лапы не сплющивается.
-  Matrix4 left = Matrix4.identity();
-  Matrix4 right = Matrix4.identity();
-
-  /// Поворот и подскок корпуса в координатах коробки мишка — тот же, что
-  /// у самого мишки.
-  Matrix4 body = Matrix4.identity();
-
-  bool _ready = false;
-
-  /// Кисти уже известны — до первого кадра рисовать нечего.
-  bool get ready => _ready;
-
-  /// Лапы лежат на столе: вдох поднимает плечи, а лапы почти стоят
-  /// (заказчик 28.09: «продолжает дышать, руки в разные стороны»). По
-  /// высоте лапа идёт за кистью на [_follow] от отклонения, середина
-  /// отклонений — медленное среднее (≈ 4 с, длиннее вдоха 3 с).
-  static const double _follow = 0.2;
-  static const double _settle = 0.004;
-  double? _baseLeft;
-  double? _baseRight;
-
-  static Matrix4 _delta(Mat2D m, Offset rest, double restAngle, double y) {
-    final angle = math.atan2(m[1], m[0]);
-    return Matrix4.translationValues(m[4], y, 0)
-      ..rotateZ(angle - restAngle)
-      ..translateByDouble(-rest.dx, -rest.dy, 0, 1);
-  }
-
-  void _update(Mat2D l, Mat2D r) {
-    final bl = _baseLeft = _baseLeft == null
-        ? l[5]
-        : _baseLeft! + (l[5] - _baseLeft!) * _settle;
-    final br = _baseRight = _baseRight == null
-        ? r[5]
-        : _baseRight! + (r[5] - _baseRight!) * _settle;
-    left = _delta(l, restLeft, _angleLeft, bl + (l[5] - bl) * _follow);
-    right = _delta(r, restRight, _angleRight, br + (r[5] - br) * _follow);
-    _ready = true;
-    notifyListeners();
-  }
-}
-
 class RiveBearTrial extends StatefulWidget {
   const RiveBearTrial({
     super.key,
@@ -323,8 +267,9 @@ class RiveBearTrial extends StatefulWidget {
     this.mood = BearMood.normal,
     this.seated = false,
     this.asleep = false,
+    this.headOnly = false,
+    this.breath,
     this.reachBottom,
-    this.paws,
     this.onTap,
   });
 
@@ -334,17 +279,28 @@ class RiveBearTrial extends StatefulWidget {
   /// возвращается. Пока спит, эмоции и разбивки покоя не идут.
   final bool asleep;
 
-  /// Лапы на столе (кухня): сюда каждый кадр пишется, где кисти рига и
-  /// как стоит корпус — лапы рисуются отдельным слоем поверх скатерти.
-  final TablePaws? paws;
+  /// Только голова в капюшоне (кухня, заказчик 11.10: «возьми предыдущего
+  /// мишку, его одежду… наложи»): тело рига гаснет (поза `pose_body_off`),
+  /// под голову кладётся кофта с рукавами и лапами прежнего мишка.
+  final bool headOnly;
+
+  /// Дыхание мишка для слоёв вокруг него (одеяло спальни, кофта за
+  /// кухонным столом): каждый кадр — насколько он сейчас вдохнул, от −1
+  /// (конец выдоха) до +1 (вершина вдоха в игровой; за столом размах 0,6,
+  /// во сне свой), вздохи и зевки эмоций прибавляются. Из кости вдоха
+  /// рига — слои дышат ровно с ним.
+  final ValueNotifier<double>? breath;
 
   /// Ниже этой линии (в координатах артборда 1024) мишку не видно — на
   /// кухне там скатерть: ласка и щекотка оттуда не начинаются.
   final double? reachBottom;
 
-  /// Сидит за столом (кухня): вертикальные подскоки корпуса гасятся —
-  /// пружинка «активного», прыжок «радости», подскоки реакций. Голова,
-  /// уши, лицо, дыхание и покачивания в стороны — как в игровой.
+  /// Сидит за столом (кухня) или лежит в кровати («Сон»): вертикальные
+  /// подскоки корпуса гасятся — пружинка «активного», прыжок «радости»,
+  /// подскоки реакций. Дышит спокойно — петля `idle_calm`: вдох-выдох 6 с
+  /// вместо 3 с игровой и мельче (заказчик 11.10: «на кухне и в спальне
+  /// дыхание намного медленнее, в основной комнате оставь»). Голова, уши,
+  /// лицо, моргание и покачивания в стороны — как в игровой.
   final bool seated;
 
   final BearFaceCue cue;
@@ -370,7 +326,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
   File? _file;
   late final _TrialPainter _painter = _TrialPainter()
     ..seated = widget.seated
-    ..paws = widget.paws
+    ..headOnly = widget.headOnly
+    ..breath = widget.breath
     ..setAsleep(widget.asleep, instant: true);
 
   /// Реакция корпуса на эмоцию — длиной с саму эмоцию.
@@ -561,15 +518,6 @@ class _RiveBearTrialState extends State<RiveBearTrial>
             animation: _body,
             builder: (context, child) {
               final body = _bodyTransform(box.maxHeight);
-              final paws = widget.paws;
-              if (paws != null) {
-                // тот же поворот корпуса, что у Transform ниже: опора —
-                // точка (0; 0,92) коробки
-                final o = const Alignment(0, 0.92).alongSize(box.biggest);
-                paws.body = Matrix4.translationValues(o.dx, o.dy, 0)
-                  ..multiply(body)
-                  ..multiply(Matrix4.translationValues(-o.dx, -o.dy, 0));
-              }
               return Transform(
                 alignment: const Alignment(0, 0.92),
                 transform: body,
@@ -699,31 +647,39 @@ final class _TrialPainter extends BasicArtboardPainter {
   Component? _eHips;
   double _hipsRestY = 0;
 
-  /// Сидит за столом — корпус не подпрыгивает, руки лежат на столе.
+  /// Сидит за столом или лежит в кровати — корпус не подпрыгивает, дышит
+  /// спокойно ([_calm]).
   bool seated = false;
 
-  /// Куда писать положение кистей для слоя лап на столе.
-  TablePaws? paws;
+  /// Только голова: тело рига гаснет ([_bodyOff]).
+  bool headOnly = false;
 
-  // Руки на столе (кухня, заказчик 27.09–28.09, по образцу прежнего
-  // мишка). В покое руки рига разведены «стойкой» (~37° от вертикали);
-  // за столом так казалось, что стол засунут под мышки (заказчик 28.09).
-  // Руки опущены вдоль тела почти отвесно (плечо внутрь на 0,64 рад), а
-  // нижняя часть руки укорочена до 0,6 — рука идёт вперёд, к зрителю, и
-  // кисть ложится на кромку стола прямо под плечом, кончиком вниз.
+  /// Куда писать вдох для слоёв вокруг мишка ([RiveBearTrial.breath]).
+  ValueNotifier<double>? breath;
+
+  /// Спокойный покой (`idle_calm`): тот же `idle_life`, но вдох-выдох 6 с
+  /// и мельче — за столом и в кровати.
+  Animation? _calm;
+
+  /// Поза «тело спрятано» (`pose_body_off`) — ставится поверх всего.
+  Animation? _bodyOff;
+
+  /// Кость вдоха: покой и сон двигают `b_breath`, эмоции — `e_breath`.
+  /// Масштаб по высоте в покое 1 … 1,065 (`breathing` в rebuild_rig.py):
+  /// середина [_breathMid], полразмаха [_breathHalf].
+  Component? _bBreath;
+  Component? _eBreath;
+  static const double _breathMid = 1.0325;
+  static const double _breathHalf = 0.0325;
+
+  // Руки сидящего укорочены и почти не повёрнуты — так они уходят под
+  // край одеяла в кровати («Сон», 11.10). История: 27.09–11.10 так же
+  // клались руки на кухонный стол (рука к зрителю, лапа на кромке), но
+  // сплющенный рукав рига давал «крылышки» и заломы (заказчик 11.10:
+  // «лапки короткие… складки, когда он дышит»). С 11.10 на кухне тело
+  // рига спрятано ([headOnly]), кофта и лапы — прежнего мишка.
   // Смещения прибавляются к тому, что поставили клипы, и снимаются до
   // следующего кадра: покачивания рук из клипов остаются.
-  // 11.10 (заказчик: «лапки ровно на столе, как у прежнего мишки»): замер
-  // по кадрам — плечо рига на y 551 артборда, кисть на 647, и лапа лежала
-  // под кромкой стола, на скатерти; у прежнего мишки от плечевого сустава
-  // до запястья — 28 px кадра (45 артборда), лапа на самой кромке. Рука
-  // укорочена вся ([_seatUpper], кость эмоции над плечом), нижняя часть ещё
-  // сильнее ([_seatShorten]): рука смотрит к зрителю, рукав короткий, как у
-  // прежнего. Лапы прежнего — на 112 px кадра от середины, снаружи плеч,
-  // рукава к ним идут вниз и наружу: плечо почти не повёрнуто (внутрь на
-  // 0,06), запястье — на 56 px артборда от плеча, под углом 33° от отвеса.
-  // Отвесные руки 28.09 нужны были длинным рукам: короткие до стола не
-  // достают, и «стол под мышками» больше не получается.
   static const double _seatTurn = 0.06;
   static const double _seatUpper = 0.6;
   static const double _seatShorten = 0.56;
@@ -731,8 +687,6 @@ final class _TrialPainter extends BasicArtboardPainter {
   Component? _eArmR1;
   Component? _eArmL2;
   Component? _eArmR2;
-  Component? _handL;
-  Component? _handR;
   bool _seatOn = false;
 
   // Докачка (заказчик 10.10: «чтобы мишка был живым»). Кончики ушей и
@@ -1483,6 +1437,12 @@ final class _TrialPainter extends BasicArtboardPainter {
     _idle?.dispose();
     _faces?.dispose();
     _idle = artboard.animationNamed('idle_life');
+    _calm?.dispose();
+    _calm = artboard.animationNamed('idle_calm');
+    _bodyOff?.dispose();
+    _bodyOff = artboard.animationNamed('pose_body_off');
+    _bBreath = artboard.component('b_breath');
+    _eBreath = artboard.component('e_breath');
     _faces = artboard.animationNamed('face_demo');
     for (final clip in _clips.values) {
       clip.dispose();
@@ -1541,8 +1501,6 @@ final class _TrialPainter extends BasicArtboardPainter {
     _eArmR1 = artboard.component('e_arm_r1');
     _eArmL2 = artboard.component('e_arm_l2');
     _eArmR2 = artboard.component('e_arm_r2');
-    _handL = artboard.component('b_hand_l');
-    _handR = artboard.component('b_hand_r');
     _bHead = artboard.component('b_head');
     _eEarL3 = artboard.component('e_ear_l3');
     _eEarR3 = artboard.component('e_ear_r3');
@@ -1582,7 +1540,8 @@ final class _TrialPainter extends BasicArtboardPainter {
     // (`play` → `petCancel`) петля в этом же кадре перекроет.
     _advanceBonus(elapsedSeconds);
     _advanceSpont(elapsedSeconds);
-    _idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
+    final idle = seated ? (_calm ?? _idle) : _idle;
+    idle?.advanceAndApply(elapsedSeconds * _idleSpeed());
     _applySleepIdle(elapsedSeconds);
     // Кончилась анимация — вернуть её кости в покой до петли настроения,
     // а не после: иначе на один кадр мишка вставал в «чистый» покой поверх
@@ -1634,13 +1593,22 @@ final class _TrialPainter extends BasicArtboardPainter {
     if (seated && hips != null) hips.y = _hipsRestY;
     _seatApply();
     _jiggleApply(elapsedSeconds);
+    // Тело гаснет поверх всего: эмоции ключуют прозрачность расправленной
+    // кофты у подмышек, и она проявлялась бы над кофтой прежнего мишка.
+    if (headOnly) {
+      _bodyOff
+        ?..time = 0
+        ..apply(mix: 1);
+    }
     super.advance(0);
     _jiggleMeasure(elapsedSeconds);
-    final paws = this.paws;
-    final l = _handL;
-    final r = _handR;
-    if (paws != null && l != null && r != null) {
-      paws._update(l.worldTransform, r.worldTransform);
+    final breath = this.breath;
+    final b = _bBreath;
+    if (breath != null && b != null) {
+      final e = _eBreath;
+      breath.value =
+          (b.scaleY - _breathMid) / _breathHalf +
+          (e == null ? 0 : (e.scaleY - 1) / _breathHalf);
     }
     return true;
   }
@@ -1648,6 +1616,8 @@ final class _TrialPainter extends BasicArtboardPainter {
   @override
   void dispose() {
     _idle?.dispose();
+    _calm?.dispose();
+    _bodyOff?.dispose();
     _faces?.dispose();
     _petFace?.dispose();
     _petPass?.dispose();

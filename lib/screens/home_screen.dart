@@ -274,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen>
     // Сцена сна собрана из десятка картинок; если грузить их в момент
     // открытия, мишка появляется по частям. Греем, пока человек на главной.
     BedroomScene.warmUp(context);
-    KitchenScene.warmUp(context);
+    KitchenBear.warmUp(context);
   }
 
   void _runAction(BearAction action) {

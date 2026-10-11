@@ -25,6 +25,12 @@ import '../bear/rive_bear_trial.dart';
 /// голова склонилась, глаза закрыты, как в моргании покоя, дышит медленно,
 /// изредка дёргает ухом.
 ///
+/// Дышит одеяло вместе с мишкой (заказчик 11.10: «подъём одеяла… сейчас
+/// не совпадает», «часто дышит»): горб над грудью поднимается от вдоха
+/// самого рига ([RiveBearTrial.breath]) — и в темпе спокойного покоя
+/// (6 с), и во сне (6,4 с), и на вздохах эмоций. Лапы держат край одеяла и
+/// поднимаются с ним.
+///
 /// Слои снизу вверх: комната (рисуется не здесь) → мишка → лапы прежнего
 /// мишка у подбородка → передний край одеяла (дышит над грудью, закрывает
 /// запястья) → свет ночника.
@@ -79,15 +85,22 @@ class BedroomScene extends StatefulWidget {
     0, 0, 0, 1, 0, //
   ]);
 
-  /// Дыхание: вдох короче выдоха. 4,4 с — как петля сна мишка.
-  static const Duration breath = Duration(milliseconds: 4400);
-
   /// Горб одеяла над грудью: центр и разброс — в долях слоя одеяла.
   static const Offset chest = Offset(0.50, 0.10);
   static const Size chestSpread = Size(0.17, 0.24);
 
   /// На сколько поднимается грудь на вдохе — в долях высоты слоя одеяла.
   static const double chestRise = 0.013;
+
+  /// Сколько горба одеяла приходится на точку (доли кадра): 1 — над
+  /// грудью, к краям сходит на нет.
+  static double blanketBump(Offset at) {
+    final u = (at.dx - blanket.left) / blanket.width;
+    final v = (at.dy - blanket.top) / blanket.height;
+    final dx = (u - chest.dx) / chestSpread.width;
+    final dy = (v - chest.dy) / chestSpread.height;
+    return math.exp(-(dx * dx + dy * dy));
+  }
 
   /// Ночник: медленное мерцание.
   static const Duration lampBreath = Duration(milliseconds: 5500);
@@ -98,9 +111,22 @@ class BedroomScene extends StatefulWidget {
 
   static const String _blanketAsset = 'assets/rooms/bedroom/blanket_front.png';
 
-  /// Лапы прежнего мишка — слой той же коробки [bear]: ровно на своём месте
-  /// у подбородка, под краем одеяла.
+  /// Лапы прежнего мишка — слой той же коробки [bear]: у подбородка, под
+  /// краем одеяла. Картинка одна на обе лапы: левая — столбцы до
+  /// [pawSplit], правая — после.
   static const String _pawsAsset = 'assets/rooms/bedroom/bear_paws.png';
+  static const double pawSplit = 0.5;
+
+  /// Правая лапа (справа для зрителя) отодвинута от лица — доля ширины
+  /// кадра. Заказчик 11.10: «правая лапка чересчур закрывает лицо». У
+  /// прежнего мишка лапы стояли несимметрично: правая на 75 px кадра от
+  /// середины мордочки, левая на 87; наша мордочка шире — правая теперь
+  /// там же, где левая, на 89 px.
+  static const double pawRightShift = 14 / 941;
+
+  /// Середины лап (доли кадра) — по ним лапы поднимаются с одеялом.
+  static const Offset pawLeftAt = Offset(387 / 941, 921 / 1672);
+  static const Offset pawRightAt = Offset((548 + 14) / 941, 921 / 1672);
 
   /// Лапы нарисованы под свет спальни и светлее нашего мишка под
   /// [night]: замер 11.10 — лапы (238, 213, 197), щека (218, 197, 178).
@@ -129,36 +155,23 @@ class BedroomScene extends StatefulWidget {
 
 class _BedroomSceneState extends State<BedroomScene>
     with TickerProviderStateMixin {
-  late final AnimationController _breath = AnimationController(
-    vsync: this,
-    duration: BedroomScene.breath,
-  );
+  /// Вдох мишка — пишет сам риг каждый кадр ([RiveBearTrial.breath]).
+  final ValueNotifier<double> _breath = ValueNotifier(0);
 
   late final AnimationController _lamp = AnimationController(
     vsync: this,
     duration: BedroomScene.lampBreath,
   );
 
-  /// Вдох короче выдоха: так дышат во сне. Ровная синусоида читается как
-  /// качание, а не как дыхание.
-  late final Animation<double> _wave = TweenSequence<double>([
-    TweenSequenceItem(
-      tween: Tween(
-        begin: 0.0,
-        end: 1.0,
-      ).chain(CurveTween(curve: Curves.easeInOutSine)),
-      weight: 42,
-    ),
-    TweenSequenceItem(
-      tween: Tween(
-        begin: 1.0,
-        end: 0.0,
-      ).chain(CurveTween(curve: Curves.easeInOutSine)),
-      weight: 58,
-    ),
-  ]).animate(_breath);
+  /// Насколько поднята грудь: 0 — выдох, 1 — вдох. Вдох рига от −1 до +1
+  /// (в кровати размах 0,6, во сне свой), вздох эмоции — выше 1.
+  double get _rise {
+    if (_stillSetting ?? false) return 0;
+    return ((_breath.value + 1) / 2).clamp(0.0, 1.5);
+  }
 
   ui.Image? _blanket;
+  ui.Image? _paws;
   final List<(ImageStream, ImageStreamListener)> _streams = [];
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
@@ -170,6 +183,7 @@ class _BedroomSceneState extends State<BedroomScene>
     super.didChangeDependencies();
     if (_streams.isEmpty) {
       _load(BedroomScene._blanketAsset, (i) => _blanket = i);
+      _load(BedroomScene._pawsAsset, (i) => _paws = i);
     }
     // Системная настройка «убрать анимацию» — для тех, кому от движения
     // на экране плохо. Тогда одеяло и ночник стоят.
@@ -177,14 +191,10 @@ class _BedroomSceneState extends State<BedroomScene>
     if (still == _stillSetting) return;
     _stillSetting = still;
     if (still) {
-      _breath
-        ..stop()
-        ..value = 0;
       _lamp
         ..stop()
         ..value = 0;
     } else {
-      _breath.repeat();
       _lamp.repeat(reverse: true);
     }
   }
@@ -236,20 +246,13 @@ class _BedroomSceneState extends State<BedroomScene>
                     mood: widget.mood,
                     seated: true,
                     asleep: widget.asleep,
+                    breath: _breath,
                   ),
                 ),
               ),
               // Лапы держат край одеяла у подбородка: под одеялом, как у
               // прежнего мишки, — край одеяла закрывает запястья.
-              _place(
-                BedroomScene.bear,
-                w,
-                h,
-                ColorFiltered(
-                  colorFilter: BedroomScene.pawTone,
-                  child: Image.asset(BedroomScene._pawsAsset, fit: BoxFit.fill),
-                ),
-              ),
+              _place(BedroomScene.bear, w, h, _pawsLayer(h)),
               _place(BedroomScene.blanket, w, h, _blanketLayer()),
               _place(BedroomScene.glow, w, h, _glowLayer()),
             ],
@@ -273,8 +276,34 @@ class _BedroomSceneState extends State<BedroomScene>
       builder: (context, _) => CustomPaint(
         painter: _BreathingBlanket(
           image: image,
-          rise: BedroomScene.chestRise * _wave.value,
+          rise: BedroomScene.chestRise * _rise,
         ),
+      ),
+    );
+  }
+
+  /// Лапы прежнего мишка: правая отодвинута от лица, обе поднимаются с
+  /// краем одеяла — ровно на столько, на сколько горб одеяла у них.
+  Widget _pawsLayer(double h) {
+    final image = _paws;
+    if (image == null) return const SizedBox.shrink();
+    return ColorFiltered(
+      colorFilter: BedroomScene.pawTone,
+      child: AnimatedBuilder(
+        animation: _breath,
+        builder: (context, _) {
+          final lift =
+              BedroomScene.chestRise * _rise * BedroomScene.blanket.height * h;
+          return CustomPaint(
+            painter: _BedPaws(
+              image: image,
+              liftLeft: lift * BedroomScene.blanketBump(BedroomScene.pawLeftAt),
+              liftRight:
+                  lift * BedroomScene.blanketBump(BedroomScene.pawRightAt),
+              shiftRight: BedroomScene.pawRightShift / BedroomScene.bear.width,
+            ),
+          );
+        },
       ),
     );
   }
@@ -303,6 +332,55 @@ class _BedroomSceneState extends State<BedroomScene>
       child: child,
     );
   }
+}
+
+/// Лапы у подбородка — две половины одной картинки: левая на месте,
+/// правая сдвинута на [shiftRight] (доля ширины слоя); каждая поднята на
+/// свой подъём края одеяла, px.
+class _BedPaws extends CustomPainter {
+  const _BedPaws({
+    required this.image,
+    required this.liftLeft,
+    required this.liftRight,
+    required this.shiftRight,
+  });
+
+  final ui.Image image;
+  final double liftLeft;
+  final double liftRight;
+  final double shiftRight;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final iw = image.width.toDouble();
+    final ih = image.height.toDouble();
+    const split = BedroomScene.pawSplit;
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, iw * split, ih),
+      Rect.fromLTWH(0, -liftLeft, size.width * split, size.height),
+      paint,
+    );
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(iw * split, 0, iw * (1 - split), ih),
+      Rect.fromLTWH(
+        size.width * (split + shiftRight),
+        -liftRight,
+        size.width * (1 - split),
+        size.height,
+      ),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BedPaws old) =>
+      old.image != image ||
+      old.liftLeft != liftLeft ||
+      old.liftRight != liftRight ||
+      old.shiftRight != shiftRight;
 }
 
 /// Одеяло, натянутое на сетку: узлы над грудью приподняты, остальные лежат.
