@@ -39,7 +39,8 @@ import 'kitchen_scene.dart' show KitchenMeal, KitchenMood, KitchenScene;
 ///   ведут по голове — ласка, по животу над столом — щекотка (заказчик
 ///   27.09: «включи поглаживание на кухне»).
 ///
-/// Пока жуёт — лапы по очереди похлопывают по столу (кивок у запястья).
+/// Пока жуёт — лапы по очереди похлопывают по столу: приподнимаются в
+/// рукавах, под ними изнанка рукава (`seat_cuffs.png`), не стул.
 /// За столом мишка сидит: вертикальные подскоки корпуса гасятся
 /// ([RiveBearTrial.seated]). Цвет головы чуть теплее и темнее — под свет
 /// иллюстрации кухни (замер по шерсти и капюшону старого мишки).
@@ -106,6 +107,7 @@ class KitchenBear extends StatefulWidget {
   static const String _dir = 'assets/rooms/kitchen';
   static const List<String> assets = [
     '$_dir/seat_body.png',
+    '$_dir/seat_cuffs.png',
     '$_dir/seat_paw_left.png',
     '$_dir/seat_paw_right.png',
   ];
@@ -122,9 +124,16 @@ class KitchenBear extends StatefulWidget {
   static const double breathLift = 1.5 / 1672;
   static const double breathSwell = 0.012;
 
-  /// Похлопывание: кивок лапы у запястья до 14° и подъём на 6 px кадра.
-  static const double patTurn = 0.24;
-  static const double patLift = 6 / 1672;
+  /// Похлопывание: лапа приподнимается в рукаве на 4 px кадра и
+  /// опускается на стол. Заказчик 11.10: «когда лапками двигает —
+  /// проблески, как будто рукава обрезаны». Замер по кадрам: прежний кивок
+  /// (поворот до 14° у середины верха лапы и подъём на 6 px) открывал проём
+  /// рукава до 135 px² кадра — сквозь рукав был виден стул, — и край лапы
+  /// вылезал за рукав на 620 px². Теперь проём под лапой закрыт изнанкой
+  /// рукава (`seat_cuffs.png`), а лапа только поднимается: просвета нет,
+  /// нового меха над рукавом — 40–60 px² (верх лапы поднимается вдоль
+  /// рукава).
+  static const double patLift = 4 / 1672;
 
   /// Когда каждая лапа хлопает (доли [_KitchenBearState._patTime]) — по
   /// очереди, как «вкусно!» на каждое жевание.
@@ -268,9 +277,11 @@ class _KitchenBearState extends State<KitchenBear>
                   animation: Listenable.merge([_breath, _pat]),
                   builder: (context, _) => Stack(
                     children: [
-                      _paw(w, h, KitchenBear.pawLeft, 'left', 1),
-                      _paw(w, h, KitchenBear.pawRight, 'right', -1),
-                      _body(w, h, table.top),
+                      // изнанка рукавов — под лапами, дышит с кофтой
+                      _body(w, h, table.top, 'seat_cuffs'),
+                      _paw(w, h, KitchenBear.pawLeft, 'left'),
+                      _paw(w, h, KitchenBear.pawRight, 'right'),
+                      _body(w, h, table.top, 'seat_body'),
                     ],
                   ),
                 ),
@@ -306,9 +317,10 @@ class _KitchenBearState extends State<KitchenBear>
     );
   }
 
-  /// Кофта с рукавами: на вдохе чуть растёт от кромки стола и поднимается
-  /// — вместе с головой, которая дышит в риге.
-  Widget _body(double w, double h, double tableTop) {
+  /// Кофта с рукавами ([asset] `seat_body`) и изнанка рукавов под лапами
+  /// (`seat_cuffs`): на вдохе чуть растут от кромки стола и поднимаются —
+  /// вместе с головой, которая дышит в риге.
+  Widget _body(double w, double h, double tableTop, String asset) {
     final b = _breath.value.clamp(-1.6, 1.6);
     final box = KitchenBear.body;
     return Positioned(
@@ -321,18 +333,17 @@ class _KitchenBearState extends State<KitchenBear>
         scaleX: 1 + KitchenBear.breathSwell * 0.3 * b,
         // опора — кромка стола
         alignment: Alignment(0, (tableTop - box.top) / box.height * 2 - 1),
-        child: Image.asset(
-          '${KitchenBear._dir}/seat_body.png',
-          fit: BoxFit.fill,
-        ),
+        child: Image.asset('${KitchenBear._dir}/$asset.png', fit: BoxFit.fill),
       ),
     );
   }
 
   /// Лапа на кромке стола с мягкой тенью на скатерти; пока жуёт —
-  /// кивает у запястья (верх лапы под манжетой) и чуть приподнимается.
-  Widget _paw(double w, double h, Rect box, String side, double sign) {
-    final bump = _bump(sign > 0 ? KitchenBear.patsLeft : KitchenBear.patsRight);
+  /// приподнимается в рукаве и опускается ([KitchenBear.patLift]).
+  Widget _paw(double w, double h, Rect box, String side) {
+    final bump = _bump(
+      side == 'left' ? KitchenBear.patsLeft : KitchenBear.patsRight,
+    );
     final rect = Rect.fromLTWH(
       box.left * w,
       box.top * h,
@@ -367,13 +378,9 @@ class _KitchenBearState extends State<KitchenBear>
           Positioned.fill(
             child: Transform.translate(
               offset: Offset(0, -KitchenBear.patLift * h * bump),
-              child: Transform.rotate(
-                angle: sign * KitchenBear.patTurn * bump,
-                alignment: Alignment.topCenter,
-                child: Image.asset(
-                  '${KitchenBear._dir}/seat_paw_$side.png',
-                  fit: BoxFit.fill,
-                ),
+              child: Image.asset(
+                '${KitchenBear._dir}/seat_paw_$side.png',
+                fit: BoxFit.fill,
               ),
             ),
           ),
