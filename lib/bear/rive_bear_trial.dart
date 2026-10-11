@@ -713,8 +713,20 @@ final class _TrialPainter extends BasicArtboardPainter {
   // кисть ложится на кромку стола прямо под плечом, кончиком вниз.
   // Смещения прибавляются к тому, что поставили клипы, и снимаются до
   // следующего кадра: покачивания рук из клипов остаются.
-  static const double _seatTurn = 0.64;
-  static const double _seatShorten = 0.6;
+  // 11.10 (заказчик: «лапки ровно на столе, как у прежнего мишки»): замер
+  // по кадрам — плечо рига на y 551 артборда, кисть на 647, и лапа лежала
+  // под кромкой стола, на скатерти; у прежнего мишки от плечевого сустава
+  // до запястья — 28 px кадра (45 артборда), лапа на самой кромке. Рука
+  // укорочена вся ([_seatUpper], кость эмоции над плечом), нижняя часть ещё
+  // сильнее ([_seatShorten]): рука смотрит к зрителю, рукав короткий, как у
+  // прежнего. Лапы прежнего — на 112 px кадра от середины, снаружи плеч,
+  // рукава к ним идут вниз и наружу: плечо почти не повёрнуто (внутрь на
+  // 0,06), запястье — на 56 px артборда от плеча, под углом 33° от отвеса.
+  // Отвесные руки 28.09 нужны были длинным рукам: короткие до стола не
+  // достают, и «стол под мышками» больше не получается.
+  static const double _seatTurn = 0.06;
+  static const double _seatUpper = 0.6;
+  static const double _seatShorten = 0.56;
   Component? _eArmL1;
   Component? _eArmR1;
   Component? _eArmL2;
@@ -907,6 +919,9 @@ final class _TrialPainter extends BasicArtboardPainter {
     _seatOn = false;
     _eArmL1?.rotation += _seatTurn;
     _eArmR1?.rotation -= _seatTurn;
+    for (final e in [_eArmL1, _eArmR1]) {
+      if (e != null) e.scaleX /= _seatUpper;
+    }
     for (final e in [_eArmL2, _eArmR2]) {
       if (e != null) e.scaleX /= _seatShorten;
     }
@@ -917,6 +932,9 @@ final class _TrialPainter extends BasicArtboardPainter {
     _seatOn = true;
     _eArmL1?.rotation -= _seatTurn;
     _eArmR1?.rotation += _seatTurn;
+    for (final e in [_eArmL1, _eArmR1]) {
+      if (e != null) e.scaleX *= _seatUpper;
+    }
     for (final e in [_eArmL2, _eArmR2]) {
       if (e != null) e.scaleX *= _seatShorten;
     }

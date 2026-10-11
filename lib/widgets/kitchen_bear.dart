@@ -299,7 +299,17 @@ class TablePawsPainter extends CustomPainter {
 
   /// Насколько лапа выше конца рукава рига, px артборда: манжета
   /// заходит на рукав, лапа ложится на кромку, а не свисает перед ней.
+  ///
+  /// 11.10: на кромку стола лапу ставит сама рука — укороченная за столом
+  /// ([RiveBearTrial.seated]); картинка лишь чуть выше конца рукава.
   static const double seatLift = 14;
+
+  /// Манжета картинки гаснет выше запястья: с короткой рукой (11.10) она
+  /// торчала бы над плечом полупрозрачным краем. Оставлено [cuffKeep] px
+  /// артборда над запястьем — на шов с рукавом рига, и [cuffFeather] — на
+  /// растушёвку.
+  static const double cuffKeep = 10;
+  static const double cuffFeather = 16;
 
   /// Похлопывание: кивок кисти до 14° и лапа чуть над столом.
   static const double patTurn = 0.24;
@@ -364,8 +374,9 @@ class TablePawsPainter extends CustomPainter {
     // хлопке лапа отрывается — тень бледнее и шире
     final shadowAt =
         MatrixUtils.transformPoint(at, shadow) +
-        // под лапу: замер по кадрам 28.09 (тень выглядывала снизу)
-        Offset(sign < 0 ? 8 : 0, -14);
+        // под лапу: замер по кадрам 28.09 (тень выглядывала снизу); лапа
+        // поднята на [seatLift] — и тень с ней
+        Offset(sign < 0 ? 8 : 0, -seatLift);
     canvas.drawOval(
       Rect.fromCenter(
         center: shadowAt,
@@ -384,12 +395,26 @@ class TablePawsPainter extends CustomPainter {
     canvas.translate(wrist.dx, wrist.dy - patLift * bump);
     canvas.rotate(sign * patTurn * bump);
     canvas.translate(-wrist.dx, -wrist.dy);
+    final layer = box.inflate(2);
+    canvas.saveLayer(layer, Paint());
     canvas.drawImageRect(
       image,
       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
       box,
       Paint()..filterQuality = FilterQuality.medium,
     );
+    final top = wrist.dy - cuffKeep;
+    canvas.drawRect(
+      layer,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          Offset(0, top - cuffFeather),
+          Offset(0, top),
+          const [Color(0x00000000), Color(0xFF000000)],
+        ),
+    );
+    canvas.restore();
     canvas.restore();
   }
 

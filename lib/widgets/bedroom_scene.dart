@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear_rig_spec.dart';
 import '../bear/rive_bear_trial.dart';
-import 'kitchen_bear.dart' show TablePawsPainter;
 
 /// Живая спальня: мишка в кровати под одеялом, ночник.
 ///
@@ -16,14 +15,19 @@ import 'kitchen_bear.dart' show TablePawsPainter;
 ///
 /// С 10.10 в кровати тот же Rive-мишка, что в игровой и на кухне (заказчик:
 /// «во сне поменять мишку на того, что в главной комнате»). Лежит там же,
-/// где лежал нарисованный: глаза — на месте его глаз, тело под одеялом, лапы
-/// поверх одеяла. Засыпает и спит сам мишка ([RiveBearTrial.asleep]):
+/// где лежал нарисованный: глаза — на месте его глаз, тело под одеялом.
+/// Лапы — как у прежнего (заказчик 11.10: «лежит, как будто сидит», «лапки
+/// на одеяле, как в предыдущей версии»): у подбородка, держат край одеяла и
+/// выглядывают из-под него. Руки за кистями по одеялу больше не тянутся —
+/// так мишка казался сидящим в кровати. Засыпает и спит сам мишка
+/// ([RiveBearTrial.asleep]):
 /// сонные веки и медленное моргание, потом петля сна (ТЗ `idle_asleep`) —
 /// голова склонилась, глаза закрыты, как в моргании покоя, дышит медленно,
 /// изредка дёргает ухом.
 ///
-/// Слои снизу вверх: комната (рисуется не здесь) → мишка → передний край
-/// одеяла (дышит над грудью) → лапы на одеяле → свет ночника.
+/// Слои снизу вверх: комната (рисуется не здесь) → мишка → лапы прежнего
+/// мишка у подбородка → передний край одеяла (дышит над грудью, закрывает
+/// запястья) → свет ночника.
 class BedroomScene extends StatefulWidget {
   const BedroomScene({
     super.key,
@@ -94,11 +98,23 @@ class BedroomScene extends StatefulWidget {
 
   static const String _blanketAsset = 'assets/rooms/bedroom/blanket_front.png';
 
+  /// Лапы прежнего мишка — слой той же коробки [bear]: ровно на своём месте
+  /// у подбородка, под краем одеяла.
+  static const String _pawsAsset = 'assets/rooms/bedroom/bear_paws.png';
+
+  /// Лапы нарисованы под свет спальни и светлее нашего мишка под
+  /// [night]: замер 11.10 — лапы (238, 213, 197), щека (218, 197, 178).
+  static const ColorFilter pawTone = ColorFilter.matrix(<double>[
+    0.92, 0, 0, 0, 0, //
+    0, 0.925, 0, 0, 0, //
+    0, 0, 0.90, 0, 0, //
+    0, 0, 0, 1, 0, //
+  ]);
+
   static const List<String> assets = [
     _blanketAsset,
+    _pawsAsset,
     'assets/rooms/bedroom/lamp_glow.png',
-    'assets/rooms/kitchen/table_paw_left.png',
-    'assets/rooms/kitchen/table_paw_right.png',
   ];
 
   /// Заранее раскодировать картинки — ещё до того, как открыли «Сон»:
@@ -142,13 +158,7 @@ class _BedroomSceneState extends State<BedroomScene>
     ),
   ]).animate(_breath);
 
-  /// Где кисти мишка — сюда их пишет сам мишка каждый кадр, лапы рисуются
-  /// по ним поверх одеяла.
-  final TablePaws _paws = TablePaws();
-
   ui.Image? _blanket;
-  ui.Image? _pawLeft;
-  ui.Image? _pawRight;
   final List<(ImageStream, ImageStreamListener)> _streams = [];
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
@@ -160,8 +170,6 @@ class _BedroomSceneState extends State<BedroomScene>
     super.didChangeDependencies();
     if (_streams.isEmpty) {
       _load(BedroomScene._blanketAsset, (i) => _blanket = i);
-      _load('assets/rooms/kitchen/table_paw_left.png', (i) => _pawLeft = i);
-      _load('assets/rooms/kitchen/table_paw_right.png', (i) => _pawRight = i);
     }
     // Системная настройка «убрать анимацию» — для тех, кому от движения
     // на экране плохо. Тогда одеяло и ночник стоят.
@@ -195,7 +203,6 @@ class _BedroomSceneState extends State<BedroomScene>
     for (final (stream, listener) in _streams) {
       stream.removeListener(listener);
     }
-    _paws.dispose();
     _breath.dispose();
     _lamp.dispose();
     super.dispose();
@@ -216,8 +223,6 @@ class _BedroomSceneState extends State<BedroomScene>
             BedroomScene.bearSide * w,
             BedroomScene.bearSide * w,
           );
-          final pawLeft = _pawLeft;
-          final pawRight = _pawRight;
 
           return Stack(
             children: [
@@ -231,27 +236,21 @@ class _BedroomSceneState extends State<BedroomScene>
                     mood: widget.mood,
                     seated: true,
                     asleep: widget.asleep,
-                    paws: _paws,
                   ),
                 ),
               ),
-              _place(BedroomScene.blanket, w, h, _blanketLayer()),
-              // Лапы — поверх одеяла, в той же коробке, что мишка.
-              if (pawLeft != null && pawRight != null)
-                Positioned.fromRect(
-                  rect: box,
-                  child: ColorFiltered(
-                    colorFilter: BedroomScene.night,
-                    child: CustomPaint(
-                      painter: TablePawsPainter(
-                        paws: _paws,
-                        pat: kAlwaysDismissedAnimation,
-                        left: pawLeft,
-                        right: pawRight,
-                      ),
-                    ),
-                  ),
+              // Лапы держат край одеяла у подбородка: под одеялом, как у
+              // прежнего мишки, — край одеяла закрывает запястья.
+              _place(
+                BedroomScene.bear,
+                w,
+                h,
+                ColorFiltered(
+                  colorFilter: BedroomScene.pawTone,
+                  child: Image.asset(BedroomScene._pawsAsset, fit: BoxFit.fill),
                 ),
+              ),
+              _place(BedroomScene.blanket, w, h, _blanketLayer()),
               _place(BedroomScene.glow, w, h, _glowLayer()),
             ],
           );
