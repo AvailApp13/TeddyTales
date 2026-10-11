@@ -31,9 +31,13 @@ import '../bear/rive_bear_trial.dart';
 /// (6 с), и во сне (6,4 с), и на вздохах эмоций. Лапы держат край одеяла и
 /// поднимаются с ним.
 ///
-/// Слои снизу вверх: комната (рисуется не здесь) → мишка → лапы прежнего
-/// мишка у подбородка → передний край одеяла (дышит над грудью, закрывает
-/// запястья) → свет ночника.
+/// Тело рига в кровати спрятано (11.10, как на кухне): под подбородком —
+/// ровный край капюшона прежнего мишка ([_collarAsset]), без заломов
+/// воротника рига и без его плеча у левой лапы.
+///
+/// Слои снизу вверх: комната (рисуется не здесь) → воротник прежнего
+/// мишка → голова мишка → лапы прежнего мишка у подбородка → передний
+/// край одеяла (дышит над грудью, закрывает запястья) → свет ночника.
 class BedroomScene extends StatefulWidget {
   const BedroomScene({
     super.key,
@@ -149,9 +153,20 @@ class BedroomScene extends StatefulWidget {
     0, 0, 0, 1, 0, //
   ]);
 
+  /// Ровный край капюшона прежнего мишка под подбородком — в той же
+  /// рамке [bear] (`tool/cut_bedroom_collar.py`). Тело рига в кровати
+  /// спрятано ([RiveBearTrial.headOnly]): заказчик 11.10 — «около лапки
+  /// появилась часть его кофты», «под подбородком складки ужасно выглядят…
+  /// как на кухне, сделай так же и в спальне».
+  static const String _collarAsset = 'assets/rooms/bedroom/bear_collar.png';
+
+  /// Середина воротника (доли кадра) — по ней он поднимается с одеялом.
+  static const Offset collarAt = Offset(474 / 941, 913 / 1672);
+
   static const List<String> assets = [
     _blanketAsset,
     _pawsAsset,
+    _collarAsset,
     'assets/rooms/bedroom/lamp_glow.png',
   ];
 
@@ -248,6 +263,8 @@ class _BedroomSceneState extends State<BedroomScene>
 
           return Stack(
             children: [
+              // Воротник под головой: капюшон ложится на него сверху.
+              _place(BedroomScene.bear, w, h, _collarLayer(h)),
               Positioned.fromRect(
                 rect: box,
                 child: ColorFiltered(
@@ -257,6 +274,7 @@ class _BedroomSceneState extends State<BedroomScene>
                     trait: widget.trait,
                     mood: widget.mood,
                     seated: true,
+                    headOnly: true,
                     asleep: widget.asleep,
                     breath: _breath,
                   ),
@@ -291,6 +309,26 @@ class _BedroomSceneState extends State<BedroomScene>
           rise: BedroomScene.chestRise * _rise,
         ),
       ),
+    );
+  }
+
+  /// Воротник поднимается с грудью — на столько же, на сколько одеяло у
+  /// подбородка. Цвет уже подогнан под ночник — без фильтра.
+  Widget _collarLayer(double h) {
+    return AnimatedBuilder(
+      animation: _breath,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(
+          0,
+          -BedroomScene.chestRise *
+              _rise *
+              BedroomScene.blanket.height *
+              h *
+              BedroomScene.blanketBump(BedroomScene.collarAt),
+        ),
+        child: child,
+      ),
+      child: Image.asset(BedroomScene._collarAsset, fit: BoxFit.fill),
     );
   }
 
