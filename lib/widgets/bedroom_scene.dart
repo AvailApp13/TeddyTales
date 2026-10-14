@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../bear/bear_rig_spec.dart';
@@ -50,7 +51,8 @@ class BedroomScene extends StatefulWidget {
 
   /// Герой (КП 2.4). Девочка лежит, как мальчик (заказчик 14.10: «делай
   /// лапки девочки… у одеяла»): тело рига спрятано, под подбородком — ворот
-  /// её кофточки, у подбородка — лапы в её мех (`tool/rive/girl_bed.py`).
+  /// её кофточки, у подбородка — её собственные лапки
+  /// (`tool/rive/girl_bed.py`).
   final BearSkin skin;
 
   /// Уложили спать: мишка засыпает и спит, глаза закрыты. Заказчик 22.09:
@@ -169,9 +171,10 @@ class BedroomScene extends StatefulWidget {
   /// Середина воротника (доли кадра) — по ней он поднимается с одеялом.
   static const Offset collarAt = Offset(474 / 941, 913 / 1672);
 
-  /// Девочка: ворот её кофточки между лапами и круглые лапы в её мех — в
-  /// той же рамке [bear], на тех же местах, что у мальчика. Цвет — как у
-  /// слоёв рига, свет спальни — [night].
+  /// Девочка: ворот её кофточки между лапами и её собственные лапки (из
+  /// слоёв, срезом рукава под одеяло) — в той же рамке [bear], на тех же
+  /// местах, что у мальчика. Цвет — как у слоёв рига, свет — тот же, что
+  /// у её головы.
   static const String _girlCollarAsset = 'assets/rooms/bedroom/girl_collar.png';
   static const String _girlPawsAsset = 'assets/rooms/bedroom/girl_paws.png';
 
@@ -331,9 +334,20 @@ class _BedroomSceneState extends State<BedroomScene>
     );
   }
 
+  /// Ворот и лапы девочки — из её слоёв, того же цвета, что голова рига, и
+  /// свет им — ровно тот, что достаётся голове. В браузере Rive рисует
+  /// мишку в своём холсте поверх страницы (`HtmlElementView` в
+  /// `rive_native`), фильтры Flutter до него не доходят — голова там без
+  /// [BedroomScene.night]; на телефоне (текстура) — с ним. Под ночником
+  /// поверх нефильтрованной головы лапы выходили темнее и желтее мордочки
+  /// (заказчик 14.10: «она белая, а лапы… серые»).
+  static Widget _likeHead(Widget child) => kIsWeb
+      ? child
+      : ColorFiltered(colorFilter: BedroomScene.night, child: child);
+
   /// Воротник поднимается с грудью — на столько же, на сколько одеяло у
   /// подбородка. Цвет мальчика уже подогнан под ночник — без фильтра; ворот
-  /// девочки — под [BedroomScene.night], как её голова.
+  /// девочки — в свете её головы ([_likeHead]).
   Widget _collarLayer(double h, {bool girl = false}) {
     return AnimatedBuilder(
       animation: _breath,
@@ -349,12 +363,8 @@ class _BedroomSceneState extends State<BedroomScene>
         child: child,
       ),
       child: girl
-          ? ColorFiltered(
-              colorFilter: BedroomScene.night,
-              child: Image.asset(
-                BedroomScene._girlCollarAsset,
-                fit: BoxFit.fill,
-              ),
+          ? _likeHead(
+              Image.asset(BedroomScene._girlCollarAsset, fit: BoxFit.fill),
             )
           : Image.asset(BedroomScene._collarAsset, fit: BoxFit.fill),
     );
@@ -362,33 +372,32 @@ class _BedroomSceneState extends State<BedroomScene>
 
   /// Лапы прежнего мишка: правая отодвинута от лица, обе поднимаются с
   /// краем одеяла — ровно на столько, на сколько горб одеяла у них. У
-  /// девочки — те же лапы в её мех, под свет спальни, как её голова.
+  /// девочки — её собственные лапки, в свете её головы ([_likeHead]).
   Widget _pawsLayer(double h, {bool girl = false}) {
     final image = girl ? _girlPaws : _paws;
     if (image == null) return const SizedBox.shrink();
-    return ColorFiltered(
-      colorFilter: girl ? BedroomScene.night : BedroomScene.pawTone,
-      child: AnimatedBuilder(
-        animation: _breath,
-        builder: (context, _) {
-          final lift =
-              BedroomScene.chestRise * _rise * BedroomScene.blanket.height * h;
-          final raise = BedroomScene.pawRaise * h;
-          return CustomPaint(
-            painter: _BedPaws(
-              image: image,
-              liftLeft:
-                  raise +
-                  lift * BedroomScene.blanketBump(BedroomScene.pawLeftAt),
-              liftRight:
-                  raise +
-                  lift * BedroomScene.blanketBump(BedroomScene.pawRightAt),
-              shiftRight: BedroomScene.pawRightShift / BedroomScene.bear.width,
-            ),
-          );
-        },
-      ),
+    final paws = AnimatedBuilder(
+      animation: _breath,
+      builder: (context, _) {
+        final lift =
+            BedroomScene.chestRise * _rise * BedroomScene.blanket.height * h;
+        final raise = BedroomScene.pawRaise * h;
+        return CustomPaint(
+          painter: _BedPaws(
+            image: image,
+            liftLeft:
+                raise + lift * BedroomScene.blanketBump(BedroomScene.pawLeftAt),
+            liftRight:
+                raise +
+                lift * BedroomScene.blanketBump(BedroomScene.pawRightAt),
+            shiftRight: BedroomScene.pawRightShift / BedroomScene.bear.width,
+          ),
+        );
+      },
     );
+    return girl
+        ? _likeHead(paws)
+        : ColorFiltered(colorFilter: BedroomScene.pawTone, child: paws);
   }
 
   /// Свет ночника: еле заметно колышется, как живой огонёк.

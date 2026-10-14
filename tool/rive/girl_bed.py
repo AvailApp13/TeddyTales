@@ -14,12 +14,19 @@
   ворот между лапами, к лапам мягко сходит на нет, снизу — до края одеяла
   с запасом. Рукава и плечи не берутся: над одеялом они торчали, и
   девочка казалась сидящей.
-- `girl_paws.png` — круглые пушистые лапы прежнего мишки, те же, что у
-  мальчика (`bear_paws.png`), в её мех: яркость меха сохраняется, цвет —
-  медиана её щёк и лба. Её
-  собственные лапы на фото смотрят вниз и срезаны рукавом — перевёрнутые,
-  они торчали над одеялом треугольниками.
+- `girl_paws.png` — её собственные лапки (заказчик 14.10: «лапы… как
+  будто бы не её, а от пацана… она белая, а лапы… серые»; до этого были
+  лапы мальчика, перекрашенные в её мех, — чужой рисунок меха и серая
+  кайма). Лапка — слой руки минус то, что закрывают рукав и кофточка, без
+  кромки подрисовки у среза. На фото лапки смотрят вниз и срезаны рукавом,
+  и кончиком вверх над одеялом торчал «клин»; поэтому лапка повёрнута
+  срезом рукава вниз, вдоль края одеяла, и срез уходит под одеяло — над
+  ним только её круглый пушистый край. Обе — её правая лапка (левая
+  зеркально): левая на фото срезана наискось и торчала скошенным
+  холмиком. Места и ширина — как у лап мальчика (`bear_paws.png`), цвет —
+  её слоёв без перекраски, свет — тот же, что у головы.
 """
+import math
 import os
 import sys
 
@@ -66,38 +73,79 @@ def collar(size):
     return out * keep[..., None]
 
 
-def fur():
-    """Мех девочки — медиана щёк и лба (без глаз, носа и банта)."""
-    h = np.asarray(Image.open(os.path.join(LAYERS, 'head.png')).convert('RGBA')).astype(np.float64)
-    ys, xs = np.mgrid[0:h.shape[0], 0:h.shape[1]]
-    m = (h[..., 3] > 250) & (np.abs(xs - 680) < 230) & (ys > 640) & (ys < 1040)
-    rgb = h[..., :3][m]
-    y = rgb @ [0.299, 0.587, 0.114]
-    keep = (y > np.percentile(y, 30)) & (y < np.percentile(y, 90))
-    return np.median(rgb[keep], axis=0)
+# Лапки — в картинке той же рамки, что `bear_paws.png`: левая в левой
+# половине, правая — в правой (приложение сдвигает её на `pawRightShift`).
+PAW_X = {'left': 62, 'right': 381}             # середины лап, px картинки
+PAW_W = {'left': 120, 'right': 120}            # ширина лап — как у лап мальчика
+PAW_TILT = {'left': 0.1, 'right': -0.1}        # срез вдоль края одеяла, рад
+PAW_SHIFT = {'left': 0, 'right': 14 * UP}      # BedroomScene.pawRightShift — 14 px кадра
+PAW_RAISE = 6 * UP                             # BedroomScene.pawRaise — 6 px кадра
+PAW_HIDE = 7                                   # срез рукава под краем одеяла, px картинки
+PAW_TRIM = 5                                   # кромка подрисовки у среза, px слоя
 
 
-def paws():
-    """Лапы прежнего мишки в её мех: яркость своя, цвет — её. Кромка у
-    этих лап голубовато-серая (≈8 % темнее меха) — на белом мехе это серое
-    кольцо, поэтому к краю яркость сходит к средней, а полупрозрачная кайма
-    не светлее меха."""
-    p = np.asarray(Image.open(os.path.join(DIR, 'bear_paws.png')).convert('RGBA')).astype(np.float64)
-    a = p[..., 3]
-    y = p[..., :3] @ [0.299, 0.587, 0.114]
-    k = y / np.median(y[a > 200])
-    rim = np.clip((8 - ndimage.distance_transform_edt(a > 200)) / 8, 0, 1)
-    k = k * (1 - rim) + rim
-    k = np.where(a < 230, np.minimum(k, 1.0), k)
-    rgb = np.clip(fur()[None, None] * np.clip(k, 0, 1.6)[..., None], 0, 255)
-    # только сами лапы: голубой уголок над левой (край прежнего капюшона)
-    # срезается
-    core = ndimage.binary_opening(a > 40, iterations=4)
-    lab, n = ndimage.label(core)
-    sizes = np.bincount(lab.ravel())[1:]
-    two = np.isin(lab, np.argsort(sizes)[-2:] + 1)
-    keep = ndimage.gaussian_filter(ndimage.binary_dilation(two, iterations=4).astype(np.float64), 1.5)
-    return np.dstack([rgb, a * np.clip(keep, 0, 1)])
+def layer(name):
+    return np.asarray(Image.open(os.path.join(LAYERS, name)).convert('RGBA')).astype(np.float64)
+
+
+def own_paw(side):
+    """Её лапка из слоёв: рука минус то, что закрывают рукав и кофточка,
+    без светло-зелёной кромки подрисовки у среза рукава. → (rgb, альфа,
+    точки среза, точки лапки) в кадре слоёв.
+
+    Обе лапки — её правая, левая — зеркально: левая на фото срезана рукавом
+    наискось, и над одеялом торчала скошенным холмиком с острым краем."""
+    arm = layer('arm_right.png')
+    cover = np.clip(layer('sleeve_right.png')[..., 3] + layer('shirt.png')[..., 3], 0, 255) / 255
+    if side == 'left':
+        arm, cover = arm[:, ::-1], cover[:, ::-1]
+    a = arm[..., 3] * (1 - cover) * (1 - ndimage.binary_dilation(cover > 0.25, iterations=PAW_TRIM))
+    core = ndimage.binary_opening(a > 128, iterations=3)
+    lab, _ = ndimage.label(core)
+    core = lab == np.argmax(np.bincount(lab.ravel())[1:]) + 1
+    keep = ndimage.gaussian_filter(ndimage.binary_dilation(core, iterations=3).astype(np.float64), 1.0)
+    a = a * np.clip(keep, 0, 1)
+    ring = ndimage.binary_dilation(core, iterations=PAW_TRIM + 3) & ~core
+    ys, xs = np.nonzero(ring & (cover > 0.5))
+    cut = np.stack([xs, ys], 1).astype(np.float64)
+    ys, xs = np.nonzero(core)
+    return arm[..., :3], a, cut, np.stack([xs, ys], 1).astype(np.float64)
+
+
+def blanket_edge(x, side):
+    """Край одеяла над лапой — в координатах картинки лап, с подъёмом и
+    сдвигом лап в приложении."""
+    room_x = BX + (x + PAW_SHIFT[side]) / UP
+    return (np.interp(room_x, *zip(*BLANKET)) - BY) * UP + PAW_RAISE
+
+
+def paw(side, size):
+    """Её лапка срезом рукава вниз: срез ложится вдоль края одеяла и уходит
+    под него на PAW_HIDE, над одеялом — круглый пушистый край лапки."""
+    rgb, a, cut, pts = own_paw(side)
+    c = cut.mean(0)
+    e = np.linalg.svd(cut - c)[2][0]               # вдоль среза
+    n = np.array([-e[1], e[0]])
+    if n @ (pts.mean(0) - c) < 0:
+        n = -n                                     # от среза к кончику
+    t = PAW_TILT[side]
+    up = np.array([math.sin(t), -math.cos(t)])
+    right = np.array([math.cos(t), math.sin(t)])
+    if (e[0] * n[1] - e[1] * n[0]) * (right[0] * up[1] - right[1] * up[0]) < 0:
+        e = -e                                     # поворот, не зеркало
+    s = PAW_W[side] / np.ptp((pts - c) @ e)
+
+    def out(p):
+        return np.outer((p - c) @ e, right) * s + np.outer((p - c) @ n, up) * s
+    o, oc = out(pts), out(cut)
+    sx = PAW_X[side] - (o[:, 0].min() + o[:, 0].max()) / 2
+    sy = (blanket_edge(oc[:, 0] + sx, side) + PAW_HIDE - oc[:, 1]).max()
+    M = (np.outer(e, right) + np.outer(n, up)) / s  # картинка → слой
+    off = c - M @ np.array([sx, sy])
+    coef = (M[0, 0], M[0, 1], off[0], M[1, 0], M[1, 1], off[1])
+    pm = np.dstack([rgb * a[..., None] / 255, a])
+    return np.stack([np.asarray(Image.fromarray(pm[..., k].astype(np.float32), 'F').transform(
+        size, Image.AFFINE, coef, resample=Image.BICUBIC)) for k in range(4)], -1)
 
 
 def to_rgba(pm):
@@ -109,8 +157,9 @@ def to_rgba(pm):
 def main():
     size = Image.open(os.path.join(DIR, 'bear_paws.png')).size
     Image.fromarray(bleed(to_rgba(collar(size))), 'RGBA').save(os.path.join(DIR, 'girl_collar.png'), optimize=True)
-    Image.fromarray(bleed(paws().round().astype(np.uint8)), 'RGBA').save(os.path.join(DIR, 'girl_paws.png'), optimize=True)
-    print('мех', fur().round(1), '→ girl_collar.png, girl_paws.png', size)
+    paws = paw('left', size) + paw('right', size)
+    Image.fromarray(bleed(to_rgba(paws)), 'RGBA').save(os.path.join(DIR, 'girl_paws.png'), optimize=True)
+    print('→ girl_collar.png, girl_paws.png', size)
 
 
 if __name__ == '__main__':
