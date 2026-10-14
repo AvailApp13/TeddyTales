@@ -2166,6 +2166,8 @@ MOODS.update({'idle_trait_active': idle_trait_active, 'idle_trait_curious': idle
 def _mood_base(name, key):
     if name.startswith('mouth_') and name.endswith('_img'):
         return 0.0
+    if name.startswith('face_'):          # накладки лица (румянец девочки) в покое скрыты
+        return 0.0
     r = E_REST[name]
     return {Emo.R: r.get('rotation', 0.0), Emo.X: r.get('x', 0.0), Emo.Y: r.get('y', 0.0)}.get(key, 1.0)
 
