@@ -134,52 +134,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get careWashTitle => '洗澡';
 
   @override
-  String get catalogCheckoutTitle => '填写订单';
+  String get catalogBuyOnSite => '前往 TeddyTales 官网购买';
 
   @override
-  String get catalogCountryChina => '中国';
-
-  @override
-  String get catalogCountryGermany => '德国';
-
-  @override
-  String get catalogCountryKazakhstan => '哈萨克斯坦';
-
-  @override
-  String get catalogCountryRussia => '俄罗斯';
-
-  @override
-  String get catalogCountryUsa => '美国';
-
-  @override
-  String get catalogDeliveryNote =>
-      '按商店数据配送：美国 7–9 个工作日，加拿大 8–10，欧洲 9–11，亚洲 5–7。订单将进入客户现有的销售系统（需求 12.5）——此表单暂不提交。';
-
-  @override
-  String get catalogFieldAddress => '地址';
-
-  @override
-  String get catalogFieldAddressHint => '街道、门牌、房号';
-
-  @override
-  String get catalogFieldCountry => '国家/地区';
-
-  @override
-  String get catalogFieldName => '姓名';
-
-  @override
-  String get catalogFieldNameHint => '与证件一致';
-
-  @override
-  String get catalogFieldPhone => '电话';
-
-  @override
-  String get catalogFieldPostcode => '邮政编码';
-
-  @override
-  String catalogFootnote(String shoes, String price) {
-    return '商品、价格与尺寸均来自 TeddyTales® 官方商店（需求 12.1）。图片暂为同一张占位图：正式照片将来自客户的商品目录。鞋子在商店单独出售——$shoes，$price。';
-  }
+  String get catalogEmpty => '联网后即可加载商品目录';
 
   @override
   String get catalogGrownSubtitle => '准备好去你家啦';
@@ -188,45 +146,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogGrownTitle => '你的小家伙长大了';
 
   @override
-  String get catalogItemFortune => '口袋幸运小熊';
+  String get catalogOpenFailed => '无法打开 TeddyTales 官网';
 
   @override
-  String get catalogItemHug => '蜜桃抱抱熊';
+  String get catalogOpenSite => '打开 TeddyTales 官网';
 
   @override
-  String get catalogItemShortFur => '短绒小熊';
+  String catalogPriceFrom(String price) {
+    return '$price 起';
+  }
 
   @override
-  String get catalogItemSpaceSet => '宇航员与新娘套装';
+  String get catalogSiteNote => '下单、付款和配送均在 TeddyTales 官网完成。价格以美元计，与官网一致。';
 
   @override
-  String get catalogOrderButton => '立即下单';
-
-  @override
-  String get catalogPayPalNote => '——也可免账户用银行卡支付';
-
-  @override
-  String get catalogPaySection => '支付 · 需求 12.4';
-
-  @override
-  String get catalogPayStub => '支付将在系统对接阶段开通';
-
-  @override
-  String catalogSizeCm(int size) {
+  String catalogSizeLabel(String size) {
     return '$size 厘米';
   }
 
   @override
-  String get catalogSummaryItem => '商品';
+  String get catalogSoldOut => '已售罄';
 
   @override
-  String get catalogSummaryPrice => '价格';
+  String get catalogTabBears => '小熊';
 
   @override
-  String get catalogSummarySize => '尺寸';
+  String get catalogTabClothes => '服装';
 
   @override
-  String get catalogTitle => '订购小熊';
+  String get catalogTabFriends => '朋友们';
+
+  @override
+  String get catalogTitle => 'TeddyTales 小熊';
+
+  @override
+  String get catalogVariant => '款式';
+
+  @override
+  String get catalogViewOnSite => '在官网查看';
 
   @override
   String get categoryAccessory => '配饰';

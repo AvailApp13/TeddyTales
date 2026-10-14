@@ -322,95 +322,17 @@ abstract class AppLocalizations {
   /// **'Купать'**
   String get careWashTitle;
 
-  /// No description provided for @catalogCheckoutTitle.
+  /// No description provided for @catalogBuyOnSite.
   ///
   /// In ru, this message translates to:
-  /// **'Оформление'**
-  String get catalogCheckoutTitle;
+  /// **'Купить на сайте TeddyTales'**
+  String get catalogBuyOnSite;
 
-  /// No description provided for @catalogCountryChina.
+  /// No description provided for @catalogEmpty.
   ///
   /// In ru, this message translates to:
-  /// **'Китай'**
-  String get catalogCountryChina;
-
-  /// No description provided for @catalogCountryGermany.
-  ///
-  /// In ru, this message translates to:
-  /// **'Германия'**
-  String get catalogCountryGermany;
-
-  /// No description provided for @catalogCountryKazakhstan.
-  ///
-  /// In ru, this message translates to:
-  /// **'Казахстан'**
-  String get catalogCountryKazakhstan;
-
-  /// No description provided for @catalogCountryRussia.
-  ///
-  /// In ru, this message translates to:
-  /// **'Россия'**
-  String get catalogCountryRussia;
-
-  /// No description provided for @catalogCountryUsa.
-  ///
-  /// In ru, this message translates to:
-  /// **'США'**
-  String get catalogCountryUsa;
-
-  /// No description provided for @catalogDeliveryNote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.'**
-  String get catalogDeliveryNote;
-
-  /// No description provided for @catalogFieldAddress.
-  ///
-  /// In ru, this message translates to:
-  /// **'Адрес'**
-  String get catalogFieldAddress;
-
-  /// No description provided for @catalogFieldAddressHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Улица, дом, квартира'**
-  String get catalogFieldAddressHint;
-
-  /// No description provided for @catalogFieldCountry.
-  ///
-  /// In ru, this message translates to:
-  /// **'Страна'**
-  String get catalogFieldCountry;
-
-  /// No description provided for @catalogFieldName.
-  ///
-  /// In ru, this message translates to:
-  /// **'Имя и фамилия'**
-  String get catalogFieldName;
-
-  /// No description provided for @catalogFieldNameHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Как в документах'**
-  String get catalogFieldNameHint;
-
-  /// No description provided for @catalogFieldPhone.
-  ///
-  /// In ru, this message translates to:
-  /// **'Телефон'**
-  String get catalogFieldPhone;
-
-  /// No description provided for @catalogFieldPostcode.
-  ///
-  /// In ru, this message translates to:
-  /// **'Индекс'**
-  String get catalogFieldPostcode;
-
-  /// No description provided for @catalogFootnote.
-  ///
-  /// In ru, this message translates to:
-  /// **'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — {shoes}, {price}.'**
-  String catalogFootnote(String shoes, String price);
+  /// **'Каталог загрузится, когда появится интернет'**
+  String get catalogEmpty;
 
   /// No description provided for @catalogGrownSubtitle.
   ///
@@ -424,83 +346,77 @@ abstract class AppLocalizations {
   /// **'Твой малыш вырос'**
   String get catalogGrownTitle;
 
-  /// No description provided for @catalogItemFortune.
+  /// No description provided for @catalogOpenFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Карманный мишка Фортуна'**
-  String get catalogItemFortune;
+  /// **'Не получилось открыть сайт TeddyTales'**
+  String get catalogOpenFailed;
 
-  /// No description provided for @catalogItemHug.
+  /// No description provided for @catalogOpenSite.
   ///
   /// In ru, this message translates to:
-  /// **'Персиковый Обнимишка'**
-  String get catalogItemHug;
+  /// **'Открыть сайт TeddyTales'**
+  String get catalogOpenSite;
 
-  /// No description provided for @catalogItemShortFur.
+  /// No description provided for @catalogPriceFrom.
   ///
   /// In ru, this message translates to:
-  /// **'Мишка с короткой шерсткой'**
-  String get catalogItemShortFur;
+  /// **'от {price}'**
+  String catalogPriceFrom(String price);
 
-  /// No description provided for @catalogItemSpaceSet.
+  /// No description provided for @catalogSiteNote.
   ///
   /// In ru, this message translates to:
-  /// **'Набор Космонавт и Невеста'**
-  String get catalogItemSpaceSet;
+  /// **'Оформление, оплата и доставка — на сайте TeddyTales. Цены — в долларах США, как на сайте.'**
+  String get catalogSiteNote;
 
-  /// No description provided for @catalogOrderButton.
-  ///
-  /// In ru, this message translates to:
-  /// **'Оформить заказ'**
-  String get catalogOrderButton;
-
-  /// No description provided for @catalogPayPalNote.
-  ///
-  /// In ru, this message translates to:
-  /// **' — и картой без аккаунта'**
-  String get catalogPayPalNote;
-
-  /// No description provided for @catalogPaySection.
-  ///
-  /// In ru, this message translates to:
-  /// **'Оплата · КП 12.4'**
-  String get catalogPaySection;
-
-  /// No description provided for @catalogPayStub.
-  ///
-  /// In ru, this message translates to:
-  /// **'Оплата подключается на этапе интеграции'**
-  String get catalogPayStub;
-
-  /// No description provided for @catalogSizeCm.
+  /// No description provided for @catalogSizeLabel.
   ///
   /// In ru, this message translates to:
   /// **'{size} см'**
-  String catalogSizeCm(int size);
+  String catalogSizeLabel(String size);
 
-  /// No description provided for @catalogSummaryItem.
+  /// No description provided for @catalogSoldOut.
   ///
   /// In ru, this message translates to:
-  /// **'Товар'**
-  String get catalogSummaryItem;
+  /// **'Нет в наличии'**
+  String get catalogSoldOut;
 
-  /// No description provided for @catalogSummaryPrice.
+  /// No description provided for @catalogTabBears.
   ///
   /// In ru, this message translates to:
-  /// **'Цена'**
-  String get catalogSummaryPrice;
+  /// **'Мишки'**
+  String get catalogTabBears;
 
-  /// No description provided for @catalogSummarySize.
+  /// No description provided for @catalogTabClothes.
   ///
   /// In ru, this message translates to:
-  /// **'Размер'**
-  String get catalogSummarySize;
+  /// **'Одежда'**
+  String get catalogTabClothes;
+
+  /// No description provided for @catalogTabFriends.
+  ///
+  /// In ru, this message translates to:
+  /// **'Друзья'**
+  String get catalogTabFriends;
 
   /// No description provided for @catalogTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Заказать мишку'**
+  /// **'Мишки TeddyTales'**
   String get catalogTitle;
+
+  /// No description provided for @catalogVariant.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вариант'**
+  String get catalogVariant;
+
+  /// No description provided for @catalogViewOnSite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посмотреть на сайте'**
+  String get catalogViewOnSite;
 
   /// No description provided for @categoryAccessory.
   ///

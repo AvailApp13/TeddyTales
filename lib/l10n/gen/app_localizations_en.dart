@@ -167,52 +167,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get careWashTitle => 'Bathe';
 
   @override
-  String get catalogCheckoutTitle => 'Checkout';
+  String get catalogBuyOnSite => 'Buy on the TeddyTales website';
 
   @override
-  String get catalogCountryChina => 'China';
-
-  @override
-  String get catalogCountryGermany => 'Germany';
-
-  @override
-  String get catalogCountryKazakhstan => 'Kazakhstan';
-
-  @override
-  String get catalogCountryRussia => 'Russia';
-
-  @override
-  String get catalogCountryUsa => 'USA';
-
-  @override
-  String get catalogDeliveryNote =>
-      'Delivery per the store: USA 7–9 business days, Canada 8–10, Europe 9–11, Asia 5–7. Orders go to the Client\'s live sales system (Brief 12.5) — this form doesn\'t submit anything yet.';
-
-  @override
-  String get catalogFieldAddress => 'Address';
-
-  @override
-  String get catalogFieldAddressHint => 'Street, building, apartment';
-
-  @override
-  String get catalogFieldCountry => 'Country';
-
-  @override
-  String get catalogFieldName => 'Full name';
-
-  @override
-  String get catalogFieldNameHint => 'As in your ID';
-
-  @override
-  String get catalogFieldPhone => 'Phone';
-
-  @override
-  String get catalogFieldPostcode => 'Postcode';
-
-  @override
-  String catalogFootnote(String shoes, String price) {
-    return 'Items, prices and sizes come from the official TeddyTales® store, as required by Brief 12.1. The photos are identical placeholders: real shots will come from the Client\'s catalog. Shoes are sold there separately — $shoes, $price.';
-  }
+  String get catalogEmpty => 'The catalog will load once you\'re back online';
 
   @override
   String get catalogGrownSubtitle => 'and ready to come home to you';
@@ -221,45 +179,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogGrownTitle => 'Your little one is all grown up';
 
   @override
-  String get catalogItemFortune => 'Fortune Pocket Bear';
+  String get catalogOpenFailed => 'Couldn\'t open the TeddyTales website';
 
   @override
-  String get catalogItemHug => 'Peachy Cuddle Bear';
+  String get catalogOpenSite => 'Open the TeddyTales website';
 
   @override
-  String get catalogItemShortFur => 'Short-Fur Teddy';
+  String catalogPriceFrom(String price) {
+    return 'from $price';
+  }
 
   @override
-  String get catalogItemSpaceSet => 'Astronaut & Bride Set';
+  String get catalogSiteNote =>
+      'Checkout, payment and delivery happen on the TeddyTales website. Prices are in US dollars, as on the website.';
 
   @override
-  String get catalogOrderButton => 'Order now';
-
-  @override
-  String get catalogPayPalNote => ' — or by card, no account needed';
-
-  @override
-  String get catalogPaySection => 'Payment · Brief 12.4';
-
-  @override
-  String get catalogPayStub => 'Payments will be connected during integration';
-
-  @override
-  String catalogSizeCm(int size) {
+  String catalogSizeLabel(String size) {
     return '$size cm';
   }
 
   @override
-  String get catalogSummaryItem => 'Item';
+  String get catalogSoldOut => 'Sold out';
 
   @override
-  String get catalogSummaryPrice => 'Price';
+  String get catalogTabBears => 'Bears';
 
   @override
-  String get catalogSummarySize => 'Size';
+  String get catalogTabClothes => 'Clothes';
 
   @override
-  String get catalogTitle => 'Order a bear';
+  String get catalogTabFriends => 'Friends';
+
+  @override
+  String get catalogTitle => 'TeddyTales bears';
+
+  @override
+  String get catalogVariant => 'Option';
+
+  @override
+  String get catalogViewOnSite => 'View on the website';
 
   @override
   String get categoryAccessory => 'Accessories';

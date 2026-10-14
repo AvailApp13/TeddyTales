@@ -171,52 +171,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get careWashTitle => 'Купать';
 
   @override
-  String get catalogCheckoutTitle => 'Оформление';
+  String get catalogBuyOnSite => 'Купить на сайте TeddyTales';
 
   @override
-  String get catalogCountryChina => 'Китай';
-
-  @override
-  String get catalogCountryGermany => 'Германия';
-
-  @override
-  String get catalogCountryKazakhstan => 'Казахстан';
-
-  @override
-  String get catalogCountryRussia => 'Россия';
-
-  @override
-  String get catalogCountryUsa => 'США';
-
-  @override
-  String get catalogDeliveryNote =>
-      'Доставка по данным магазина: США 7–9 рабочих дней, Канада 8–10, Европа 9–11, Азия 5–7. Заказ уходит в действующую систему продаж Заказчика (КП 12.5) — здесь форма без отправки.';
-
-  @override
-  String get catalogFieldAddress => 'Адрес';
-
-  @override
-  String get catalogFieldAddressHint => 'Улица, дом, квартира';
-
-  @override
-  String get catalogFieldCountry => 'Страна';
-
-  @override
-  String get catalogFieldName => 'Имя и фамилия';
-
-  @override
-  String get catalogFieldNameHint => 'Как в документах';
-
-  @override
-  String get catalogFieldPhone => 'Телефон';
-
-  @override
-  String get catalogFieldPostcode => 'Индекс';
-
-  @override
-  String catalogFootnote(String shoes, String price) {
-    return 'Товары, цены и размеры — из официального магазина TeddyTales®, как требует КП 12.1. Фотографии подставлены одинаковые: настоящие снимки берутся из каталога Заказчика. Обувь там продаётся отдельно — $shoes, $price.';
-  }
+  String get catalogEmpty => 'Каталог загрузится, когда появится интернет';
 
   @override
   String get catalogGrownSubtitle => 'и готов отправиться к тебе домой';
@@ -225,45 +183,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogGrownTitle => 'Твой малыш вырос';
 
   @override
-  String get catalogItemFortune => 'Карманный мишка Фортуна';
+  String get catalogOpenFailed => 'Не получилось открыть сайт TeddyTales';
 
   @override
-  String get catalogItemHug => 'Персиковый Обнимишка';
+  String get catalogOpenSite => 'Открыть сайт TeddyTales';
 
   @override
-  String get catalogItemShortFur => 'Мишка с короткой шерсткой';
+  String catalogPriceFrom(String price) {
+    return 'от $price';
+  }
 
   @override
-  String get catalogItemSpaceSet => 'Набор Космонавт и Невеста';
+  String get catalogSiteNote =>
+      'Оформление, оплата и доставка — на сайте TeddyTales. Цены — в долларах США, как на сайте.';
 
   @override
-  String get catalogOrderButton => 'Оформить заказ';
-
-  @override
-  String get catalogPayPalNote => ' — и картой без аккаунта';
-
-  @override
-  String get catalogPaySection => 'Оплата · КП 12.4';
-
-  @override
-  String get catalogPayStub => 'Оплата подключается на этапе интеграции';
-
-  @override
-  String catalogSizeCm(int size) {
+  String catalogSizeLabel(String size) {
     return '$size см';
   }
 
   @override
-  String get catalogSummaryItem => 'Товар';
+  String get catalogSoldOut => 'Нет в наличии';
 
   @override
-  String get catalogSummaryPrice => 'Цена';
+  String get catalogTabBears => 'Мишки';
 
   @override
-  String get catalogSummarySize => 'Размер';
+  String get catalogTabClothes => 'Одежда';
 
   @override
-  String get catalogTitle => 'Заказать мишку';
+  String get catalogTabFriends => 'Друзья';
+
+  @override
+  String get catalogTitle => 'Мишки TeddyTales';
+
+  @override
+  String get catalogVariant => 'Вариант';
+
+  @override
+  String get catalogViewOnSite => 'Посмотреть на сайте';
 
   @override
   String get categoryAccessory => 'Аксессуары';

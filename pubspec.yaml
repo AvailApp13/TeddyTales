@@ -34,6 +34,7 @@ dependencies:
   sign_in_with_apple: ^8.2.0
   in_app_purchase: ^3.3.1
   crypto: ^3.0.7
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +78,7 @@ flutter:
     - assets/shop/items/
     # Звуки кухни (24.09): синтезированы tool/make_sfx.py.
     - assets/audio/
+    - assets/catalog/
     # Условия использования и политика конфиденциальности (КП 14.2) по
     # языкам; тексты подставляются без правок кода.
     - assets/legal/
