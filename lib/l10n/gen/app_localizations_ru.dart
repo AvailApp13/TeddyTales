@@ -174,6 +174,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogBuyOnSite => 'Купить на сайте TeddyTales';
 
   @override
+  String get catalogComingSoon => 'Скоро здесь появятся мишки TeddyTales';
+
+  @override
   String get catalogEmpty => 'Каталог загрузится, когда появится интернет';
 
   @override

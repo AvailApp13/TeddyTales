@@ -328,6 +328,12 @@ abstract class AppLocalizations {
   /// **'Купить на сайте TeddyTales'**
   String get catalogBuyOnSite;
 
+  /// No description provided for @catalogComingSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро здесь появятся мишки TeddyTales'**
+  String get catalogComingSoon;
+
   /// No description provided for @catalogEmpty.
   ///
   /// In ru, this message translates to:

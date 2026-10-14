@@ -33,7 +33,12 @@ void main() {
         'images': ['https://cdn.shopify.com/s/files/story.webp?v=1'],
         'variants': [
           {'id': 21, 'title': 'Everest', 'price': 129.9, 'available': false},
-          {'id': 22, 'title': 'Serendipity', 'price': 139.9, 'available': false},
+          {
+            'id': 22,
+            'title': 'Serendipity',
+            'price': 139.9,
+            'available': false,
+          },
         ],
         'position': 1,
       },
@@ -48,7 +53,12 @@ void main() {
         'available': true,
         'images': ['https://cdn.shopify.com/s/files/lina.webp?v=1'],
         'variants': [
-          {'id': 11, 'title': 'Default Title', 'price': 55.9, 'available': true},
+          {
+            'id': 11,
+            'title': 'Default Title',
+            'price': 55.9,
+            'available': true,
+          },
         ],
         'position': 2,
       },
@@ -96,7 +106,12 @@ void main() {
         'available': true,
         'images': <String>[],
         'variants': [
-          {'id': 41, 'title': 'Default Title', 'price': 69.9, 'available': true},
+          {
+            'id': 41,
+            'title': 'Default Title',
+            'price': 69.9,
+            'available': true,
+          },
         ],
         'position': 4,
       },
@@ -231,6 +246,8 @@ void main() {
     Future<List<Uri>> pumpCatalog(
       WidgetTester tester, {
       bool opens = true,
+      bool showcase = true,
+      void Function()? onFetch,
     }) async {
       tester.view.physicalSize = const Size(1170, 2532);
       tester.view.devicePixelRatio = 3;
@@ -251,19 +268,39 @@ void main() {
           home: CatalogScreen(
             controller: bear,
             repository: StoreCatalogRepository(
-              fetch: () async => serverCatalog(),
+              fetch: () async {
+                onFetch?.call();
+                return serverCatalog();
+              },
               bundle: _Bundle(null),
             ),
             openLink: (uri) async {
               opened.add(uri);
               return opens;
             },
+            showcase: showcase,
           ),
         ),
       );
       await tester.pumpAndSettle();
       return opened;
     }
+
+    testWidgets('витрина спрятана — «скоро» и без запросов к серверу', (
+      tester,
+    ) async {
+      var fetched = 0;
+      await pumpCatalog(tester, showcase: false, onFetch: () => fetched++);
+      expect(find.text('Мишки TeddyTales'), findsOneWidget);
+      expect(
+        find.text('Скоро здесь появятся мишки TeddyTales'),
+        findsOneWidget,
+      );
+      expect(find.text('Lina Bear Milk Tea (15CM)'), findsNothing);
+      expect(find.text('Одежда'), findsNothing);
+      expect(fetched, 0);
+      expect(kStoreCatalogShown, isFalse);
+    });
 
     testWidgets('вкладки, карточки и «Нет в наличии»', (tester) async {
       await pumpCatalog(tester);
@@ -320,7 +357,10 @@ void main() {
       expect(opened.single.queryParameters['variant'], '21');
       // Сайт не открылся — уведомление сверху.
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Не получилось открыть сайт TeddyTales'), findsOneWidget);
+      expect(
+        find.text('Не получилось открыть сайт TeddyTales'),
+        findsOneWidget,
+      );
       await tester.pumpAndSettle(const Duration(seconds: 5));
     });
   });

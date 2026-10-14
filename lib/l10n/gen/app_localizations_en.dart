@@ -170,6 +170,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogBuyOnSite => 'Buy on the TeddyTales website';
 
   @override
+  String get catalogComingSoon => 'TeddyTales bears are coming here soon';
+
+  @override
   String get catalogEmpty => 'The catalog will load once you\'re back online';
 
   @override

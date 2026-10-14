@@ -9,6 +9,15 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/top_toast.dart';
 
+/// Видна ли витрина сайта в «Мишках».
+///
+/// Заказчик 14.10 после разговора с Ириной: teddytales.com — магазин для
+/// отправок по всему миру, в ценах растаможка и налоги. Витрину прячем до
+/// выхода на международные площадки: вместо неё — «Скоро здесь появятся
+/// мишки TeddyTales». Код, сервер и снимок остаются; включить — `true` и
+/// снова запустить загрузку на сервере (`docs/store-catalog.md`).
+const bool kStoreCatalogShown = false;
+
 /// Открывает страницу магазина.
 typedef StoreLinkOpener = Future<bool> Function(Uri uri);
 
@@ -39,6 +48,7 @@ class CatalogScreen extends StatefulWidget {
     required this.controller,
     this.repository,
     this.openLink = openStoreLink,
+    this.showcase = kStoreCatalogShown,
   });
 
   /// Тот же контроллер, что и на главной: экран читает из него только стадию,
@@ -48,6 +58,10 @@ class CatalogScreen extends StatefulWidget {
   /// Откуда брать витрину; в тестах — подменная.
   final StoreCatalogRepository? repository;
   final StoreLinkOpener openLink;
+
+  /// Витрина или заглушка «скоро» (`kStoreCatalogShown`); в тестах витрины —
+  /// `true`.
+  final bool showcase;
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -64,7 +78,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.showcase) _load();
   }
 
   /// Сразу — сохранённая витрина или снимок из сборки, следом — свежая с
@@ -100,7 +114,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
               children: [
                 _SheetHeader(title: l10n.catalogTitle),
                 Expanded(
-                  child: catalog == null || catalog.products.isEmpty
+                  child: !widget.showcase
+                      ? const _ComingSoon()
+                      : catalog == null || catalog.products.isEmpty
                       ? _EmptyState(
                           loading: _loading,
                           onOpenSite: () => _open(
@@ -176,11 +192,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
   void _openProduct(StoreCatalog catalog, StoreProduct product) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => _ProductScreen(
-          catalog: catalog,
-          product: product,
-          openLink: _open,
-        ),
+        builder: (context) =>
+            _ProductScreen(catalog: catalog, product: product, openLink: _open),
       ),
     );
   }
@@ -379,9 +392,9 @@ class _ProductCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             storePrice(compareAt),
-                            style: _metaStyle(theme)?.copyWith(
-                              decoration: TextDecoration.lineThrough,
-                            ),
+                            style: _metaStyle(
+                              theme,
+                            )?.copyWith(decoration: TextDecoration.lineThrough),
                           ),
                         ],
                       ],
@@ -526,6 +539,50 @@ class _SiteNote extends StatelessWidget {
   }
 }
 
+/// Вместо спрятанной витрины (`kStoreCatalogShown`): портрет мишки и
+/// «Скоро здесь появятся мишки TeddyTales».
+class _ComingSoon extends StatelessWidget {
+  const _ComingSoon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.pagePadding * 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 148,
+              height: 148,
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.sageSoft, width: 3),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/bear_hero.jpg',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              context.l10n.catalogComingSoon,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Витрины нет совсем: первый запуск без сети и без снимка.
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.loading, required this.onOpenSite});
@@ -548,9 +605,9 @@ class _EmptyState extends StatelessWidget {
             Text(
               l10n.catalogEmpty,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 14),
             OutlinedButton(
@@ -821,9 +878,9 @@ class _InfoChip extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppColors.textPrimary,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: AppColors.textPrimary),
       ),
     );
   }

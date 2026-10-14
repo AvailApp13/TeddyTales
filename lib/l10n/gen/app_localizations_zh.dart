@@ -137,6 +137,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get catalogBuyOnSite => '前往 TeddyTales 官网购买';
 
   @override
+  String get catalogComingSoon => 'TeddyTales 小熊即将在这里上架';
+
+  @override
   String get catalogEmpty => '联网后即可加载商品目录';
 
   @override
