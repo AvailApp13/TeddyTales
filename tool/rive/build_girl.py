@@ -18,6 +18,12 @@ Rive, скелет, веса и все движения — те же, что у
 - выражения: её плитки Higgsfield (смех, зевок, закрытые глаза), где их ещё
   нет — плитки мальчика, сдвинутые к её носу (рты-линии — в цвет её
   стежка); удивление — пока её лицо покоя (⚠ ждёт плитки Higgsfield);
+- рты (14.10, заказчик: «рот открывается вообще не так»): полости — с её
+  плиток, без носа (раньше в полость попадал низ носа со стежком — рот
+  «коробкой» прилипал к носу, а зевок и жевание открывались на
+  подбородке); жевание — её рот смеха, плитка зевка не обрезается;
+- свои эмоции — женственные, ярче (`girl_emotions.py`): глазки-дужки с
+  плитки смеха (`happy`), румянец (`blush`), наклоны головы вместо тряски;
 - ткань под капюшоном и расправленная складка кофты мальчика не нужны:
   её слои уже дорисованы с запасом.
 
@@ -58,6 +64,37 @@ def _shift(rgb, dx, dy):
     return ndimage.shift(rgb, (dy, dx, 0), order=1, mode='nearest')
 
 
+def _shift_down(rgb, dx, dy):
+    """Сдвиг вниз на dy без обрезки: плитка выше на dy. Зевку нужно: его
+    рот ниже края плитки после сдвига к носу (низ «о» срезался)."""
+    h, w = rgb.shape[:2]
+    out = np.empty((h + dy, w, 3))
+    out[dy:] = _shift(rgb, dx, 0)
+    out[:dy] = out[dy:dy + 1]
+    return out
+
+
+# Румянец (14.10): мягкие розовые пятна на щёчках — зоны в кадре 1024, как
+# EYES/MOUTH в faces.py; сила в середине пятна.
+BLUSH = [(262, 598, 112, 78), (762, 598, 112, 78)]
+BLUSH_PINK = (250, 135, 160)
+BLUSH_K = 0.42
+
+
+def _blush_tile(face):
+    """Её лицо покоя (плитка) с румянцем на щёчках."""
+    rgb = np.asarray(face, np.float64)
+    h, w = rgb.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
+    fx, fy = (xx + faces.BOX[0] + 0.5) / faces.K, (yy + faces.BOX[1] + 0.5) / faces.K
+    s = np.zeros((h, w))
+    for cx, cy, ax, ay in BLUSH:
+        d2 = ((fx - cx) / ax) ** 2 + ((fy - cy) / ay) ** 2
+        s = np.maximum(s, np.exp(-2.2 * d2) * (d2 < 1))
+    k = BLUSH_K * s[..., None]
+    return rgb * (1 - k) + np.array(BLUSH_PINK, np.float64) * k
+
+
 def tiles_dir():
     """Папка плиток для `faces.py` и `mouth.py` (вместо `assets_src/rive/faces`)."""
     d = tempfile.mkdtemp(prefix='girl_faces_')
@@ -70,23 +107,36 @@ def tiles_dir():
         Image.fromarray(rgb.clip(0, 255).round().astype(np.uint8)).save(os.path.join(d, fn), quality=95)
     for name, (dx, dy) in GIRL_SHIFT.items():
         rgb = np.asarray(Image.open(os.path.join(GIRL, 'faces', f'{name}.webp')).convert('RGB'), np.float64)
-        Image.fromarray(_shift(rgb, dx, dy).clip(0, 255).round().astype(np.uint8)).save(
+        # зевок — без обрезки снизу (не накладка: размер плитки свой)
+        rgb = _shift_down(rgb, dx, dy) if name == 'yawn' else _shift(rgb, dx, dy)
+        Image.fromarray(rgb.clip(0, 255).round().astype(np.uint8)).save(
             os.path.join(d, f'{name}.webp'), quality=95)
     # ⚠ ждёт плитки Higgsfield (дневной лимит 14.10): удивление — её лицо покоя
     head = Image.open(os.path.join(GIRL, 'layers', 'head.png')).convert('RGB')
     x0, y0 = faces.FRAME[0] + faces.BOX[0], faces.FRAME[1] + faces.BOX[1]
-    head.crop((x0, y0, x0 + faces.BOX[2] - faces.BOX[0], y0 + faces.BOX[3] - faces.BOX[1])).save(
-        os.path.join(d, 'surprised.webp'), quality=95)
+    face = head.crop((x0, y0, x0 + faces.BOX[2] - faces.BOX[0], y0 + faces.BOX[3] - faces.BOX[1]))
+    face.save(os.path.join(d, 'surprised.webp'), quality=95)
+    Image.fromarray(_blush_tile(face).clip(0, 255).round().astype(np.uint8)).save(
+        os.path.join(d, 'blush.webp'), quality=95)
     return d
 
 
 TILES = tiles_dir()
 faces.SRC = mouth.SRC = TILES
 faces.OVERLAYS = [('blink', 'eyes_closed', faces.EYES),
-                  ('surprised', 'surprised', faces.EYES)]
+                  ('surprised', 'surprised', faces.EYES),
+                  ('happy', 'laugh', faces.EYES),        # глазки-дужки (^ ^) её смеха
+                  ('blush', 'blush', BLUSH)]             # румянец, проявляется плавно
 DY = BOY_SHIFT[1]
-mouth.CAVITIES = {k: (pic, y0 + DY, y1 + DY, sig, shut)
-                  for k, (pic, y0, y1, sig, shut) in mouth.CAVITIES.items()}
+# Полости рта — с её плиток (строки — после сдвига к носу): поиск ниже носа
+# и стежка под ним (нос кончается на 176-й строке, рот начинается со 192-й;
+# выше 190 в полость попадал низ носа). Жевание — её рот смеха (плитки
+# жевания Higgsfield ещё нет), челюстью и меньше.
+mouth.CAVITIES = {
+    'open': ('laugh', 190, 268, 2.2, (0.35, 0.03)),
+    'yawn': ('yawn', 192, 322, 5.0, (0.6, 1.0)),
+    'chew': ('laugh', 190, 268, 2.2, (0.5, 1.0)),
+}
 mouth.SHAPE_ROWS = (mouth.SHAPE_ROWS[0] + DY, mouth.SHAPE_ROWS[1] + DY)
 mouth.REST = REST_MOUTH
 mouth.CENTER_Y = round(mouth.TEX_O[1] + (REST_Y - mouth.TEX_O[3]) * mouth.TEX_K, 1)
@@ -223,6 +273,14 @@ def girl_breathing(B, rest, period=rr.PERIOD, amp=1.0):
 rr.breathing = girl_breathing
 underpaint.build = lambda project, rive_root, byname: 0
 crease.flatten = lambda rgba: {s: np.zeros_like(rgba) for s in ('l', 'r')}
+
+# Свои эмоции девочки (заказчик 14.10: «женственной… головой так не трясти…
+# рот открывается вообще не так») — вместо мальчиковых, `girl_emotions.py`.
+import girl_emotions  # noqa: E402
+rr.LIP_Y = girl_emotions.LIP_Y
+rr.JAW_K = dict(girl_emotions.JAW_K)
+rr.EMOTION_ANIMS.update(girl_emotions.CLIPS)
+rr.MOODS.update(girl_emotions.MOODS)
 
 
 def prepare(project):

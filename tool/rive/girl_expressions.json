@@ -1,5 +1,5 @@
 {
- "_": "Выражения мордочки девочки (JOY) — Higgsfield gpt_image_2_5, правка кадра assets_src/rive/girl/joy_face_1024.jpg (media 7ff9750d-0067-44bc-9ba6-320570c0f099), 1:1, 1k, по 2 варианта. План одобрен заказчиком 14.10. Промт = common + text.",
+ "_": "Выражения мордочки девочки (JOY) — Higgsfield gpt_image_2_5, правка кадра assets_src/rive/girl/joy_face_1024.jpg (media 7ff9750d-0067-44bc-9ba6-320570c0f099), 1:1, 1k, по 2 варианта. План одобрен заказчиком 14.10. Промт = common + text. 14.10, заказчик: «девочка должна быть женственной… эмоции ярче» — подписи ещё не сделанных выражений уточнены (по-девичьи); количество и кредиты плана те же.",
  "model": "gpt_image_2_5",
  "aspect_ratio": "1:1",
  "resolution": "1k",
@@ -19,7 +19,7 @@
   {
    "name": "yawn",
    "quality": "max",
-   "text": "a big yawn - both eyes squeezed tightly shut with crinkled fur, the mouth opened tall into a big oval O showing the dark inside and a pink tongue at the bottom, the muzzle stretched downward.",
+   "text": "a dainty little yawn - both eyes squeezed shut with crinkled fur, the mouth opened into a small neat round o showing the dark inside and a pink tongue at the bottom.",
    "jobs": [
     "c00e9ea5-2fd6-45ba-8112-22b7a0248e8b"
    ]
@@ -27,13 +27,13 @@
   {
    "name": "chew_open",
    "quality": "max",
-   "text": "chewing with the mouth half open - happy squinting eyes (the fur under the eyes pushes up, the black beads still visible), the mouth slightly open in a small rounded opening showing a pink tongue, cheeks puffed out as if full of food.",
+   "text": "dainty, girlish chewing with the mouth slightly open - happy squint (the fur under the eyes pushes up, the black beads still visible), a small neat rounded mouth opening showing a little pink tongue, round cheeks puffed out with food.",
    "jobs": []
   },
   {
    "name": "surprised",
    "quality": "max",
-   "text": "surprise - the bead eyes wide open, perfectly round, a little larger, with bright highlights, the fur around the eyes lifted, a small round O mouth open showing a pink tongue.",
+   "text": "a sweet girlish surprise (\"oh!\") - the bead eyes wide open, round and sparkling with bright highlights, the fur around the eyes lifted, a small delicate round o mouth showing a little pink tongue.",
    "jobs": []
   },
   {
@@ -47,43 +47,43 @@
   {
    "name": "sad",
    "quality": "max",
-   "text": "sadness - the inner ends of the brows raised so the fur above each eye slants down toward the outside, heavy upper eyelids of fur cover the top of the bead eyes, the mouth a downturned arc, about to cry.",
+   "text": "a soft girlish sadness - the inner ends of the brows raised so the fur above each eye slants down toward the outside, heavy upper eyelids of fur cover the top of the bead eyes, a small trembling downturned mouth, about to cry.",
    "jobs": []
   },
   {
    "name": "upset",
    "quality": "max",
-   "text": "pouting and offended like a sulky little child, not angry - heavy eyelids half covering the beads, the lips pressed into a small tight downturned pout pushed slightly to one side.",
+   "text": "a cute girlish pout, offended but not angry - heavy eyelids half covering the beads, the lips pushed forward into a small rounded pout slightly to one side, round cheeks a little puffed.",
    "jobs": []
   },
   {
    "name": "sleepy",
    "quality": "max",
-   "text": "sleepiness - heavy upper eyelids of white fur cover the upper half of the bead eyes, a drowsy relaxed look, the mouth a small relaxed flat line.",
+   "text": "a sweet drowsy look - heavy upper eyelids of white fur cover the upper half of the bead eyes, a soft relaxed tiny mouth.",
    "jobs": []
   },
   {
    "name": "chew_closed",
    "quality": "max",
-   "text": "contentedly chewing with the mouth closed - eyes in a happy squint (the fur under the eyes pushes up, the black beads still visible), the mouth closed in a small cat-like w-shaped smile, cheeks puffed out as if full of food.",
+   "text": "contentedly chewing a treat with the mouth closed, cute and girlish - happy squint (the fur under the eyes pushes up, the black beads still visible), the mouth closed in a tiny cat-like w-shaped smile, round cheeks puffed out with food.",
    "jobs": []
   },
   {
    "name": "smile",
    "quality": "xhigh",
-   "text": "a happy smile - the mouth opens into a small friendly smile showing a little pink tongue, cheeks lifted, the fur under the eyes pushes up a little so the bead eyes look smiling but stay open.",
+   "text": "a sweet girlish smile - the mouth opens into a small happy smile showing a little pink tongue, cheeks lifted, the bead eyes smiling but open.",
    "jobs": []
   },
   {
    "name": "laugh2",
    "quality": "xhigh",
-   "text": "a soft giggle - both eyes closed into happy upward arcs (upside-down U), the mouth open in a medium smile showing a pink tongue, cheeks raised.",
+   "text": "a soft girlish giggle - both eyes closed into happy upward arcs (upside-down U), the mouth open in a medium sweet smile showing a pink tongue, cheeks raised.",
    "jobs": []
   },
   {
    "name": "lick",
    "quality": "xhigh",
-   "text": "licking the lips after something tasty - blissful squinting eyes, a closed smile, the tip of a pink tongue licking the corner of the upper lip on one side.",
+   "text": "licking the lips after something tasty, cute and girlish - blissful squint, a closed smile, the tip of a pink tongue peeking out at the corner of the mouth.",
    "jobs": []
   }
  ]

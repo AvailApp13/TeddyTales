@@ -1814,6 +1814,13 @@ def mwave(t, n=1, phase=0.0):
     return math.sin(2 * math.pi * n * t / MOOD_T + phase)
 
 
+# Полости с нижней челюстью (зевок, жевание): верхняя губа встаёт на LIP_Y
+# (мир, верх ротика покоя), полное раскрытие челюсти — JAW_K высоты полости.
+# У девочки — свои (`build_girl.py`).
+LIP_Y = 500.0
+JAW_K = {'yawn': 0.8, 'chew': 1.0}
+
+
 def _mood_mouth(spec, kind, w, h):
     """Рот настроения: ширина и высота — функции времени (как Emo.mouth_open)."""
     sx0, sy0 = mouth.closed(kind)
@@ -1824,9 +1831,9 @@ def _mood_mouth(spec, kind, w, h):
     spec.setdefault('_mouth_h', []).append(h)
     if kind in mouth.JAW:
         _, top, bot = mouth.rows(kind)
-        k = 0.8 if kind == 'yawn' else 1.0
+        k = JAW_K[kind]
         spec[(f'jaw_{kind}', Emo.Y)] = lambda t: k * (bot - top) * h(t)
-        spec[(f'mouth_{kind}', Emo.X)] = lambda t: top - 500.0
+        spec[(f'mouth_{kind}', Emo.X)] = lambda t: top - LIP_Y
 
 
 def _mood_eyes(spec, low, top):
