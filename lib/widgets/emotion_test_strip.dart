@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 
+import '../bear/bear_rig_spec.dart';
 import '../bear/rive_bear_trial.dart';
 import '../theme/app_colors.dart';
 
@@ -13,9 +14,18 @@ import '../theme/app_colors.dart';
 /// какая группа сейчас на экране. Номера прежние (как в прежней
 /// проверочной панели), по ним удобно писать правки.
 class EmotionTestStrip extends StatefulWidget {
-  const EmotionTestStrip({super.key, required this.cue});
+  const EmotionTestStrip({
+    super.key,
+    required this.cue,
+    this.skin = BearSkin.boy,
+  });
 
   final BearFaceCue cue;
+
+  /// Настоящий герой (КП 2.4). Первая плитка ленты — «Мальчик /
+  /// Девочка»: проверить второго героя (заказчик 14.10), до перезапуска
+  /// ([BearFaceCue.hero]).
+  final BearSkin skin;
 
   /// Размер плитки и зазор между плитками, пт.
   static const double tileWidth = 84;
@@ -49,6 +59,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
   void initState() {
     super.initState();
     widget.cue.addListener(_changed);
+    widget.cue.hero.addListener(_changed);
     _scroll.addListener(_scrolled);
   }
 
@@ -58,12 +69,15 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
     if (oldWidget.cue != widget.cue) {
       oldWidget.cue.removeListener(_changed);
       widget.cue.addListener(_changed);
+      oldWidget.cue.hero.removeListener(_changed);
+      widget.cue.hero.addListener(_changed);
     }
   }
 
   @override
   void dispose() {
     widget.cue.removeListener(_changed);
+    widget.cue.hero.removeListener(_changed);
     _scroll.dispose();
     super.dispose();
   }
@@ -163,10 +177,21 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
                   scrollDirection: Axis.horizontal,
                   // справа запас: последняя плитка выходит из-под затухания
                   padding: const EdgeInsets.only(left: 16, right: 56),
-                  itemCount: BearFace.values.length,
+                  itemCount: BearFace.values.length + 1,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: EmotionTestStrip.gap),
-                  itemBuilder: (context, i) {
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      final hero = widget.cue.heroOr(widget.skin);
+                      return _HeroTile(
+                        hero: hero,
+                        onTap: () =>
+                            widget.cue.hero.value = hero == BearSkin.girl
+                            ? BearSkin.boy
+                            : BearSkin.girl,
+                      );
+                    }
+                    final i = index - 1;
                     final face = BearFace.values[i];
                     return _EmotionTile(
                       number: i + 1,
@@ -181,6 +206,73 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Первая плитка ленты: кто на экране — мальчик или девочка; тап меняет
+/// героя (проверка второго героя, заказчик 14.10).
+class _HeroTile extends StatelessWidget {
+  const _HeroTile({required this.hero, required this.onTap});
+
+  final BearSkin hero;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const ink = Color(0xFF4A3528);
+    final girl = hero == BearSkin.girl;
+    final color = girl ? const Color(0xFFD27A95) : const Color(0xFF5E8DC4);
+    return GestureDetector(
+      key: const ValueKey('emotion-test-hero'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: EmotionTestStrip.tileWidth,
+        padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color, width: 1.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        // крупный шрифт не выталкивает подпись за плитку
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                girl ? 'Девочка' : 'Мальчик',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13.5,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                girl ? 'показать\nмальчика' : 'показать\nдевочку',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ink.withValues(alpha: 0.75),
+                  fontSize: 10.5,
+                  height: 1.1,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

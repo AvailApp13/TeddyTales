@@ -70,6 +70,7 @@ SHAPES = {
 }
 KINDS = list(CAVITIES) + list(SHAPES)
 REST = (679, 1043, 27, 16)   # ротик покоя в пикселях текстуры лица: центр, полуоси
+SHAPE_ROWS = (188, 260)      # где искать линию губ в плитке (строки)
 
 
 def _shape(name):
@@ -80,7 +81,7 @@ def _shape(name):
     h, w = im.shape[:2]
     lum = im.mean(2)
     yy, xx = np.mgrid[0:h, 0:w]
-    reg = (yy >= 188) & (yy < 260) & (xx > 95) & (xx < 250)
+    reg = (yy >= SHAPE_ROWS[0]) & (yy < SHAPE_ROWS[1]) & (xx > 95) & (xx < 250)
     loc = ndimage.gaussian_filter(lum, 6)
     m = ((lum < thr) | ((loc - lum) > 30)) & reg
     m = ndimage.binary_closing(m, iterations=2)

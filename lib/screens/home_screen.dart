@@ -1556,6 +1556,7 @@ class _RoomScene extends StatelessWidget {
               cue: faceCue,
               mood: mood,
               trait: controller.state.trait,
+              skin: controller.state.skin,
             ),
           ),
           // Буквы z и облако мыслей ждут одного момента: мишку уложили и
@@ -1604,6 +1605,7 @@ class _RoomScene extends StatelessWidget {
                 child: KitchenBear(
                   cue: faceCue,
                   mood: mood,
+                  skin: controller.state.skin,
                   trait: _kitchenTrait(controller.state.trait),
                   meal: meal,
                   pet: pets,
@@ -1685,6 +1687,7 @@ class _RoomScene extends StatelessWidget {
               cue: faceCue,
               trait: controller.state.trait,
               mood: mood,
+              skin: controller.state.skin,
               onTap: controller.petBear,
             ),
           ),
@@ -1880,7 +1883,7 @@ class _RoomScene extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: _stripBottom,
-            child: EmotionTestStrip(cue: faceCue),
+            child: EmotionTestStrip(cue: faceCue, skin: controller.state.skin),
           ),
         // Мишка спит, а мы в другой комнате (заказчик 26.09): посередине —
         // «Мишка спит»: разбудить и позвать сюда или оставить спать.

@@ -54,7 +54,14 @@ class KitchenBear extends StatefulWidget {
     this.pet = 0,
     this.refuse = 0,
     this.onTap,
+    this.skin = BearSkin.boy,
   });
+
+  /// Герой (КП 2.4). У девочки за столом — её кофточка с рукавами из её
+  /// слоёв (`girl_seat.png`, `tool/rive/girl_kitchen.py`), лапы уходят под
+  /// стол. ⚠ Лапы на столе, как у мальчика, — нужен рисунок (ждёт
+  /// согласования, `docs/rive-girl.md`).
+  final BearSkin skin;
 
   final BearFaceCue cue;
   final BearMood mood;
@@ -110,7 +117,13 @@ class KitchenBear extends StatefulWidget {
     '$_dir/seat_cuffs.png',
     '$_dir/seat_paw_left.png',
     '$_dir/seat_paw_right.png',
+    '$_dir/girl_seat.png',
   ];
+
+  /// Тело девочки за столом — полоса артборда рига (1024 × 225) от y 420
+  /// до кромки стола: стоит в том же квадрате, что голова рига.
+  static const double girlSeatTop = 420 / 1024;
+  static const double girlSeatHeight = 225 / 1024;
 
   /// Заранее раскодировать тело — иначе за столом на долю секунды
   /// показалась бы одна голова.
@@ -271,19 +284,30 @@ class _KitchenBearState extends State<KitchenBear>
               ),
             ),
             // Тело прежнего мишка: лапы под рукавами, кофта поверх.
+            // У девочки — её кофточка из её слоёв.
             Positioned.fill(
               child: IgnorePointer(
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([_breath, _pat]),
-                  builder: (context, _) => Stack(
-                    children: [
-                      // изнанка рукавов — под лапами, дышит с кофтой
-                      _body(w, h, table.top, 'seat_cuffs'),
-                      _paw(w, h, KitchenBear.pawLeft, 'left'),
-                      _paw(w, h, KitchenBear.pawRight, 'right'),
-                      _body(w, h, table.top, 'seat_body'),
-                    ],
-                  ),
+                child: ValueListenableBuilder<BearSkin?>(
+                  valueListenable: widget.cue.hero,
+                  builder: (context, _, _) =>
+                      widget.cue.heroOr(widget.skin) == BearSkin.girl
+                      ? AnimatedBuilder(
+                          animation: _breath,
+                          builder: (context, _) =>
+                              Stack(children: [_girlSeat(w, h)]),
+                        )
+                      : AnimatedBuilder(
+                          animation: Listenable.merge([_breath, _pat]),
+                          builder: (context, _) => Stack(
+                            children: [
+                              // изнанка рукавов — под лапами, дышит с кофтой
+                              _body(w, h, table.top, 'seat_cuffs'),
+                              _paw(w, h, KitchenBear.pawLeft, 'left'),
+                              _paw(w, h, KitchenBear.pawRight, 'right'),
+                              _body(w, h, table.top, 'seat_body'),
+                            ],
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -299,6 +323,7 @@ class _KitchenBearState extends State<KitchenBear>
                   cue: widget.cue,
                   trait: widget.trait,
                   mood: widget.mood,
+                  skin: widget.skin,
                   seated: true,
                   headOnly: true,
                   breath: _breath,
@@ -334,6 +359,34 @@ class _KitchenBearState extends State<KitchenBear>
         // опора — кромка стола
         alignment: Alignment(0, (tableTop - box.top) / box.height * 2 - 1),
         child: Image.asset('${KitchenBear._dir}/$asset.png', fit: BoxFit.fill),
+      ),
+    );
+  }
+
+  /// Кофточка девочки до кромки стола — в квадрате головы рига; дышит,
+  /// как кофта мальчика: растёт от кромки и чуть поднимается.
+  Widget _girlSeat(double w, double h) {
+    final b = _breath.value.clamp(-1.6, 1.6);
+    final side = KitchenBear.side * w;
+    return Positioned(
+      left: KitchenBear.left * w,
+      top:
+          KitchenBear.top * h +
+          KitchenBear.girlSeatTop * side -
+          KitchenBear.breathLift * b * h,
+      width: side,
+      height: KitchenBear.girlSeatHeight * side,
+      child: Transform.scale(
+        scaleY: 1 + KitchenBear.breathSwell * b,
+        scaleX: 1 + KitchenBear.breathSwell * 0.3 * b,
+        alignment: Alignment.bottomCenter,
+        child: ColorFiltered(
+          colorFilter: KitchenBear.warm,
+          child: Image.asset(
+            '${KitchenBear._dir}/girl_seat.png',
+            fit: BoxFit.fill,
+          ),
+        ),
       ),
     );
   }

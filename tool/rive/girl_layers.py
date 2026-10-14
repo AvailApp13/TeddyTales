@@ -392,6 +392,22 @@ def to_frame(layer):
     return np.dstack([np.clip(rgb, 0, 255), a * 255]).round().astype(np.uint8)
 
 
+def bleed(rgba):
+    """Цвет прозрачных пикселей — от ближайшего плотного (альфа не трогаем).
+    Рендер Rive смешивает соседние пиксели текстуры без учёта прозрачности:
+    чёрные прозрачные края давали серую кайму по силуэту (у слоёв мальчика
+    там цвет меха)."""
+    a = rgba[..., 3]
+    solid = a >= 128
+    if not solid.any():
+        return rgba
+    _, (iy, ix) = ndimage.distance_transform_edt(~solid, return_indices=True)
+    out = rgba.copy()
+    empty = a < 8
+    out[empty, :3] = rgba[iy[empty], ix[empty], :3]
+    return out
+
+
 def composite(stack):
     """Наложение слоёв (RGBA float, альфа 0..1) по порядку на прозрачном:
     (цвет, умноженный на альфу; альфа)."""
@@ -438,7 +454,7 @@ def main():
           f'точек > 8: {(diff > 8).sum()}; альфа: {np.abs(ca - alpha).max():.3f}')
     os.makedirs(OUT, exist_ok=True)
     for name in ORDER:
-        Image.fromarray(to_frame(lays[name]), 'RGBA').save(os.path.join(OUT, f'{name}.png'), optimize=True)
+        Image.fromarray(bleed(to_frame(lays[name])), 'RGBA').save(os.path.join(OUT, f'{name}.png'), optimize=True)
         print('слой', name)
 
 

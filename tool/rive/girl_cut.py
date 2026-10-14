@@ -17,9 +17,10 @@
    пикселям вне мишки (ошибка ~1,5 единицы яркости).
 3. Цвет края очищается от примеси фона: F = (I − (1 − a)·B) / a.
 4. Кромка меха по силуэту (5–8 px) на фото отсвечивает голубовато-серым
-   фоном студии — на тёплых стенах комнат это кайма. Тон кромки
-   подтягивается к меху на 14 px глубже (фактура остаётся), а цвет
-   полупрозрачных ворсинок берётся от ближайшего плотного меха.
+   фоном студии — на тёплых стенах комнат это кайма. На 16 px от силуэта
+   цвет кромки — ближайшего меха сразу за ней, 16–22 px от края (рисунок
+   ворсинок по яркости свой). Полупрозрачная кайма силуэта — цветом
+   ближайшего плотного пикселя (мех — мехом, кофта — тканью).
 
 Зависимости: numpy, scipy, Pillow.
 """
@@ -69,24 +70,49 @@ def main():
     alpha[y0:y0 + crop.shape[0], x0:x0 + crop.shape[1]] = crop
     a3 = np.clip(alpha, 1e-3, 1)[..., None]
     color = np.clip((im - (1 - a3) * bg) / a3, 0, 255)
-    # кромка меха: тон — как у меха глубже от края
+    # кромка меха: тон — как у меха глубже от края. Образец — ближайший
+    # чистый мех не ближе 10 px к силуэту (над лентой банта на макушке
+    # глубже лежит зелёная лента — её брать нельзя); ткань и бант не трогаем
     inside = alpha > 0.5
     dist = ndimage.distance_transform_edt(inside)
     solid = alpha >= 0.9
-    norm = np.maximum(ndimage.gaussian_filter(solid.astype(float), 3), 1e-6)
-    lf = np.stack([ndimage.gaussian_filter(color[..., c] * solid, 3) for c in range(3)], -1) / norm[..., None]
-    _, (dy, dx) = ndimage.distance_transform_edt(dist < 14, return_indices=True)
-    deep = lf[dy, dx]
-    fur_deep = (deep.mean(2) > 200) & (deep.max(2) - deep.min(2) < 30)
-    w = np.clip(1 - dist / 12, 0, 1) * fur_deep * (alpha > 0.03)
-    color = np.clip(color + (deep - lf) * w[..., None], 0, 255)
-    # край меха — цветом соседнего плотного меха
-    _, (iy, ix) = ndimage.distance_transform_edt(~solid, return_indices=True)
+    sat = color.max(2) - color.min(2)
+    lum = color.mean(2)
+    fur = solid & (sat < 25) & (lum > 170)
+    # образец — ближайший мех сразу за кромкой, 16–22 px от силуэта (у
+    # макушки и ушей кромка на фото холоднее и темнее — подсветка
+    # студийного фона; дальше вглубь у уха уже тень раковины; где за
+    # кромкой лента банта — берётся ближайший мех за ней)
+    deep_fur = fur & (dist >= 16) & (dist <= 22)
+    norm = np.maximum(ndimage.gaussian_filter(deep_fur.astype(float), 4), 1e-6)
+    field = np.stack([ndimage.gaussian_filter(color[..., c] * deep_fur, 4) for c in range(3)], -1) / norm[..., None]
+    _, (dy, dx) = ndimage.distance_transform_edt(~deep_fur, return_indices=True)
+    deep = field[dy, dx]
+    # только кромка меха: ближайший плотный пиксель — мех (у кофты и юбки
+    # кромка тоже бледная, но перекрашивать её в белый мех нельзя)
+    _, (sy, sx) = ndimage.distance_transform_edt(~solid, return_indices=True)
+    by_fur = fur[sy, sx]
+    rim = (alpha > 0.03) & (sat < 40) & (dist < 16) & by_fur
+    w = np.clip((16 - dist) / 8, 0, 1) * rim          # 1 до 8 px от края, к 16 px — 0
+    # яркость ворса — своя (рисунок ворсинок), цвет и уровень — меха; у
+    # полупрозрачных ворсинок своя яркость — шум (там почти один фон)
+    sl = ndimage.gaussian_filter(lum * solid, 2) / np.maximum(ndimage.gaussian_filter(solid.astype(float), 2), 1e-6)
+    keep = np.where(alpha >= 0.6, np.clip(lum / np.maximum(sl, 1), 0.9, 1.1), 1.0)
+    # кромка на фото темнее середины меха на 10–15 единиц: на розовой стене
+    # это серая обводка. Уровень кромки — как у самого светлого меха рядом
+    # (в 20 px), чуть ниже
+    fl = ndimage.gaussian_filter(lum * fur, 3) / np.maximum(ndimage.gaussian_filter(fur.astype(float), 3), 1e-6)
+    ref = ndimage.maximum_filter(np.where(fur, fl, 0), size=41)
+    gain = np.clip(0.98 * ref / np.maximum(deep.mean(2), 1), 1.0, 1.12)
+    target = deep * (gain * keep)[..., None]
+    color = np.clip(color * (1 - w[..., None]) + target * w[..., None], 0, 255)
+    # полупрозрачная кайма силуэта — цветом соседнего плотного: у меха —
+    # меха, у кофты — ткани (на фото кайма бледная от фона студии).
+    # Полупрозрачная органза банта внутри силуэта — своя.
     near = np.stack([ndimage.gaussian_filter(color[..., c] * solid, 2) /
                      np.maximum(ndimage.gaussian_filter(solid.astype(float), 2), 1e-6)
-                     for c in range(3)], -1)[iy, ix]
-    furish = (near.mean(2) > 190) & (near.max(2) - near.min(2) < 30)
-    t = np.clip((0.85 - alpha) / 0.35, 0, 1) * furish * (alpha < 0.9)
+                     for c in range(3)], -1)[sy, sx]
+    t = np.clip((0.6 - alpha) / 0.3, 0, 1) * (dist == 0)
     color = color * (1 - t[..., None]) + near * t[..., None]
     color[alpha < 0.03] = 0
     rgba = np.dstack([color, alpha * 255]).round().astype(np.uint8)

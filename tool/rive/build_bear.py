@@ -108,7 +108,9 @@ def tidy(keep=3):
         shutil.rmtree(path, ignore_errors=True)
 
 
-def main():
+def main(out=OUT, prepare=None):
+    """prepare(project) — правка проекта перед `rebuild_rig` (девочка:
+    свои картинки и сетки, `build_girl.py`)."""
     tidy()
     work = tempfile.mkdtemp(prefix='rive_bear_')
     shutil.copy(SRC, os.path.join(work, 'bear.rev'))
@@ -129,10 +131,12 @@ def main():
                   + ''.join(body) + '</LinearAnimation>\n        ')
     s = s[:anchor] + extra + s[anchor:]
     open(scene, 'w', encoding='utf-8').write(s)
+    if prepare is not None:
+        prepare(project)
     rebuild_rig.main(project)
     subprocess.run(['rive', project, '--once'], env=env, check=True)
-    shutil.copy(os.path.join(project, 'build', 'bear.riv'), OUT)
-    print('готово:', OUT)
+    shutil.copy(os.path.join(project, 'build', 'bear.riv'), out)
+    print('готово:', out, '; проект:', project)
 
 
 if __name__ == '__main__':

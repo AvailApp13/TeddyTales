@@ -45,7 +45,14 @@ class BedroomScene extends StatefulWidget {
     required this.cue,
     this.mood = BearMood.normal,
     this.trait = BearTrait.active,
+    this.skin = BearSkin.boy,
   });
+
+  /// Герой (КП 2.4). У девочки нет капюшона: воротник и лапы прежнего
+  /// мишка (голубая кофта, бежевый мех) ей не подходят — она лежит со
+  /// своим телом рига: над одеялом голова и ворот кофточки. ⚠ Её лапы у
+  /// края одеяла — следующим шагом (`docs/rive-girl.md`).
+  final BearSkin skin;
 
   /// Уложили спать: мишка засыпает и спит, глаза закрыты. Заказчик 22.09:
   /// «при нажатии её наш мишка должен закрыть глаза полностью».
@@ -261,10 +268,11 @@ class _BedroomSceneState extends State<BedroomScene>
             BedroomScene.bearSide * w,
           );
 
+          final girl = widget.cue.heroOr(widget.skin) == BearSkin.girl;
           return Stack(
             children: [
               // Воротник под головой: капюшон ложится на него сверху.
-              _place(BedroomScene.bear, w, h, _collarLayer(h)),
+              if (!girl) _place(BedroomScene.bear, w, h, _collarLayer(h)),
               Positioned.fromRect(
                 rect: box,
                 child: ColorFiltered(
@@ -273,8 +281,11 @@ class _BedroomSceneState extends State<BedroomScene>
                     cue: widget.cue,
                     trait: widget.trait,
                     mood: widget.mood,
+                    skin: widget.skin,
                     seated: true,
-                    headOnly: true,
+                    // у девочки тело рига остаётся: между подбородком и
+                    // одеялом — ворот её кофточки, ниже всё под одеялом
+                    headOnly: !girl,
                     asleep: widget.asleep,
                     breath: _breath,
                   ),
@@ -282,7 +293,7 @@ class _BedroomSceneState extends State<BedroomScene>
               ),
               // Лапы держат край одеяла у подбородка: под одеялом, как у
               // прежнего мишки, — край одеяла закрывает запястья.
-              _place(BedroomScene.bear, w, h, _pawsLayer(h)),
+              if (!girl) _place(BedroomScene.bear, w, h, _pawsLayer(h)),
               _place(BedroomScene.blanket, w, h, _blanketLayer()),
               _place(BedroomScene.glow, w, h, _glowLayer()),
             ],
