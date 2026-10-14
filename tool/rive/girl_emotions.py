@@ -662,26 +662,27 @@ MB, MW, MH = rr.mbump, rr.mwave, rr.mhold
 _R, _X, _Y, _SX, _SY, _OP = Emo.R, Emo.X, Emo.Y, Emo.SX, Emo.SY, Emo.OP
 
 
-def _clav(sp, fn, alt=False):
-    """Плечики: fn(t) — подъём, рад. alt — по очереди (одно вверх, другое
-    вниз), иначе оба."""
+def _clav(sp, fn):
+    """Плечики: fn(t) — подъём обоих, рад. Только вместе: по очереди в
+    покое выглядело «волной через плечи» (заказчик 14.10)."""
     sp[('clav_l', _R)] = fn
-    sp[('clav_r', _R)] = fn if alt else (lambda t: -fn(t))
+    sp[('clav_r', _R)] = lambda t: -fn(t)
 
 
-def _tilt(sp, fn, chest=0.3, turn=40.0, lag=4):
-    """Наклон головы (рад) с S-линией груди и поворотом лица, как tilt()."""
+def _tilt(sp, fn, turn=40.0):
+    """Наклон головы (рад) с поворотом лица. Грудь в петлях не
+    наклоняется навстречу (S-линия — только в эмоциях): иначе плечики
+    поднимались по очереди (заказчик 14.10, «волна через плечи»)."""
     sp[('head', _R)] = fn
-    sp[('chest', _R)] = lambda t: -chest * fn(t - lag)
     sp[('face', _Y)] = lambda t: turn * fn(t)
 
 
 def mood_happy():
     """Покой: радость — напевает про себя: покачивается из стороны в
     сторону (по 3 с), головка склоняется то к одному плечику, то к другому,
-    плечики по очереди пританцовывают, лёгкое пружинистое покачивание;
-    глазки улыбаются, сомкнутая улыбка, румянец; раз за петлю радостно
-    приподнимается на носочках."""
+    плечики чуть приподняты, лёгкое пружинистое покачивание; глазки
+    улыбаются, сомкнутая улыбка, румянец; раз за петлю радостно
+    приподнимается на носочках — плечики вверх вместе с ней."""
     sp = {}
     hop = lambda t: MB(t, 600, 22)
     prep = lambda t: MB(t, 574, 10)
@@ -690,7 +691,7 @@ def mood_happy():
     sp[('hips', _X)] = lambda t: 2.2 * MW(t, 4)
     sp[('hips', _Y)] = lambda t: -0.8 * (0.5 - 0.5 * math.cos(2 * math.pi * 8 * t / rr.MOOD_T)) - 4.0 * hop(t) + 1.5 * prep(t)
     sp[('breath', _SY)] = lambda t: 0.02 + 0.02 * hop(t - 4)
-    _clav(sp, lambda t: 0.035 * MW(t, 8, 0.4), alt=True)
+    _clav(sp, lambda t: 0.02 + 0.05 * hop(t - 2))
     sp[('ear_l1', _R)] = lambda t: -0.05 + 0.03 * MW(t, 4, -1.2) + 0.06 * MB(t, 614, 14)
     sp[('ear_r1', _R)] = lambda t: 0.05 + 0.03 * MW(t, 4, -1.2) - 0.06 * MB(t, 614, 14)
     rr._mood_eyes(sp, lambda t: 0.22, lambda t: 0.0)
@@ -752,7 +753,6 @@ def mood_hungry():
     sp[('face', _X)] = lambda t: 1.5 * (look_l(t) + look_r(t)) + 1.5 * yum(t) - 5.5 * down(t)
     sp[('breath', _SY)] = lambda t: 0.035 * rumble(t) - 0.015 * down(t)
     sp[('hips', _Y)] = lambda t: 1.2 * rumble(t)
-    sp[('belly', _R)] = lambda t: 0.01 * (MB(t, 560, 6) - MB(t, 578, 6))
     _clav(sp, lambda t: 0.03 * (look_l(t) + look_r(t)) + 0.04 * yum(t) + 0.06 * down(t))
     sp[('brow_l', _R)] = lambda t: -0.08 - 0.04 * down(t)
     sp[('brow_r', _R)] = lambda t: 0.08 + 0.04 * down(t)
@@ -804,7 +804,6 @@ def mood_dirty():
     fluff = lambda t: MB(t, 430, 60) * math.sin(2 * math.pi * (t - 370) / 40)
     sp[('hips', _X)] = lambda t: 1.2 * fluff(t)
     sp[('head', _R)] = lambda t: 0.05 * fluff(t - 4) + 0.03 * look(t) - 0.07 * fu(t)
-    sp[('chest', _R)] = lambda t: 0.02 * fu(t - 4)
     sp[('face', _X)] = lambda t: -5.0 * look(t) - 2.0 * MB(t, 230, 22) + 1.5 * fu(t)
     sp[('face', _Y)] = lambda t: -3.0 * MB(t, 140, 60) + 3.0 * MB(t, 600, 50) - 6.0 * fu(t)
     sp[('clav_l', _R)] = lambda t: 0.05 * abs(fluff(t)) + 0.03 * look(t) + 0.08 * fu(t)
@@ -830,7 +829,7 @@ def _swap(k):
 
 def idle_trait_active():
     """Активная: бодрая, пружинит на носочках раз в секунду — юбочка
-    подпрыгивает, плечики пританцовывают по очереди, головка высоко и
+    подпрыгивает, плечики подпрыгивают вместе с ней, головка высоко и
     кокетливо склоняется вслед за взглядом по сторонам; глазки смеются,
     улыбка; раз за петлю радостно подпрыгивает — улыбка раскрывается,
     щёчки розовеют."""
@@ -845,9 +844,9 @@ def idle_trait_active():
     sp[('face', _X)] = lambda t: 2.5 + 2.0 * hop(t)
     sp[('hips', _Y)] = lambda t: -2.4 * bob(t) - 8.0 * hop(t) + 2.5 * prep(t)
     sp[('breath', _SY)] = lambda t: 0.016 * bob(t) + 0.03 * hop(t - 4)
-    dance = lambda t: 0.03 * MW(t, 12, 0.5) * (1 - joy(t))
-    sp[('clav_l', _R)] = lambda t: dance(t) + 0.06 * hop(t - 2)
-    sp[('clav_r', _R)] = lambda t: dance(t) - 0.06 * hop(t - 2)
+    # плечики вместе — подпрыгивают с ней (заказчик 14.10: по очереди
+    # выглядело «волной через плечи»)
+    _clav(sp, lambda t: 0.015 * bob(t - 2) + 0.06 * hop(t - 2))
     sp[('skirt_l', _R)] = lambda t: 0.03 * bob(t - 6) + 0.08 * MB(t, 626, 14)
     sp[('skirt_r', _R)] = lambda t: -0.03 * bob(t - 6) - 0.08 * MB(t, 626, 14)
     sp[('ear_l1', _R)] = lambda t: -0.1 + 0.04 * bob(t - 5) + 0.08 * MB(t, 626, 12)
@@ -950,7 +949,6 @@ def idle_trait_independent():
     sp[('face', _X)] = lambda t: 3.0 + 1.5 * toss(t)
     sp[('face', _Y)] = lambda t: 6.5 * away(t)
     sp[('head', _R)] = lambda t: 0.045 * away(t - 4) - 0.06 * toss(t)
-    sp[('chest', _R)] = lambda t: 0.012 * toss(t - 4)
     _clav(sp, lambda t: 0.02 * toss(t - 3))
     sp[('ear_l1', _R)] = lambda t: -0.15 * MB(t, 250, 6) - 0.15 * MB(t, 660, 6) + 0.05 * toss(t - 6)
     sp[('ear_l2', _R)] = lambda t: -0.09 * MB(t, 254, 7) - 0.09 * MB(t, 664, 7)

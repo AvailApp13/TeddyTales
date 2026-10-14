@@ -196,6 +196,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
                     return _EmotionTile(
                       number: i + 1,
                       face: face,
+                      hero: widget.cue.heroOr(widget.skin),
                       color: _groupOf(i + 1).$3,
                       selected: face == current,
                       onTap: () => widget.cue.show(face),
@@ -282,6 +283,7 @@ class _EmotionTile extends StatelessWidget {
   const _EmotionTile({
     required this.number,
     required this.face,
+    required this.hero,
     required this.color,
     required this.selected,
     required this.onTap,
@@ -289,6 +291,9 @@ class _EmotionTile extends StatelessWidget {
 
   final int number;
   final BearFace face;
+
+  /// Кто на экране: у девочки подписи в женском роде.
+  final BearSkin hero;
   final Color color;
   final bool selected;
   final VoidCallback onTap;
@@ -298,10 +303,11 @@ class _EmotionTile extends StatelessWidget {
     const ink = Color(0xFF4A3528);
     // «Покой: радость» — «Покой:» на первой строке, настроение на второй;
     // длинные слова — с переносом, иначе в плитке они слишком мелкие
-    final label = face.label
+    final label = face
+        .labelFor(hero)
         .replaceFirst(': ', ':\n')
-        .replaceFirst('Любознательный', 'Любо-\nзнательный')
-        .replaceFirst('Самостоятельный', 'Само-\nстоятельный');
+        .replaceFirst('Любознательн', 'Любо-\nзнательн')
+        .replaceFirst('Самостоятельн', 'Само-\nстоятельн');
     return GestureDetector(
       key: ValueKey('emotion-test-${face.name}'),
       behavior: HitTestBehavior.opaque,

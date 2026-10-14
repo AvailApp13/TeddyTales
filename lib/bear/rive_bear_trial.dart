@@ -225,6 +225,28 @@ enum BearFace {
     treat => 'Угощение',
   };
 
+  /// Подпись для героя: у девочки — в женском роде (заказчик 14.10:
+  /// «подписи сделай в женском роде»).
+  String labelFor(BearSkin hero) {
+    if (hero != BearSkin.girl) return label;
+    return switch (this) {
+      sleepy => 'Сонная',
+      startle => 'Вздрогнула',
+      bonusStretch => 'Потянулась',
+      bonusListen => 'Прислушалась',
+      bonusStep => 'Переступила',
+      bonusShake => 'Встряхнулась',
+      bonusSigh => 'Вздохнула',
+      traitActive => 'Активная',
+      traitCurious => 'Любознательная',
+      traitAffectionate => 'Ласковая',
+      traitCalm => 'Спокойная',
+      traitIndependent => 'Самостоятельная',
+      traitReserved => 'Замкнутая',
+      _ => label,
+    };
+  }
+
   /// Поза тела на эмоцию (заказчик 26.09: «плавно, как в Томе»): лицо в
   /// файле только подменяется, поэтому эмоцию играет корпус — наклон,
   /// сжатие-растяжение, подъём.
