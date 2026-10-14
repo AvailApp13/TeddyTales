@@ -48,10 +48,9 @@ class BedroomScene extends StatefulWidget {
     this.skin = BearSkin.boy,
   });
 
-  /// Герой (КП 2.4). У девочки нет капюшона: воротник и лапы прежнего
-  /// мишка (голубая кофта, бежевый мех) ей не подходят — она лежит со
-  /// своим телом рига: над одеялом голова и ворот кофточки. ⚠ Её лапы у
-  /// края одеяла — следующим шагом (`docs/rive-girl.md`).
+  /// Герой (КП 2.4). Девочка лежит, как мальчик (заказчик 14.10: «делай
+  /// лапки девочки… у одеяла»): тело рига спрятано, под подбородком — ворот
+  /// её кофточки, у подбородка — лапы в её мех (`tool/rive/girl_bed.py`).
   final BearSkin skin;
 
   /// Уложили спать: мишка засыпает и спит, глаза закрыты. Заказчик 22.09:
@@ -170,10 +169,18 @@ class BedroomScene extends StatefulWidget {
   /// Середина воротника (доли кадра) — по ней он поднимается с одеялом.
   static const Offset collarAt = Offset(474 / 941, 913 / 1672);
 
+  /// Девочка: ворот её кофточки между лапами и круглые лапы в её мех — в
+  /// той же рамке [bear], на тех же местах, что у мальчика. Цвет — как у
+  /// слоёв рига, свет спальни — [night].
+  static const String _girlCollarAsset = 'assets/rooms/bedroom/girl_collar.png';
+  static const String _girlPawsAsset = 'assets/rooms/bedroom/girl_paws.png';
+
   static const List<String> assets = [
     _blanketAsset,
     _pawsAsset,
     _collarAsset,
+    _girlPawsAsset,
+    _girlCollarAsset,
     'assets/rooms/bedroom/lamp_glow.png',
   ];
 
@@ -206,6 +213,7 @@ class _BedroomSceneState extends State<BedroomScene>
 
   ui.Image? _blanket;
   ui.Image? _paws;
+  ui.Image? _girlPaws;
   final List<(ImageStream, ImageStreamListener)> _streams = [];
 
   /// `null`, пока настройку ещё не читали: иначе первый заход совпал бы
@@ -218,6 +226,7 @@ class _BedroomSceneState extends State<BedroomScene>
     if (_streams.isEmpty) {
       _load(BedroomScene._blanketAsset, (i) => _blanket = i);
       _load(BedroomScene._pawsAsset, (i) => _paws = i);
+      _load(BedroomScene._girlPawsAsset, (i) => _girlPaws = i);
     }
     // Системная настройка «убрать анимацию» — для тех, кому от движения
     // на экране плохо. Тогда одеяло и ночник стоят.
@@ -271,8 +280,9 @@ class _BedroomSceneState extends State<BedroomScene>
           final girl = widget.cue.heroOr(widget.skin) == BearSkin.girl;
           return Stack(
             children: [
-              // Воротник под головой: капюшон ложится на него сверху.
-              if (!girl) _place(BedroomScene.bear, w, h, _collarLayer(h)),
+              // Воротник под головой: капюшон (у девочки — подбородок)
+              // ложится на него сверху.
+              _place(BedroomScene.bear, w, h, _collarLayer(h, girl: girl)),
               Positioned.fromRect(
                 rect: box,
                 child: ColorFiltered(
@@ -283,9 +293,7 @@ class _BedroomSceneState extends State<BedroomScene>
                     mood: widget.mood,
                     skin: widget.skin,
                     seated: true,
-                    // у девочки тело рига остаётся: между подбородком и
-                    // одеялом — ворот её кофточки, ниже всё под одеялом
-                    headOnly: !girl,
+                    headOnly: true,
                     asleep: widget.asleep,
                     breath: _breath,
                   ),
@@ -293,7 +301,7 @@ class _BedroomSceneState extends State<BedroomScene>
               ),
               // Лапы держат край одеяла у подбородка: под одеялом, как у
               // прежнего мишки, — край одеяла закрывает запястья.
-              if (!girl) _place(BedroomScene.bear, w, h, _pawsLayer(h)),
+              _place(BedroomScene.bear, w, h, _pawsLayer(h, girl: girl)),
               _place(BedroomScene.blanket, w, h, _blanketLayer()),
               _place(BedroomScene.glow, w, h, _glowLayer()),
             ],
@@ -324,8 +332,9 @@ class _BedroomSceneState extends State<BedroomScene>
   }
 
   /// Воротник поднимается с грудью — на столько же, на сколько одеяло у
-  /// подбородка. Цвет уже подогнан под ночник — без фильтра.
-  Widget _collarLayer(double h) {
+  /// подбородка. Цвет мальчика уже подогнан под ночник — без фильтра; ворот
+  /// девочки — под [BedroomScene.night], как её голова.
+  Widget _collarLayer(double h, {bool girl = false}) {
     return AnimatedBuilder(
       animation: _breath,
       builder: (context, child) => Transform.translate(
@@ -339,17 +348,26 @@ class _BedroomSceneState extends State<BedroomScene>
         ),
         child: child,
       ),
-      child: Image.asset(BedroomScene._collarAsset, fit: BoxFit.fill),
+      child: girl
+          ? ColorFiltered(
+              colorFilter: BedroomScene.night,
+              child: Image.asset(
+                BedroomScene._girlCollarAsset,
+                fit: BoxFit.fill,
+              ),
+            )
+          : Image.asset(BedroomScene._collarAsset, fit: BoxFit.fill),
     );
   }
 
   /// Лапы прежнего мишка: правая отодвинута от лица, обе поднимаются с
-  /// краем одеяла — ровно на столько, на сколько горб одеяла у них.
-  Widget _pawsLayer(double h) {
-    final image = _paws;
+  /// краем одеяла — ровно на столько, на сколько горб одеяла у них. У
+  /// девочки — те же лапы в её мех, под свет спальни, как её голова.
+  Widget _pawsLayer(double h, {bool girl = false}) {
+    final image = girl ? _girlPaws : _paws;
     if (image == null) return const SizedBox.shrink();
     return ColorFiltered(
-      colorFilter: BedroomScene.pawTone,
+      colorFilter: girl ? BedroomScene.night : BedroomScene.pawTone,
       child: AnimatedBuilder(
         animation: _breath,
         builder: (context, _) {

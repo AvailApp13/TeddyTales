@@ -15,7 +15,8 @@ flutter build web --release --base-href /TeddyTales/ --dart-define=RIVE_NATIVE_W
 
 затем скопировать `build/web` во временную папку, выбросить лишнее
 (`canvaskit/skwasm*`, `canvaskit/experimental_webparagraph`, `canvaskit/wimp*`,
-`canvaskit/*.symbols`, `flutter_service_worker.js`), заменить в `index.html`
+`canvaskit/*.symbols`, `flutter_service_worker.js`, а пока витрина «Мишки»
+спрятана — и `store/`: в версии артефакта не больше 511 файлов), заменить в `index.html`
 `<base href="/TeddyTales/">` на `<base href="./">` — и опубликовать тем же
 `file_path`, что и в прошлый раз: адрес артефакта тогда сохранится.
 
