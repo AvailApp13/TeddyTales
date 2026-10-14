@@ -771,6 +771,17 @@ final class _TrialPainter extends BasicArtboardPainter {
   final _Spring _hoodTip = _Spring(freq: 2.6, damping: 0.18, limit: 0.3);
   final _Spring _cheeks = _Spring(freq: 6.0, damping: 0.3, limit: 3);
 
+  // Бант девочки (14.10) — петли от узла на макушке (`bow_lo` вниз-вправо
+  // с хвостом, `bow_up` вверх-влево), качаются так же, как кончики ушей.
+  // Петли длиннее ушей втрое — толчок меньше, кончик отходит столько же.
+  // У мальчика этих костей нет — пружины стоят.
+  Component? _eBowLo;
+  Component? _eBowUp;
+  double _bowLoRest = 0;
+  double _bowUpRest = 0;
+  final _Spring _bowLo = _Spring(freq: 2.4, damping: 0.16, limit: 0.14);
+  final _Spring _bowUp = _Spring(freq: 3.0, damping: 0.2, limit: 0.14);
+
   /// Голова в прошлом кадре: положение (px артборда), угол и их скорости.
   double? _headX;
   double? _headY;
@@ -790,6 +801,9 @@ final class _TrialPainter extends BasicArtboardPainter {
   static const double _hoodSide = 0.072;
   static const double _hoodTurn = 4.9;
   static const double _cheekUp = 1.26;
+  // бант: толчок поперёк петли (доли — направление петли от узла)
+  static const double _bowSide = 0.03;
+  static const double _bowTurn = 4.0;
 
   void _jiggleOff() {
     if (_cheekOn == 0) return;
@@ -800,12 +814,14 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   /// Пружины — на кадр вперёд, кончики — на место.
   void _jiggleApply(double dt) {
-    for (final s in [_earL, _earR, _hoodTip, _cheeks]) {
+    for (final s in [_earL, _earR, _hoodTip, _cheeks, _bowLo, _bowUp]) {
       s.step(dt);
     }
     _eEarL3?.rotation = _earL3Rest + _earL.x;
     _eEarR3?.rotation = _earR3Rest + _earR.x;
     _eHood3?.rotation = _hood3Rest + _hoodTip.x;
+    _eBowLo?.rotation = _bowLoRest + _bowLo.x;
+    _eBowUp?.rotation = _bowUpRest + _bowUp.x;
     // у костей лица ось x смотрит вверх
     _cheekOn = _cheeks.x;
     _eCheekL?.x += _cheekOn;
@@ -848,6 +864,10 @@ final class _TrialPainter extends BasicArtboardPainter {
     _earR.kick(-_earSide * dvx - _earUp * dvy - _earTurn * dva);
     _hoodTip.kick(-_hoodSide * dvx - _hoodTurn * dva);
     _cheeks.kick(_cheekUp * dvy);
+    // кончик отстаёт против разгона; поворот кости на +угол уводит его
+    // поперёк петли: нижняя (105, 101) от узла, верхняя (−63, −96)
+    _bowLo.kick(_bowSide * (0.69 * dvx - 0.72 * dvy) - _bowTurn * dva);
+    _bowUp.kick(_bowSide * (-0.84 * dvx + 0.55 * dvy) - _bowTurn * dva);
   }
 
   // --- Сон («Сон», заказчик 10.10; ТЗ idle_asleep) -------------------------
@@ -1573,6 +1593,10 @@ final class _TrialPainter extends BasicArtboardPainter {
     _earL3Rest = _eEarL3?.rotation ?? 0;
     _earR3Rest = _eEarR3?.rotation ?? 0;
     _hood3Rest = _eHood3?.rotation ?? 0;
+    _eBowLo = artboard.component('e_bow_lo');
+    _eBowUp = artboard.component('e_bow_up');
+    _bowLoRest = _eBowLo?.rotation ?? 0;
+    _bowUpRest = _eBowUp?.rotation ?? 0;
     _cheekOn = 0;
     _headX = null;
     _mouthSignal.clear();
