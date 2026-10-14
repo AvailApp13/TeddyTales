@@ -15,15 +15,19 @@
    маска Higgsfield чистая.
 2. Фон — гладкий градиент. Он восстанавливается полиномом 3-й степени по
    пикселям вне мишки (ошибка ~1,5 единицы яркости).
-3. Цвет края очищается от примеси фона: F = (I − (1 − a)·B) / a. На синем
-   и на кремовом фоне каймы нет.
+3. Цвет края очищается от примеси фона: F = (I − (1 − a)·B) / a.
+4. Кромка меха по силуэту (5–8 px) на фото отсвечивает голубовато-серым
+   фоном студии — на тёплых стенах комнат это кайма. Тон кромки
+   подтягивается к меху на 14 px глубже (фактура остаётся), а цвет
+   полупрозрачных ворсинок берётся от ближайшего плотного меха.
 
-Зависимости: numpy, Pillow.
+Зависимости: numpy, scipy, Pillow.
 """
 import os
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DIR = os.path.join(ROOT, 'assets_src/rive/girl')
@@ -65,6 +69,25 @@ def main():
     alpha[y0:y0 + crop.shape[0], x0:x0 + crop.shape[1]] = crop
     a3 = np.clip(alpha, 1e-3, 1)[..., None]
     color = np.clip((im - (1 - a3) * bg) / a3, 0, 255)
+    # кромка меха: тон — как у меха глубже от края
+    inside = alpha > 0.5
+    dist = ndimage.distance_transform_edt(inside)
+    solid = alpha >= 0.9
+    norm = np.maximum(ndimage.gaussian_filter(solid.astype(float), 3), 1e-6)
+    lf = np.stack([ndimage.gaussian_filter(color[..., c] * solid, 3) for c in range(3)], -1) / norm[..., None]
+    _, (dy, dx) = ndimage.distance_transform_edt(dist < 14, return_indices=True)
+    deep = lf[dy, dx]
+    fur_deep = (deep.mean(2) > 200) & (deep.max(2) - deep.min(2) < 30)
+    w = np.clip(1 - dist / 12, 0, 1) * fur_deep * (alpha > 0.03)
+    color = np.clip(color + (deep - lf) * w[..., None], 0, 255)
+    # край меха — цветом соседнего плотного меха
+    _, (iy, ix) = ndimage.distance_transform_edt(~solid, return_indices=True)
+    near = np.stack([ndimage.gaussian_filter(color[..., c] * solid, 2) /
+                     np.maximum(ndimage.gaussian_filter(solid.astype(float), 2), 1e-6)
+                     for c in range(3)], -1)[iy, ix]
+    furish = (near.mean(2) > 190) & (near.max(2) - near.min(2) < 30)
+    t = np.clip((0.85 - alpha) / 0.35, 0, 1) * furish * (alpha < 0.9)
+    color = color * (1 - t[..., None]) + near * t[..., None]
     color[alpha < 0.03] = 0
     rgba = np.dstack([color, alpha * 255]).round().astype(np.uint8)
     Image.fromarray(rgba, 'RGBA').save(OUT, optimize=True)
