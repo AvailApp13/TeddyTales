@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../audio/sounds.dart';
@@ -89,6 +90,14 @@ class KitchenBear extends StatefulWidget {
     0, 0, 0.935, 0, 0, //
     0, 0, 0, 1, 0, //
   ]);
+
+  /// Свет, который достаётся голове рига: в браузере Rive рисует мишку в
+  /// своём холсте поверх страницы (`HtmlElementView` в `rive_native`),
+  /// фильтры Flutter до него не доходят — голова там без [warm]; на телефоне
+  /// (текстура) — с ним. Кофточка, лапки и рукава девочки — из её слоёв, того
+  /// же цвета, что голова, и свет им тот же, иначе лапки выходили теплее
+  /// мордочки (заказчик 15.10: «на кухне исправь так же», как в спальне).
+  static ColorFilter? get headLight => kIsWeb ? null : warm;
 
   /// Тело прежнего мишка — доли кадра (печатает `tool/cut_kitchen_seat.py`):
   /// кофта с рукавами и лапы на их прежних местах.
@@ -340,7 +349,7 @@ class _KitchenBearState extends State<KitchenBear>
                                 table.top,
                                 'girl_seat',
                                 box: KitchenBear.girlBody,
-                                filter: KitchenBear.warm,
+                                filter: KitchenBear.headLight,
                               ),
                               _paw(
                                 w,
@@ -349,7 +358,7 @@ class _KitchenBearState extends State<KitchenBear>
                                 'left',
                                 asset: 'girl_paw',
                                 shadow: KitchenBear.girlPawLeftShadow,
-                                filter: KitchenBear.warm,
+                                filter: KitchenBear.headLight,
                               ),
                               _paw(
                                 w,
@@ -358,7 +367,7 @@ class _KitchenBearState extends State<KitchenBear>
                                 'right',
                                 asset: 'girl_paw',
                                 shadow: KitchenBear.girlPawRightShadow,
-                                filter: KitchenBear.warm,
+                                filter: KitchenBear.headLight,
                               ),
                               _body(
                                 w,
@@ -366,7 +375,7 @@ class _KitchenBearState extends State<KitchenBear>
                                 table.top,
                                 'girl_sleeves',
                                 box: KitchenBear.girlBody,
-                                filter: KitchenBear.warm,
+                                filter: KitchenBear.headLight,
                               ),
                             ],
                           ),
@@ -420,7 +429,8 @@ class _KitchenBearState extends State<KitchenBear>
   /// Кофта с рукавами ([asset] `seat_body`) и изнанка рукавов под лапами
   /// (`seat_cuffs`): на вдохе чуть растут от кромки стола и поднимаются —
   /// вместе с головой, которая дышит в риге. У девочки — её кофточка и
-  /// рукава ([KitchenBear.girlBody]) под цвет головы ([filter]).
+  /// рукава ([KitchenBear.girlBody]) в свете головы
+  /// ([filter] = [KitchenBear.headLight]).
   Widget _body(
     double w,
     double h,
