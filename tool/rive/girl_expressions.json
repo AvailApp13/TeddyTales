@@ -34,7 +34,9 @@
    "name": "surprised",
    "quality": "max",
    "text": "a sweet girlish surprise (\"oh!\") - the bead eyes wide open, round and sparkling with bright highlights, the fur around the eyes lifted, a small delicate round o mouth showing a little pink tongue.",
-   "jobs": []
+   "jobs": [
+    "40c7894d-a4eb-43c5-8ce6-8dda1dc61cf0"
+   ]
   },
   {
    "name": "eyes_closed",
@@ -48,19 +50,26 @@
    "name": "sad",
    "quality": "max",
    "text": "a soft girlish sadness - the inner ends of the brows raised so the fur above each eye slants down toward the outside, heavy upper eyelids of fur cover the top of the bead eyes, a small trembling downturned mouth, about to cry.",
-   "jobs": []
+   "jobs": [
+    "acbfff80-a4b8-4d87-955a-c06ff0499b2a"
+   ]
   },
   {
    "name": "upset",
    "quality": "max",
    "text": "a cute girlish pout, offended but not angry - heavy eyelids half covering the beads, the lips pushed forward into a small rounded pout slightly to one side, round cheeks a little puffed.",
-   "jobs": []
+   "jobs": [
+    "3b9e956c-63d9-4f42-ad81-947873694c0c",
+    "aabc2026-bf5b-4ccf-97fb-2aa82fe18ce4"
+   ]
   },
   {
    "name": "sleepy",
    "quality": "max",
    "text": "a sweet drowsy look - heavy upper eyelids of white fur cover the upper half of the bead eyes, a soft relaxed tiny mouth.",
-   "jobs": []
+   "jobs": [
+    "f1ccae7a-ae7b-4ae6-a1cc-5deecb603c00"
+   ]
   },
   {
    "name": "chew_closed",
