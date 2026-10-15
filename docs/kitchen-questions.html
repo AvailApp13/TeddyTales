@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — кухня: вопросы по приготовлению</title>
+<style>
+  /* Шрифт тот же, что в приложении. */
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+
+  :root {
+    --ink: #4A3B2A;
+    --ink-soft: #8A7A68;
+    --line: #E3D7C6;
+    --cream: #FBF6EE;
+    --sage: #7FA98A;
+    --sage-soft: #EAF2EC;
+    --rose: #D98C86;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 21pt;
+    font-weight: 800;
+    margin: 0 0 2mm;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 7mm 0 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 1.5pt solid var(--sage);
+    break-after: avoid;
+  }
+
+  h3 {
+    font-size: 11pt;
+    font-weight: 800;
+    margin: 5mm 0 2mm;
+    break-after: avoid;
+  }
+
+  p { margin: 0 0 2.5mm; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1mm; }
+
+  .lead {
+    font-size: 11pt;
+    color: var(--ink);
+  }
+
+  .meta {
+    font-size: 9pt;
+    color: var(--ink-soft);
+    margin-bottom: 6mm;
+  }
+
+  .note {
+    background: var(--cream);
+    border-left: 2.5pt solid var(--sage);
+    padding: 3mm 4mm;
+    margin: 0 0 4mm;
+    break-inside: avoid;
+  }
+
+  .note strong { font-weight: 800; }
+
+  .tz {
+    background: #FFFFFF;
+    border: 1pt solid var(--line);
+    border-radius: 3mm;
+    padding: 3mm 4mm;
+    font-size: 9.5pt;
+    color: var(--ink-soft);
+    margin: 0 0 4mm;
+    break-inside: avoid;
+  }
+
+  .tz b { color: var(--ink); font-weight: 800; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 4mm;
+    font-size: 9.5pt;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 800;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    color: var(--ink-soft);
+    border-bottom: 1pt solid var(--line);
+    padding: 1.5mm 2mm;
+  }
+
+  td {
+    padding: 2mm;
+    border-bottom: 0.5pt solid var(--line);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: #FCFAF6; }
+
+  td.num { color: var(--ink-soft); width: 7mm; }
+  td.fill { background: #FFFDF9 !important; }
+
+  .q {
+    break-inside: avoid;
+    margin: 0 0 3mm;
+  }
+
+  .q-title {
+    font-weight: 800;
+    margin-bottom: 1.5mm;
+  }
+
+  .q-title .n {
+    display: inline-block;
+    min-width: 8mm;
+    color: var(--sage);
+  }
+
+  .hint {
+    font-size: 9pt;
+    color: var(--ink-soft);
+    margin: 0 0 2mm 8mm;
+  }
+
+  .answer {
+    margin-left: 8mm;
+    border: 0.75pt dashed var(--line);
+    border-radius: 2mm;
+    background: #FFFDF9;
+    height: 14mm;
+  }
+
+  .answer.tall { height: 24mm; }
+  .answer.short { height: 8mm; }
+
+  .choice {
+    margin: 0 0 2mm 8mm;
+    display: flex;
+    gap: 2.5mm;
+    align-items: baseline;
+    break-inside: avoid;
+  }
+
+  .box {
+    flex: none;
+    width: 4mm;
+    height: 4mm;
+    border: 1pt solid var(--ink-soft);
+    border-radius: 1mm;
+    display: inline-block;
+    transform: translateY(0.5mm);
+  }
+
+  .choice b { font-weight: 800; }
+  .choice .why { color: var(--ink-soft); }
+
+  .cols { display: flex; gap: 6mm; }
+  .cols > * { flex: 1; }
+
+  .foot {
+    margin-top: 5mm;
+    padding-top: 3mm;
+    border-top: 1pt solid var(--line);
+    font-size: 9pt;
+    color: var(--ink-soft);
+  }
+
+  .total {
+    background: var(--sage-soft);
+    border-radius: 3mm;
+    padding: 3.5mm 4mm;
+    break-inside: avoid;
+  }
+
+  .page-break { break-before: page; }
+</style>
+</head>
+<body>
+
+<h1>Кухня: что и как готовит малыш</h1>
+<div class="meta">
+  Вопросы для Ирины · TeddyTales · 21 сентября 2026 · от команды разработки
+</div>
+
+<p class="lead">
+  Ирина, добрый день! Мы подошли к кухне — это второй большой раздел после
+  комнаты. Чтобы отрисовать её правильно с первого раза, нам нужно от вас
+  решение по составу еды. Ниже вопросы; ответить можно прямо в этом файле,
+  голосом или списком в переписке — как удобнее.
+</p>
+
+<div class="note">
+  <strong>Количество менять не нужно.</strong> Оно зафиксировано техническим
+  заданием: ровно 10 готовых блюд и ровно 5 рецептов. Вопросы ниже — только
+  про то, <em>какие именно</em> это блюда, из чего они состоят и как должны
+  выглядеть. Если какое-то количество всё же хочется изменить, скажите
+  отдельно — это правка к ТЗ, и её нужно согласовать.
+</div>
+
+<div class="tz">
+  <b>Что говорит ТЗ (раздел 8 «Еда»)</b><br>
+  <b>8.1</b> Экран кормления: две вкладки — «Готовые блюда» и «Приготовить»;
+  подсказка от характера малыша.<br>
+  <b>8.2</b> Ровно <b>10 блюд</b> (каша, суп, сэндвич, фрукты, йогурт,
+  печенье, салат, паста, омлет, пирог), цена 5–15 монет.<br>
+  <b>8.3</b> Экран выбора рецепта.<br>
+  <b>8.4</b> Мини-игра готовки: выбор ингредиентов и последовательность;
+  ошибка — подсказка и повтор.<br>
+  <b>8.5</b> Ровно <b>5 рецептов</b>.<br>
+  Отдельно, раздел 5: у новорождённого — кормление из бутылочки.
+</div>
+
+<h2>А. Десять готовых блюд</h2>
+
+<p>
+  Это вкладка «Готовые блюда»: их покупают за монеты и сразу дают малышу,
+  без мини-игры. Названия в левой колонке взяты из ТЗ дословно — мы их не
+  придумывали. Скажите, пожалуйста, по каждому: оставляем или меняем, и как
+  блюдо выглядит.
+</p>
+
+<table>
+  <tr>
+    <th class="num">№</th>
+    <th style="width: 32mm">Блюдо по ТЗ</th>
+    <th>Оставляем или меняем на что</th>
+    <th>Как подано: тарелка, миска, чашка, на доске…</th>
+  </tr>
+  <tr><td class="num">1</td><td>Каша</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">2</td><td>Суп</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">3</td><td>Сэндвич</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">4</td><td>Фрукты</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">5</td><td>Йогурт</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">6</td><td>Печенье</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">7</td><td>Салат</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">8</td><td>Паста</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">9</td><td>Омлет</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">10</td><td>Пирог</td><td class="fill"></td><td class="fill"></td></tr>
+</table>
+
+<div class="q">
+  <div class="q-title"><span class="n">А1.</span> Посуда — общая или у каждого блюда своя?</div>
+  <div class="hint">
+    Если посуда общая (например, одна и та же мисочка с мордочкой мишки), еда
+    выглядит как один набор и рисовать проще. Если у каждого блюда своя —
+    богаче, но это десять разных предметов посуды.
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Общая посуда</b> — одна-две формы на все блюда</span></div>
+  <div class="choice"><span class="box"></span><span><b>Своя у каждого блюда</b></span></div>
+  <div class="choice"><span class="box"></span><span>Другое: <span class="why">_________________________________________</span></span></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А2.</span> Порция меняется с возрастом малыша?</div>
+  <div class="hint">
+    В игре четыре стадии роста. Может быть, новорождённому — бутылочка и
+    жидкая каша, а взрослому — полноценная тарелка.
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Нет</b>, блюдо выглядит одинаково на всех стадиях</span></div>
+  <div class="choice"><span class="box"></span><span><b>Да</b>, часть блюд отличается — какие и чем:</span></div>
+  <div class="answer short"></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">А3.</span> Бутылочка для новорождённого</div>
+  <div class="hint">
+    По ТЗ на первой стадии малыша кормят из бутылочки. Это одиннадцатая
+    картинка сверх десяти блюд или одно из блюд превращается в бутылочку?
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Отдельная картинка</b> бутылочки, сверх десяти</span></div>
+  <div class="choice"><span class="box"></span><span><b>Не нужна</b>, обойдёмся кашей и йогуртом</span></div>
+</div>
+
+<h2 class="page-break">Б. Пять рецептов — то, что малыш готовит сам</h2>
+
+<p>
+  Это вкладка «Приготовить»: мини-игра, в которой выбирают ингредиенты. ТЗ
+  требует ровно пять рецептов, но <em>не называет</em> их — это ваш выбор.
+  Ниже то, что мы поставили как рабочую заглушку; замените на своё.
+</p>
+
+<table>
+  <tr>
+    <th class="num">№</th>
+    <th style="width: 34mm">Наш рабочий вариант</th>
+    <th>Ваш вариант: какое блюдо готовим</th>
+    <th style="width: 22mm">Сложность 1–3</th>
+  </tr>
+  <tr><td class="num">1</td><td>Печенье <span style="color:#8A7A68">(3 шага)</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">2</td><td>Сэндвич <span style="color:#8A7A68">(3 шага)</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">3</td><td>Фруктовый салат <span style="color:#8A7A68">(4 шага)</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">4</td><td>Мясное блюдо <span style="color:#8A7A68">(5 шагов)</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="num">5</td><td>Овощное блюдо <span style="color:#8A7A68">(6 шагов)</span></td><td class="fill"></td><td class="fill"></td></tr>
+</table>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б1.</span> Состав каждого рецепта</div>
+  <div class="hint">
+    Самое важное для отрисовки: из чего складывается блюдо. Напишите
+    ингредиенты по порядку — в игре их кладут именно в этой
+    последовательности. Три–шесть на рецепт.
+  </div>
+  <table>
+    <tr>
+      <th style="width: 34mm">Рецепт</th>
+      <th>Ингредиенты по порядку</th>
+    </tr>
+    <tr><td>1.</td><td class="fill" style="height: 11mm"></td></tr>
+    <tr><td>2.</td><td class="fill" style="height: 11mm"></td></tr>
+    <tr><td>3.</td><td class="fill" style="height: 11mm"></td></tr>
+    <tr><td>4.</td><td class="fill" style="height: 11mm"></td></tr>
+    <tr><td>5.</td><td class="fill" style="height: 11mm"></td></tr>
+  </table>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Б2.</span> Показывать ли блюдо «в процессе»?</div>
+  <div class="hint">
+    Положили муку — в миске мука; добавили масло — тесто; в конце — готовое
+    печенье. Это живее, но требует отрисовать каждый промежуточный шаг: на
+    пять рецептов это примерно двадцать лишних картинок.
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Только готовое блюдо</b> в конце, в процессе — пустая миска</span></div>
+  <div class="choice"><span class="box"></span><span><b>Два состояния</b>: пустая миска и наполненная</span></div>
+  <div class="choice"><span class="box"></span><span><b>Каждый шаг свой</b> — рисуем все промежуточные</span></div>
+</div>
+
+<h2>В. Главный вопрос: что считается ошибкой</h2>
+
+<p>
+  ТЗ (8.4) говорит: «выбор ингредиентов и последовательность, ошибка —
+  подсказка и повтор». Но насколько строго — решать вам, и от этого зависит
+  и количество картинок, и настроение игры. Выберите, пожалуйста, один
+  вариант.
+</p>
+
+<div class="choice">
+  <span class="box"></span>
+  <span>
+    <b>Вариант 1. Строгий рецепт.</b>
+    У блюда один правильный состав и один правильный порядок. Лишний
+    ингредиент или не тот шаг — малыш морщится, появляется подсказка, шаг
+    повторяется. <span class="why">Ближе всего к букве ТЗ. Нужны «неправильные»
+    ингредиенты-обманки — по 3 на рецепт.</span>
+  </span>
+</div>
+
+<div class="choice">
+  <span class="box"></span>
+  <span>
+    <b>Вариант 2. Без ошибок, просто разные блюда.</b>
+    Что положил, то и получилось: из яблока с бананом — фруктовый салат, из
+    яблока с мёдом — другой. Ошибиться нельзя, можно только сделать
+    по-своему. <span class="why">Добрее и спокойнее для малышей, но нужны
+    картинки на каждое сочетание.</span>
+  </span>
+</div>
+
+<div class="choice">
+  <span class="box"></span>
+  <span>
+    <b>Вариант 3. Середина.</b>
+    Состав важен, порядок — нет. Положил лишнее — мягкая подсказка «а это
+    сюда не нужно», без проигрыша и без потери награды.
+    <span class="why">Наш совет: правило понятно ребёнку, а ошибка не
+    расстраивает.</span>
+  </span>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">В1.</span> Как малыш показывает ошибку?</div>
+  <div class="hint">
+    Нам нужно знать, какую анимацию заказывать аниматору: это та же грусть,
+    что при голоде, или отдельное движение.
+  </div>
+  <div class="answer short"></div>
+</div>
+
+<h2>Г. Ингредиенты — из чего рисовать</h2>
+
+<p>
+  Каждый ингредиент — отдельная картинка: её показывают на экране готовки и
+  перетаскивают в миску. Сейчас в рабочей заглушке их 23. Точное число
+  станет известно из ваших ответов на Б1.
+</p>
+
+<div class="q">
+  <div class="q-title"><span class="n">Г1.</span> Список ингредиентов</div>
+  <div class="hint">
+    Если удобнее — просто перечислите всё, что должно быть на кухне, а мы
+    разложим по рецептам. Наш рабочий набор для примера: мука, сахар, масло,
+    соль, хлеб, сыр, помидор, яблоко, банан, апельсин, йогурт, мясо, лук,
+    морковь, капуста, картофель, зелень, специи, мёд, шоколад, конфета,
+    перец, рыба.
+  </div>
+  <div class="answer tall"></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Г2.</span> Ингредиент — продукт или уже подготовленный?</div>
+  <div class="hint">
+    Целое яблоко или дольки? Кочан капусты или нашинкованная? Для малышей
+    обычно понятнее целый узнаваемый продукт.
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Целый продукт</b> — яблоко, морковка, кочан</span></div>
+  <div class="choice"><span class="box"></span><span><b>Подготовленный</b> — нарезанный, в ложке, в мисочке</span></div>
+</div>
+
+<h2>Д. Как еда попадает в кухню</h2>
+
+<p>
+  Кухня у нас — готовый кадр: стол, полки, окно. По вашему решению она не
+  обставляется игроком, на ней меняется только еда на столе. Значит, у блюда
+  есть два вида: значок в меню выбора и то же блюдо, стоящее на столе.
+</p>
+
+<div class="q">
+  <div class="q-title"><span class="n">Д1.</span> Рисуем ли блюдо отдельно «для стола»?</div>
+  <div class="hint">
+    Значок в меню смотрит прямо, а на столе блюдо видно немного сверху и
+    сбоку — так снят кадр кухни. Один и тот же рисунок в обоих местах будет
+    выглядеть наклейкой.
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Да</b>, два ракурса: значок и вид на столе</span></div>
+  <div class="choice"><span class="box"></span><span><b>Нет</b>, одной картинки достаточно</span></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Д2.</span> Остаётся ли еда на столе после кормления?</div>
+  <div class="hint">
+    Например, пустая тарелка на столе до следующего кормления — или стол
+    сразу чистый.
+  </div>
+  <div class="choice"><span class="box"></span><span>Стол <b>сразу чистый</b></span></div>
+  <div class="choice"><span class="box"></span><span>Остаётся <b>пустая тарелка</b> — нужна ещё одна картинка</span></div>
+</div>
+
+<h2>Е. Что будет дальше</h2>
+
+<p>
+  Картинки еды мы рисуем сами — присылать нам ничего не нужно. От вас нужны
+  только решения из этого файла: какие блюда, из чего они складываются и
+  насколько строгой делаем готовку. По вашим ответам мы отрисуем всё, что
+  нужно, соберём экран кормления и мини-игру и покажем вам живое приложение
+  на утверждение. Что не понравится — переделаем.
+</p>
+
+<div class="q">
+  <div class="q-title"><span class="n">Е1.</span> В каком стиле рисуем еду?</div>
+  <div class="hint">
+    Комната и вещи в ней сейчас в мягком объёмном стиле, пастельных тонов, с
+    мишками на мебели. Еде держаться того же стиля — или она должна
+    выглядеть иначе?
+  </div>
+  <div class="choice"><span class="box"></span><span><b>Тот же стиль</b>, что у вещей комнаты</span></div>
+  <div class="choice"><span class="box"></span><span><b>Иначе</b> — как именно:</span></div>
+  <div class="answer short"></div>
+</div>
+
+<div class="q">
+  <div class="q-title"><span class="n">Е2.</span> Есть ли блюда, которых быть не должно?</div>
+  <div class="hint">
+    Игра для малышей, и что-то может не подойти по смыслу — например,
+    конфеты и шоколад как поощрение. Скажите, если такое есть: мы уберём это
+    и из ингредиентов тоже.
+  </div>
+  <div class="answer short"></div>
+</div>
+
+<div class="total">
+  <b>Почему мы так подробно спрашиваем.</b> При сегодняшнем составе рисовать
+  нам примерно <b>38 картинок</b>: 10 блюд, 5 карточек рецептов и около 23
+  ингредиентов. Плюс бутылочка (А3), вид блюда «на столе» (Д1) и пустая
+  тарелка (Д2), если они нужны. Два ответа меняют это число сильнее
+  остальных: вариант 2 в разделе В и «каждый шаг свой» в Б2 увеличивают
+  работу в разы. Поэтому они и стоят отдельными вопросами — решить их лучше
+  до отрисовки, а не после.
+</div>
+
+<div class="foot">
+  Ответы нужны до начала отрисовки: по ним собираются и картинки, и сам
+  экран кормления с мини-игрой. Если по какому-то пункту решения пока нет —
+  так и напишите, мы поставим рабочий вариант и вернёмся к нему позже.
+</div>
+
+</body>
+</html>

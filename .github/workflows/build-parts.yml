@@ -1,0 +1,91 @@
+name: Детали мишки v6
+
+# Зачем это нужно. Исходные кадры мишки лежат в облаке Higgsfield, и CDN
+# закрыт нашим egress-прокси: из рабочей сессии их не скачать. У раннера
+# GitHub интернет открытый — он забирает кадры сам, режет их и складывает
+# готовые детали в отдельную ветку-кэш, откуда их уже можно взять обычным
+# git fetch.
+#
+# Ветка-кэш — сирота: без общей истории с рабочей веткой, один коммит,
+# каждый запуск переписывает её целиком. Пять с лишним мегабайт бинарников
+# так не оседают в истории проекта.
+
+# Запуск по пушу, а не кнопкой: кнопка `workflow_dispatch` появляется только
+# у тех сценариев, что лежат в ветке по умолчанию, а сюда мы не пушим.
+# Фильтр по путям держит сборку редкой: она нужна, только когда меняется
+# список кадров или сама нарезка.
+on:
+  push:
+    branches:
+      - claude/greeting-5sa20d
+    paths:
+      - tool/frames-v6.json
+      - tool/align_plush.py
+      - tool/cut_parts.py
+      - .github/workflows/build-parts.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CACHE_BRANCH: claude/parts-v6-cache
+
+jobs:
+  parts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Поставить Pillow
+        run: pip install --quiet pillow
+
+      - name: Скачать кадры
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.request
+
+          spec = json.loads(pathlib.Path('tool/frames-v6.json').read_text())
+          out = pathlib.Path('raw')
+          out.mkdir(exist_ok=True)
+          for name, remote in spec['frames'].items():
+              dst = out / f'{name}.png'
+              urllib.request.urlretrieve(spec['base'] + remote, dst)
+              print(f'{name:8s} {dst.stat().st_size / 1e6:5.1f} МБ')
+          PY
+
+      - name: Свести кадры на общую сетку
+        run: python3 tool/align_plush.py --grid=v6 aligned/ raw/*.png
+
+      - name: Нарезать детали
+        run: python3 tool/cut_parts.py parts/ aligned/*.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parts-v6
+          path: parts/
+
+      - name: Выложить в ветку-кэш
+        run: |
+          set -eu
+          staging="$(mktemp -d)"
+          cp parts/* "$staging/"
+
+          git config user.name 'TeddyTales build'
+          git config user.email 'ru.life3@gmail.com'
+
+          # Сирота: рабочее дерево очищается, истории нет.
+          git switch --orphan "$CACHE_BRANCH"
+          mkdir -p parts
+          cp "$staging"/* parts/
+          git add parts
+          git commit -m 'Детали мишки v6: девять частей, собраны из кадров'
+          git push -f -u origin "$CACHE_BRANCH"
+
+          echo '## Детали собраны' >> "$GITHUB_STEP_SUMMARY"
+          echo "Ветка \`$CACHE_BRANCH\`, файлов: $(ls parts | wc -l)" \
+            >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,13 @@
+{
+  "_": "Исходные кадры набора plush-v6 в облаке Higgsfield. Имя слева — то, под которым кадр должен лечь на диск: align_plush.py и cut_parts.py узнают кадры по имени файла. Job id каждого кадра — в docs/reference/plush-v6/README.md. Здесь только семь кадров из десяти: те, из которых режутся детали.",
+  "base": "https://d8j0ntlcm91z4.cloudfront.net/user_3FAY04WOvA0q9Qv76xACjKJ08m7/",
+  "frames": {
+    "0calm": "hf_20260915_081445_f3940d57-1c74-41e4-997c-473b20fa896b.png",
+    "1happy": "hf_20260915_043407_3da65d77-ab71-4a4d-b206-a8af8ca3f475.png",
+    "2sad": "hf_20260915_081445_f66573b7-0162-49d6-998b-5c6a56de30c9.png",
+    "3sleep": "hf_20260915_081445_b6585c6d-e325-4c53-8e9a-061ca18a63b6.png",
+    "4chew": "hf_20260915_081446_8df49cc6-e491-4019-9f53-0ff47c711912.png",
+    "8gazeL": "hf_20260915_081446_a5b9f4e0-26cc-4ff0-b056-78b35d34c3c0.png",
+    "9gazeR": "hf_20260915_081445_13caa570-6622-4483-b7a1-4f9e0de62176.png"
+  }
+}
