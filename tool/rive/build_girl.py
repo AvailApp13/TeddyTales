@@ -15,9 +15,9 @@ Rive, скелет, веса и все движения — те же, что у
 - юбка — подол на двух костях (`skirt_l`, `skirt_r`), чуть ходит за ногами;
 - мордочка: нос на 8 px и рот на 13 px выше, чем у мальчика (глаза
   совпадают) — зоны мимики, кости рта и носа, ротик покоя — по её мордочке;
-- выражения: её плитки Higgsfield (смех, зевок, закрытые глаза), где их ещё
-  нет — плитки мальчика, сдвинутые к её носу (рты-линии — в цвет её
-  стежка); удивление — пока её лицо покоя (⚠ ждёт плитки Higgsfield);
+- выражения: её плитки Higgsfield (смех, зевок, закрытые глаза, удивление;
+  с 19.10 — свои рты-линии грусти, обиды и сонной), где их ещё нет — плитки
+  мальчика, сдвинутые к её носу (довольная улыбка — в цвет её стежка);
 - рты (14.10, заказчик: «рот открывается вообще не так»): полости — с её
   плиток, без носа (раньше в полость попадал низ носа со стежком — рот
   «коробкой» прилипал к носу, а зевок и жевание открывались на
@@ -54,8 +54,9 @@ import mouth  # noqa: E402
 # текстурам: середина носа x 166 → 171, низ носа 195 → 173). Её — от носа на
 # плитке к носу на текстуре: Higgsfield в смехе и зевке поднимал лицо.
 BOY_SHIFT = (5, -22)
-GIRL_SHIFT = {'laugh': (1, 11), 'yawn': (1, 41), 'eyes_closed': (0, 0)}
-LINES = ('sad', 'upset', 'sleepy', 'chew_closed')    # рты-линии мальчика
+GIRL_SHIFT = {'laugh': (1, 11), 'yawn': (1, 41), 'eyes_closed': (0, 0),
+              'sad': (1, 1), 'upset': (0, 3), 'sleepy': (1, 2), 'surprised': (1, 3)}
+LINES = ('chew_closed',)    # рот-линия мальчика (её плитки жевания ещё нет)
 REST_MOUTH = (683, 1030, 25, 30)    # стёжка и «ножки» рта: эллипс для стирания
 REST_Y = 1023                       # середина её ротика, px текстуры
 
@@ -111,11 +112,10 @@ def tiles_dir():
         rgb = _shift_down(rgb, dx, dy) if name == 'yawn' else _shift(rgb, dx, dy)
         Image.fromarray(rgb.clip(0, 255).round().astype(np.uint8)).save(
             os.path.join(d, f'{name}.webp'), quality=95)
-    # ⚠ ждёт плитки Higgsfield (дневной лимит 14.10): удивление — её лицо покоя
+    # румянец — на её лице покоя
     head = Image.open(os.path.join(GIRL, 'layers', 'head.png')).convert('RGB')
     x0, y0 = faces.FRAME[0] + faces.BOX[0], faces.FRAME[1] + faces.BOX[1]
     face = head.crop((x0, y0, x0 + faces.BOX[2] - faces.BOX[0], y0 + faces.BOX[3] - faces.BOX[1]))
-    face.save(os.path.join(d, 'surprised.webp'), quality=95)
     Image.fromarray(_blush_tile(face).clip(0, 255).round().astype(np.uint8)).save(
         os.path.join(d, 'blush.webp'), quality=95)
     return d
@@ -140,6 +140,49 @@ mouth.CAVITIES = {
 mouth.SHAPE_ROWS = (mouth.SHAPE_ROWS[0] + DY, mouth.SHAPE_ROWS[1] + DY)
 mouth.REST = REST_MOUTH
 mouth.CENTER_Y = round(mouth.TEX_O[1] + (REST_Y - mouth.TEX_O[3]) * mouth.TEX_K, 1)
+
+# Свои рты-линии (19.10, её плитки Higgsfield): грусть, обида, сонная. Они
+# размером с её ротик покоя и со своим стежком от носа, не широкие дуги
+# мальчика, поэтому:
+# - низ носа из слоя линии вырезан: в плитке стежок идёт от самого носа, и
+#   кость рта тянула бы кусок носа;
+# - линия висит на носу: середина кости там, где стежок сходит с носа, —
+#   стежок не отрывается от носа, ни пока линия растёт, ни в дрожи;
+# - в покое сжата мало (0,65 × 0,9; у дуг мальчика 0,45 × 0,35, у сонной
+#   0,5 × 0,5): ножки ротика покоя расходятся в новую линию, а не
+#   схлопываются и растут заново.
+OWN_LINES = ('sad', 'pout', 'sleepy')
+OWN_CLOSED = (0.65, 0.9)
+NOSE_ROW = 172          # низ её носа, строка плитки
+for _k in OWN_LINES:
+    mouth.SHAPES[_k] = mouth.SHAPES[_k][:2] + (OWN_CLOSED,)
+_shape = mouth._shape
+_center = mouth.center
+
+
+def own_shape(name):
+    im, m, a = _shape(name)
+    if name in OWN_LINES:
+        # нос с его светлой каймой — всё до низа носа; ниже — только стежок
+        rows = np.arange(im.shape[0])[:, None]
+        nose = (rows <= NOSE_ROW) | ((im[..., 0] - im[..., 2] > 40) & (im.mean(2) < 150) & (rows <= NOSE_ROW + 3))
+        m, a = m & ~nose, a * ~nose
+    return im, m, a
+
+
+def own_center(name):
+    """Середина кости линии: x стежка под носом, y низа носа."""
+    if name not in OWN_LINES:
+        return _center(name)
+    _, m, _ = own_shape(name)
+    _, xs = np.nonzero(m[NOSE_ROW + 1:NOSE_ROW + 13])
+    tx = faces.FRAME[0] + faces.BOX[0] + float(np.median(xs)) + 0.5
+    return (round(mouth.TEX_O[0] + (tx - mouth.TEX_O[2]) * mouth.TEX_K, 1),
+            round(float(mouth._row_y(NOSE_ROW)), 1))
+
+
+mouth._shape = own_shape
+mouth.center = own_center
 
 import build_bear  # noqa: E402  (после поправок: скелет считает рты при импорте)
 import crease  # noqa: E402
