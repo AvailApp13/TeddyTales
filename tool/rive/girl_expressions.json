@@ -21,14 +21,18 @@
    "quality": "max",
    "text": "a dainty little yawn - both eyes squeezed shut with crinkled fur, the mouth opened into a small neat round o showing the dark inside and a pink tongue at the bottom.",
    "jobs": [
-    "c00e9ea5-2fd6-45ba-8112-22b7a0248e8b"
+    "c00e9ea5-2fd6-45ba-8112-22b7a0248e8b",
+    "1db50df5-18c0-4438-adf7-fb627c96193a"
    ]
   },
   {
    "name": "chew_open",
    "quality": "max",
    "text": "dainty, girlish chewing with the mouth slightly open - happy squint (the fur under the eyes pushes up, the black beads still visible), a small neat rounded mouth opening showing a little pink tongue, round cheeks puffed out with food.",
-   "jobs": []
+   "jobs": [
+    "6d07bcbc-0d5b-433b-bd62-24d93d7f0032",
+    "e02fc65c-b327-4ff4-867f-bfb9644570a5"
+   ]
   },
   {
    "name": "surprised",
@@ -82,7 +86,10 @@
    "name": "chew_closed",
    "quality": "max",
    "text": "contentedly chewing a treat with the mouth closed, cute and girlish - happy squint (the fur under the eyes pushes up, the black beads still visible), the mouth closed in a tiny cat-like w-shaped smile, round cheeks puffed out with food.",
-   "jobs": []
+   "jobs": [
+    "ed3a8a24-ec18-4298-8532-490ae74e1359",
+    "2cbceed7-e6d4-4f8f-9877-ec7b7060c621"
+   ]
   },
   {
    "name": "smile",
