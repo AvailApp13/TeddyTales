@@ -25,10 +25,12 @@ import os
 import sys
 
 import cv2
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 VIDEO_EXT = ('.mp4', '.mov', '.m4v', '.webm', '.mkv', '.avi')
 FONT_DIR = '/usr/share/fonts/truetype/liberation'
+CLOSEUP = 0.8       # рамка лица шире этой доли кадра — крупный план, миниатюра полного кадра не нужна
+CARD = 640          # сторона карточки с лицом, px
 
 
 def font(size, bold=False):
@@ -94,7 +96,7 @@ def sheets(src, out, step_s=0.25, cols=8, tw=200):
 
 def caption(im, lines):
     """Кадр с подписью снизу (две строки); шрифт — от ширины кадра, чтобы читался и на листе."""
-    k = max(1.0, im.width / 360)
+    k = max(1.0, im.width / 430)
     pad = round(46 * k)
     out = Image.new('RGB', (im.width, im.height + pad), (24, 24, 28))
     out.paste(im, (0, 0))
@@ -118,21 +120,24 @@ def build(src, labels_path, out):
             fps, _ = info(path)
             im = read_frame(path, idx)
             if len(fr) > 2:
-                # лицо крупно рядом с полным кадром: в полный рост мимика мелкая
+                # карточка — лицо крупно (квадрат, у всех кадров один размер: листы без дыр);
+                # полный кадр — миниатюрой в углу, у крупного плана её нет (то же лицо)
                 x0, y0, x1, y1 = fr[2]
-                face = im.crop((x0, y0, x1, y1))
-                fh = 640; full = im.resize((round(fh * im.width / im.height), fh), Image.LANCZOS)
-                face = face.resize((round(fh * face.width / face.height), fh), Image.LANCZOS)
-                im = Image.new('RGB', (full.width + 8 + face.width, fh), (24, 24, 28))
-                im.paste(full, (0, 0)); im.paste(face, (full.width + 8, 0))
-            if im.width > 1100:
+                face = im.crop((max(0, x0), max(0, y0), min(im.width, x1), min(im.height, y1)))
+                face = ImageOps.pad(face, (CARD, CARD), Image.LANCZOS, color=(24, 24, 28))
+                if (x1 - x0) < CLOSEUP * im.width:
+                    th = round(CARD * 0.3); tw = round(th * im.width / im.height)
+                    face.paste((255, 255, 255), (8, 8, tw + 14, th + 14))
+                    face.paste(im.resize((tw, th), Image.LANCZOS), (11, 11))
+                im = face
+            elif im.width > 1100:
                 im = im.resize((1100, round(1100 * im.height / im.width)), Image.LANCZOS)
             note = f' · {fr[3]}' if len(fr) > 3 else ''
             card = caption(im, [f'{e["title"]} — {k}', f'КП {e["kp"]} · {video} · {idx / fps:.2f} с{note}'])
             card.save(os.path.join(folder, f'{e["id"]}_{k}.jpg'), quality=92)
             cells.append(card)
         # лист эмоции: все её кадры в ряд (до 3 в строке)
-        cw = 360 if all(c.width < c.height for c in cells) else 540
+        cw = 440 if all(c.width == CARD for c in cells) else 360 if all(c.width < c.height for c in cells) else 540
         thumbs = [c.resize((cw, round(cw * c.height / c.width)), Image.LANCZOS) for c in cells]
         ch = max(t.height for t in thumbs)
         cols = min(3, len(thumbs))
