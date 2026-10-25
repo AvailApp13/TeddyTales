@@ -16,6 +16,7 @@
 labels.json:
     {"emotions": [{"id": "joy", "title": "Радость", "kp": "4.8 emote_joy",
                    "frames": [["video_01.mp4", 118, [x0, y0, x1, y1]], ["video_07.mp4", 52], ...]}, ...]}
+    четвёртый (необязательный) — пометка к кадру, например «девочка».
     третий элемент кадра (необязательный) — рамка лица в пикселях кадра: на карточке лицо
     показывается крупно рядом с полным кадром.
 """
@@ -126,7 +127,8 @@ def build(src, labels_path, out):
                 im.paste(full, (0, 0)); im.paste(face, (full.width + 8, 0))
             if im.width > 1100:
                 im = im.resize((1100, round(1100 * im.height / im.width)), Image.LANCZOS)
-            card = caption(im, [f'{e["title"]} — {k}', f'КП {e["kp"]} · {video} · {idx / fps:.2f} с'])
+            note = f' · {fr[3]}' if len(fr) > 3 else ''
+            card = caption(im, [f'{e["title"]} — {k}', f'КП {e["kp"]} · {video} · {idx / fps:.2f} с{note}'])
             card.save(os.path.join(folder, f'{e["id"]}_{k}.jpg'), quality=92)
             cells.append(card)
         # лист эмоции: все её кадры в ряд (до 3 в строке)
