@@ -106,12 +106,20 @@ def caption(im, lines):
     return out
 
 
+def fs_name(title):
+    """Название эмоции -> имя папки/файла: по-русски, без кавычек и знаков, запрещённых в именах (/ :)."""
+    for a, b in (('«', ''), ('»', ''), ('"', ''), ('/', '-'), (':', ' -'), (' — ', ' - ')):
+        title = title.replace(a, b)
+    return ' '.join(title.split())
+
+
 def build(src, labels_path, out):
     labels = json.load(open(labels_path))
     os.makedirs(out, exist_ok=True)
     overview = []
     for n, e in enumerate(labels['emotions'], 1):
-        folder = os.path.join(out, f'{n:02d}_{e["id"]}')
+        name = fs_name(e['title'])
+        folder = os.path.join(out, f'{n:02d} {name}')
         os.makedirs(folder, exist_ok=True)
         cells = []
         for k, fr in enumerate(e['frames'], 1):
@@ -134,7 +142,7 @@ def build(src, labels_path, out):
                 im = im.resize((1100, round(1100 * im.height / im.width)), Image.LANCZOS)
             note = f' · {fr[3]}' if len(fr) > 3 else ''
             card = caption(im, [f'{e["title"]} — {k}', f'КП {e["kp"]} · {video} · {idx / fps:.2f} с{note}'])
-            card.save(os.path.join(folder, f'{e["id"]}_{k}.jpg'), quality=92)
+            card.save(os.path.join(folder, f'{name} {k}.jpg'), quality=92)
             cells.append(card)
         # лист эмоции: все её кадры в ряд (до 3 в строке)
         cw = 440 if all(c.width == CARD for c in cells) else 360 if all(c.width < c.height for c in cells) else 540
@@ -147,7 +155,7 @@ def build(src, labels_path, out):
         d.text((12, 38), f'КП {e["kp"]}', fill=(170, 200, 255), font=font(14))
         for k, t in enumerate(thumbs):
             sheet.paste(t, (10 + (k % cols) * (cw + 10), 56 + (k // cols) * (ch + 10)))
-        sheet.save(os.path.join(folder, f'_{e["id"]}_лист.jpg'), quality=90)
+        sheet.save(os.path.join(folder, f'_лист - {name}.jpg'), quality=90)
         overview.append(sheet)
         print(f'{n:02d} {e["title"]}: {len(cells)} кадров')
     # общий обзор для согласования — все листы эмоций подряд (PDF, по эмоции на страницу)
