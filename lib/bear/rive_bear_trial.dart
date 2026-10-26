@@ -34,9 +34,17 @@ const String kTrialBearAsset = 'assets/rive/bear_boy_v2.riv';
 /// (`tool/rive/build_girl.py`, `docs/rive-girl.md`).
 const String kGirlBearAsset = 'assets/rive/bear_girl.riv';
 
-/// Файл мишка нужного героя.
-String bearAsset(BearSkin skin) =>
-    skin == BearSkin.girl ? kGirlBearAsset : kTrialBearAsset;
+/// ⚠ Мимика v2 мальчика (заказчик 26.10: лицо «один в один» по видео
+/// Ирины, `docs/mimika-v2.md`): тот же риг и те же клипы, новое лицо —
+/// глаза с бликом, нос, рот-шов (`tool/rive/face_v2.py`). Показывается
+/// плиткой «Мимика v2» проверочной ленты ([BearFaceCue.faceV2]); заменит
+/// [kTrialBearAsset] после «да» заказчика.
+const String kBoyFaceV2Asset = 'assets/rive/bear_boy_v3.riv';
+
+/// Файл мишка нужного героя; v2 — новое лицо (пока только у мальчика).
+String bearAsset(BearSkin skin, {bool v2 = false}) => skin == BearSkin.girl
+    ? kGirlBearAsset
+    : (v2 ? kBoyFaceV2Asset : kTrialBearAsset);
 
 /// Артборд в файле героя.
 String bearArtboard(BearSkin skin) =>
@@ -294,6 +302,11 @@ class BearFaceCue extends ChangeNotifier {
   /// Снять вместе с лентой перед публикацией.
   final ValueNotifier<BearSkin?> hero = ValueNotifier<BearSkin?>(null);
 
+  /// ⚠ Проверка мимики v2 (заказчик 26.10): новое лицо мальчика
+  /// ([kBoyFaceV2Asset]) или прежнее — плитка «Мимика v2» в проверочной
+  /// ленте, до перезапуска. Снять, когда новое лицо утвердят.
+  final ValueNotifier<bool> faceV2 = ValueNotifier<bool>(true);
+
   void show(BearFace face) {
     _face = face;
     _serial++;
@@ -306,6 +319,7 @@ class BearFaceCue extends ChangeNotifier {
   @override
   void dispose() {
     hero.dispose();
+    faceV2.dispose();
     super.dispose();
   }
 }
@@ -381,9 +395,10 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     with SingleTickerProviderStateMixin {
   File? _file;
 
-  /// Чей файл загружен ([_file]) и чей грузится.
+  /// Чей файл загружен ([_file]), какой это файл и какой грузится.
   BearSkin? _fileSkin;
-  BearSkin? _loading;
+  String? _fileAsset;
+  String? _loading;
   late final _TrialPainter _painter = _TrialPainter()
     ..seated = widget.seated
     ..headOnly = widget.headOnly
@@ -511,19 +526,20 @@ class _RiveBearTrialState extends State<RiveBearTrial>
     _painter.setTrait(widget.trait, real: true);
     _painter.setMood('mood_${widget.mood.name}', real: true);
     widget.cue.hero.addListener(_load);
+    widget.cue.faceV2.addListener(_load);
     _load();
   }
 
-  /// Файл героя на экране; сменился герой — грузится его файл, прежний
-  /// показывается, пока новый не готов.
+  /// Файл героя на экране; сменился герой (или лицо v2) — грузится его
+  /// файл, прежний показывается, пока новый не готов.
   void _load() {
     final skin = widget.cue.heroOr(widget.skin);
-    if (skin == _loading || (skin == _fileSkin && _loading == null)) return;
-    _loading = skin;
-    final asset = bearAsset(skin);
+    final asset = bearAsset(skin, v2: widget.cue.faceV2.value);
+    if (asset == _loading || (asset == _fileAsset && _loading == null)) return;
+    _loading = asset;
     File.asset(asset, riveFactory: Factory.rive)
         .then((file) {
-          if (!mounted || _loading != skin) {
+          if (!mounted || _loading != asset) {
             file?.dispose();
             return;
           }
@@ -531,6 +547,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
           setState(() {
             _file = file;
             _fileSkin = skin;
+            _fileAsset = asset;
             _loading = null;
           });
           if (old != null) {
@@ -538,7 +555,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
           }
         })
         .catchError((Object error) {
-          if (_loading == skin) _loading = null;
+          if (_loading == asset) _loading = null;
           debugPrint('[TeddyTales] $asset не загрузился: $error');
         });
   }
@@ -556,6 +573,8 @@ class _RiveBearTrialState extends State<RiveBearTrial>
       widget.cue.addListener(_onCue);
       oldWidget.cue.hero.removeListener(_load);
       widget.cue.hero.addListener(_load);
+      oldWidget.cue.faceV2.removeListener(_load);
+      widget.cue.faceV2.addListener(_load);
     }
     if (oldWidget.skin != widget.skin || oldWidget.cue != widget.cue) _load();
     if (oldWidget.trait != widget.trait) {
@@ -573,6 +592,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
   void dispose() {
     widget.cue.removeListener(_onCue);
     widget.cue.hero.removeListener(_load);
+    widget.cue.faceV2.removeListener(_load);
     _body.dispose();
     _painter.dispose();
     _file?.dispose();
@@ -609,7 +629,7 @@ class _RiveBearTrialState extends State<RiveBearTrial>
               );
             },
             child: RiveFileWidget(
-              key: ValueKey(_fileSkin),
+              key: ValueKey(_fileAsset),
               file: file,
               painter: _painter,
               artboardName: bearArtboard(_fileSkin ?? BearSkin.boy),

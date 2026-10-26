@@ -24,7 +24,8 @@ class EmotionTestStrip extends StatefulWidget {
 
   /// Настоящий герой (КП 2.4). Первая плитка ленты — «Мальчик /
   /// Девочка»: проверить второго героя (заказчик 14.10), до перезапуска
-  /// ([BearFaceCue.hero]).
+  /// ([BearFaceCue.hero]); вторая — «Мимика v2 / Прежняя»: новое лицо
+  /// мальчика или прежнее ([BearFaceCue.faceV2]).
   final BearSkin skin;
 
   /// Размер плитки и зазор между плитками, пт.
@@ -60,6 +61,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
     super.initState();
     widget.cue.addListener(_changed);
     widget.cue.hero.addListener(_changed);
+    widget.cue.faceV2.addListener(_changed);
     _scroll.addListener(_scrolled);
   }
 
@@ -71,6 +73,8 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
       widget.cue.addListener(_changed);
       oldWidget.cue.hero.removeListener(_changed);
       widget.cue.hero.addListener(_changed);
+      oldWidget.cue.faceV2.removeListener(_changed);
+      widget.cue.faceV2.addListener(_changed);
     }
   }
 
@@ -78,6 +82,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
   void dispose() {
     widget.cue.removeListener(_changed);
     widget.cue.hero.removeListener(_changed);
+    widget.cue.faceV2.removeListener(_changed);
     _scroll.dispose();
     super.dispose();
   }
@@ -94,7 +99,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
         _scroll.offset >= _scroll.position.maxScrollExtent - step * 0.5;
     final first = atEnd
         ? BearFace.values.length
-        : ((_scroll.offset + step * 0.5) / step).floor() + 1;
+        : ((_scroll.offset + step * 0.5) / step).floor();
     final clamped = first.clamp(1, BearFace.values.length);
     if (clamped != _first) setState(() => _first = clamped);
   }
@@ -177,7 +182,7 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
                   scrollDirection: Axis.horizontal,
                   // справа запас: последняя плитка выходит из-под затухания
                   padding: const EdgeInsets.only(left: 16, right: 56),
-                  itemCount: BearFace.values.length + 1,
+                  itemCount: BearFace.values.length + 2,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: EmotionTestStrip.gap),
                   itemBuilder: (context, index) {
@@ -191,7 +196,15 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
                             : BearSkin.girl,
                       );
                     }
-                    final i = index - 1;
+                    if (index == 1) {
+                      final v2 = widget.cue.faceV2.value;
+                      return _FaceV2Tile(
+                        on: v2,
+                        girl: widget.cue.heroOr(widget.skin) == BearSkin.girl,
+                        onTap: () => widget.cue.faceV2.value = !v2,
+                      );
+                    }
+                    final i = index - 2;
                     final face = BearFace.values[i];
                     return _EmotionTile(
                       number: i + 1,
@@ -263,6 +276,80 @@ class _HeroTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 girl ? 'показать\nмальчика' : 'показать\nдевочку',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ink.withValues(alpha: 0.75),
+                  fontSize: 10.5,
+                  height: 1.1,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Вторая плитка: мимика v2 — новое лицо мальчика по видео Ирины или
+/// прежнее, для сравнения (заказчик 26.10, `docs/mimika-v2.md`).
+class _FaceV2Tile extends StatelessWidget {
+  const _FaceV2Tile({
+    required this.on,
+    required this.girl,
+    required this.onTap,
+  });
+
+  final bool on;
+
+  /// На экране девочка: её новое лицо — следующим этапом.
+  final bool girl;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const ink = Color(0xFF4A3528);
+    final color = on ? const Color(0xFF6FA173) : const Color(0xFF9A8576);
+    return GestureDetector(
+      key: const ValueKey('emotion-test-face-v2'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: EmotionTestStrip.tileWidth,
+        padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color, width: 1.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                on ? 'Мимика v2' : 'Прежняя',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13.5,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                girl
+                    ? 'у девочки —\nпозже'
+                    : (on ? 'показать\nпрежнюю' : 'показать\nv2'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: ink.withValues(alpha: 0.75),
