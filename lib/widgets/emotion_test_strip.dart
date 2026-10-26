@@ -47,6 +47,7 @@ const List<(int, String, Color)> _groups = [
   (20, 'Разнообразие покоя 20–25', Color(0xFFC08A3E)),
   (26, 'Характер 26–31', Color(0xFFB0698B)),
   (32, 'Реакции характера 32–33', Color(0xFF8A6FB8)),
+  (34, 'Мимика v2: новые эмоции 34–45', Color(0xFFD27A95)),
 ];
 
 (int, String, Color) _groupOf(int number) =>
@@ -200,7 +201,6 @@ class _EmotionTestStripState extends State<EmotionTestStrip> {
                       final v2 = widget.cue.faceV2.value;
                       return _FaceV2Tile(
                         on: v2,
-                        girl: widget.cue.heroOr(widget.skin) == BearSkin.girl,
                         onTap: () => widget.cue.faceV2.value = !v2,
                       );
                     }
@@ -292,19 +292,12 @@ class _HeroTile extends StatelessWidget {
   }
 }
 
-/// Вторая плитка: мимика v2 — новое лицо мальчика по видео Ирины или
-/// прежнее, для сравнения (заказчик 26.10, `docs/mimika-v2.md`).
+/// Вторая плитка: мимика v2 — новое лицо по видео Ирины или прежнее, для
+/// сравнения (заказчик 26.10, `docs/mimika-v2.md`), у обоих героев.
 class _FaceV2Tile extends StatelessWidget {
-  const _FaceV2Tile({
-    required this.on,
-    required this.girl,
-    required this.onTap,
-  });
+  const _FaceV2Tile({required this.on, required this.onTap});
 
   final bool on;
-
-  /// На экране девочка: её новое лицо — следующим этапом.
-  final bool girl;
   final VoidCallback onTap;
 
   @override
@@ -347,9 +340,7 @@ class _FaceV2Tile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                girl
-                    ? 'у девочки —\nпозже'
-                    : (on ? 'показать\nпрежнюю' : 'показать\nv2'),
+                on ? 'показать\nпрежнюю' : 'показать\nv2',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: ink.withValues(alpha: 0.75),

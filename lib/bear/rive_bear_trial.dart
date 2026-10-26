@@ -34,16 +34,18 @@ const String kTrialBearAsset = 'assets/rive/bear_boy_v2.riv';
 /// (`tool/rive/build_girl.py`, `docs/rive-girl.md`).
 const String kGirlBearAsset = 'assets/rive/bear_girl.riv';
 
-/// ⚠ Мимика v2 мальчика (заказчик 26.10: лицо «один в один» по видео
-/// Ирины, `docs/mimika-v2.md`): тот же риг и те же клипы, новое лицо —
-/// глаза с бликом, нос, рот-шов (`tool/rive/face_v2.py`). Показывается
-/// плиткой «Мимика v2» проверочной ленты ([BearFaceCue.faceV2]); заменит
-/// [kTrialBearAsset] после «да» заказчика.
+/// ⚠ Мимика v2 (заказчик 26.10: «ровно как в видео… и у мальчика, и у
+/// девочки», `docs/mimika-v2.md`): тот же риг и те же клипы, новое лицо —
+/// глаза с бликом, нос, рот-шов, бровки, дужки, все эмоции видео
+/// (`tool/rive/face_v2.py`, `face_v2_girl.py`, `clips_v2.py`).
+/// Показывается плиткой «Мимика v2» проверочной ленты
+/// ([BearFaceCue.faceV2]); заменит прежние файлы после «да» заказчика.
 const String kBoyFaceV2Asset = 'assets/rive/bear_boy_v3.riv';
+const String kGirlFaceV2Asset = 'assets/rive/bear_girl_v2.riv';
 
-/// Файл мишка нужного героя; v2 — новое лицо (пока только у мальчика).
+/// Файл мишка нужного героя; v2 — новое лицо.
 String bearAsset(BearSkin skin, {bool v2 = false}) => skin == BearSkin.girl
-    ? kGirlBearAsset
+    ? (v2 ? kGirlFaceV2Asset : kGirlBearAsset)
     : (v2 ? kBoyFaceV2Asset : kTrialBearAsset);
 
 /// Артборд в файле героя.
@@ -109,7 +111,23 @@ enum BearFace {
   /// Реакции характера (ТЗ `reaction_trait_*_touch` / `*_treat`): на
   /// касание — это и тап по мишке (заказчик 27.09); на угощение.
   touch(0, 0),
-  treat(0, 0);
+  treat(0, 0),
+
+  /// Мимика v2 (заказчик 26.10: «все эмоции, ровно как в видео»): эмоции
+  /// видео Ирины, которых не было среди плиток, — свои клипы в файлах v2
+  /// (`tool/rive/clips_v2.py`). В прежних файлах их нет — покой.
+  joy(0, 2.5),
+  delight(0, 2.5),
+  tender(0, 2.5),
+  kiss(0, 2.5),
+  sorry(0, 2.5),
+  cry(0, 2.5),
+  wink(0, 2.5),
+  fear(0, 2.5),
+  anger(0, 2.5),
+  doubt(0, 2.5),
+  shy(0, 2.5),
+  confused(0, 2.5);
 
   const BearFace(this.frame, this.hold);
 
@@ -155,6 +173,18 @@ enum BearFace {
     traitReserved ||
     touch ||
     treat => null,
+    joy => 'emo_joy',
+    delight => 'emo_delight',
+    tender => 'emo_tender',
+    kiss => 'emo_kiss',
+    sorry => 'emo_sorry',
+    cry => 'emo_cry',
+    wink => 'emo_wink',
+    fear => 'emo_fear',
+    anger => 'emo_anger',
+    doubt => 'emo_doubt',
+    shy => 'emo_shy',
+    confused => 'emo_confused',
   };
 
   /// Заказчик утвердил — кнопка на проверочной панели больше не нужна
@@ -231,6 +261,18 @@ enum BearFace {
     traitReserved => 'Замкнутый',
     touch => 'Касание',
     treat => 'Угощение',
+    joy => 'Радость',
+    delight => 'Восторг',
+    tender => 'Нежность',
+    kiss => 'Поцелуй',
+    sorry => 'Огорчение',
+    cry => 'Плач',
+    wink => 'Подмигивание',
+    fear => 'Испуг',
+    anger => 'Злость',
+    doubt => 'Сомнение',
+    shy => 'Смущение',
+    confused => 'Растерянность',
   };
 
   /// Подпись для героя: у девочки — в женском роде (заказчик 14.10:
@@ -1380,6 +1422,19 @@ final class _TrialPainter extends BasicArtboardPainter {
     'pout',
     'sleepy',
     'content',
+    // мимика v2: свои рты (`face_v2.VMOUTHS`) — «о» удивления, губки «ε»,
+    // «D» радости, смеха и восторга, хмурость ⌒, всхлип, щёлочка жевания и
+    // большое «U» зевка; в прежних файлах их нет — рты решаются по тем, что
+    // есть
+    'o',
+    'kiss',
+    'd',
+    'laugh',
+    'delight',
+    'frown',
+    'sob',
+    'munch',
+    'gape',
   ];
 
   /// Порог щёлочки — `MOUTH_SWAP` в `tool/rive/rebuild_rig.py`.
@@ -1410,7 +1465,7 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   void _measureMouths() {
     _mouthCloseAt.clear();
-    if (_mouthSignal.length != _mouthKinds.length) return;
+    if (_mouthSignal.isEmpty) return;
     for (final clip in _clips.values) {
       double? last;
       for (var t = clip.duration; t >= 0; t -= 1 / 15) {
@@ -1437,17 +1492,22 @@ final class _TrialPainter extends BasicArtboardPainter {
 
   void _resolveMouths() {
     final zero = _mouthZero;
-    if (zero == null || _mouthSignal.length != _mouthKinds.length) return;
-    // «Удивление» — фото-лицо со своим ртом, у него свои прозрачности.
+    if (zero == null || _mouthSignal.isEmpty) return;
+    // «Удивление» прежних файлов — фото-лицо со своим ртом, у него свои
+    // прозрачности; в мимике v2 у него свой рот «о» (`mh_o`).
     final clip = _clip;
-    if (clip != null && clip == _clips['emo_surprised']) return;
+    if (clip != null &&
+        clip == _clips['emo_surprised'] &&
+        !_mouthSignal.containsKey('o')) {
+      return;
+    }
     zero
       ..time = 0
       ..apply(mix: 1);
     String? best;
     var bestH = 0.0;
-    for (final kind in _mouthKinds) {
-      final h = math.max(0.0, _mouthSignal[kind]!.y);
+    for (final MapEntry(key: kind, value: signal) in _mouthSignal.entries) {
+      final h = math.max(0.0, signal.y);
       if (h > bestH) {
         bestH = h;
         best = kind;
@@ -1456,7 +1516,8 @@ final class _TrialPainter extends BasicArtboardPainter {
     final on = _mouthOn;
     if (bestH >= _mouthSwap) {
       _mouthOn = best;
-    } else if (on != null && math.max(0.0, _mouthSignal[on]!.y) <= _mouthOff) {
+    } else if (on != null &&
+        math.max(0.0, _mouthSignal[on]?.y ?? 0.0) <= _mouthOff) {
       _mouthOn = null;
     }
     _mouthOp[_mouthOn ?? 'rest']

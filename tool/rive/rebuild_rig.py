@@ -163,7 +163,9 @@ HOOKS = []
 # Обёртки бусин и глазниц (id картинок из исходника)
 WRAPS = {'bead_l': '0:112404', 'bead_r': '0:277344',
          'sock_l': '0:277340', 'sock_r': '0:277342'}
-# 290+: кости эмоций занимают 200 + номер кости, и с 10.10 их больше 60.
+# 290+: кости — 4000 + номер, их кости эмоций — 5000 + номер (до 26.10 —
+# 100 и 200 + номер: с мимикой v2 костей больше 90, и номера налезали
+# на обёртки и якоря).
 WRAP_IDS = {k: ident(290 + i) for i, k in enumerate(WRAPS)}
 # Обёртки — Node, а не кости: сдвиг у Node — ключи 13/14 (x/y), у кости —
 # 90/91. Эмоции пишут сдвиг бусин «костяным» ключом, как у всех, а при
@@ -222,7 +224,7 @@ def build_bones():
             b['local'] = dict(rotation=ang - p['angle'])
         bones[name] = b
     for i, name in enumerate(bones):
-        bones[name]['id'] = ident(100 + i)
+        bones[name]['id'] = ident(4000 + i)
     return bones
 
 
@@ -2974,8 +2976,8 @@ def main(project):
         E_REST[name] = dict(e_local)
         b['local'] = own
         helper = ET.Element(tag, {**{k: fmt(v) for k, v in e_local.items()}, 'length': '0',
-                                  'name': f'e_{name}', 'id': ident(200 + i)})
-        E_IDS[name] = ident(200 + i)
+                                  'name': f'e_{name}', 'id': ident(5000 + i)})
+        E_IDS[name] = ident(5000 + i)
         attrs = {k: fmt(v) for k, v in own.items()}
         if name.startswith('mouth_') and name[6:] in mouth.KINDS:   # в покое рот сомкнут
             sx, sy = mouth.closed(name[6:])
