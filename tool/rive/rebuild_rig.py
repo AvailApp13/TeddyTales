@@ -156,6 +156,9 @@ CHAIN = [
 TRANSLATED = {'hips', 'face', 'cheek_l', 'cheek_r'}
 E_REST = {}   # имя → поза покоя кости эмоции (заполняет main)
 E_IDS = {}    # имя → id кости эмоции / обёртки
+# Поправки поверх рига (мимика v2, `face_v2.py`): функции ctx → None, их
+# вызывает main, когда лицо, веки и рты построены, — до весов сеток.
+HOOKS = []
 
 # Обёртки бусин и глазниц (id картинок из исходника)
 WRAPS = {'bead_l': '0:112404', 'bead_r': '0:277344',
@@ -3044,6 +3047,9 @@ def main(project):
                                              'name': f'mh_{k}', 'id': nid}))
         E_IDS[f'mh_{k}'] = nid
         E_REST[f'mh_{k}'] = dict(x=0.0, y=0.0)
+    for hook in HOOKS:
+        hook(dict(project=project, root=root, ab=ab, byname=byname, B=B, W=W,
+                  next_id=lambda: ident(next(ids))))
     # 4в'''. Ткань кофты и рукавов под капюшоном — с запасом (underpaint.py):
     #       при движении головы из-под края капюшона видна кофта, а не срез.
     print('underpaint', underpaint.build(project, root, byname), 'px')
