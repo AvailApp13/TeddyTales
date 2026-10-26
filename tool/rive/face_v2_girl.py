@@ -42,11 +42,15 @@ GIRL = dict(
     wide_y=(0.0, 2.7, 4.8, 6.2, 6.5, 6.0, 4.5, 2.0, -1.5, -8.0, -12.0),
     # закрытые глаза — толстая ровная черта, ресничек в кадрах не видно
     lashes=(),
+    dlip_k=0.85,                               # «D» восторга ×0,85 («ротик меньше и мягче», 14.10)
     bounce=(516.0, 548.0),
     # на белом меху: белок и тяжёлое веко — мех, тень складки бровей светлее,
     # краска лица мягче (на белом иначе слишком красно)
     white_rgb='#f3eceb', lidcap_rgb='#f6f1ef', lidcap_edge='#b9a898', bshade_rgb='#cbbab0',
     flush_rgb=(240, 120, 125), flush_peak=0.55,
+    # краска «Обиды» — пятном на лице: до банта, ободка и ушей не доходит
+    # (их вырезанные края на розовом светились белой каймой)
+    flush_oval=(512.0, 455.0, 125.0, 105.0),
     # сердце — по центру груди между пуговицами планки, пуговицы поверх
     heart=(511.0, 636.0), heart_w=120.0, heart_hole=((511.0, 578.0, 16.0), (511.0, 694.0, 16.0)),
 )
@@ -55,6 +59,7 @@ NOSE_ROI = (625, 935, 735, 1020)
 NOSE_RGB = (70.0, 38.0, 26.0)
 NOSE_EGG = (0.35, 0.6)                       # шире всего на 35 % высоты, низ — 0,6 ширины
 GIRL['nose_box'] = NOSE_BOX
+GIRL_EYE_HOLE = 42                           # затенённые овалы глазниц, px текстуры
 
 # Её выражения поверх общих (кадры с ней): нежность — дужки ниже и уже,
 # широкая улыбка с уголками выше, румянец сильнее.
@@ -65,12 +70,16 @@ GIRL_EXPR = {
 
 
 def prepare(project):
-    """Её слои (`build_girl.prepare`), затем лицо v2: нос, бусины, закрытые
-    глаза. Глазницы у неё уже мех (`girl_rig.eye_pieces`)."""
+    """Её слои (`build_girl.prepare`), затем лицо v2: нос, глазницы мехом,
+    бусины, закрытые глаза."""
     bg.prepare(project)
-    fv.nose_edit(os.path.join(project, 'bear_face.png'), NOSE_ROI, NOSE_BOX, NOSE_RGB, egg=NOSE_EGG)
+    # прежние глазницы в текстуре лица (затенённые овалы) — мехом: бусина
+    # сидит прямо в меху, при моргании под ней не видно серой «чашечки»
+    fv.nose_edit(os.path.join(project, 'bear_face.png'), NOSE_ROI, NOSE_BOX, NOSE_RGB, egg=NOSE_EGG,
+                 eyes=(fv.OLD_EYES, GIRL_EYE_HOLE))
     for side in 'lr':
         fv.bead(os.path.join(project, f'face_gaze_bead_{side}.png'))
+        fv.clear(os.path.join(project, f'face_gaze_socket_{side}.png'))
         fv.closed_eye(os.path.join(project, f'face_eyes_closed_eye_{side}.png'))
 
 

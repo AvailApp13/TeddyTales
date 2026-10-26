@@ -327,7 +327,7 @@ POSES = {
     'joylip': ((0.0, 0.0), lambda s, t: (s * 46.0 * t, _table(JOYLIP_Y, t))),
     # «Восторг 1–3»: линия губы «D» 100 px — середина плоско провисает на
     # 6,5 ниже конца стежка (стежок дотягивается до неё), концы острые
-    'dlip': ((0.0, 6.5), lambda s, t: (s * 50.0 * t, _table(DLIP_Y, t))),
+    'dlip': ((0.0, 6.5), lambda s, t: (s * 50.0 * G.get('dlip_k', 1.0) * t, G.get('dlip_k', 1.0) * _table(DLIP_Y, t))),
     # «Нежность 1»: «лодочка» 62 px — донце мелкое, уголки крючком вверх
     'tender': ((0.0, 5.0), lambda s, t: (s * 31.0 * t, _table(TENDER_Y, t))),
 }
@@ -369,6 +369,8 @@ def _seam_bone_world(name):
 def pose_offsets(pose, k=1.0):
     """{кость: (dx, dy) мира} — сдвиг костей шва от покоя к позе, доля k."""
     (jx, jy), leg = POSES[pose]
+    if pose == 'dlip':                         # «D» восторга — в масштабе героя
+        jy *= G.get('dlip_k', 1.0)
     out = {'seam_c': (jx * k, jy * k)}
     for side, s in (('l', -1), ('r', 1)):
         for i, t in enumerate(LEG_T, 1):
@@ -640,11 +642,13 @@ def _vmouth_shapes(kind, common):
     if kind == 'delight':
         # «Восторг 1–3»: «D» 100 × 38,5 — верх плоско провисает (поза
         # 'dlip'), низ — полная U, язык-купол 26 × 12, приглушённый
+        kd = G.get('dlip_k', 1.0)              # у девочки ротик меньше (×0,85)
         right = [(50, -5.0), (48.5, 1.5), (46, 7.5), (42, 13.5), (36, 20.0), (29, 26.5), (20, 33.0), (10, 37.3),
                  (0, 38.5)]
-        bottom = _spline(right + [(-x, y) for x, y in right[::-1][1:]], 3)
+        bottom = _spline([(x * kd, y * kd) for x, y in right + [(-x, y) for x, y in right[::-1][1:]]], 3)
         dome = [(-13, 36.0), (-11, 29.0), (-7, 26.3), (0, 25.5), (7, 26.3), (11, 29.0), (13, 36.0)]
-        tongue = _spline(dome, 3) + [(x, 37.5 - 0.0128 * x * x) for x in [13 - 26 * i / 8 for i in range(1, 8)]]
+        tongue = [(x * kd, y * kd) for x, y in _spline(dome, 3)
+                  + [(x, 37.5 - 0.0128 * x * x) for x in [13 - 26 * i / 8 for i in range(1, 8)]]]
         return _grown_d('delight', 'dlip', common, bottom, tongue,
                         ('#290b07', '#3a1208', '#a06e62', '#ba9085', '#7a4a40'))
     if kind == 'd':
@@ -948,27 +952,52 @@ def _shut_line(s, B):
     return ring, w_at, lashes
 
 
-def _flush_tile(face_png, to_tex):
-    """Краска на всё лицо («Обида 1–2»): мех лица ровной заливкой, мягкий
-    край 12 px у капюшона; нос не краснеет."""
-    a = np.asarray(Image.open(face_png).convert('RGBA'), np.float64)[..., 3] / 255
+def _flush_tile(png, to_tex, face=True):
+    """Краска на всё лицо («Обида 1–2»): мех ровной заливкой. Лицо (face) —
+    мягкий край 12 px у капюшона, нос не краснеет (маска по цвету носа);
+    заплатка века (face=False) — по её же альфе, иначе вокруг глаз остаются
+    светлые «очки»: плитка во всю текстуру (обрезка по альфе выкидывала
+    треугольники сетки, выходящие за край), альфа с поправкой на наложение —
+    на полупрозрачном краю заплатки краска та же, что на лице под ней.
+    to_tex — своей картинки. flush_oval (x, y, rx, ry мира) — краска пятном
+    на лице, к краям овала сходит на нет (девочка: на белом меху у банта и
+    ушей иначе видна светлая кромка)."""
+    im = np.asarray(Image.open(png).convert('RGBA'), np.float64)
+    a = im[..., 3] / 255
+    p = G.get('flush_peak', 0.8)
     k = abs(to_tex(1, 0)[0] - to_tex(0, 0)[0])
+    fall = 1.0
+    if 'flush_oval' in G:
+        cx, cy, rx, ry = G['flush_oval']
+        tx, ty = to_tex(cx, cy)
+        yy, xx = np.mgrid[0:a.shape[0], 0:a.shape[1]]
+        u = np.clip((1.0 - np.hypot((xx - tx) / (rx * k), (yy - ty) / (ry * k))) / 0.45, 0, 1)
+        fall = u * u * (3 - 2 * u)
+    if not face:
+        q = p * fall
+        tile = np.zeros(im.shape, np.uint8)
+        tile[..., :3] = G.get('flush_rgb', G['red_rgb'])
+        tile[..., 3] = (q * a / ((1 - q) + q * a) * 255).round().astype(np.uint8)
+        return tile, (0, 0)
     inner = ndimage.distance_transform_edt(a > 0.5)
-    m = np.clip(inner / (12.0 * k), 0, 1)
+    m = np.clip(inner / (12.0 * k), 0, 1) * fall
     x0, y0, x1, y1 = NOSE_BOX_TEX[0]
-    yy, xx = np.mgrid[0:a.shape[0], 0:a.shape[1]] + 0.5
-    cxn, cyn = (x0 + x1) / 2, (y0 + y1) / 2
-    rn = np.hypot((xx - cxn) / ((x1 - x0) / 2 + 6 * k), (yy - cyn) / ((y1 - y0) / 2 + 6 * k))
-    m *= np.clip((rn - 1.0) / 0.25, 0, 1)
+    box = np.zeros(a.shape, bool)
+    box[int(y0) - 12:int(y1) + 12, int(x0) - 12:int(x1) + 12] = True
+    r, g, bl = im[..., 0], im[..., 1], im[..., 2]
+    nose = box & (r < 140) & (g < 100) & (bl < 90)
+    nose = ndimage.binary_dilation(nose, iterations=2)
+    m *= 1 - ndimage.gaussian_filter(nose.astype(np.float64), 1.5)
     ys, xs = np.nonzero(m > 0.003)
     bx0, by0, bx1, by1 = xs.min(), ys.min(), xs.max() + 1, ys.max() + 1
     tile = np.zeros((by1 - by0, bx1 - bx0, 4), np.uint8)
     tile[..., :3] = G.get('flush_rgb', G['red_rgb'])
-    tile[..., 3] = (m[by0:by1, bx0:bx1] * G.get('flush_peak', 0.8) * 255).round().astype(np.uint8)
+    tile[..., 3] = (m[by0:by1, bx0:bx1] * p * 255).round().astype(np.uint8)
     return tile, (int(bx0), int(by0))
 
 
 NOSE_BOX_TEX = [None]          # NOSE_BOX героя (пиксели текстуры лица) — для краски
+IDLE_OWN = {}                  # узлы моргания покоя (`parts`, `_idle_own`): bead_<s>, line_<s>
 
 
 def _ring(cx, cy, r, n=28):
@@ -1031,6 +1060,10 @@ def parts(ctx):
     jx, jy = G['junction']
     tile, origin = _flush_tile(os.path.join(ctx['project'], fa.get('file')), to_tex)
     layer(face_img, tile, origin, 'face_flush_img', 'bear_flush.png', '9900306', fh, face_img)
+    la = assets[lid.get('assetId')]
+    tile, origin = _flush_tile(os.path.join(ctx['project'], la.get('file')),
+                               _to_tex(lid, int(la.get('width')), int(la.get('height'))), face=False)
+    layer(lid, tile, origin, 'face_flush_lid_img', 'bear_flush_lid.png', '9900307', holder, lid)
     tile, origin = _gauss_tile(to_tex, [(jx, jy - 40, 70.0, 48.0)] + [(x, y, 22.0, 16.0) for x, y in G['blush'].values()],
                                G['red_rgb'], G.get('red_peak', 0.42))
     layer(face_img, tile, origin, 'face_red_img', 'bear_red.png', '9900301', fh, face_img)
@@ -1179,6 +1212,14 @@ def parts(ctx):
         wrap = next(e for e in ab.iter('Node') if e.get('id') == rr.WRAP_IDS[f'bead_{s}'])
         gaze = next(p for p in ab.iter() if wrap in list(p))
         gw = Wm[gaze]
+        # накладки бусины — в двух узлах, которые моргание покоя сплющивает и
+        # гасит вместе с картинкой бусины (`_blink_drop`): над ней и под ней
+        blink_top = ET.Element('Node', {'x': '0', 'y': '0', 'name': f'bead_blink_top_{s}', 'id': nid()})
+        blink_bot = ET.Element('Node', {'x': '0', 'y': '0', 'name': f'bead_blink_bot_{s}', 'id': nid()})
+        wrap.insert(0, blink_top)
+        wrap.append(blink_bot)
+        rr.E_IDS[f'bead_blink_top_{s}'] = blink_top.get('id')
+        rr.E_IDS[f'bead_blink_bot_{s}'] = blink_bot.get('id')
         # мокрые глаза: свет на нижнем крае и второй большой блик — в обёртке
         # бусины (ходят и сплющиваются вместе с ней)
         grp = ET.Element('Node', {'x': '0', 'y': '0', 'opacity': '0', 'name': f'face_wet_{s}', 'id': nid()})
@@ -1190,7 +1231,7 @@ def parts(ctx):
             ET.SubElement(g, 'Ellipse', {'width': f'{gw_}', 'height': f'{gw_ * 0.8:.3g}', 'name': 'e', 'id': nid()})
             fl = ET.SubElement(g, 'Fill', {'name': 'F', 'id': nid()})
             ET.SubElement(fl, 'SolidColor', {'colorValue': vec.argb('#ffffff', 0.9), 'name': 'C', 'id': nid()})
-        wrap.insert(0, grp)
+        blink_top.insert(0, grp)
         rr.E_IDS[f'face_wet_{s}'] = grp.get('id')
         # ободок «распахнутого» взгляда («Удивление 1–2»): светлая дуга 120°
         # внутри края бусины с наружной стороны, чуть ниже середины
@@ -1199,7 +1240,7 @@ def parts(ctx):
         rim_g.append(_local_shape('rim', [(14.3 * math.cos(math.radians(a)), 14.3 * math.sin(math.radians(a)))
                                           for a in range(c0 - 60, c0 + 61, 10)], stroke=(2.4, '#e9ddd0', 0.85),
                                   nid=nid, closed=False))
-        wrap.insert(0, rim_g)
+        blink_top.insert(0, rim_g)
         rr.E_IDS[f'face_rim_{s}'] = rim_g.get('id')
         # лужица слёз у нижнего края бусины («Плач 1, 3»): линза, толще к
         # наружному углу, где начинается дорожка
@@ -1217,12 +1258,12 @@ def parts(ctx):
             pool.append(_local_shape('pool_glint', _ring(gx, gy, r_, 10), fill=('#ffffff', 0.95), nid=nid))
         pool.append(_local_shape('pool', outer + inner[::-1], fill=('#cfeaff', 0.8), stroke=(0.6, TEAR_EDGE, 0.9),
                                  nid=nid))
-        wrap.insert(0, pool)
+        blink_top.insert(0, pool)
         rr.E_IDS[f'face_pool_{s}'] = pool.get('id')
         # тусклая бусина «зажмурился» («Смущение 2»): тёмный диск без блика
         dull = ET.Element('Node', {'x': '0', 'y': '0', 'opacity': '0', 'name': f'face_dull_{s}', 'id': nid()})
         dull.append(_local_shape('dull', _ring(0, 0, 16.8, 32), fill=('#160f0c',), nid=nid))
-        wrap.insert(0, dull)
+        blink_top.insert(0, dull)
         rr.E_IDS[f'face_dull_{s}'] = dull.get('id')
 
         gcommon = dict(bones=B, pack=rr.pack, next_id=nid, holder_world=gw)
@@ -1240,15 +1281,23 @@ def parts(ctx):
         arc = [(cx + 20 * math.cos(f), cy + 12 - 24 * math.sin(f)) for f in [math.pi * (1 - i / 20) for i in range(21)]]
         fur = lambda x, y: rr.weights_for('face_arc', x, y, B)
         cap = ET.Element('Node', {'x': '0', 'y': '0', 'opacity': '0', 'name': f'face_lidcap_{s}', 'id': nid()})
-        cap.append(vec.shape('lidcap_edge', arc, weights=fur, stroke=(1.2, G.get('lidcap_edge', '#7a4e33'), 0.55),
+        cap.append(vec.shape('lidcap_edge', arc[3:-3], weights=fur, stroke=(1.2, G.get('lidcap_edge', '#7a4e33'), 0.3),
                              **gcommon))
-        cap.append(vec.shape('lidcap', arc, weights=fur, closed=True, fill=(G.get('lidcap_rgb', '#b47d58'),),
-                             **gcommon))
+        lidcap = vec.shape('lidcap', arc, weights=fur, closed=True, fill=(G.get('lidcap_rgb', '#e4ccb4'),), **gcommon)
+        # мягкий край: веко — мех, а не наклейка
+        ET.SubElement(lidcap.find('Fill'), 'Feather', {'strength': '3', 'name': 'soft', 'id': nid()})
+        cap.append(lidcap)
         gaze.insert(at, cap)
         rr.E_IDS[f'face_lidcap_{s}'] = cap.get('id')
-        white = vec.shape(f'face_white_{s}', _ring(cx, cy, 16.7, 32), weights=lambda x, y, b=f'eye_{s}': {b: 1.0},
-                          closed=True, fill=(G.get('white_rgb', '#d8c8c3'),), opacity=0.0, **gcommon)
-        gaze.insert(at + 1, white)
+        # белок («Сомнение 1»): под бусиной в её обёртке — круг глазницы, как
+        # он ляжет, когда бусина ушла вбок (gx 3,5) и сузилась (bsx −0,2):
+        # виден серп с другой стороны; моргает и срезается вместе с бусиной
+        k = 0.8
+        white = ET.Element('Node', {'x': '0', 'y': '0', 'opacity': '0', 'name': f'face_white_{s}', 'id': nid()})
+        white.append(_local_shape('white', [(-3.5 / k + 16.7 / k * math.cos(2 * math.pi * i / 36),
+                                             16.7 * math.sin(2 * math.pi * i / 36)) for i in range(36)],
+                                  fill=(G.get('white_rgb', '#d8c8c3'),), nid=nid))
+        blink_bot.append(white)
         rr.E_IDS[f'face_white_{s}'] = white.get('id')
 
     # закрытые глаза (моргание покоя, клипы, сон): векторная черта сна «тип Б»
@@ -1269,6 +1318,28 @@ def parts(ctx):
         fx.append(vec.shape(f'shut_line_{s}', ring, weights=w_at, closed=True, fill=(G['arc_rgb'],), **common))
         rr.E_IDS[f'face_lash_{s}'] = grp.get('id')
     rr.E_IDS['face_shut'] = fx.get('id')
+
+    # моргание покоя — на своих узлах (`_idle_own`): петли настроения и
+    # характера ключуют черту сна и обёртки бусин весь цикл и перебивали
+    # покой — в моргании бусина пропадала без черты. Сдвиг покоя (опускание
+    # к черте, быстрые движения глаз) — узел между глазницей и обёрткой, он
+    # складывается с настроением; черта моргания — в самой обёртке: где
+    # бусина сплющилась (и в «Сонливости», где она ниже), там и черта.
+    for s in 'lr':
+        wrap = next(e for e in ab.iter('Node') if e.get('id') == rr.WRAP_IDS[f'bead_{s}'])
+        gaze = next(p for p in ab.iter() if wrap in list(p))
+        own = ET.Element('Node', {'x': '0', 'y': '0', 'name': f'e_bead_{s}_idle', 'id': nid()})
+        gaze.insert(list(gaze).index(wrap), own)
+        gaze.remove(wrap)
+        own.append(wrap)
+        inv = Wm[wrap].inv()
+        line = ET.Element('Node', {'x': '0', 'y': '0', 'opacity': '0', 'name': f'face_blink_line_{s}', 'id': nid()})
+        line.append(_local_shape('blink_line', [(lx, ly - SHUT_DY) for lx, ly in (inv.apply(x, y)
+                                                                             for x, y in _shut_line(s, B)[0])],
+                                 fill=(G['arc_rgb'],), nid=nid))
+        wrap.insert(0, line)
+        IDLE_OWN[f'bead_{s}'] = own.get('id')
+        IDLE_OWN[f'line_{s}'] = line.get('id')
 
 
 def prune(img):
@@ -1339,6 +1410,7 @@ def install(geom):
             a = math.radians(TEAR_TILT)
             rr.CHAIN.append((f'tear_{s}{i}', 'face', (x, y), (x - away * 10 * math.sin(a), y - 10 * math.cos(a))))
     jx, jy = G['junction']
+    VPIVOT['delight'] = (0.0, 6.5 * G.get('dlip_k', 1.0))
     for k in VMOUTHS:
         px, py = VPIVOT.get(k, (0.0, 0.0))
         rr.CHAIN.append((f'mouth_{k}', 'face', (jx + px, jy + py), (jx + px + 20, jy + py)))
@@ -1366,6 +1438,7 @@ def install(geom):
         SHUT_DY ниже середины глаза): на переходе одна полоска, а не две."""
         _blink_drop(idle)
         sleep0(ab, idle, B)
+        _idle_own(idle)
         pose = next(a for a in ab.iter('LinearAnimation') if a.get('name') == 'pose_eyes_shut')
         for s in 'lr':
             ko = ET.SubElement(pose, 'KeyedObject', {'objectId': rr.E_IDS[f'face_lash_{s}']})
@@ -1430,6 +1503,20 @@ def _blink_drop(idle):
             continue
         keys = sorted((int(k.get('frame', '0')), float(k.get('value', '0'))) for k in kp)
         rest = rr.BEAD_REST[img]
+        # накладки бусины моргают вместе с ней: тот же scaleY (доля покоя) и
+        # та же прозрачность
+        op = next((k for k in ko.findall('KeyedProperty') if k.get('propertyKey') == '18'), None)
+        for part in ('top', 'bot'):
+            nko = ET.SubElement(idle, 'KeyedObject', {'objectId': rr.E_IDS[f'bead_blink_{part}_{wrap[-1]}']})
+            nkp = ET.SubElement(nko, 'KeyedProperty', {'propertyKey': '17'})
+            for f, v in keys:
+                ET.SubElement(nkp, 'KeyFrameDouble', {'value': rr.fmt(v / rest), 'frame': str(f),
+                                                      'interpolationType': 'linear'})
+            if op is not None:
+                okp = ET.SubElement(nko, 'KeyedProperty', {'propertyKey': '18'})
+                for k in op:
+                    ET.SubElement(okp, 'KeyFrameDouble', {'value': k.get('value', '0'), 'frame': k.get('frame', '0'),
+                                                          'interpolationType': 'linear'})
         y0 = rr.E_REST[wrap]['y']
         drop = {f: SHUT_DY * min(1.0, max(0.0, 1 - v / rest)) for f, v in keys}
         frames = sorted({f for f, d in drop.items() if d > 1e-3} | {0, keys[-1][0]})
@@ -1439,6 +1526,38 @@ def _blink_drop(idle):
         for f in frames:
             ET.SubElement(nkp, 'KeyFrameDouble', {'value': rr.fmt(y0 + drop.get(f, 0.0)), 'frame': str(f),
                                                   'interpolationType': 'linear'})
+
+
+def _idle_own(idle):
+    """Моргание и взгляд покоя — на свои узлы (`parts`): ключи x/y обёрток
+    бусин (быстрые движения глаз, опускание к черте) — на узел сдвига покоя,
+    от нуля; черта сна покою не нужна — моргают черты в обёртках. Петли
+    настроения и клипы ключуют прежние узлы и покой больше не перебивают."""
+    wraps = {rr.WRAP_IDS[w]: w for w in ('bead_l', 'bead_r')}
+    fx = rr.E_IDS['face_shut']
+    for ko in list(idle.findall('KeyedObject')):
+        oid = ko.get('objectId')
+        if oid in wraps:
+            w = wraps[oid]
+            ko.set('objectId', IDLE_OWN[w])
+            for kp in ko.findall('KeyedProperty'):
+                rest = rr.E_REST[w]['x' if kp.get('propertyKey') == '13' else 'y']
+                for k in kp:
+                    v = float(k.get('value', '0')) - rest
+                    assert kp.get('propertyKey') == '13' or v > -0.05, 'бусина в моргании ушла вверх'
+                    k.set('value', rr.fmt(v))
+        elif oid == fx:
+            idle.remove(ko)
+    # черта видна ровно тогда, когда спрятана бусина (ключи исходника
+    # гасили черту раньше, чем возвращалась бусина, — глаза мелькали пустыми)
+    for img, s in ((rr.BEAD_L, 'l'), (rr.BEAD_R, 'r')):
+        ko = next(k for k in idle.findall('KeyedObject') if k.get('objectId') == img)
+        kp = next(k for k in ko.findall('KeyedProperty') if k.get('propertyKey') == '18')
+        nko = ET.SubElement(idle, 'KeyedObject', {'objectId': IDLE_OWN[f'line_{s}']})
+        nkp = ET.SubElement(nko, 'KeyedProperty', {'propertyKey': '18'})
+        for k in kp:
+            ET.SubElement(nkp, 'KeyFrameDouble', {'value': rr.fmt(1 - float(k.get('value', '0'))),
+                                                  'frame': k.get('frame', '0'), 'interpolationType': 'linear'})
 
 
 # --- Клипы: рты-линии → позы шва ---------------------------------------------
@@ -1650,6 +1769,7 @@ def channels(ex):
     out[('face_shut', OP)] = min(1.0, max(0.0, (shut - 0.4) / 0.6))
     out[('face_heart_glow', OP)] = min(1.0, ex.get('heart', 0.0) * ex.get('glow', 1.0))
     out[('face_crease', OP)] = min(1.0, ex.get('crease', 0.0))
+    out[('face_flush_lid', OP)] = min(1.0, ex.get('flush', 0.0))   # краска и на заплатке века
     if ex.get('tongue'):                        # большой язык «вкусно!» («Еда 4»)
         out[('d_tongue', Y)] = -5.5 * ex['tongue']
         out[('d_tongue', SX)] = 0.45 * ex['tongue']
