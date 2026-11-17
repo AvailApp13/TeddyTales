@@ -787,6 +787,10 @@
   "settingsSectionNotifications": "Уведомления",
   "settingsSignOut": "Выйти",
   "settingsSignOutConfirmBody": "Прогресс останется на сервере и вернётся при следующем входе.",
+  "settingsSignOutGuestBody": "Вы вошли без почты и Apple, поэтому малыш сохранён только на этом телефоне. После выхода вернуть его не получится. Чтобы не потерять его, сначала привяжите вход в настройках.",
+  "@settingsSignOutGuestBody": {
+    "description": "Подтверждение выхода для гостя: мишка пропадёт"
+  },
   "settingsSignOutConfirmTitle": "Выйти из аккаунта?",
   "settingsSignOutHint": "Вернёт к выбору способа входа",
   "settingsTitle": "Настройки",

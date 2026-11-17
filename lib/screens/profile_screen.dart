@@ -291,8 +291,11 @@ class ProfileScreen extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  confirmSignOut(context, onSignOut),
+                              onPressed: () => confirmSignOut(
+                                context,
+                                onSignOut,
+                                guest: game.account?.isAnonymous ?? true,
+                              ),
                               icon: const Icon(Icons.logout, size: 19),
                               label: Text(l10n.settingsSignOut),
                               style: OutlinedButton.styleFrom(

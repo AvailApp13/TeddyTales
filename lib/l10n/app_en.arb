@@ -435,6 +435,7 @@
   "settingsSectionNotifications": "Notifications",
   "settingsSignOut": "Sign out",
   "settingsSignOutConfirmBody": "Your progress stays on the server and comes back next time you sign in.",
+  "settingsSignOutGuestBody": "You signed in without email or Apple, so your little one is saved only on this phone. After signing out it cannot be restored. Link a sign-in method in Settings first to keep it.",
   "settingsSignOutConfirmTitle": "Sign out?",
   "settingsSignOutHint": "Takes you back to the sign-in options",
   "settingsTitle": "Settings",

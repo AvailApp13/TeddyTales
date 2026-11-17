@@ -207,8 +207,11 @@ class SettingsScreen extends StatelessWidget {
                                   ),
                                   subtitle: Text(l10n.settingsSignOutHint),
                                   trailing: const Icon(Icons.logout, size: 20),
-                                  onTap: () =>
-                                      confirmSignOut(context, onSignOut),
+                                  onTap: () => confirmSignOut(
+                                    context,
+                                    onSignOut,
+                                    guest: game.account?.isAnonymous ?? true,
+                                  ),
                                 ),
                                 if (game.onRestorePurchases
                                     case final restore?) ...[

@@ -1227,6 +1227,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSignOutConfirmBody => '进度保存在服务器，下次登录会恢复。';
 
   @override
+  String get settingsSignOutGuestBody =>
+      '你没有用邮箱或 Apple 登录，宝宝只保存在这部手机上。退出后将无法恢复。请先在设置中绑定登录方式。';
+
+  @override
   String get settingsSignOutConfirmTitle => '确定退出登录？';
 
   @override

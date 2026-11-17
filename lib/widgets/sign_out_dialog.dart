@@ -17,10 +17,15 @@ import 'top_toast.dart';
 /// приложении, которое делается одним касанием. И говорим главное — что
 /// прогресс никуда не денется: без этой строки человек читает «выйти» как
 /// «стереть мишку».
+///
+/// Гость (вошёл через «Пропустить», без почты и Apple) — другое дело: его
+/// мишка привязан только к этому телефону, и выход теряет его навсегда.
+/// Ему так и говорим (проверка 17.11 — раньше обещали, что всё вернётся).
 Future<void> confirmSignOut(
   BuildContext context,
-  VoidCallback? onSignOut,
-) async {
+  VoidCallback? onSignOut, {
+  bool guest = false,
+}) async {
   if (onSignOut == null) return;
   final l10n = context.l10n;
 
@@ -28,7 +33,7 @@ Future<void> confirmSignOut(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(l10n.settingsSignOutConfirmTitle),
-      content: Text(l10n.settingsSignOutConfirmBody),
+      content: Text(guest ? l10n.settingsSignOutGuestBody : l10n.settingsSignOutConfirmBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),

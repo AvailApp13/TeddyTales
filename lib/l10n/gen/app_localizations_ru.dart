@@ -1312,6 +1312,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Прогресс останется на сервере и вернётся при следующем входе.';
 
   @override
+  String get settingsSignOutGuestBody =>
+      'Вы вошли без почты и Apple, поэтому малыш сохранён только на этом телефоне. После выхода вернуть его не получится. Чтобы не потерять его, сначала привяжите вход в настройках.';
+
+  @override
   String get settingsSignOutConfirmTitle => 'Выйти из аккаунта?';
 
   @override

@@ -1302,6 +1302,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your progress stays on the server and comes back next time you sign in.';
 
   @override
+  String get settingsSignOutGuestBody =>
+      'You signed in without email or Apple, so your little one is saved only on this phone. After signing out it cannot be restored. Link a sign-in method in Settings first to keep it.';
+
+  @override
   String get settingsSignOutConfirmTitle => 'Sign out?';
 
   @override
