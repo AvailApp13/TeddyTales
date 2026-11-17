@@ -28,6 +28,7 @@ import 'game/shop_items.dart' show ItemPrices;
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
 import 'notifications/push_registration.dart';
+import 'widgets/tablet_scale.dart';
 import 'notifications/smart_texts.dart'
     show NotificationTexts, notificationName;
 import 'alarm/wake_alarm.dart';
@@ -243,12 +244,13 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   late BearLanguage _language = _startLanguage();
 
   BearLanguage _startLanguage() {
-    BearLanguage? parse(Object? code) => switch (code?.toString().split(RegExp('[-_]')).first) {
-      'ru' => BearLanguage.ru,
-      'zh' => BearLanguage.zh,
-      'en' => BearLanguage.en,
-      _ => null,
-    };
+    BearLanguage? parse(Object? code) =>
+        switch (code?.toString().split(RegExp('[-_]')).first) {
+          'ru' => BearLanguage.ru,
+          'zh' => BearLanguage.zh,
+          'en' => BearLanguage.en,
+          _ => null,
+        };
     return parse(widget.boot.cache?.loadSettings()['language']) ??
         parse(widget.boot.snapshot.account.locale) ??
         parse(WidgetsBinding.instance.platformDispatcher.locale.languageCode) ??
@@ -261,11 +263,13 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     _saveSettings();
   }
 
-  void _saveSettings() => unawaited(widget.boot.cache?.saveSettings({
-    'language': _language.name,
-    'notifications': _game.notificationSettings,
-    'quiet_hours': _game.quietHours,
-  }));
+  void _saveSettings() => unawaited(
+    widget.boot.cache?.saveSettings({
+      'language': _language.name,
+      'notifications': _game.notificationSettings,
+      'quiet_hours': _game.quietHours,
+    }),
+  );
 
   /// Пускать ли дальше стартовой страницы: есть сессия (человек уже
   /// входил на этом телефоне), гость или стартовая страница выключена.
@@ -370,7 +374,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
           },
           _ => null,
         },
-        quietHours: saved['quiet_hours'] is bool ? saved['quiet_hours'] as bool : null,
+        quietHours: saved['quiet_hours'] is bool
+            ? saved['quiet_hours'] as bool
+            : null,
       )
       ..onSettingsChanged = _saveSettings;
     // Обращение к полю поднимает `late final` и включает подписку на
@@ -601,6 +607,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
+      // На планшете всё крупнее (заказчик 17.11) — см. TabletScale.
+      builder: (context, child) => TabletScale(child: child!),
       home: _signedIn ? _home() : _start(),
     );
   }
