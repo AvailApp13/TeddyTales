@@ -59,18 +59,31 @@ class BearLifePolicy {
 
   /// Следующее состояние по показателям с учётом текущего ([current]) и
   /// того, сколько оно уже держится ([held]).
-  BearMood resolve(BearCareStats stats, BearMood current, Duration held) {
+  ///
+  /// [stage] — нужды, которых нет на этой стадии, не выбираются: «грязнуля»
+  /// по ТЗ аниматора только со стадии 3 (как в `BearMoodPolicy`; проверка
+  /// 17.11 — живой мишка показывал его и малышу).
+  BearMood resolve(
+    BearCareStats stats,
+    BearMood current,
+    Duration held, {
+    BearStage? stage,
+  }) {
+    if (stage != null && current.isNeed && !current.isAvailableOn(stage)) {
+      current = BearMood.normal;
+      held = minHold;
+    }
     if (held < minHold) return current;
     // Нужда: держится, пока её показатель не поднялся выше порога отпускания.
     if (current.isNeed && needOf(stats, current) < lowRelease) {
       // …но более острая нужда перебивает.
-      final worse = _worstNeed(stats, low);
+      final worse = _worstNeed(stats, low, stage);
       if (worse != null && needOf(stats, worse) < needOf(stats, current)) {
         return worse;
       }
       return current;
     }
-    final need = _worstNeed(stats, low);
+    final need = _worstNeed(stats, low, stage);
     if (need != null) return need;
     final average = stats.average;
     switch (current) {
@@ -86,7 +99,7 @@ class BearLifePolicy {
     return BearMood.normal;
   }
 
-  static BearMood? _worstNeed(BearCareStats stats, double below) {
+  static BearMood? _worstNeed(BearCareStats stats, double below, BearStage? stage) {
     BearMood? worst;
     var value = below;
     for (final (v, mood) in [
@@ -94,7 +107,7 @@ class BearLifePolicy {
       (stats.sleep, BearMood.sleepy),
       (stats.hygiene, BearMood.dirty),
     ]) {
-      if (v < value) {
+      if (v < value && (stage == null || mood.isAvailableOn(stage))) {
         value = v;
         worst = mood;
       }
@@ -188,7 +201,7 @@ class BearLife extends ChangeNotifier {
   }
 
   BearMood _initialMood(BearCareStats stats) =>
-      policy.resolve(stats, BearMood.normal, policy.minHold);
+      policy.resolve(stats, BearMood.normal, policy.minHold, stage: controller.state.stage);
 
   void _onController() {
     final prev = _stats;
@@ -218,7 +231,12 @@ class BearLife extends ChangeNotifier {
 
   void _tick() {
     final now = clock.now();
-    final next = policy.resolve(_stats, _mood, now.difference(_since));
+    final next = policy.resolve(
+      _stats,
+      _mood,
+      now.difference(_since),
+      stage: controller.state.stage,
+    );
     if (next != _mood) {
       _mood = next;
       _since = now;

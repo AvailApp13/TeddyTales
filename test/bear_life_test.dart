@@ -103,4 +103,16 @@ void main() {
       );
     });
   });
+
+  test('малышу «грязнулю» не показываем — только со стадии 3', () {
+    const stats = BearCareStats(food: 90, hygiene: 10, sleep: 90, play: 90, love: 90);
+    expect(
+      policy.resolve(stats, BearMood.normal, policy.minHold, stage: BearStage.newborn),
+      isNot(BearMood.dirty),
+    );
+    expect(
+      policy.resolve(stats, BearMood.normal, policy.minHold, stage: BearStage.growing),
+      BearMood.dirty,
+    );
+  });
 }
