@@ -42,6 +42,9 @@ class NotificationService {
   /// Включённые типы (КП 13.2). Пустое множество — молчим совсем.
   Set<String> enabled = {'hungry', 'play', 'sleep'};
 
+  /// Тихие часы из настроек (КП 13.2): ночные напоминания — на утро.
+  bool quietHours = true;
+
   /// Поднимает механизм уведомлений.
   ///
   /// Возвращает `null`, если не вышло: разрешение не дали, платформа не
@@ -126,7 +129,7 @@ class NotificationService {
 
     final at = now ?? DateTime.now();
     bool on(String kind) => enabled.contains(switchOf(kind));
-    final plan = schedule.planFrom(
+    final plan = schedule.withQuiet(quietHours).planFrom(
       stats,
       decay,
       at,

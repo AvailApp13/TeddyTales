@@ -99,6 +99,23 @@ void main() {
   });
 
   group('Настройки', () {
+    test('уведомления и тихие часы сохраняются и восстанавливаются', () {
+      var saved = 0;
+      game.onSettingsChanged = () => saved++;
+
+      game.setQuietHours(false);
+      expect(saved, 1);
+      expect(game.notificationSettings, isNotEmpty);
+
+      game.restoreSettings(
+        notifications: {'event': true, 'nonexistent': true},
+        quietHours: true,
+      );
+      expect(game.isNotificationOn('event'), isTrue);
+      expect(game.notificationSettings.containsKey('nonexistent'), isFalse);
+      expect(game.quietHours, isTrue);
+    });
+
     testWidgets('раздел «Аккаунт» показывается вместе с выходом', (
       tester,
     ) async {

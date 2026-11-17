@@ -25,6 +25,29 @@ class LocalCache {
   LocalCache(this._prefs);
 
   static const String _key = 'teddytales.snapshot.v1';
+  static const String _settingsKey = 'teddytales.settings.v1';
+
+  /// Настройки этого телефона: язык, какие уведомления включены, тихие
+  /// часы (КП 13.2, 14.2, 16.1). Раньше жили только в памяти и
+  /// сбрасывались при каждом запуске (проверка 17.11). Пусто — не меняли.
+  Map<String, dynamic> loadSettings() {
+    final text = _prefs.getString(_settingsKey);
+    if (text == null) return const {};
+    try {
+      final json = jsonDecode(text);
+      return json is Map ? Map<String, dynamic>.from(json) : const {};
+    } on Object catch (_) {
+      return const {};
+    }
+  }
+
+  Future<void> saveSettings(Map<String, dynamic> settings) async {
+    try {
+      await _prefs.setString(_settingsKey, jsonEncode(settings));
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] настройки не сохранились: $error');
+    }
+  }
 
   static Future<LocalCache?> open() async {
     try {

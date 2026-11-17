@@ -233,7 +233,36 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     localOnly: !widget.boot.hasSession && !widget.boot.isOnline,
   );
 
-  BearLanguage _language = BearLanguage.ru;
+  /// Язык: выбранный в настройках (хранится на телефоне), иначе язык
+  /// кабинета, иначе язык телефона. Раньше каждый запуск начинался на
+  /// русском, и китайский пользователь видел русскую стартовую страницу
+  /// (проверка 17.11).
+  late BearLanguage _language = _startLanguage();
+
+  BearLanguage _startLanguage() {
+    BearLanguage? parse(Object? code) => switch (code?.toString().split(RegExp('[-_]')).first) {
+      'ru' => BearLanguage.ru,
+      'zh' => BearLanguage.zh,
+      'en' => BearLanguage.en,
+      _ => null,
+    };
+    return parse(widget.boot.cache?.loadSettings()['language']) ??
+        parse(widget.boot.snapshot.account.locale) ??
+        parse(WidgetsBinding.instance.platformDispatcher.locale.languageCode) ??
+        // Язык телефона не из трёх: английский понятнее всего.
+        BearLanguage.en;
+  }
+
+  void _setLanguage(BearLanguage value) {
+    setState(() => _language = value);
+    _saveSettings();
+  }
+
+  void _saveSettings() => unawaited(widget.boot.cache?.saveSettings({
+    'language': _language.name,
+    'notifications': _game.notificationSettings,
+    'quiet_hours': _game.quietHours,
+  }));
 
   /// Пускать ли дальше стартовой страницы: есть сессия (человек уже
   /// входил на этом телефоне), гость или стартовая страница выключена.
@@ -281,10 +310,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     final service = widget.notifications;
     if (service == null) return;
 
-    service.enabled = {
-      for (final kind in NotificationKind.values)
-        if (_game.isNotificationOn(kind.id)) kind.id,
-    };
+    service
+      ..enabled = {
+        for (final kind in NotificationKind.values)
+          if (_game.isNotificationOn(kind.id)) kind.id,
+      }
+      ..quietHours = _game.quietHours;
     service.reschedule(
       stats: _bear.stats,
       decay: _bear.decay,
@@ -324,6 +355,20 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   @override
   void initState() {
     super.initState();
+    // Настройки этого телефона (КП 13.2): что включено и тихие часы.
+    final saved = widget.boot.cache?.loadSettings() ?? const {};
+    _game
+      ..restoreSettings(
+        notifications: switch (saved['notifications']) {
+          final Map map => {
+            for (final e in map.entries)
+              if (e.value is bool) e.key.toString(): e.value as bool,
+          },
+          _ => null,
+        },
+        quietHours: saved['quiet_hours'] is bool ? saved['quiet_hours'] as bool : null,
+      )
+      ..onSettingsChanged = _saveSettings;
     // Обращение к полю поднимает `late final` и включает подписку на
     // действия. Без этой строки мост создался бы только при первом
     // обращении из разметки, то есть никогда.
@@ -716,7 +761,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       game: _game,
       calendar: _calendar,
       language: _language,
-      onLanguageChanged: (value) => setState(() => _language = value),
+      onLanguageChanged: _setLanguage,
       // ВРЕМЕННО: настоящего рига ещё нет, поэтому показываем сторонний
       // демонстрационный файл — он подтверждает, что пайплайн загрузки,
       // выбора State Machine и рендера работает. Убрать, как только придёт

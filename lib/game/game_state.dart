@@ -535,8 +535,10 @@ class GameState extends ChangeNotifier {
     _notifications[id] = on;
     notifyListeners();
     final ask = onAskNotifications;
-    if (!on || ask == null) return true;
-    if (await ask()) return true;
+    if (!on || ask == null || await ask()) {
+      onSettingsChanged?.call();
+      return true;
+    }
     _notifications[id] = false;
     notifyListeners();
     return false;
@@ -555,11 +557,28 @@ class GameState extends ChangeNotifier {
       _notifications[kind.id] = true;
     }
     notifyListeners();
+    onSettingsChanged?.call();
     return true;
   }
 
   void setQuietHours(bool value) {
     _quietHours = value;
+    notifyListeners();
+    onSettingsChanged?.call();
+  }
+
+  /// Настройки поменялись — сохранить на телефоне (`LocalCache`).
+  VoidCallback? onSettingsChanged;
+
+  /// Включённые уведомления по типам — для сохранения.
+  Map<String, bool> get notificationSettings => Map.unmodifiable(_notifications);
+
+  /// Сохранённые настройки при запуске. Неизвестные типы пропускаются.
+  void restoreSettings({Map<String, bool>? notifications, bool? quietHours}) {
+    for (final MapEntry(:key, :value) in (notifications ?? const {}).entries) {
+      if (_notifications.containsKey(key)) _notifications[key] = value;
+    }
+    if (quietHours != null) _quietHours = quietHours;
     notifyListeners();
   }
 }

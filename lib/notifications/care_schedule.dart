@@ -18,7 +18,24 @@ class CareSchedule {
     this.minGap = const Duration(hours: 3),
     this.maxPerDay = 4,
     this.bundleWindow = const Duration(minutes: 90),
+    this.quiet = true,
   });
+
+  /// То же расписание с тихими часами или без — по переключателю в
+  /// настройках (КП 13.2). Раньше переключатель ни на что не влиял.
+  CareSchedule withQuiet(bool quiet) => CareSchedule(
+    threshold: threshold,
+    quietFrom: quietFrom,
+    quietUntil: quietUntil,
+    minGap: minGap,
+    maxPerDay: maxPerDay,
+    bundleWindow: bundleWindow,
+    quiet: quiet,
+  );
+
+  /// Включены ли тихие часы. Выключены — напоминание приходит, когда
+  /// наступило, даже ночью.
+  final bool quiet;
 
   /// Значение показателя, при котором пора напомнить. Не ноль: по КП 6.3
   /// показатели упираются в безопасный предел, и ждать нуля — значит не
@@ -59,6 +76,7 @@ class CareSchedule {
   /// Именно сдвигает, а не отменяет: мишка, проголодавшийся в полночь, к
   /// восьми утра голоден тем более, и промолчать было бы хуже.
   DateTime respectQuietHours(DateTime moment) {
+    if (!quiet) return moment;
     final hour = moment.hour;
     final isQuiet = quietFrom > quietUntil
         // Промежуток через полночь: 22–8.

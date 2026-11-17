@@ -37,6 +37,12 @@ void main() {
       expect(at, DateTime(2026, 9, 17, 8));
     });
 
+    test('тихие часы выключены в настройках — ночью не сдвигается', () {
+      final at = DateTime(2026, 9, 16, 1, 30);
+      expect(schedule.withQuiet(false).respectQuietHours(at), at);
+      expect(schedule.withQuiet(true).respectQuietHours(at), DateTime(2026, 9, 16, 8));
+    });
+
     test('дневное не трогается', () {
       final at = DateTime(2026, 9, 16, 15, 20);
       expect(schedule.respectQuietHours(at), at);
