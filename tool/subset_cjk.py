@@ -8,7 +8,8 @@
 килобайт. Тот же приём, что в tool/subset_emoji.py.
 
 Источник символов — китайский ARB (lib/l10n/app_zh.arb) плюс китайские
-строки в lib/**/*.dart (реплики питомца лежат в коде). Запускать после
+строки в lib/**/*.dart (реплики питомца лежат в коде) и правовые тексты
+assets/legal/*.md. Запускать после
 каждого пополнения переводов:
 
     python3 tool/subset_cjk.py
@@ -44,6 +45,13 @@ def collect(root: Path) -> set[int]:
             if key.startswith('@') or not isinstance(value, str):
                 continue
             found.update(ord(c) for c in value if is_cjk(ord(c)))
+
+    # Правовые тексты (условия, политика) открываются в приложении —
+    # китайская версия тоже рисуется этим шрифтом (проверка 17.11).
+    for path in sorted((root / 'assets' / 'legal').glob('*.md')):
+        for char in path.read_text(encoding='utf-8'):
+            if is_cjk(ord(char)):
+                found.add(ord(char))
 
     for path in sorted((root / 'lib').rglob('*.dart')):
         for char in path.read_text(encoding='utf-8'):
