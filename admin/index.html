@@ -278,7 +278,10 @@ $('btn-signout').onclick = async () => {
 
 function sections() {
   const all = [
-    { id: 'dash', title: 'Дашборд', admin: false, render: renderDash },
+    // Оператору заказов — только заказы (КП 15.7): дашборд сервер отдаёт
+    // одному администратору, и до 17.11 у оператора панель открывалась
+    // ошибкой «Доступ только для администратора».
+    { id: 'dash', title: 'Дашборд', admin: true, render: renderDash },
     { id: 'economy', title: 'Экономика', admin: true, render: renderEconomy },
     { id: 'prices', title: 'Каталог и цены', admin: true, render: renderPrices },
     { id: 'zodiac', title: 'Знаки зодиака', admin: true, render: renderZodiac },
