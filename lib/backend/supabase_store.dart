@@ -260,7 +260,29 @@ class SupabaseStore implements ProgressStore, AccountAuth {
       );
     }
     _petId = snapshot.petId;
-    return snapshot;
+    return snapshot.copyWith(slots: await _roomSlots());
+  }
+
+  /// Где что стоит в игровой (`room_layout.slot`, миграция 0032): снимок
+  /// функций места не несёт, дочитывается здесь. Без колонки или без сети
+  /// — пусто: вещи, как раньше, ждут в ленте, вход не ломается.
+  Future<Map<String, String>> _roomSlots() async {
+    final player = _client.auth.currentUser?.id;
+    if (player == null) return const {};
+    try {
+      final rows = await _client
+          .from('room_layout')
+          .select('item_id, slot')
+          .eq('player_id', player)
+          .not('slot', 'is', null);
+      return {
+        for (final row in rows)
+          if (row['slot'] case final String slot) slot: row['item_id'].toString(),
+      };
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] места вещей не прочитаны: $error');
+      return const {};
+    }
   }
 
   Future<String> _pet() async => _petId ?? (await load()).petId;
@@ -353,17 +375,24 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   }
 
   @override
-  Future<void> setPlaced(String itemId, {required bool placed}) async {
+  Future<void> setPlaced(String itemId, {required bool placed, String? slot}) async {
     final player = _client.auth.currentUser?.id;
     if (player == null) {
       throw const ProgressStoreException('setPlaced без входа');
     }
     try {
       if (placed) {
-        await _client.from('room_layout').upsert({
-          'player_id': player,
-          'item_id': itemId,
-        });
+        final row = {'player_id': player, 'item_id': itemId};
+        try {
+          // Место в игровой (миграция 0032). Стены и пол — без места.
+          await _client.from('room_layout').upsert({...row, 'slot': ?slot});
+        } on PostgrestException catch (error) {
+          // Сервер без колонки `slot` (0032 ещё не применена): вещь
+          // сохраняется как раньше, без места, — выставление не теряется.
+          if (slot == null) rethrow;
+          debugPrint('[TeddyTales] место вещи не сохранено: ${error.message}');
+          await _client.from('room_layout').upsert(row);
+        }
       } else {
         await _client
             .from('room_layout')

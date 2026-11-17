@@ -122,14 +122,17 @@ class MemoryStore implements ProgressStore {
   }
 
   @override
-  Future<void> setPlaced(String itemId, {required bool placed}) async {
+  Future<void> setPlaced(String itemId, {required bool placed, String? slot}) async {
     final next = Set<String>.from(_snapshot.placed);
+    final slots = Map<String, String>.from(_snapshot.slots)
+      ..removeWhere((_, item) => item == itemId);
     if (placed) {
       next.add(itemId);
+      if (slot != null) slots[slot] = itemId;
     } else {
       next.remove(itemId);
     }
-    _snapshot = _snapshot.copyWith(placed: next);
+    _snapshot = _snapshot.copyWith(placed: next, slots: slots);
   }
 
   @override

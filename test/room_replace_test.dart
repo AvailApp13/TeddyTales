@@ -81,7 +81,7 @@ void main() {
   test('сервер узнаёт про обе половины замены', () {
     game = build();
     final events = <(String, bool)>[];
-    game.onPlace = (id, {required placed}) => events.add((id, placed));
+    game.onPlace = (id, {required placed, slot}) => events.add((id, placed));
 
     game.replacePlaced('bed', 'lamp');
 

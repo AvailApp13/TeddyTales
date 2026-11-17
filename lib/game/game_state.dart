@@ -10,6 +10,7 @@ import '../bear/bear_state.dart';
 import 'food.dart';
 import 'pet_profile.dart';
 import 'referral_info.dart';
+import 'room_slots.dart';
 import 'shop_items.dart';
 import 'test_stubs.dart';
 
@@ -32,6 +33,7 @@ class GameState extends ChangeNotifier {
     required PetProfile profile,
     Set<String>? owned,
     Set<String>? placed,
+    Map<String, String>? slots,
     int walletFloor = kTestWallet,
     AccountInfo? account,
   }) : _account = account,
@@ -54,7 +56,18 @@ class GameState extends ChangeNotifier {
        // комнату каждый собирает сам через раздел «Комната».
        _placed = {
          ...placed ?? const {'wall_rose', 'floor_wood'},
-       };
+       } {
+    // Где что стояло в игровой (сервер или кеш телефона, КП 10.7). Берётся
+    // только то, что можно поставить сейчас: место есть в игровой, вещь
+    // куплена, выставлена и сюда помещается. Остальное ждёт в ленте.
+    for (final MapEntry(key: slotId, value: itemId) in (slots ?? const {}).entries) {
+      final slot = roomSlots.where((s) => s.id == slotId).firstOrNull;
+      if (slot == null || _slots.containsKey(slotId) || _slots.containsValue(itemId)) continue;
+      if (!_owned.contains(itemId) || !_placed.contains(itemId)) continue;
+      if (!slot.takes(ItemCatalog.byId(itemId))) continue;
+      _slots[slotId] = itemId;
+    }
+  }
 
   /// Что даётся бесплатно на старте. КП 10.8: 12 предметов бесплатно.
   static const Set<String> _startingItems = {
@@ -96,7 +109,7 @@ class GameState extends ChangeNotifier {
   void Function(String categoryId, int level)? onLevelDone;
 
   /// Предмет поставлен в комнату или убран.
-  void Function(String itemId, {required bool placed})? onPlace;
+  void Function(String itemId, {required bool placed, String? slot})? onPlace;
 
   final int _walletFloor;
   PetProfile _profile;
@@ -275,7 +288,7 @@ class GameState extends ChangeNotifier {
     _placed.add(itemId);
 
     bear.recordAction(BearAction.decorate);
-    onPlace?.call(itemId, placed: true);
+    onPlace?.call(itemId, placed: true, slot: slotId);
     notifyListeners();
   }
 

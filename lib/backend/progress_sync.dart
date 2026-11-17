@@ -66,8 +66,8 @@ class ProgressSync {
       game.onReferral = referral;
       game.onRedeemReferral = redeemReferral;
     }
-    game.onPlace = (itemId, {required placed}) =>
-        unawaited(place(itemId, placed: placed));
+    game.onPlace = (itemId, {required placed, slot}) =>
+        unawaited(place(itemId, placed: placed, slot: slot));
   }
 
   final ProgressStore store;
@@ -235,9 +235,9 @@ class ProgressSync {
   }
 
   /// Ставит предмет в комнату или убирает (КП 10.7).
-  Future<void> place(String itemId, {required bool placed}) async {
+  Future<void> place(String itemId, {required bool placed, String? slot}) async {
     try {
-      await store.setPlaced(itemId, placed: placed);
+      await store.setPlaced(itemId, placed: placed, slot: slot);
       _online = true;
     } on Object catch (error) {
       _offline(error);

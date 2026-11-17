@@ -380,13 +380,42 @@ void main() {
 
     test('сервер узнаёт про обе половины замены', () {
       final events = <(String, bool)>[];
-      game.onPlace = (id, {required placed}) => events.add((id, placed));
+      game.onPlace = (id, {required placed, slot}) => events.add((id, placed));
 
       game.placeInSlot('nursery.floor_left', 'bed');
       game.placeInSlot('nursery.floor_left', 'armchair');
 
       // Без первой записи на сервере остались бы стоять обе вещи разом.
       expect(events, [('bed', true), ('bed', false), ('armchair', true)]);
+    });
+
+    test('сервер узнаёт место вещи (проверка 17.11)', () {
+      final slots = <String?>[];
+      game.onPlace = (id, {required placed, slot}) => slots.add(slot);
+
+      game.placeInSlot('nursery.floor_left', 'armchair');
+
+      expect(slots, ['nursery.floor_left']);
+    });
+
+    test('после перезапуска вещь встаёт на своё место', () {
+      final restored = GameState(
+        bear: BearController(),
+        profile: PetProfile(name: 'Тедди', birthAt: DateTime(2026, 6, 1)),
+        owned: {'armchair', 'rug', 'ball'},
+        placed: const {'armchair', 'rug'},
+        slots: const {
+          'nursery.floor_left': 'armchair',
+          // не выставлена — ждёт в ленте
+          'nursery.toy_left': 'ball',
+          // такого места нет
+          'nursery.attic': 'rug',
+        },
+      );
+
+      expect(restored.itemInSlot('nursery.floor_left'), 'armchair');
+      expect(restored.itemInSlot('nursery.toy_left'), isNull);
+      expect(restored.slotOf('rug'), isNull);
     });
   });
 }

@@ -25,6 +25,7 @@ class PetSnapshot {
     required this.placed,
     required this.eduProgress,
     required this.serverTime,
+    this.slots = const {},
     this.account = const AccountInfo(),
     this.named = true,
     this.inclinations = const {},
@@ -44,6 +45,11 @@ class PetSnapshot {
   /// Что куплено (КП 10.8) и что расставлено в комнате (КП 10.7).
   final Set<String> inventory;
   final Set<String> placed;
+
+  /// Где что стоит в игровой: место → вещь (КП 10.7). Сервер хранит место
+  /// в `room_layout.slot` (миграция 0032), снимок функций его не несёт —
+  /// `SupabaseStore.load` дочитывает отдельно; кеш телефона хранит сам.
+  final Map<String, String> slots;
 
   /// Сколько уровней пройдено по категориям (КП 9.2).
   final Map<String, int> eduProgress;
@@ -140,6 +146,7 @@ class PetSnapshot {
       ),
       inventory: _ids(json['inventory']),
       placed: _ids(json['placed']),
+      slots: _slotMap(json['slots']),
       eduProgress: _progress(json['edu']),
       serverTime: _time(json['server_time']) ?? DateTime.now(),
       account: AccountInfo(
@@ -181,13 +188,18 @@ class PetSnapshot {
   }
 
   /// Тот же снимок с другим кабинетом — для кеша и тестов.
-  PetSnapshot copyWith({Set<String>? placed, AccountInfo? account}) =>
+  PetSnapshot copyWith({
+    Set<String>? placed,
+    Map<String, String>? slots,
+    AccountInfo? account,
+  }) =>
       PetSnapshot(
         petId: petId,
         profile: profile,
         state: state,
         inventory: inventory,
         placed: placed ?? this.placed,
+        slots: slots ?? this.slots,
         eduProgress: eduProgress,
         serverTime: serverTime,
         account: account ?? this.account,
@@ -269,6 +281,14 @@ class PetSnapshot {
 
   static Set<String> _ids(Object? value) =>
       value is List ? value.map((item) => item.toString()).toSet() : <String>{};
+
+  static Map<String, String> _slotMap(Object? value) {
+    if (value is! Map) return const {};
+    return {
+      for (final entry in value.entries)
+        if (entry.value != null) entry.key.toString(): entry.value.toString(),
+    };
+  }
 
   static Map<String, int> _progress(Object? value) {
     if (value is! Map) return const {};

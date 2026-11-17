@@ -31,6 +31,7 @@ class _FakeStore implements ProgressStore {
   final List<String> bought = [];
   final List<(String, int)> levels = [];
   final List<(String, bool)> placed = [];
+  final Map<String, String> slots = {};
 
   PetSnapshot answer = _snapshotWith(coins: 100);
 
@@ -96,9 +97,10 @@ class _FakeStore implements ProgressStore {
       answer;
 
   @override
-  Future<void> setPlaced(String itemId, {required bool placed}) async {
+  Future<void> setPlaced(String itemId, {required bool placed, String? slot}) async {
     if (failing) throw const ProgressStoreException('нет сети');
     this.placed.add((itemId, placed));
+    if (placed && slot != null) slots[slot] = itemId;
   }
 
   @override

@@ -71,8 +71,10 @@ abstract interface class ProgressStore {
   /// с кодом (TT404, TT403, TT409, TT410, TT429).
   Future<PetSnapshot> redeemReferral(String code);
 
-  /// Поставить предмет в комнату или убрать (КП 10.7).
-  Future<void> setPlaced(String itemId, {required bool placed});
+  /// Поставить предмет в комнату или убрать (КП 10.7). [slot] — место в
+  /// игровой, чтобы после перезапуска вещь встала туда же; у стен и пола
+  /// места нет.
+  Future<void> setPlaced(String itemId, {required bool placed, String? slot});
 
   /// Настройки игры: скорости, тайминги, награды, цены (КП 5.6, 15.4).
   Future<Map<String, dynamic>> config();

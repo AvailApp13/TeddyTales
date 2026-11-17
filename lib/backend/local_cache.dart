@@ -120,6 +120,7 @@ class LocalCache {
     },
     'inventory': s.inventory.toList(),
     'placed': s.placed.toList(),
+    'slots': s.slots,
     'edu': s.eduProgress,
     'asleep': s.asleep,
     'daily': s.daily.toJson(),
