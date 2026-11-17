@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import 'bear_action.dart';
 import 'bear_initiative.dart';
+import 'bear_phrases.dart';
 import 'bear_rig_sink.dart';
 import 'bear_rig_spec.dart';
 import 'bear_state.dart';
@@ -188,7 +189,20 @@ class BearController extends ChangeNotifier {
 
     _fire(BearRigSpec.trgStageUp);
     _update(_state.copyWith(stage: next));
+    _cue(BearPhraseContext.stageUp);
     return true;
+  }
+
+  // --- Повод для реплики (КП 13.3) ----------------------------------------
+
+  /// Последнее событие, о котором мишка может сказать в пузыре.
+  BearPhraseCue? get phraseCue => _phraseCue;
+  BearPhraseCue? _phraseCue;
+  int _cueSerial = 0;
+
+  void _cue(BearPhraseContext context) {
+    _phraseCue = BearPhraseCue(context, ++_cueSerial, clock.now());
+    notifyListeners();
   }
 
   // --- Прямая установка (загрузка сохранения, дев-панель, гардероб) --------
@@ -224,6 +238,9 @@ class BearController extends ChangeNotifier {
   void recordAction(BearAction action, {DateTime? at}) {
     traitTracker.record(action, at: at);
     onAction?.call(action);
+
+    final said = BearPhraseCue.afterAction(action);
+    if (said != null) _cue(said);
 
     if (!autoTrait) return;
 

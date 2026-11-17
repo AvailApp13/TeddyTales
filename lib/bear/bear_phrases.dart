@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'bear_action.dart';
 import 'bear_rig_spec.dart';
 
 /// Языки интерфейса (КП 16.1).
@@ -34,6 +35,35 @@ enum BearPhraseContext {
 
   /// Нужда ниже 15 — про мишку забыли (заказчик 27.09, живой мишка).
   forgotten,
+}
+
+/// Повод для реплики, который дало событие: покормили, помыли, поиграли,
+/// погладили, проснулся, вырос (КП 13.3). До 17.11 пузырь знал только
+/// настроение и просьбу, и 13 из 32 реплик не показывались никогда.
+class BearPhraseCue {
+  const BearPhraseCue(this.context, this.serial, this.at);
+
+  final BearPhraseContext context;
+
+  /// Номер события — два одинаковых повода подряд различимы.
+  final int serial;
+
+  /// Когда случилось: старый повод пузырь уже не вспоминает.
+  final DateTime at;
+
+  /// Сколько повод живёт. Покормили на кухне — «Вкусно!» ещё уместно,
+  /// когда через полминуты вернулись в игровую, а через пять минут — нет.
+  static const Duration fresh = Duration(seconds: 90);
+
+  /// Что сказать после действия ухода, или `null`.
+  static BearPhraseContext? afterAction(BearAction action) => switch (action) {
+    BearAction.feed => BearPhraseContext.afterFeed,
+    BearAction.wash => BearPhraseContext.afterWash,
+    BearAction.play => BearPhraseContext.afterPlay,
+    BearAction.pet => BearPhraseContext.afterPet,
+    BearAction.wake => BearPhraseContext.afterWake,
+    _ => null,
+  };
 }
 
 /// Реплика питомца на трёх языках (КП 13.3, 13.4).

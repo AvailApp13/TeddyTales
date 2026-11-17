@@ -277,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen>
     KitchenBear.warmUp(context);
   }
 
-  void _runAction(BearAction action) {
+  void _runAction(BearAction action, {bool fromBubble = false}) {
     final controller = widget.controller;
 
     // Комната — следствие действия (`roomForAction`), а не отдельный выбор.
@@ -311,16 +311,21 @@ class _HomeScreenState extends State<HomeScreen>
         break;
       case BearAction.play:
         break;
+      // «Погладь меня» в пузыре — то же касание, что по мишке (КП 7.6).
+      // Кольцо «Любовь» сюда не попадает: у него своя комната.
       case BearAction.pet:
-        break;
+        if (fromBubble) _petBear();
       case BearAction.wake:
         controller.wakeBear();
-      // Обучение, гардероб и редактор комнаты живут в своих разделах —
-      // отсюда только отмечаем намерение, экранов ещё нет.
+      // «Пойдём учиться?» в пузыре (КП 3.4) — открывает раздел «Учимся»,
+      // как пункт лапы. До 17.11 здесь была надпись «экран не собран».
       case BearAction.learn:
+        _openSection(AppSection.learning);
+      // Одежда продаётся в магазине (раздел «Гардероб»).
       case BearAction.dressUp:
+        _openShop();
       case BearAction.decorate:
-        _notImplemented(action);
+        _startFurnishing();
     }
   }
 
@@ -1041,9 +1046,6 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _meal = KitchenMeal(id: ++_meals, mood: mood));
   }
 
-  void _notImplemented(BearAction action) =>
-      showTopToast(context, context.l10n.homeScreenNotReady(action.name));
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -1077,7 +1079,7 @@ class _HomeScreenState extends State<HomeScreen>
                     forgotten: _life.forgotten,
                     showBubble: _showSpeechBubble,
                     language: widget.language,
-                    onAcceptInitiative: _runAction,
+                    onAcceptInitiative: (a) => _runAction(a, fromBubble: true),
                     riveAssetPath: widget.riveAssetPath,
                     game: widget.game,
                     onSlotTap: _furnishing ? _useSlot : _openSlotSheet,
@@ -1936,6 +1938,7 @@ class _RoomScene extends StatelessWidget {
         child: PetSpeechBubble(
           mood: mood,
           forgotten: forgotten,
+          cue: controller.phraseCue,
           initiative: controller.initiative,
           language: language,
           girl: controller.state.skin == BearSkin.girl,

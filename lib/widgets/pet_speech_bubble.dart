@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../bear/bear.dart';
@@ -27,6 +28,7 @@ class PetSpeechBubble extends StatefulWidget {
     required this.mood,
     required this.initiative,
     this.forgotten = false,
+    this.cue,
     this.language = BearLanguage.ru,
     this.girl = false,
     this.onTap,
@@ -38,6 +40,11 @@ class PetSpeechBubble extends StatefulWidget {
 
   /// Нужда ниже 15 — реплика «Ты про меня забыл?» (`BearLife.forgotten`).
   final bool forgotten;
+
+  /// Повод от события — покормили, погладили, вырос (КП 13.3,
+  /// `BearController.phraseCue`). Свежий и ещё не сказанный — важнее
+  /// настроения и просьбы.
+  final BearPhraseCue? cue;
   final BearLanguage language;
 
   /// Героиня JOY — реплики в женском роде.
@@ -56,6 +63,13 @@ class PetSpeechBubble extends StatefulWidget {
 
   /// Сколько облачко держится после последней буквы.
   static const Duration hold = Duration(milliseconds: 3500);
+
+  /// Новый «запуск» для тестов: мишка снова здоровается.
+  @visibleForTesting
+  static void resetSession() {
+    _PetSpeechBubbleState._greeted = false;
+    _PetSpeechBubbleState._saidCue = 0;
+  }
 
   @override
   State<PetSpeechBubble> createState() => _PetSpeechBubbleState();
@@ -118,9 +132,48 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
     super.dispose();
   }
 
+  /// Поздоровался ли мишка за этот запуск. Общее на все облачка: пузырь
+  /// пересоздаётся при каждом входе в игровую, а здороваются один раз.
+  static bool _greeted = false;
+
+  /// Последний сказанный повод — тоже общий, чтобы при возвращении в
+  /// игровую «Вкусно!» не прозвучало второй раз.
+  static int _saidCue = 0;
+
+  /// Реплика по событию или приветствие: договаривается до конца, смена
+  /// настроения её не перебивает.
+  bool _sticky = false;
+
   void _refresh() {
-    final next = _resolveContext();
-    if (next == _context && _phrase != null) return;
+    final cue = widget.cue;
+    final freshCue =
+        cue != null &&
+        cue.serial > _saidCue &&
+        clock.now().difference(cue.at) < BearPhraseCue.fresh;
+    // Договариваем начатое: настроение пересчитывается каждую секунду.
+    if (_sticky && !_out.isCompleted) return;
+    _sticky = false;
+
+    BearPhraseContext next;
+    if (widget.forgotten) {
+      next = BearPhraseContext.forgotten;
+    } else if (!_greeted) {
+      next = BearPhraseContext.greeting;
+      _sticky = true;
+    } else if (freshCue) {
+      next = cue.context;
+      _sticky = true;
+    } else {
+      next = _resolveContext();
+    }
+    _greeted = true;
+    if (freshCue) _saidCue = cue.serial;
+
+    // То же самое, что уже сказано, — молчим; по событию — повторяем, только
+    // если прошлое облачко успело растаять (гладят без остановки).
+    if (next == _context && _phrase != null) {
+      if (!_sticky || !_out.isCompleted) return;
+    }
     _context = next;
     _phrase = BearPhrases.random(next);
     final chars = _phrase!.text(widget.language, girl: widget.girl).length;
@@ -132,7 +185,6 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
   }
 
   BearPhraseContext _resolveContext() {
-    if (widget.forgotten) return BearPhraseContext.forgotten;
     final initiative = widget.initiative;
     if (initiative != null) {
       return switch (initiative.action) {
@@ -177,7 +229,8 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
               alignment: Alignment.bottomRight,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: initiative == null || widget.onTap == null
+                // Приветствие и «Вкусно!» — не предложение, тап не нужен.
+                onTap: initiative == null || _sticky || widget.onTap == null
                     ? null
                     : () => widget.onTap!(initiative.action),
                 child: CustomPaint(
