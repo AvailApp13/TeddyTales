@@ -31,6 +31,9 @@ Future<String?> showRenamePetDialog({
   /// рождения, поэтому говорит «Назвать» и «Позже», а не «Сохранить» и
   /// «Отмена», и объясняет, что имя можно поменять.
   bool firstRun = false,
+
+  /// Своя подпись над полем — например, «имя не прошло проверку».
+  String? lead,
 }) {
   // Заказчик 26.09: окно из матового стекла в стиле главного экрана.
   return showGlassPanel<String>(
@@ -39,7 +42,12 @@ Future<String?> showRenamePetDialog({
     width: 330,
     dismissible: false,
     builder: (context) =>
-        _RenameDialog(current: current, onSubmit: onSubmit, firstRun: firstRun),
+        _RenameDialog(
+          current: current,
+          onSubmit: onSubmit,
+          firstRun: firstRun,
+          lead: lead,
+        ),
   );
 }
 
@@ -48,9 +56,11 @@ class _RenameDialog extends StatefulWidget {
     required this.current,
     required this.onSubmit,
     required this.firstRun,
+    this.lead,
   });
 
   final String current;
+  final String? lead;
   final bool firstRun;
   final Future<PetNameError?> Function(String name) onSubmit;
 
@@ -140,9 +150,9 @@ class _RenameDialogState extends State<_RenameDialog> {
           leading: const _PawBadge(),
         ),
         const SizedBox(height: 10),
-        if (widget.firstRun) ...[
+        if (widget.firstRun || widget.lead != null) ...[
           Text(
-            l10n.nameFirstLead,
+            widget.lead ?? l10n.nameFirstLead,
             style: glassText(14, 600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),

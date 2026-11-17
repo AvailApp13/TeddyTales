@@ -706,6 +706,12 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       });
       return;
     }
+    if (widget.boot.isOnline &&
+        widget.boot.snapshot.named &&
+        widget.boot.snapshot.nameRejected) {
+      _askNewName();
+      return;
+    }
     if (!widget.boot.isOnline || widget.boot.snapshot.named) return;
     _askedName = true;
     // Остальные окна ждут конца первого запуска (см. GameState.onboarding).
@@ -731,6 +737,22 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         await showFriendCodeDialog(after, _game);
       }
       _game.onboarding.value = false;
+    });
+  }
+
+  /// Модератор отклонил имя в панели (КП 15.6): сервер вернул «Мой
+  /// малыш», просим придумать другое. Без видео рождения — малыш уже есть.
+  void _askNewName() {
+    _askedName = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final context = _navigator.currentContext;
+      if (context == null) return;
+      await showRenamePetDialog(
+        context: context,
+        current: '',
+        onSubmit: _rename,
+        lead: context.l10n.nameRejectedLead,
+      );
     });
   }
 

@@ -1013,6 +1013,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your little one has arrived. What will you call them? You can change the name later in the profile.';
 
   @override
+  String get nameRejectedLead =>
+      'That name did not pass review. Please choose another one — for now your little one is called “My little one”.';
+
+  @override
   String get nameFirstSave => 'Name';
 
   @override

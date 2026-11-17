@@ -1768,6 +1768,12 @@ abstract class AppLocalizations {
   /// **'Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.'**
   String get nameFirstLead;
 
+  /// No description provided for @nameRejectedLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это имя не прошло проверку. Придумайте, пожалуйста, другое — пока малыша зовут «Мой малыш».'**
+  String get nameRejectedLead;
+
   /// No description provided for @nameFirstSave.
   ///
   /// In ru, this message translates to:

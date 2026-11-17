@@ -237,5 +237,19 @@ void main() {
       final json = _serverJson();
       expect(PetSnapshot.fromJson(json).named, isTrue);
     });
+
+    test('модератор отклонил имя — приложение попросит другое (КП 15.6)', () {
+      final json = _serverJson();
+      expect(PetSnapshot.fromJson(json).nameRejected, isFalse);
+      json['pet'] = {
+        ...json['pet'] as Map<String, dynamic>,
+        'name': PetProfile.defaultName,
+        'name_status': 'rejected',
+        'named_at': '2026-09-24T09:00:00+00:00',
+      };
+      final snapshot = PetSnapshot.fromJson(json);
+      expect(snapshot.named, isTrue, reason: 'видео рождения не повторяем');
+      expect(snapshot.nameRejected, isTrue);
+    });
   });
 }

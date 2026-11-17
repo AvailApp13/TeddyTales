@@ -1024,6 +1024,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Малыш появился на свет. Как его назовёте? Имя можно будет поменять в профиле.';
 
   @override
+  String get nameRejectedLead =>
+      'Это имя не прошло проверку. Придумайте, пожалуйста, другое — пока малыша зовут «Мой малыш».';
+
+  @override
   String get nameFirstSave => 'Назвать';
 
   @override

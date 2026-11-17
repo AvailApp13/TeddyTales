@@ -28,6 +28,7 @@ class PetSnapshot {
     this.slots = const {},
     this.account = const AccountInfo(),
     this.named = true,
+    this.nameRejected = false,
     this.inclinations = const {},
     this.growth = const GrowthOutlook(),
     this.asleep = false,
@@ -67,6 +68,10 @@ class PetSnapshot {
   /// Дал ли человек имя малышу (КП 2.3). `false` — приложение спросит имя
   /// на первом запуске.
   final bool named;
+
+  /// Модератор отклонил имя в панели (КП 15.6): сервер вернул «Мой малыш»,
+  /// приложение попросит придумать другое.
+  final bool nameRejected;
 
   /// Склонности своего знака зодиака (КП 7.2): добавка к счёту каждой
   /// черты. Таблицу правит Заказчик в панели (миграция 0014); пустая —
@@ -161,6 +166,7 @@ class PetSnapshot {
       // Имя, данное до появления отметки named_at, тоже считается: такой
       // человек уже называл малыша в профиле, спрашивать заново незачем.
       named: pet['named_at'] != null || name != PetProfile.defaultName,
+      nameRejected: pet['name_status'] == 'rejected',
       asleep: json['asleep'] == true,
       daily: DailyInfo.fromJson(_map(json['daily'])),
       welcomeBack: json['welcome_back'] == true,
@@ -204,6 +210,7 @@ class PetSnapshot {
         serverTime: serverTime,
         account: account ?? this.account,
         named: named,
+        nameRejected: nameRejected,
         inclinations: inclinations,
         growth: growth,
         asleep: asleep,

@@ -940,6 +940,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nameFirstLead => '小宝宝出生了。给它起个名字吧？之后可以在个人资料里修改。';
 
   @override
+  String get nameRejectedLead => '这个名字没有通过审核。请另起一个名字——现在宝宝暂时叫“我的宝宝”。';
+
+  @override
   String get nameFirstSave => '起名';
 
   @override
