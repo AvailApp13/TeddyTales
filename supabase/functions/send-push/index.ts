@@ -104,11 +104,21 @@ Deno.serve(async (req) => {
   const db = createClient(url, service);
   const { data: tokens, error } = await db
     .from("push_tokens")
-    .select("token, platform, locale")
+    .select("*")
     .contains("kinds", [kind]);
   if (error) return json({ error: "db", detail: error.message }, 500);
 
-  const ios = (tokens ?? []).filter((t) => t.platform === "ios");
+  // Тихие часы (КП 13.2): 22:00–08:00 по времени телефона, если они
+  // включены. Пояс не известен (старая сборка) — шлём, как раньше.
+  const now = Date.now();
+  const sleeping = (t: { quiet?: boolean; utc_offset_min?: number | null }) => {
+    if (t.quiet === false || t.utc_offset_min == null) return false;
+    const local = new Date(now + t.utc_offset_min * 60_000).getUTCHours();
+    return local >= 22 || local < 8;
+  };
+  const allIos = (tokens ?? []).filter((t) => t.platform === "ios");
+  const ios = allIos.filter((t) => !sleeping(t));
+  const quiet = allIos.length - ios.length;
   const { data: cfg } = await db.rpc("apns_config");
   const configured = Boolean(
     cfg?.apns_key_p8 && cfg?.apns_key_id && cfg?.apns_team_id,
@@ -117,7 +127,8 @@ Deno.serve(async (req) => {
   if (input.dryRun || !configured) {
     return json({
       recipients: ios.length,
-      android: (tokens ?? []).length - ios.length,
+      quiet,
+      android: (tokens ?? []).length - allIos.length,
       sent: 0,
       failed: 0,
       removed: 0,
@@ -171,9 +182,12 @@ Deno.serve(async (req) => {
     title_ru: title.ru,
     sent,
     failed,
-    note: removed ? `удалено устаревших адресов: ${removed}` : null,
+    note: [
+      removed ? `удалено устаревших адресов: ${removed}` : "",
+      quiet ? `в тихих часах, не отправлено: ${quiet}` : "",
+    ].filter(Boolean).join("; ") || null,
     created_by: who?.user?.id ?? null,
   });
 
-  return json({ recipients: ios.length, sent, failed, removed, configured });
+  return json({ recipients: ios.length, quiet, sent, failed, removed, configured });
 });

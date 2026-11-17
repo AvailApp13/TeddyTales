@@ -436,7 +436,9 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         if (_game.isNotificationOn(kind.id)) kind.id,
     ];
     final locale = _language.name;
-    final key = '$token|$locale|${kinds.join(',')}';
+    final offset = DateTime.now().timeZoneOffset.inMinutes;
+    final quiet = _game.quietHours;
+    final key = '$token|$locale|${kinds.join(',')}|$offset|$quiet';
     if (key == _pushSent) return;
     try {
       await widget.boot.store.registerPushToken(
@@ -444,6 +446,8 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
         platform: 'ios',
         locale: locale,
         kinds: kinds,
+        utcOffsetMinutes: offset,
+        quietHours: quiet,
       );
       _pushSent = key;
     } on Object catch (error) {

@@ -444,6 +444,8 @@ class SupabaseStore implements ProgressStore, AccountAuth {
     required String platform,
     required String locale,
     required List<String> kinds,
+    int? utcOffsetMinutes,
+    bool quietHours = true,
   }) async {
     try {
       await _client.rpc<dynamic>(
@@ -455,6 +457,20 @@ class SupabaseStore implements ProgressStore, AccountAuth {
           'p_kinds': kinds,
         },
       );
+      // Отдельным вызовом: функция появилась в миграции 0032, и сервер без
+      // неё не должен ломать саму регистрацию адреса.
+      try {
+        await _client.rpc<dynamic>(
+          'set_push_quiet',
+          params: {
+            'p_token': token,
+            'p_utc_offset': utcOffsetMinutes,
+            'p_quiet': quietHours,
+          },
+        );
+      } on PostgrestException catch (error) {
+        debugPrint('Тихие часы для push не сохранены: $error');
+      }
     } on Object catch (error) {
       throw ProgressStoreException(
         'Не удалось сохранить адрес для уведомлений',

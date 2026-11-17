@@ -530,3 +530,46 @@ How many are there?', '🍎🍎🍎🍎🍎
   ('world', 10, 9, 'Что бывает зимой?', 'What happens in winter?', '冬天有什么？', '["🍅","🏖","⛄️","🥒"]'::jsonb, 2),
   ('world', 10, 10, 'Что бывает летом?', 'What happens in summer?', '夏天有什么？', '["🧤","🛷","❄️","🍉"]'::jsonb, 3)
 on conflict (category, level, idx) do nothing;
+
+-- --- Тихие часы для рассылки из панели (КП 13.2, проверка 17.11) -----------
+--
+-- «Событие» и «Новинки» уходили всем подписанным сразу, в любое время:
+-- сервер не знал ни часового пояса, ни настройки «Тихие часы». Теперь
+-- приложение сообщает их вместе с адресом (set_push_quiet), и send-push
+-- пропускает тех, у кого тихие часы включены и сейчас 22:00–08:00 по их
+-- времени. Пояс не известен (старая сборка) — шлём, как раньше.
+
+alter table public.push_tokens add column if not exists utc_offset_min integer
+  check (utc_offset_min between -840 and 840);
+alter table public.push_tokens add column if not exists quiet boolean not null default true;
+
+comment on column public.push_tokens.utc_offset_min is
+  'Смещение часов телефона от UTC в минутах — для тихих часов. null — не известно.';
+comment on column public.push_tokens.quiet is
+  'Тихие часы 22:00–08:00 включены в настройках приложения (КП 13.2).';
+
+create or replace function public.set_push_quiet(
+  p_token text,
+  p_utc_offset integer default null,
+  p_quiet boolean default true
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not_signed_in';
+  end if;
+  update public.push_tokens
+  set utc_offset_min = case
+        when p_utc_offset between -840 and 840 then p_utc_offset end,
+      quiet = coalesce(p_quiet, true),
+      updated_at = now()
+  where token = p_token and player_id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.set_push_quiet(text, integer, boolean) from public, anon;
+grant execute on function public.set_push_quiet(text, integer, boolean) to authenticated;

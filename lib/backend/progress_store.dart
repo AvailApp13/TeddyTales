@@ -88,11 +88,15 @@ abstract interface class ProgressStore {
 
   /// Адрес телефона для push с сервера (КП 13.1): токен, платформа
   /// (`ios`/`android`), язык и включённые типы уведомлений (КП 13.2).
+  /// [utcOffsetMinutes] и [quietHours] — чтобы сервер не будил ночью
+  /// рассылкой «Событие» и «Новинки» (КП 13.2, тихие часы 22:00–08:00).
   Future<void> registerPushToken({
     required String token,
     required String platform,
     required String locale,
     required List<String> kinds,
+    int? utcOffsetMinutes,
+    bool quietHours = true,
   });
 }
 

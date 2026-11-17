@@ -145,6 +145,8 @@ class MemoryStore implements ProgressStore {
     required String platform,
     required String locale,
     required List<String> kinds,
+    int? utcOffsetMinutes,
+    bool quietHours = true,
   }) async {}
 
   @override

@@ -735,8 +735,10 @@ async function renderPush() {
       say(`Получателей: ${data.recipients}. Ключ Apple для push ещё не подключён — отправка заработает после него.`, false);
       return;
     }
-    if (dryRun) { say(`Получат: ${data.recipients}`, true); return; }
-    say(`Доставлено: ${data.sent}${data.failed ? `, ошибок: ${data.failed}` : ''}`, true);
+    // Тихие часы (КП 13.2): у кого сейчас ночь, тем не шлём.
+    const quiet = data.quiet ? `; в тихих часах (22:00–08:00 у них), не получат: ${data.quiet}` : '';
+    if (dryRun) { say(`Получат: ${data.recipients}${quiet}`, true); return; }
+    say(`Доставлено: ${data.sent}${data.failed ? `, ошибок: ${data.failed}` : ''}${quiet}`, true);
     renderPush();
   };
   $('push-check').onclick = () => call(true);
