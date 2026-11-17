@@ -70,7 +70,9 @@ class ProgressSync {
         unawaited(place(itemId, placed: placed, slot: slot));
   }
 
-  final ProgressStore store;
+  /// Куда уходят действия. Запуск без сети начинается с хранилища в памяти;
+  /// когда связь вернётся, [reconnect] меняет его на сервер.
+  ProgressStore store;
   final BearController bear;
   final GameState game;
 
@@ -280,6 +282,39 @@ class ProgressSync {
   /// Пробует отправить накопленное. Зовётся, когда приложение вернулось из
   /// фона: связь к этому моменту часто уже есть.
   Future<void> retry() => _drain();
+
+  bool _reconnecting = false;
+
+  /// Запуск был без сети, а теперь сервер отвечает: дальше работаем с ним
+  /// (проверка 17.11 — раньше приложение до перезапуска оставалось в
+  /// памяти, а действия терялись). Уход, сыгранный без сети, уходит на
+  /// сервер по порядку; снимок сервера становится истиной. `true` —
+  /// подключились.
+  Future<bool> reconnect(
+    ProgressStore online, {
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    final offline = store;
+    if (offline is! MemoryStore || _reconnecting) return false;
+    _reconnecting = true;
+    try {
+      final snapshot = await online.load().timeout(timeout);
+      store = online;
+      _apply(snapshot);
+      for (final action in [...offline.pending]) {
+        if (_careActions.contains(action)) {
+          unawaited(_enqueue(_Job((store) => store.recordCare(action))));
+        }
+      }
+      offline.pending.clear();
+      return true;
+    } on Object catch (error) {
+      debugPrint('[TeddyTales] сервер пока не отвечает: $error');
+      return false;
+    } finally {
+      _reconnecting = false;
+    }
+  }
 
   void _apply(PetSnapshot snapshot) {
     // Без сервера (гость без сети, песочница) «ответ» — снимок из памяти,

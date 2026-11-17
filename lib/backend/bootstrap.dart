@@ -17,6 +17,7 @@ class BootResult {
     this.error,
     this.auth,
     this.hasSession = false,
+    this.fromCache = false,
   });
 
   final ProgressStore store;
@@ -27,6 +28,13 @@ class BootResult {
 
   /// Работаем ли с сервером. `false` — запустились офлайн (КП 1.1).
   final bool isOnline;
+
+  /// Снимок — последний сохранённый на телефоне (запуск без сети). Тогда
+  /// показывается свой мишка, а не демонстрационный (проверка 17.11).
+  final bool fromCache;
+
+  /// Снимок настоящий: с сервера или из кеша, не пустая заготовка.
+  bool get hasRealSnapshot => isOnline || fromCache;
 
   /// Учётная запись: вход и регистрация по почте, выход. `null` — сервер не
   /// настроен или не поднялся.
@@ -113,6 +121,7 @@ abstract final class Bootstrap {
         error: offline.error,
         auth: store,
         hasSession: store.isSignedIn,
+        fromCache: offline.fromCache,
       );
     }
   }
@@ -128,6 +137,7 @@ abstract final class Bootstrap {
       isOnline: false,
       cache: cache,
       error: reason,
+      fromCache: saved != null,
     );
   }
 }

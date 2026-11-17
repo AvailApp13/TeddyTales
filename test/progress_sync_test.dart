@@ -42,7 +42,10 @@ class _FakeStore implements ProgressStore {
   Future<void> signIn() async {}
 
   @override
-  Future<PetSnapshot> load() async => answer;
+  Future<PetSnapshot> load() async {
+    if (failing) throw const ProgressStoreException('нет сети');
+    return answer;
+  }
 
   @override
   Future<PetSnapshot> recordCare(BearAction action) async {
@@ -475,6 +478,42 @@ void main() {
     bear.washBear();
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(saved, hasLength(1));
+  });
+
+  test('запуск без сети: связь вернулась — уход уходит на сервер', () async {
+    final bear = BearController();
+    final game = GameState(
+      bear: bear,
+      profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+      walletFloor: 0,
+    );
+    final memory = MemoryStore();
+    final sync = ProgressSync(store: memory, bear: bear, game: game);
+    bear.petBear();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(memory.pending, [BearAction.pet]);
+
+    final server = _FakeStore(failing: false);
+    expect(await sync.reconnect(server), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(sync.store, same(server));
+    expect(server.care, [BearAction.pet], reason: 'сыгранное без сети не теряется');
+    expect(memory.pending, isEmpty);
+    expect(game.profile.coins, 100, reason: 'монеты — с сервера');
+  });
+
+  test('запуск без сети: сервер всё ещё молчит — остаёмся в памяти', () async {
+    final bear = BearController();
+    final game = GameState(
+      bear: bear,
+      profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+    );
+    final memory = MemoryStore();
+    final sync = ProgressSync(store: memory, bear: bear, game: game);
+
+    expect(await sync.reconnect(_FakeStore(failing: true)), isFalse);
+    expect(sync.store, same(memory));
   });
 
   test('хранилище в памяти подходит мосту как есть', () async {

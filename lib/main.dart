@@ -13,6 +13,8 @@ import 'backend/bootstrap.dart';
 import 'backend/store_purchases.dart';
 import 'backend/supabase_store.dart';
 import 'backend/pet_snapshot.dart' show DailyInfo, GrowthOutlook;
+import 'backend/memory_store.dart';
+import 'backend/progress_store.dart';
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
 import 'game/food.dart';
@@ -179,7 +181,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// пересчитывает их по своим часам (КП 1.5) и присылает при каждом
   /// действии.
   late final BearController _bear = BearController(
-    initialState: widget.boot.isOnline
+    initialState: widget.boot.hasRealSnapshot
         ? widget.boot.snapshot.state
         : const BearState(
             stage: BearStage.growing,
@@ -206,7 +208,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   late final GameState _game = GameState(
     bear: _bear,
     profile: _profile,
-    account: widget.boot.isOnline ? widget.boot.snapshot.account : null,
+    account: widget.boot.hasRealSnapshot ? widget.boot.snapshot.account : null,
     // Пустые наборы означают, что сервера не было: тогда GameState сам
     // выдаст стартовый набор из двенадцати предметов (КП 10.8).
     owned: widget.boot.snapshot.inventory.isEmpty
@@ -240,7 +242,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
   /// Карточка питомца. С сервера, если он ответил; иначе — прежние
   /// демонстрационные значения из макета, чтобы офлайн не выглядел пустым
   /// экраном.
-  late final PetProfile _profile = widget.boot.isOnline
+  late final PetProfile _profile = widget.boot.hasRealSnapshot
       ? widget.boot.snapshot.profile
       : PetProfile(
           name: PetProfile.defaultName,
@@ -259,6 +261,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     onPaused: _planReminders,
     onResumed: () {
       _sync.retry();
+      unawaited(_reconnect());
       // Игрок открыл приложение — напоминания ему больше не нужны, он уже
       // здесь. Оставить их значит показать «малыш проголодался» человеку,
       // который в эту секунду его кормит.
@@ -298,6 +301,26 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     );
   }
 
+  Timer? _reconnectTimer;
+
+  /// Можно ли подключиться позже: запустились без сети, но человек уже
+  /// входил (есть кабинет на сервере). Гость без входа и без сети играет в
+  /// памяти до перезапуска — сверять его покупки не с кем.
+  bool get _canReconnect =>
+      !widget.boot.isOnline &&
+      widget.boot.hasSession &&
+      widget.boot.auth is ProgressStore;
+
+  Future<void> _reconnect() async {
+    if (!_canReconnect || _sync.store is! MemoryStore) return;
+    final online = widget.boot.auth! as ProgressStore;
+    // Снимок сервера мост применяет сам и отдаёт в кеш (onSnapshot).
+    if (await _sync.reconnect(online)) {
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -305,6 +328,14 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     // действия. Без этой строки мост создался бы только при первом
     // обращении из разметки, то есть никогда.
     _sync.retry();
+    // Запуск без сети у того, кто уже входил: раз в минуту и при каждом
+    // возвращении в приложение пробуем выйти на сервер (проверка 17.11).
+    if (_canReconnect) {
+      _reconnectTimer = Timer.periodic(
+        const Duration(minutes: 1),
+        (_) => unawaited(_reconnect()),
+      );
+    }
     if (widget.boot.isOnline) {
       _game
         ..setGrowth(widget.boot.snapshot.growth)
@@ -485,6 +516,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     WidgetsBinding.instance.removeObserver(_lifecycle);
     _sync.dispose();
     _purchases?.dispose();
