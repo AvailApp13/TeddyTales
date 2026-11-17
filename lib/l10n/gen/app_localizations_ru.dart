@@ -913,6 +913,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get learnCorrectRepeatToast =>
+      'Верно! Уровень уже пройден — монеты даются за новый';
+
+  @override
   String get learnGamesTitle => 'Игры';
 
   @override

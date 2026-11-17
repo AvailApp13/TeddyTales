@@ -904,6 +904,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get learnCorrectRepeatToast =>
+      'Correct! Level already done — coins are for new levels';
+
+  @override
   String get learnGamesTitle => 'Games';
 
   @override

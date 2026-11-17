@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Сервер (Supabase), картинки и push. Было только в отладочной
+         сборке — релиз без него уходил в офлайн (проверка 17.11). -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Будильник «проснёмся вместе» ставится в системные «Часы». Обычное
          разрешение: пользователя о нём не спрашивают. -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />

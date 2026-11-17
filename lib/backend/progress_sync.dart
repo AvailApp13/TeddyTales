@@ -306,6 +306,7 @@ class ProgressSync {
     }
     game.setProfile(snapshot.profile);
     game.setAccount(snapshot.account);
+    game.setEduProgress(snapshot.eduProgress);
     game.setGrowth(snapshot.growth);
     game.setAsleep(snapshot.asleep);
     if (!snapshot.daily.isEmpty) game.setDaily(snapshot.daily);

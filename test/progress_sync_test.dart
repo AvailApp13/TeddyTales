@@ -183,6 +183,40 @@ void main() {
       expect(it.store.care, [BearAction.pet, BearAction.wash, BearAction.play]);
     });
 
+    test('пройденные уровни с сервера применяются (проверка 17.11)', () async {
+      final it = _setUp();
+      it.store.answer = PetSnapshot(
+        petId: 'pet',
+        profile: PetProfile(name: 'Тишка', birthAt: DateTime.utc(2026, 9, 1)),
+        state: const BearState(),
+        inventory: const {},
+        placed: const {},
+        eduProgress: const {'colors': 4, 'counting': 2},
+        serverTime: DateTime.utc(2026, 9, 16),
+        account: const AccountInfo(isAnonymous: true, playerAge: 31),
+      );
+      it.bear.petBear();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(it.game.eduProgress('colors'), 4);
+      expect(it.game.eduProgress('counting'), 2);
+      // Возраст игрока сервер помнит — второй раз не спрашиваем.
+      expect(it.game.playerAge, 31);
+    });
+
+    test('за повтор пройденного уровня монет нет — как на сервере', () {
+      final it = _setUp();
+      it.game.setEduProgress(const {'colors': 3});
+      final coins = it.game.profile.coins;
+
+      expect(it.game.completeLevel('colors', 1), isFalse);
+      expect(it.game.profile.coins, coins);
+
+      expect(it.game.completeLevel('colors', 3), isTrue);
+      expect(it.game.profile.coins, coins + 10);
+      expect(it.game.eduProgress('colors'), 4);
+    });
+
     test('обучение идёт своим путём, а не как уход', () async {
       final it = _setUp();
       it.game.completeLevel('colors', 2);

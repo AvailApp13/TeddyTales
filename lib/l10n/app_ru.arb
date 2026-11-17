@@ -544,6 +544,10 @@
     }
   },
   "learnCorrectToast": "{coins, plural, one{Верно! +{coins} монета} few{Верно! +{coins} монеты} other{Верно! +{coins} монет}}",
+  "learnCorrectRepeatToast": "Верно! Уровень уже пройден — монеты даются за новый",
+  "@learnCorrectRepeatToast": {
+    "description": "Тост после верного ответа на уже пройденном уровне: монеты не начисляются"
+  },
   "learnGamesTitle": "Игры",
   "@learnLevelDoneToast": {
     "placeholders": {

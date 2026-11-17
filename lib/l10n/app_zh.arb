@@ -273,6 +273,7 @@
   "learnCatLocked": "到「{stage}」阶段开放",
   "learnCatWorldTitle": "认识世界",
   "learnCorrectToast": "{coins, plural, other{答对了！+{coins}金币}}",
+  "learnCorrectRepeatToast": "答对了！此关已通过，新关卡才有金币",
   "learnGamesTitle": "游戏",
   "learnLevelDoneToast": "{coins, plural, other{通关啦！+{coins}金币}}",
   "learnLevelsCount": "{count, plural, other{{count}个关卡}}",

@@ -1600,6 +1600,12 @@ abstract class AppLocalizations {
   /// **'{coins, plural, one{Верно! +{coins} монета} few{Верно! +{coins} монеты} other{Верно! +{coins} монет}}'**
   String learnCorrectToast(int coins);
 
+  /// Тост после верного ответа на уже пройденном уровне: монеты не начисляются
+  ///
+  /// In ru, this message translates to:
+  /// **'Верно! Уровень уже пройден — монеты даются за новый'**
+  String get learnCorrectRepeatToast;
+
   /// No description provided for @learnGamesTitle.
   ///
   /// In ru, this message translates to:

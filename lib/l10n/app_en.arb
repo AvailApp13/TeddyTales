@@ -273,6 +273,7 @@
   "learnCatLocked": "Opens at the «{stage}» stage",
   "learnCatWorldTitle": "The World Around",
   "learnCorrectToast": "{coins, plural, one{Correct! +{coins} coin} other{Correct! +{coins} coins}}",
+  "learnCorrectRepeatToast": "Correct! Level already done — coins are for new levels",
   "learnGamesTitle": "Games",
   "learnLevelDoneToast": "{coins, plural, one{Level complete! +{coins} coin} other{Level complete! +{coins} coins}}",
   "learnLevelsCount": "{count, plural, one{{count} level} other{{count} levels}}",

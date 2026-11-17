@@ -448,7 +448,17 @@ async function renderEconomy() {
       <div class="card">
         <h2 style="margin-top:0">${esc(CONFIG_TITLES[row.key] || row.key)}</h2>
         <p class="note"><code>${esc(row.key)}</code></p>
-        ${FOOD_TABLES[row.key] ? foodTable(row) : `
+        ${FOOD_TABLES[row.key] ? foodTable(row) : typeof row.value === 'number' ? `
+        <table><tbody>
+          <tr>
+            <td>значение</td>
+            <td class="num">
+              <input class="small" type="number" step="0.001"
+                     data-key="${esc(row.key)}" data-scalar="1"
+                     value="${esc(row.value)}">
+            </td>
+          </tr>
+        </tbody></table>` : `
         <table><tbody>
           ${Object.entries(row.value)
             // Правится только число. Вложенные таблицы (блюда, рецепты)
@@ -478,7 +488,14 @@ async function renderEconomy() {
 
 async function saveConfig(key, button) {
   // Правки накладываются на то, что уже лежит, — нечисловые поля остаются.
-  const current = (await loadConfig()).find((r) => r.key === key)?.value || {};
+  const current = (await loadConfig()).find((r) => r.key === key)?.value;
+  // Настройка-число (например, test_wallet_floor) сохраняется числом.
+  // Раньше «{ ...число }» давало {} — и вход на сервере падал у всех.
+  const scalar = $('view').querySelector(`input[data-key="${CSS.escape(key)}"][data-scalar]`);
+  if (scalar || typeof current !== 'object' || current === null) {
+    if (!scalar || scalar.value === '' || !Number.isFinite(Number(scalar.value))) return;
+    return writeConfig(key, Number(scalar.value), button);
+  }
   const value = { ...current };
   $('view').querySelectorAll(`input[data-key="${CSS.escape(key)}"]`).forEach((input) => {
     const { row, field } = input.dataset;
@@ -492,6 +509,10 @@ async function saveConfig(key, button) {
     }
   });
 
+  return writeConfig(key, value, button);
+}
+
+async function writeConfig(key, value, button) {
   button.disabled = true;
   const { error } = await db.from('game_config').update({ value }).eq('key', key);
   button.disabled = false;

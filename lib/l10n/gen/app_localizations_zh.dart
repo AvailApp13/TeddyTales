@@ -836,6 +836,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get learnCorrectRepeatToast => '答对了！此关已通过，新关卡才有金币';
+
+  @override
   String get learnGamesTitle => '游戏';
 
   @override

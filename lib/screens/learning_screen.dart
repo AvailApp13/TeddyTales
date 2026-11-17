@@ -252,7 +252,7 @@ class _LearningScreenState extends State<LearningScreen> {
       return;
     }
 
-    widget.game.completeLevel(category.id, level, reward: _levelReward);
+    final paid = widget.game.completeLevel(category.id, level, reward: _levelReward);
     _solved = true;
 
     // Пауза, чтобы успели прочитаться зелёная подсветка ответа и реакция
@@ -260,7 +260,10 @@ class _LearningScreenState extends State<LearningScreen> {
     _closeTimer = Timer(const Duration(milliseconds: 700), () {
       if (!mounted) return;
       _closeLevel();
-      showTopToast(context, context.l10n.learnCorrectToast(_levelReward));
+      showTopToast(
+        context,
+        paid ? context.l10n.learnCorrectToast(_levelReward) : context.l10n.learnCorrectRepeatToast,
+      );
     });
   }
 

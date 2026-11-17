@@ -215,7 +215,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     placed: widget.boot.snapshot.placed.isEmpty
         ? null
         : widget.boot.snapshot.placed,
-  );
+  )..setEduProgress(widget.boot.snapshot.eduProgress);
 
   /// Мост к серверу: отправляет действия и применяет ответы (КП 1.4).
   ///

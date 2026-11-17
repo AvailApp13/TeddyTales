@@ -35,6 +35,7 @@ class GameState extends ChangeNotifier {
     int walletFloor = kTestWallet,
     AccountInfo? account,
   }) : _account = account,
+       _playerAge = account?.playerAge?.clamp(1, 120),
        // Не «выдать 5000», а «поднять до 5000»: если на счету больше —
        // например, заработано или пришло с сервера, — отнимать нельзя.
        //
@@ -131,7 +132,28 @@ class GameState extends ChangeNotifier {
 
   void setAccount(AccountInfo account) {
     _account = account;
+    // Возраст игрока сервер помнит (`players.player_age`): без этого вопрос
+    // о возрасте задавался при каждом запуске (проверка 17.11).
+    if (account.playerAge case final age? when _playerAge == null) {
+      _playerAge = age.clamp(1, 120);
+    }
     notifyListeners();
+  }
+
+  /// Пройденные уровни обучения с сервера (`edu_progress`): после
+  /// перезапуска игрок продолжает с того уровня, где остановился, а не с
+  /// первого (проверка 17.11). Берётся большее: уровень, пройденный только
+  /// что и ещё не подтверждённый сервером, не откатывается.
+  void setEduProgress(Map<String, int> progress) {
+    var changed = false;
+    for (final MapEntry(:key, :value) in progress.entries) {
+      final done = value.clamp(0, eduLevelsPerCategory);
+      if (done > (_eduProgress[key] ?? 0)) {
+        _eduProgress[key] = done;
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
   }
 
   /// Прогноз роста с сервера (КП 5.6, 5.7): для уведомления «Новая
@@ -441,17 +463,23 @@ class GameState extends ChangeNotifier {
   // --- Обучение (КП 9) -----------------------------------------------------
 
   /// Засчитывает пройденный уровень: монеты, радость мишки, вклад в характер.
-  void completeLevel(String categoryId, int level, {int reward = 10}) {
+  /// `true` — уровень новый и монеты начислены. За повтор пройденного
+  /// уровня сервер не платит (`complete_level`, миграция 0010), значит, и
+  /// здесь не начисляется: иначе «+10» показывалось, а потом откатывалось.
+  bool completeLevel(String categoryId, int level, {int reward = 10}) {
     final done = eduProgress(categoryId);
-    if (level >= done) _eduProgress[categoryId] = (done + 1).clamp(0, 10);
-
-    earn(reward);
+    final fresh = level >= done;
+    if (fresh) {
+      _eduProgress[categoryId] = (done + 1).clamp(0, 10);
+      earn(reward);
+    }
     bear.showHappy();
     bear.recordAction(BearAction.learn);
     // Награду на сервере считает своя функция — по таблице наград, а не по
     // числу, присланному отсюда (КП 9.5, 15.4).
     onLevelDone?.call(categoryId, level);
     notifyListeners();
+    return fresh;
   }
 
   // --- Уведомления (КП 13.2) -----------------------------------------------
