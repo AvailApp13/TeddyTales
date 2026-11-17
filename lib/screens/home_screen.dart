@@ -48,6 +48,7 @@ import '../widgets/furnish_bar.dart';
 import '../widgets/paw_menu.dart';
 import '../widgets/pet_header.dart';
 import '../widgets/pet_speech_bubble.dart';
+import '../widgets/tablet_scale.dart';
 import '../widgets/kitchen_bear.dart';
 import '../widgets/stats_test_panel.dart';
 import '../bear/bear_life.dart';
@@ -1160,15 +1161,19 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppDimens.pagePadding,
                             ),
-                            child: PetHeader(
-                              profile: profile,
-                              age: age,
-                              fx: _fx,
-                              onOpenProfile: () => _openGlass(_profileScreen()),
-                              onShare: () => showShareCard(
-                                context,
-                                game: widget.game,
-                                stage: state.stage,
+                            // На планшете шапка ещё крупнее (заказчик 17.11).
+                            child: TabletBoost(
+                              child: PetHeader(
+                                profile: profile,
+                                age: age,
+                                fx: _fx,
+                                onOpenProfile: () =>
+                                    _openGlass(_profileScreen()),
+                                onShare: () => showShareCard(
+                                  context,
+                                  game: widget.game,
+                                  stage: state.stage,
+                                ),
                               ),
                             ),
                           ),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -68,23 +70,31 @@ class _ShopSheetState extends State<_ShopSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      controller: _sheet,
-      initialChildSize: ShopScreen.half,
-      // Дотянули до низа — панель закрывается сама (лист под ней ловит
-      // это и уходит).
-      minChildSize: ShopScreen.closeAt,
-      maxChildSize: ShopScreen.full,
-      snap: true,
-      snapSizes: const [ShopScreen.half],
-      expand: false,
-      builder: (context, scroll) => ShopScreen(
-        game: widget.game,
-        focusItemId: widget.focusItemId,
-        scrollController: scroll,
-        sheet: _sheet,
-        onApplied: widget.onApplied,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Список категорий — ровно по высоте плиток (заказчик 17.11: на
+        // планшете под тремя плитками оставалась пустая половина панели).
+        final rest = ShopScreen.categoriesSize(context, constraints.maxHeight);
+        return DraggableScrollableSheet(
+          controller: _sheet,
+          initialChildSize: widget.focusItemId == null ? rest : ShopScreen.half,
+          // Дотянули до низа — панель закрывается сама (лист под ней ловит
+          // это и уходит).
+          minChildSize: math.min(ShopScreen.closeAt, rest - 0.05),
+          maxChildSize: ShopScreen.full,
+          snap: true,
+          snapSizes: {rest, ShopScreen.half}.toList()..sort(),
+          expand: false,
+          builder: (context, scroll) => ShopScreen(
+            game: widget.game,
+            focusItemId: widget.focusItemId,
+            scrollController: scroll,
+            sheet: _sheet,
+            onApplied: widget.onApplied,
+            categoriesRest: rest,
+          ),
+        );
+      },
     );
   }
 }
@@ -113,7 +123,12 @@ class ShopScreen extends StatefulWidget {
     this.scrollController,
     this.sheet,
     this.onApplied,
+    this.categoriesRest,
   });
+
+  /// Высота панели на списке категорий — по плиткам ([categoriesSize]).
+  /// `null` — как раньше, [half].
+  final double? categoriesRest;
 
   /// Кошелёк и инвентарь — один источник правды на все экраны:
   /// купленное здесь должно тут же появиться в комнате и в гардеробе.
@@ -145,11 +160,31 @@ class ShopScreen extends StatefulWidget {
   /// Ниже — панель закрывается.
   static const double closeAt = 0.2;
 
+  /// Доля высоты, в которую помещается список категорий: ручка, шапка,
+  /// ряды плиток ([_CategoryList]) и нижний отступ телефона. Не больше
+  /// [half] — на телефоне так и было.
+  static double categoriesSize(BuildContext context, double height) {
+    if (height <= 0) return half;
+    final count = _ShopTab.values.where((t) => !t.isEmpty).length;
+    final rows = (count / _CategoryList.columns).ceil();
+    final content =
+        19 + // ручка
+        50 + // шапка
+        6 +
+        rows * _CategoryList.tileHeight +
+        (rows - 1) * _CategoryList.gap +
+        AppDimens.pagePadding +
+        MediaQuery.viewPaddingOf(context).bottom +
+        6;
+    return (content / height).clamp(0.12, half);
+  }
+
   @override
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopScreenState extends State<ShopScreen> {
+class _ShopScreenState extends State<ShopScreen>
+    with SingleTickerProviderStateMixin {
   /// Открытая категория. `null` — список категорий. Если пришли за
   /// конкретной вещью, открывается её категория.
   late _ShopTab? _tab = _tabOf(widget.focusItemId);
@@ -162,18 +197,81 @@ class _ShopScreenState extends State<ShopScreen> {
   /// перебором.
   ItemGroup? _group;
 
-  void _openTab(_ShopTab tab) => setState(() {
-    _tab = tab;
-    // Подкатегории у каждой вкладки свои: остаться с «Коврами» на мебели
-    // значило бы показать пустую витрину.
-    _group = null;
-  });
+  /// Смена уровня (категории ↔ витрина) — без перетекания: панель в это
+  /// время сама плавно меняет высоту, а её движение не терпит двух
+  /// прокруток сразу («Too many elements»). Между вкладками — как раньше.
+  bool _levelJump = false;
+
+  void _openTab(_ShopTab tab) {
+    // Витрине нужно место: с низкого списка категорий — до половины.
+    _resizeSoon(ShopScreen.half, onlyUp: true);
+    setState(() {
+      _levelJump = _tab == null;
+      _tab = tab;
+      // Подкатегории у каждой вкладки свои: остаться с «Коврами» на мебели
+      // значило бы показать пустую витрину.
+      _group = null;
+    });
+  }
 
   /// «Назад»: из категории — к списку категорий.
-  void _up() => setState(() {
-    _tab = null;
-    _group = null;
-  });
+  void _up() {
+    _resizeSoon(widget.categoriesRest ?? ShopScreen.half);
+    setState(() {
+      _levelJump = true;
+      _tab = null;
+      _group = null;
+    });
+  }
+
+  /// Высота панели при смене уровня (категории ↔ витрина). Ведём сами,
+  /// кадр за кадром: штатный `animateTo` обрывается, когда только что
+  /// открытая витрина перенастраивает свою прокрутку, и панель оставалась
+  /// низкой. Начинаем через кадр — когда прежний уровень уже убран: панель
+  /// двигается только при одной прокрутке («Too many elements»).
+  late final AnimationController _height = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  )..addListener(_applyHeight);
+  double _heightFrom = 0;
+  double _heightTo = 0;
+
+  /// К панели привязана ровно одна прокрутка — только тогда её можно
+  /// двигать.
+  bool get _canMove {
+    final sheet = widget.sheet;
+    final scroll = widget.scrollController;
+    return sheet != null &&
+        sheet.isAttached &&
+        (scroll == null || scroll.positions.length == 1);
+  }
+
+  void _applyHeight() {
+    final sheet = widget.sheet;
+    if (sheet == null || !_canMove) return;
+    final t = Curves.easeOutCubic.transform(_height.value);
+    sheet.jumpTo(_heightFrom + (_heightTo - _heightFrom) * t);
+  }
+
+  void _resizeSoon(double to, {bool onlyUp = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final sheet = widget.sheet;
+      if (sheet == null || !sheet.isAttached) return;
+      if (onlyUp && sheet.size >= to) return;
+      // Откуда — по панели сейчас; пропущенные кадры (пока прежний уровень
+      // ещё не убран) анимация просто догонит.
+      _heightFrom = sheet.size;
+      _heightTo = to;
+      _height.forward(from: 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _height.dispose();
+    super.dispose();
+  }
 
   /// Вкладка, на которой лежит предмет. `null` — предмета нет или он не
   /// продаётся в магазине.
@@ -244,8 +342,10 @@ class _ShopScreenState extends State<ShopScreen> {
     } else if (v < -700) {
       to = ShopScreen.full;
     } else {
-      to = const [
+      to = [
         ShopScreen.closeAt,
+        if (_tab == null && widget.categoriesRest != null)
+          widget.categoriesRest!,
         ShopScreen.half,
         ShopScreen.full,
       ].reduce((a, b) => (a - size).abs() < (b - size).abs() ? a : b);
@@ -320,7 +420,9 @@ class _ShopScreenState extends State<ShopScreen> {
                 header,
                 Expanded(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 240),
+                    duration: _levelJump
+                        ? Duration.zero
+                        : const Duration(milliseconds: 240),
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     // Витрина — во всю панель: иначе короткий раздел
@@ -421,6 +523,10 @@ class _CategoryList extends StatelessWidget {
   final ScrollController? controller;
   final ValueChanged<_ShopTab> onOpen;
 
+  static const int columns = 3;
+  static const double tileHeight = 150;
+  static const double gap = 10;
+
   @override
   Widget build(BuildContext context) {
     final tabs = [
@@ -436,10 +542,10 @@ class _CategoryList extends StatelessWidget {
         AppDimens.pagePadding,
       ),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        mainAxisExtent: 150,
+        crossAxisCount: columns,
+        crossAxisSpacing: gap,
+        mainAxisSpacing: gap,
+        mainAxisExtent: tileHeight,
       ),
       itemCount: tabs.length,
       itemBuilder: (context, index) =>
@@ -656,11 +762,13 @@ class _ItemGrid extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         // Две колонки вместо трёх: с 20.09 у товаров есть свои картинки, и
         // вещь должна быть видна, а не угадываться. Раздел теперь листают,
-        // зато сразу понятно, что покупаешь.
-        crossAxisCount: 2,
+        // зато сразу понятно, что покупаешь. На планшете (заказчик 17.11)
+        // две колонки давали широкие пустые карточки с маленькой вещью —
+        // там колонок три: карточка не шире 230, как на телефоне.
+        maxCrossAxisExtent: 230,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         // Фиксированная высота вместо пропорции: иначе на планшете карточка

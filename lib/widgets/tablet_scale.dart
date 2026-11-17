@@ -30,6 +30,7 @@ class TabletScale extends StatelessWidget {
     final mq = MediaQuery.of(context);
     final k = scaleFor(mq.size);
     if (k == 1) return child;
+    final scoped = _TabletScope(scale: k, child: child);
 
     final size = mq.size / k;
     return ClipRect(
@@ -53,9 +54,51 @@ class TabletScale extends StatelessWidget {
                 viewInsets: mq.viewInsets / k,
                 systemGestureInsets: mq.systemGestureInsets / k,
               ),
-              child: child,
+              child: scoped,
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Планшет ли это (уже внутри увеличения): для мест, которым на планшете
+  /// нужно ещё крупнее остального, — верхняя строка главного экрана.
+  static bool isTablet(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_TabletScope>() != null;
+}
+
+class _TabletScope extends InheritedWidget {
+  const _TabletScope({required this.scale, required super.child});
+
+  final double scale;
+
+  @override
+  bool updateShouldNotify(_TabletScope oldWidget) => scale != oldWidget.scale;
+}
+
+/// Ещё крупнее на планшете — в [boost] раз поверх общего увеличения
+/// (заказчик 17.11: «Мой малыш, 3 месяца, 12 дней — можно сделать больше,
+/// кнопки верхние тоже побольше»). Ребёнок раскладывается на ширину,
+/// меньшую в [boost] раз, и растягивается на всю. На телефоне — как есть.
+class TabletBoost extends StatelessWidget {
+  const TabletBoost({super.key, this.boost = 1.2, required this.child});
+
+  final double boost;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!TabletScale.isTablet(context)) return child;
+    return LayoutBuilder(
+      // Свою ширину задаём сами: в колонке ограничения свободные, и без
+      // этого FittedBox остался бы узким, ничего не увеличив.
+      builder: (context, c) => SizedBox(
+        width: c.maxWidth,
+        child: FittedBox(
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.topCenter,
+          child: SizedBox(width: c.maxWidth / boost, child: child),
         ),
       ),
     );
