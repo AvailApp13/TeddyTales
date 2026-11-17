@@ -283,6 +283,7 @@ function sections() {
     { id: 'prices', title: 'Каталог и цены', admin: true, render: renderPrices },
     { id: 'zodiac', title: 'Знаки зодиака', admin: true, render: renderZodiac },
     { id: 'content', title: 'Реплики и уведомления', admin: true, render: renderContent },
+    { id: 'push', title: 'Отправить уведомление', admin: true, render: renderPush },
     { id: 'names', title: 'Модерация имён', admin: true, render: renderNames },
     { id: 'history', title: 'История правок', admin: true, render: renderHistory },
     { id: 'staff', title: 'Доступы', admin: true, render: renderStaff },
@@ -377,8 +378,56 @@ const CONFIG_TITLES = {
   stage_rewards: 'Награда за новую стадию',
   care_cap: 'Потолок монет за уход в день',
   referral: 'Пригласи друга: монет обоим, дней на ввод кода, друзей максимум',
+  store_products: 'Покупки за деньги: product_id → предмет или монеты (КП 11.3)',
   test_wallet_floor: 'Испытания: кошелёк не ниже',
+  dishes: 'Готовые блюда: цена и сытость (КП 8.2)',
+  recipes: 'Рецепты: награда и сытость (КП 8.5)',
 };
+
+// Блюда и рецепты — таблицы «строка на блюдо» (КП 15.3, 15.4). Порядок и
+// названия — как в приложении. Йогурт и пирог из меню ушли (заказчик 01.10),
+// но на сервере остаются для старых сборок — здесь их не показываем.
+const FOOD_TABLES = {
+  dishes: {
+    head: ['Блюдо', 'Цена, монет', 'Сытость'],
+    fields: ['price', 'food'],
+    rows: {
+      porridge: 'Каша', soup: 'Суп', sandwich: 'Сэндвич', fruit: 'Фрукты',
+      fish: 'Рыба', cookie: 'Печенье', salad: 'Салат', pasta: 'Паста',
+      omelette: 'Омлет', chicken: 'Курица',
+    },
+  },
+  recipes: {
+    head: ['Рецепт', 'Награда, монет', 'Сытость'],
+    fields: ['reward', 'food'],
+    rows: {
+      cookie: 'Печенье', sandwich: 'Сэндвич', fruit_salad: 'Фруктовый салат',
+      meat: 'Курица с овощами', veggie: 'Паста с грибами',
+    },
+  },
+};
+
+function foodTable(row) {
+  const spec = FOOD_TABLES[row.key];
+  return `
+    <table>
+      <thead><tr>${spec.head.map((h, i) =>
+        `<th${i ? ' class="num"' : ''}>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${Object.entries(spec.rows).map(([id, title]) => `
+          <tr>
+            <td>${esc(title)}</td>
+            ${spec.fields.map((field) => `
+              <td class="num">
+                <input class="small" type="number" min="0" step="1"
+                       data-key="${esc(row.key)}" data-row="${esc(id)}"
+                       data-field="${esc(field)}"
+                       value="${esc(row.value[id]?.[field] ?? '')}">
+              </td>`).join('')}
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
 
 async function loadConfig() {
   const { data, error } = await db.from('game_config').select('key, value, updated_at');
@@ -399,6 +448,17 @@ async function renderEconomy() {
       <div class="card">
         <h2 style="margin-top:0">${esc(CONFIG_TITLES[row.key] || row.key)}</h2>
         <p class="note"><code>${esc(row.key)}</code></p>
+        ${FOOD_TABLES[row.key] ? foodTable(row) : typeof row.value === 'number' ? `
+        <table><tbody>
+          <tr>
+            <td>значение</td>
+            <td class="num">
+              <input class="small" type="number" step="0.001"
+                     data-key="${esc(row.key)}" data-scalar="1"
+                     value="${esc(row.value)}">
+            </td>
+          </tr>
+        </tbody></table>` : `
         <table><tbody>
           ${Object.entries(row.value)
             // Правится только число. Вложенные таблицы (блюда, рецепты)
@@ -414,7 +474,7 @@ async function renderEconomy() {
                        value="${esc(value)}">
               </td>
             </tr>`).join('')}
-        </tbody></table>
+        </tbody></table>`}
         <div class="row" style="margin-top:14px">
           <button class="action" data-save="${esc(row.key)}">Сохранить</button>
           <span class="note" data-msg="${esc(row.key)}"></span>
@@ -428,12 +488,31 @@ async function renderEconomy() {
 
 async function saveConfig(key, button) {
   // Правки накладываются на то, что уже лежит, — нечисловые поля остаются.
-  const current = (await loadConfig()).find((r) => r.key === key)?.value || {};
+  const current = (await loadConfig()).find((r) => r.key === key)?.value;
+  // Настройка-число (например, test_wallet_floor) сохраняется числом.
+  // Раньше «{ ...число }» давало {} — и вход на сервере падал у всех.
+  const scalar = $('view').querySelector(`input[data-key="${CSS.escape(key)}"][data-scalar]`);
+  if (scalar || typeof current !== 'object' || current === null) {
+    if (!scalar || scalar.value === '' || !Number.isFinite(Number(scalar.value))) return;
+    return writeConfig(key, Number(scalar.value), button);
+  }
   const value = { ...current };
   $('view').querySelectorAll(`input[data-key="${CSS.escape(key)}"]`).forEach((input) => {
-    value[input.dataset.field] = Number(input.value);
+    const { row, field } = input.dataset;
+    if (input.value === '') return;
+    if (row) {
+      // Строка таблицы блюд или рецептов: меняется одно поле, остальные
+      // поля строки и строки, которых нет на экране, остаются.
+      value[row] = { ...(value[row] || {}), [field]: Number(input.value) };
+    } else {
+      value[field] = Number(input.value);
+    }
   });
 
+  return writeConfig(key, value, button);
+}
+
+async function writeConfig(key, value, button) {
   button.disabled = true;
   const { error } = await db.from('game_config').update({ value }).eq('key', key);
   button.disabled = false;
@@ -574,6 +653,93 @@ const PHRASE_CONTEXTS = {
 const LANGS = [['ru', 'Русский'], ['en', 'English'], ['zh', '中文']];
 
 let contentLang = 'ru';
+
+// --- Push с сервера (КП 13.1, 15.5) --------------------------------------
+//
+// «Событие» и «Новинки магазина» знает только сервер. Уходят тем, у кого
+// этот тип включён в настройках приложения, — на языке телефона. Отправка —
+// функция send-push (iPhone через Apple; ⚠ Android — после Firebase).
+
+const PUSH_KINDS = [['event', 'Событие'], ['shop', 'Новинки магазина']];
+
+async function renderPush() {
+  const { data: log } = await db.from('push_log')
+    .select('kind, title_ru, sent, failed, note, created_at')
+    .order('created_at', { ascending: false }).limit(20);
+
+  $('view').innerHTML = `
+    <h1>Отправить уведомление</h1>
+    <p class="lede">
+      Придёт тем, у кого этот тип включён в настройках приложения, на языке
+      их телефона. Пустой английский или китайский — уйдёт русский текст.
+    </p>
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        ${PUSH_KINDS.map(([id, title], i) => `
+          <label style="margin-right:16px">
+            <input type="radio" name="push-kind" value="${id}" ${i === 0 ? 'checked' : ''}>
+            ${esc(title)}
+          </label>`).join('')}
+      </div>
+      ${LANGS.map(([code, title]) => `
+        <h2 style="margin:14px 0 6px">${esc(title)}</h2>
+        <input type="text" data-push-title="${code}" placeholder="Заголовок" style="width:100%;margin-bottom:6px">
+        <textarea data-push-body="${code}" rows="2" placeholder="Текст" style="width:100%"></textarea>
+      `).join('')}
+      <div class="row" style="margin-top:14px">
+        <button class="action ghost" id="push-check">Сколько получат</button>
+        <button class="action" id="push-send">Отправить</button>
+        <span class="note" id="push-msg"></span>
+      </div>
+    </div>
+    <h2>Отправленные</h2>
+    <div class="card">
+      ${(log ?? []).length === 0 ? '<p class="note">Пока ничего не отправляли.</p>' : `
+        <table><tbody>${log.map((r) => `
+          <tr>
+            <td>${esc(new Date(r.created_at).toLocaleString('ru'))}</td>
+            <td>${esc((PUSH_KINDS.find(([id]) => id === r.kind) || [, r.kind])[1])}</td>
+            <td>${esc(r.title_ru)}</td>
+            <td class="num">доставлено ${esc(r.sent)}${r.failed ? `, ошибок ${esc(r.failed)}` : ''}</td>
+          </tr>`).join('')}</tbody></table>`}
+    </div>`;
+
+  const read = () => {
+    const pick = (attr) => Object.fromEntries(LANGS.map(([code]) => [
+      code, $('view').querySelector(`[${attr}="${code}"]`).value.trim()]));
+    return {
+      kind: $('view').querySelector('input[name="push-kind"]:checked').value,
+      title: pick('data-push-title'),
+      body: pick('data-push-body'),
+    };
+  };
+  const say = (text, ok) => {
+    $('push-msg').textContent = text;
+    $('push-msg').style.color = ok ? 'var(--accent)' : 'var(--warn)';
+  };
+  const call = async (dryRun) => {
+    const input = read();
+    if (!input.title.ru || !input.body.ru) {
+      say('Нужны хотя бы русский заголовок и текст', false);
+      return;
+    }
+    const { data, error } = await db.functions.invoke('send-push', {
+      body: { ...input, dryRun },
+    });
+    if (error) { say(`Не ушло: ${error.message}`, false); return; }
+    if (!data.configured) {
+      say(`Получателей: ${data.recipients}. Ключ Apple для push ещё не подключён — отправка заработает после него.`, false);
+      return;
+    }
+    if (dryRun) { say(`Получат: ${data.recipients}`, true); return; }
+    say(`Доставлено: ${data.sent}${data.failed ? `, ошибок: ${data.failed}` : ''}`, true);
+    renderPush();
+  };
+  $('push-check').onclick = () => call(true);
+  $('push-send').onclick = () => {
+    if (window.confirm === undefined || confirm('Отправить уведомление всем, у кого включён этот тип?')) call(false);
+  };
+}
 
 async function renderContent() {
   const [{ data: phrases, error: e1 }, { data: notes, error: e2 }] = await Promise.all([
