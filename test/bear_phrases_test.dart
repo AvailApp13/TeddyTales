@@ -116,4 +116,11 @@ void main() {
       expect(script.isFinishedAt(script.duration), isTrue);
     });
   });
+
+  test('девочка говорит о себе в женском роде, к игроку — как было', () {
+    final p = BearPhrases.all.firstWhere((p) => p.id == 'greeting_1');
+    expect(p.text(BearLanguage.ru, girl: true), 'Ты пришёл! Я скучала.');
+    expect(p.text(BearLanguage.ru), 'Ты пришёл! Я скучал.');
+    expect(p.text(BearLanguage.en, girl: true), p.en);
+  });
 }

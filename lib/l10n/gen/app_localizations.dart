@@ -238,6 +238,18 @@ abstract class AppLocalizations {
   /// **'Первый плач — он зовёт тебя.'**
   String get birthCueFirstCry;
 
+  /// Субтитр рождения для героини-девочки
+  ///
+  /// In ru, this message translates to:
+  /// **'Первый плач — она зовёт тебя.'**
+  String get birthCueFirstCryGirl;
+
+  /// Субтитр рождения для героини-девочки
+  ///
+  /// In ru, this message translates to:
+  /// **'Она успокоилась. Здравствуй, малышка.'**
+  String get birthCueFinaleGirl;
+
   /// No description provided for @birthCueStars.
   ///
   /// In ru, this message translates to:

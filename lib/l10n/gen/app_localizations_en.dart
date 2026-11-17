@@ -122,6 +122,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get birthCueFirstCry => 'The first cry — calling out for you.';
 
   @override
+  String get birthCueFirstCryGirl => 'The first cry — calling out for you.';
+
+  @override
+  String get birthCueFinaleGirl => 'Calm at last. Hello, little one.';
+
+  @override
   String get birthCueStars => 'Little stars drift in the soft light.';
 
   @override

@@ -46,8 +46,10 @@ class BearPhrase {
   final String en;
   final String zh;
 
-  String text(BearLanguage language) => switch (language) {
-    BearLanguage.ru => ru,
+  /// [girl] — героиня JOY: по-русски о себе в женском роде. В английском
+  /// и китайском рода у глагола и прилагательного нет.
+  String text(BearLanguage language, {bool girl = false}) => switch (language) {
+    BearLanguage.ru => girl ? BearPhrases._girlRu[id] ?? ru : ru,
     BearLanguage.en => en,
     BearLanguage.zh => zh,
   };
@@ -73,6 +75,21 @@ class BearPhrase {
 /// стартовый набор и как фолбэк на случай, если сервер недоступен (КП 1.1,
 /// офлайн-режим).
 abstract final class BearPhrases {
+  /// Реплики девочки (героиня JOY с 14.10), где род меняется: «скучала»,
+  /// «голодна», «подросла». Обращения к игроку («Ты пришёл!») не трогаются
+  /// — пол игрока приложение не знает (проверка 17.11).
+  static const Map<String, String> _girlRu = {
+    'greeting_1': 'Ты пришёл! Я скучала.',
+    'greeting_3': 'Я тебя ждала.',
+    'hungry_1': 'Я немного голодна…',
+    'dirty_1': 'Кажется, я испачкалась.',
+    'after_feed_2': 'Теперь я сытая и довольная.',
+    'after_wash_1': 'Я чистенькая!',
+    'after_wake_1': 'Доброе утро! Я выспалась.',
+    'invite_play_2': 'Я нашла новую игру!',
+    'stage_up_1': 'Смотри, я подросла!',
+  };
+
   static const List<BearPhrase> all = <BearPhrase>[
     // --- Приветствие ------------------------------------------------------
     BearPhrase(

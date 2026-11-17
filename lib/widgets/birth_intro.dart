@@ -99,7 +99,7 @@ class BirthIntro extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _BirthVideo(asset: video ?? birthVideos[skin]),
+            _BirthVideo(asset: video ?? birthVideos[skin], girl: skin == BearSkin.girl),
             const SizedBox(height: 12),
             Text(
               l10n.birthIntroTitle,
@@ -168,9 +168,12 @@ class BirthIntro extends StatelessWidget {
 /// Место под видео рождения. Ролика нет — заглушка «Видео рождения».
 /// Есть — играет с субтитрами; «Пропустить» через 5 секунд (КП 2.1).
 class _BirthVideo extends StatefulWidget {
-  const _BirthVideo({this.asset});
+  const _BirthVideo({this.asset, this.girl = false});
 
   final String? asset;
+
+  /// Героиня JOY — субтитры в женском роде.
+  final bool girl;
 
   @override
   State<_BirthVideo> createState() => _BirthVideoState();
@@ -248,7 +251,7 @@ class _BirthVideoState extends State<_BirthVideo> {
                 right: 12,
                 bottom: 10,
                 child: Text(
-                  birthCueText(l10n, cue.id),
+                  birthCueText(l10n, cue.id, girl: widget.girl),
                   textAlign: TextAlign.center,
                   style: glassText(14, 800).copyWith(
                     shadows: const [

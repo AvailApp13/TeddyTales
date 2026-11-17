@@ -90,6 +90,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get birthCueFirstCry => '第一声啼哭——他在呼唤你。';
 
   @override
+  String get birthCueFirstCryGirl => '第一声啼哭——她在呼唤你。';
+
+  @override
+  String get birthCueFinaleGirl => '她安静下来了。你好呀，小家伙。';
+
+  @override
   String get birthCueStars => '小星星在柔和的光里飘着。';
 
   @override

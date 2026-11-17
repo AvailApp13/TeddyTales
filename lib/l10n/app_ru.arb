@@ -68,6 +68,14 @@
   "birthCueFinale": "Он успокоился. Здравствуй, малыш.",
   "birthCueFirstBreath": "Первый вдох…",
   "birthCueFirstCry": "Первый плач — он зовёт тебя.",
+  "birthCueFirstCryGirl": "Первый плач — она зовёт тебя.",
+  "birthCueFinaleGirl": "Она успокоилась. Здравствуй, малышка.",
+  "@birthCueFirstCryGirl": {
+    "description": "Субтитр рождения для героини-девочки"
+  },
+  "@birthCueFinaleGirl": {
+    "description": "Субтитр рождения для героини-девочки"
+  },
   "birthCueStars": "Звёздочки кружатся в мягком свете.",
   "birthSceneNotReady": "Сцена рождения ещё не собрана",
   "birthSkip": "Пропустить",

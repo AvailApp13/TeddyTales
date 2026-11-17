@@ -46,6 +46,47 @@ SmartCopy composeNotification(
   required BearLanguage lang,
   BearTrait trait = BearTrait.active,
   int seed = 0,
+  bool girl = false,
+}) {
+  final copy = _compose(kinds, name: name, lang: lang, trait: trait, seed: seed);
+  return girl ? SmartCopy(_feminine(copy.title, lang), _feminine(copy.body, lang)) : copy;
+}
+
+/// Героиня JOY: о мишке в женском роде (проверка 17.11). Тексты написаны
+/// о мальчике; здесь меняются только слова, где род виден.
+String _feminine(String text, BearLanguage lang) {
+  switch (lang) {
+    case BearLanguage.en:
+      return text;
+    case BearLanguage.zh:
+      return text.replaceAll('他', '她');
+    case BearLanguage.ru:
+      var out = text;
+      for (final (from, to) in _ruFeminine) {
+        out = out.replaceAll(RegExp('(?<![а-яё])$from(?![а-яё])'), to);
+      }
+      return out;
+  }
+}
+
+const _ruFeminine = [
+  ('каким он стал', 'какой она стала'),
+  ('проголодался', 'проголодалась'),
+  ('заскучал', 'заскучала'),
+  ('перебегал', 'перебегала'),
+  ('приготовил', 'приготовила'),
+  ('принёс', 'принесла'),
+  ('нашёл', 'нашла'),
+  ('подрос', 'подросла'),
+  ('справляется сам', 'справляется сама'),
+];
+
+SmartCopy _compose(
+  String kinds, {
+  required String name,
+  required BearLanguage lang,
+  required BearTrait trait,
+  required int seed,
 }) {
   final list = kinds.split('+');
   if (list.length > 1) {

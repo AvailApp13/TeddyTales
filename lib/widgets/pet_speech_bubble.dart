@@ -28,6 +28,7 @@ class PetSpeechBubble extends StatefulWidget {
     required this.initiative,
     this.forgotten = false,
     this.language = BearLanguage.ru,
+    this.girl = false,
     this.onTap,
     this.tailTo,
   });
@@ -38,6 +39,9 @@ class PetSpeechBubble extends StatefulWidget {
   /// Нужда ниже 15 — реплика «Ты про меня забыл?» (`BearLife.forgotten`).
   final bool forgotten;
   final BearLanguage language;
+
+  /// Героиня JOY — реплики в женском роде.
+  final bool girl;
 
   /// Тап по облачку — согласиться на предложение питомца.
   final ValueChanged<BearAction>? onTap;
@@ -119,7 +123,7 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
     if (next == _context && _phrase != null) return;
     _context = next;
     _phrase = BearPhrases.random(next);
-    final chars = _phrase!.text(widget.language).length;
+    final chars = _phrase!.text(widget.language, girl: widget.girl).length;
     _type.duration = Duration(milliseconds: PetSpeechBubble.msPerChar * chars);
     _hold.reset();
     _out.reset();
@@ -150,7 +154,7 @@ class _PetSpeechBubbleState extends State<PetSpeechBubble>
     if (phrase == null) return const SizedBox.shrink();
 
     final initiative = widget.initiative;
-    final text = phrase.text(widget.language);
+    final text = phrase.text(widget.language, girl: widget.girl);
     final style = glassText(12.5, 700, color: AppColors.textPrimary);
 
     return AnimatedBuilder(

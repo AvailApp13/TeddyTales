@@ -126,6 +126,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get birthCueFirstCry => 'Первый плач — он зовёт тебя.';
 
   @override
+  String get birthCueFirstCryGirl => 'Первый плач — она зовёт тебя.';
+
+  @override
+  String get birthCueFinaleGirl => 'Она успокоилась. Здравствуй, малышка.';
+
+  @override
   String get birthCueStars => 'Звёздочки кружатся в мягком свете.';
 
   @override

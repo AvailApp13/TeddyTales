@@ -10,11 +10,12 @@ import '../bear/birth_scene_script.dart';
 import 'l10n.dart';
 
 /// Текст субтитра для шага [id] на языке интерфейса.
-String birthCueText(AppLocalizations l10n, BirthSceneCueId id) => switch (id) {
+/// [girl] — героиня JOY: «Она успокоилась», «она зовёт тебя».
+String birthCueText(AppLocalizations l10n, BirthSceneCueId id, {bool girl = false}) => switch (id) {
   BirthSceneCueId.cradle => l10n.birthCueCradle,
   BirthSceneCueId.stars => l10n.birthCueStars,
   BirthSceneCueId.firstBreath => l10n.birthCueFirstBreath,
   BirthSceneCueId.awakening => l10n.birthCueAwakening,
-  BirthSceneCueId.firstCry => l10n.birthCueFirstCry,
-  BirthSceneCueId.finale => l10n.birthCueFinale,
+  BirthSceneCueId.firstCry => girl ? l10n.birthCueFirstCryGirl : l10n.birthCueFirstCry,
+  BirthSceneCueId.finale => girl ? l10n.birthCueFinaleGirl : l10n.birthCueFinale,
 };

@@ -1936,6 +1936,7 @@ class _RoomScene extends StatelessWidget {
           forgotten: forgotten,
           initiative: controller.initiative,
           language: language,
+          girl: controller.state.skin == BearSkin.girl,
           onTap: onAcceptInitiative,
           tailTo: tail,
         ),

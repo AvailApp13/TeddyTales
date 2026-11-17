@@ -329,6 +329,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       ),
       trait: _bear.state.trait,
       giftAvailable: _game.daily.giftAvailable,
+      girl: _bear.state.skin == BearSkin.girl,
     );
   }
 

@@ -119,6 +119,7 @@ class NotificationService {
     String name = '',
     BearTrait trait = BearTrait.active,
     bool giftAvailable = false,
+    bool girl = false,
   }) async {
     if (!_ready) return;
 
@@ -160,6 +161,7 @@ class NotificationService {
         lang: language,
         trait: trait,
         seed: seed,
+        girl: girl,
       );
       await _schedule(entry.key, entry.value, copy);
     }

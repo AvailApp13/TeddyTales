@@ -90,4 +90,19 @@ void main() {
     expect(switchOf('week'), 'gift');
     expect(switchOf('hungry'), 'hungry');
   });
+
+  test('девочка: уведомления в женском роде (проверка 17.11)', () {
+    final boy = composeNotification('hungry', name: 'Мими', lang: BearLanguage.ru);
+    final girl = composeNotification('hungry', name: 'Мими', lang: BearLanguage.ru, girl: true);
+    expect(boy.title, 'Мими проголодался');
+    expect(girl.title, 'Мими проголодалась');
+    expect(
+      composeNotification('stage', name: 'Мими', lang: BearLanguage.ru, girl: true).body,
+      'Посмотри, какой она стала.',
+    );
+    expect(
+      composeNotification('hungry+gift', name: 'Мими', lang: BearLanguage.ru, girl: true).body,
+      contains('нашла подарок'),
+    );
+  });
 }
