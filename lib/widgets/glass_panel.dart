@@ -343,11 +343,24 @@ InputDecoration glassField({String? hint, String? error, String? counter}) =>
 /// Экран поверх комнаты (заказчик 26.09): профиль, рост, дневник,
 /// настройки открываются не на кремовой странице, а на размытой комнате —
 /// она остаётся сзади. Экран въезжает снизу, фон плавно размывается.
+/// Ширина колонки на планшете — как у нижних листов (магазин, «Обучение»):
+/// у них предел 640 задаёт сам Flutter (Material 3, bottom sheet).
+const double kWideColumn = 640;
+
 Route<T> glassRoute<T>(Widget screen) => PageRouteBuilder<T>(
   opaque: false,
   transitionDuration: const Duration(milliseconds: 340),
   reverseTransitionDuration: const Duration(milliseconds: 240),
-  pageBuilder: (context, _, _) => screen,
+  // Планшеты (проверка 17.11): на iPad экран тянулся на всю ширину, и
+  // подпись с значением расходились к разным краям. Колонка — той же
+  // ширины, что магазин и «Обучение»; размытая комната — на весь экран.
+  // На телефоне ничего не меняется: он у́же колонки.
+  pageBuilder: (context, _, _) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: kWideColumn),
+      child: screen,
+    ),
+  ),
   transitionsBuilder: (context, animation, _, child) {
     final t = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
     return Stack(
