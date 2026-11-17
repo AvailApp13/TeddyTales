@@ -419,6 +419,7 @@ class SupabaseStore implements ProgressStore, AccountAuth {
         // говорит текстами из кода, настройки от этого не страдают.
         kPhrasesKey: await _content('phrases'),
         kNotificationTextsKey: await _content('notification_texts'),
+        kEduTasksKey: await _content('edu_tasks'),
       };
     } on Object catch (error) {
       throw ProgressStoreException(

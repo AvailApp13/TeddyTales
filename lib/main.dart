@@ -17,6 +17,7 @@ import 'backend/memory_store.dart';
 import 'backend/progress_store.dart';
 import 'backend/progress_sync.dart';
 import 'bear/bear.dart';
+import 'game/edu_tasks.dart';
 import 'game/food.dart';
 import 'game/game_calendar.dart';
 import 'game/referral_info.dart';
@@ -460,6 +461,7 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
       ItemPrices.apply(config);
       BearPhrases.applyServer(config[kPhrasesKey]);
       NotificationTexts.applyServer(config[kNotificationTextsKey]);
+      EduTasks.applyServer(config[kEduTasksKey]);
       if (mounted) setState(() {});
     } on Object catch (error) {
       debugPrint('Цены блюд с сервера не пришли: $error');

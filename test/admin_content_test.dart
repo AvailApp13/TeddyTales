@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teddy_tales/bear/bear.dart';
+import 'package:teddy_tales/game/edu_tasks.dart';
+import 'package:teddy_tales/game/learning_content.dart';
 import 'package:teddy_tales/game/shop_items.dart';
 import 'package:teddy_tales/notifications/smart_texts.dart';
 
@@ -9,6 +11,44 @@ void main() {
     ItemPrices.reset();
     BearPhrases.resetServer();
     NotificationTexts.reset();
+    EduTasks.reset();
+  });
+
+  group('Задания обучения', () {
+    List<Map<String, Object>> level(int n, {String ru = 'Вопрос'}) => [
+      for (var i = 1; i <= eduTasksPerLevel; i++)
+        {
+          'category': 'colors',
+          'level': n,
+          'idx': i,
+          'ru': '$ru $i',
+          'en': 'Q $i',
+          'zh': '问 $i',
+          'options': ['1', '2', '3', '4'],
+          'correct': 2,
+        },
+    ];
+
+    test('полный уровень из панели заменяет уровень сборки', () {
+      EduTasks.applyServer(level(1));
+      final levels = EduTasks.levels('colors');
+      expect(levels, hasLength(eduLevelsPerCategory));
+      expect(levels[0][0].question(BearLanguage.ru), 'Вопрос 1');
+      expect(levels[0][0].correct, 2);
+      // Другие уровни и категории — из сборки.
+      expect(levels[1], same(eduContent['colors']![1]));
+      expect(EduTasks.levels('count'), same(eduContent['count']));
+    });
+
+    test('неполный или с ошибкой уровень — из сборки', () {
+      final broken = level(1)..removeLast();
+      final dup = level(2);
+      dup[3] = {...dup[3], 'options': ['1', '1', '3', '4']};
+      EduTasks.applyServer([...broken, ...dup]);
+      final levels = EduTasks.levels('colors');
+      expect(levels[0], same(eduContent['colors']![0]));
+      expect(levels[1], same(eduContent['colors']![1]));
+    });
   });
 
   group('Цены вещей', () {

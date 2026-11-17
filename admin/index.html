@@ -286,6 +286,7 @@ function sections() {
     { id: 'prices', title: 'Каталог и цены', admin: true, render: renderPrices },
     { id: 'zodiac', title: 'Знаки зодиака', admin: true, render: renderZodiac },
     { id: 'content', title: 'Реплики и уведомления', admin: true, render: renderContent },
+    { id: 'tasks', title: 'Задания обучения', admin: true, render: renderTasks },
     { id: 'push', title: 'Отправить уведомление', admin: true, render: renderPush },
     { id: 'names', title: 'Модерация имён', admin: true, render: renderNames },
     { id: 'history', title: 'История правок', admin: true, render: renderHistory },
@@ -741,6 +742,112 @@ async function renderPush() {
   $('push-check').onclick = () => call(true);
   $('push-send').onclick = () => {
     if (window.confirm === undefined || confirm('Отправить уведомление всем, у кого включён этот тип?')) call(false);
+  };
+}
+
+// --- Задания обучения (КП 9.4, 15.5) ----------------------------------------
+
+const TASK_CATEGORIES = [
+  ['colors', 'Цвета и формы'], ['count', 'Счёт и логика'], ['world', 'Окружающий мир'],
+];
+let taskCategory = 'colors';
+let taskLevel = 1;
+
+async function renderTasks() {
+  const { data: rows, error } = await db.from('edu_tasks').select('*')
+    .eq('category', taskCategory).eq('level', taskLevel).order('idx');
+  if (error) throw error;
+
+  $('view').innerHTML = `
+    <h1>Задания обучения</h1>
+    <p class="lede">
+      Три категории по десять уровней, в уровне десять заданий. Вопрос —
+      на трёх языках, ответы — картинки-эмодзи или цифры, одни на все
+      языки. Приложение берёт уровень отсюда, только если все десять
+      заданий в нём заполнены; иначе — набор из сборки.
+    </p>
+
+    <div class="row" style="margin-bottom:10px">
+      ${TASK_CATEGORIES.map(([code, title]) => `
+        <button class="action ${code === taskCategory ? '' : 'ghost'}"
+                data-task-cat="${code}">${esc(title)}</button>`).join('')}
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      ${Array.from({ length: 10 }, (_, i) => i + 1).map((n) => `
+        <button class="action ${n === taskLevel ? '' : 'ghost'}"
+                data-task-level="${n}">Уровень ${n}</button>`).join('')}
+    </div>
+    <div class="row" style="margin-bottom:18px">
+      ${LANGS.map(([code, title]) => `
+        <button class="action ${code === contentLang ? '' : 'ghost'}"
+                data-lang="${code}">${esc(title)}</button>`).join('')}
+    </div>
+
+    ${rows.length === 0 ? '<div class="bad">В таблице нет заданий этого уровня.</div>' : rows.map((row) => `
+      <div class="card" data-task="${row.idx}">
+        <label for="tq-${row.idx}">Задание ${row.idx} · вопрос</label>
+        <textarea id="tq-${row.idx}" rows="2" data-task-q="${row.idx}"
+          style="width:100%;font:inherit;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--ground);color:var(--ink)">${esc(row[contentLang])}</textarea>
+        <label>Варианты ответа · отмечен верный</label>
+        <div class="row">
+          ${row.options.map((option, i) => `
+            <label style="display:flex;gap:6px;align-items:center;margin:0">
+              <input type="radio" name="tc-${row.idx}" value="${i}" ${i === row.correct ? 'checked' : ''}>
+              <input class="small" type="text" data-task-o="${row.idx}:${i}" value="${esc(option)}">
+            </label>`).join('')}
+        </div>
+      </div>`).join('')}
+
+    <div class="row" style="margin-top:6px">
+      <button class="action" id="save-tasks">Сохранить уровень</button>
+      <span class="note" id="tasks-msg"></span>
+    </div>`;
+
+  $('view').querySelectorAll('[data-task-cat]').forEach((b) => {
+    b.onclick = () => { taskCategory = b.dataset.taskCat; taskLevel = 1; open('tasks'); };
+  });
+  $('view').querySelectorAll('[data-task-level]').forEach((b) => {
+    b.onclick = () => { taskLevel = Number(b.dataset.taskLevel); open('tasks'); };
+  });
+  $('view').querySelectorAll('[data-lang]').forEach((b) => {
+    b.onclick = () => { contentLang = b.dataset.lang; open('tasks'); };
+  });
+
+  $('save-tasks').onclick = async () => {
+    const msg = $('tasks-msg');
+    const edits = [];
+    for (const row of rows) {
+      const question = $('view').querySelector(`[data-task-q="${row.idx}"]`).value;
+      const options = row.options.map((_, i) =>
+        $('view').querySelector(`[data-task-o="${row.idx}:${i}"]`).value.trim());
+      const correct = Number($('view').querySelector(`[name="tc-${row.idx}"]:checked`).value);
+      // Те же правила, что у приложения: иначе уровень молча уйдёт на
+      // набор из сборки, и правка «не сработает».
+      if (!question.trim()) return say('tasks-msg', 'bad', `Задание ${row.idx}: пустой вопрос`);
+      if (options.some((o) => !o)) return say('tasks-msg', 'bad', `Задание ${row.idx}: пустой вариант`);
+      if (new Set(options).size !== 4) return say('tasks-msg', 'bad', `Задание ${row.idx}: варианты повторяются`);
+      const changed = question !== row[contentLang] || correct !== row.correct
+        || options.some((o, i) => o !== row.options[i]);
+      if (changed) edits.push({ idx: row.idx, fields: { [contentLang]: question, options, correct } });
+    }
+    if (edits.length === 0) { msg.textContent = 'Нечего сохранять'; return; }
+
+    msg.textContent = 'Сохраняю…';
+    msg.style.color = 'var(--muted)';
+    const problems = [];
+    for (const edit of edits) {
+      const { error } = await db.from('edu_tasks')
+        .update({ ...edit.fields, updated_at: new Date().toISOString() })
+        .eq('category', taskCategory).eq('level', taskLevel).eq('idx', edit.idx);
+      if (error) problems.push(`задание ${edit.idx}: ${error.message}`);
+    }
+    if (problems.length) {
+      msg.textContent = `Не сохранилось: ${problems[0]}`;
+      msg.style.color = 'var(--warn)';
+    } else {
+      msg.textContent = `Сохранено: ${edits.length}`;
+      msg.style.color = 'var(--accent)';
+    }
   };
 }
 

@@ -133,3 +133,6 @@ const kPhrasesKey = 'content.phrases';
 
 /// Ключ текстов уведомлений панели — строки таблицы `notification_texts`.
 const kNotificationTextsKey = 'content.notification_texts';
+
+/// Ключ заданий обучения панели — строки таблицы `edu_tasks` (КП 15.5).
+const kEduTasksKey = 'content.edu_tasks';

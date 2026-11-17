@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../bear/bear_rig_spec.dart';
 import '../game/audience.dart';
+import '../game/edu_tasks.dart';
 import '../game/learning_content.dart';
 import '../game/game_state.dart';
 import '../games/adult_games.dart';
@@ -62,21 +63,21 @@ List<_EduCategory> _categories(AppLocalizations l10n) => [
     id: 'colors',
     emoji: '🎨',
     title: l10n.learnCatColorsTitle,
-    levels: eduContent['colors']!,
+    levels: EduTasks.levels('colors'),
     minStage: BearStage.newborn,
   ),
   _EduCategory(
     id: 'count',
     emoji: '🔢',
     title: l10n.learnCatCountTitle,
-    levels: eduContent['count']!,
+    levels: EduTasks.levels('count'),
     minStage: BearStage.crawling,
   ),
   _EduCategory(
     id: 'world',
     emoji: '🌍',
     title: l10n.learnCatWorldTitle,
-    levels: eduContent['world']!,
+    levels: EduTasks.levels('world'),
     minStage: BearStage.firstSteps,
   ),
 ];
