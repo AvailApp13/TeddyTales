@@ -573,3 +573,115 @@ $$;
 
 revoke execute on function public.set_push_quiet(text, integer, boolean) from public, anon;
 grant execute on function public.set_push_quiet(text, integer, boolean) to authenticated;
+
+-- --- Характер из действий (КП 7.3, проверка 17.11) ---------------------------
+--
+-- История ухода (care_events) писалась, но характер по ней не считался:
+-- pets.trait оставался стартовым, и каждый запуск возвращал его в
+-- приложение. Теперь после каждого действия характер пересчитывается — по
+-- тому же правилу, что в приложении (`lib/bear/bear_trait_tracker.dart`):
+--   * окно — 3 дня, судить не раньше чем через сутки от первого действия;
+--   * вовлечённость = действий в сутки / 8: ниже 0,25 — «замкнутый»,
+--     ниже 0,5 — «самостоятельный»;
+--   * иначе, от 6 действий, — черта с наибольшим весом (игра — активный,
+--     учёба и наряды — любознательный, ласка и еда — ласковый, сон и мытьё —
+--     спокойный) плюс добавка знака из панели (zodiac_inclinations);
+--   * ничья или нет данных — характер не меняется.
+-- Цифры — те же допущения, что в приложении; меняются в одном месте вместе
+-- с ним.
+
+create or replace function public.compute_trait(p_pet_id uuid)
+returns public.bear_trait
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_since timestamptz := now() - interval '3 days';
+  v_first timestamptz;
+  v_count integer;
+  v_days numeric;
+  v_engagement numeric;
+  v_zodiac jsonb;
+  v_best text;
+  v_best_score numeric;
+  v_second_score numeric;
+begin
+  select min(happened_at), count(*) into v_first, v_count
+  from public.care_events
+  where pet_id = p_pet_id and happened_at >= v_since;
+
+  if v_count = 0 then return null; end if;
+  v_days := extract(epoch from (now() - v_first)) / 86400.0;
+  if v_days < 1 then return null; end if;
+
+  v_engagement := least(1, (v_count / v_days) / 8.0);
+  if v_engagement < 0.25 then return 'reserved'; end if;
+  if v_engagement < 0.5 then return 'independent'; end if;
+  if v_count < 6 then return null; end if;
+
+  select coalesce(public.cfg('zodiac_inclinations') -> (p.zodiac::text), '{}'::jsonb)
+  into v_zodiac
+  from public.pets p where p.id = p_pet_id;
+
+  with weights(action, trait, weight) as (
+    values ('play', 'active', 1.0), ('wake', 'active', 0.5),
+           ('learn', 'curious', 1.0), ('dress', 'curious', 0.5),
+           ('decorate', 'curious', 0.5),
+           ('pet', 'affectionate', 1.0), ('feed', 'affectionate', 0.5),
+           ('sleep', 'calm', 1.0), ('wash', 'calm', 0.5)
+  ),
+  raw as (
+    select w.trait, sum(w.weight) as score
+    from public.care_events c
+    join weights w on w.action = c.action::text
+    where c.pet_id = p_pet_id and c.happened_at >= v_since
+    group by w.trait
+  ),
+  total as (select sum(score) as score from raw),
+  ranked as (
+    select t.trait,
+           coalesce(r.score / nullif((select score from total), 0), 0)
+           + case when jsonb_typeof(v_zodiac -> t.trait) = 'number'
+                  then (v_zodiac ->> t.trait)::numeric else 0 end as score
+    from (values ('active'), ('curious'), ('affectionate'), ('calm')) t(trait)
+    left join raw r on r.trait = t.trait
+  )
+  select (array_agg(trait order by score desc))[1],
+         (array_agg(score order by score desc))[1],
+         (array_agg(score order by score desc))[2]
+  into v_best, v_best_score, v_second_score
+  from ranked;
+
+  if v_best_score is null or v_best_score = 0 then return null; end if;
+  if v_second_score = v_best_score then return null; end if;
+  return v_best::public.bear_trait;
+end;
+$$;
+
+revoke execute on function public.compute_trait(uuid) from public, anon, authenticated;
+
+create or replace function public.update_trait_on_care()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_trait public.bear_trait := public.compute_trait(new.pet_id);
+begin
+  if v_trait is not null then
+    update public.pets set trait = v_trait
+    where id = new.pet_id and trait is distinct from v_trait;
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.update_trait_on_care() from public, anon, authenticated;
+
+drop trigger if exists on_care_trait on public.care_events;
+create trigger on_care_trait
+  after insert on public.care_events
+  for each row execute function public.update_trait_on_care();
