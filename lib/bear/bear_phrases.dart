@@ -79,7 +79,10 @@ class BearPhrase {
   /// [girl] — героиня JOY: по-русски о себе в женском роде. В английском
   /// и китайском рода у глагола и прилагательного нет.
   String text(BearLanguage language, {bool girl = false}) => switch (language) {
-    BearLanguage.ru => girl ? BearPhrases._girlRu[id] ?? ru : ru,
+    // Реплику переписали в панели — женский вариант из кода к ней уже не
+    // подходит, остаётся текст панели.
+    BearLanguage.ru =>
+      girl && BearPhrases._codeRu[id] == ru ? BearPhrases._girlRu[id] ?? ru : ru,
     BearLanguage.en => en,
     BearLanguage.zh => zh,
   };
@@ -362,9 +365,56 @@ abstract final class BearPhrases {
     ),
   ];
 
+  /// Реплики, которые сейчас в ходу: из панели управления, если она
+  /// ответила (КП 15.3, таблица `phrases`), иначе — из кода.
+  static List<BearPhrase> get current => _server ?? all;
+  static List<BearPhrase>? _server;
+
+  static final Map<String, String> _codeRu = {for (final p in all) p.id: p.ru};
+
+  /// Взять реплики из панели: строки `{id, context, ru, en, zh, enabled}`.
+  /// Выключенная в панели реплика не звучит; строка с незнакомым контекстом
+  /// или пустым текстом пропускается. Реплики, которых в панели нет, — из
+  /// кода. Если после этого у какого-то контекста не осталось ни одной
+  /// реплики, для него берутся реплики из кода: мишка не должен замолчать
+  /// из-за того, что в панели выключили всё.
+  static void applyServer(Object? rows) {
+    if (rows is! List) return;
+    final byId = {for (final p in all) p.id: p};
+    final off = <String>{};
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final id = row['id']?.toString();
+      if (id == null) continue;
+      if (row['enabled'] == false) {
+        off.add(id);
+        continue;
+      }
+      final context = BearPhraseContext.values
+          .where((c) => c.name == row['context'])
+          .firstOrNull;
+      final ru = row['ru'], en = row['en'], zh = row['zh'];
+      if (context == null || ru is! String || en is! String || zh is! String) {
+        continue;
+      }
+      if (ru.trim().isEmpty || en.trim().isEmpty || zh.trim().isEmpty) continue;
+      byId[id] = BearPhrase(id, context, ru, en, zh);
+    }
+    off.forEach(byId.remove);
+    final list = byId.values.toList();
+    for (final c in BearPhraseContext.values) {
+      if (list.any((p) => p.context == c)) continue;
+      list.addAll(all.where((p) => p.context == c));
+    }
+    _server = list;
+  }
+
+  /// Забыть реплики панели — для тестов.
+  static void resetServer() => _server = null;
+
   /// Реплики для контекста.
   static List<BearPhrase> forContext(BearPhraseContext context) =>
-      all.where((phrase) => phrase.context == context).toList();
+      current.where((phrase) => phrase.context == context).toList();
 
   /// Случайная реплика для контекста или `null`, если реплик нет.
   static BearPhrase? random(BearPhraseContext context, {Random? random}) {

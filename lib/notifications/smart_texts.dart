@@ -81,6 +81,59 @@ const _ruFeminine = [
   ('справляется сам', 'справляется сама'),
 ];
 
+/// Тексты уведомлений из панели управления (КП 15.3, таблица
+/// `notification_texts`, восемь типов КП 13.1).
+///
+/// В приложении — живые тексты с именем и чередованием (заказчик 25.09),
+/// а в таблице лежит стартовый набор из миграции 0007. Пока строку в
+/// панели не трогали, звучат живые тексты; переписали — для этого вида и
+/// языка звучит текст панели (`{name}` в нём подставляется). До 17.11
+/// правка в панели до уведомлений не доходила.
+abstract final class NotificationTexts {
+  static Map<String, Map<BearLanguage, SmartCopy>> _edited = const {};
+
+  /// Стартовый набор миграции 0007 — по нему видно, что строку правили.
+  static const Map<String, List<String>> _seed = {
+    'hungry': ['Малыш проголодался', 'Кажется, пора перекусить.', 'Your little one is hungry', 'Looks like it is time for a snack.', '宝宝饿了', '好像该吃点东西了。'],
+    'play': ['Малыш зовёт играть', 'Ему скучно одному.', 'Your little one wants to play', 'It is dull all alone.', '宝宝想玩', '一个人有点无聊。'],
+    'sleep': ['Пора спать', 'Малыш зевает и трёт глаза.', 'Time for bed', 'Your little one is yawning.', '该睡觉了', '宝宝在打哈欠。'],
+    'task': ['Новое задание', 'Загляни в раздел обучения.', 'A new task', 'Take a look at the learning section.', '有新任务', '去学习区看看吧。'],
+    'gift': ['Подарок ждёт', 'Кто-то приготовил сюрприз.', 'A gift is waiting', 'Someone left a surprise.', '有礼物', '有人给你准备了惊喜。'],
+    'stage': ['Малыш подрос', 'Открылось что-то новое.', 'Your little one grew up', 'Something new has opened.', '宝宝长大了', '有新内容解锁了。'],
+    'event': ['Сегодня особенный день', 'Заходи, расскажу.', 'Today is special', 'Come in, I will tell you.', '今天很特别', '快来，我告诉你。'],
+    'shop': ['Новинки в магазине', 'Появились новые вещи.', 'New in the shop', 'Fresh things have arrived.', '商店上新', '有新东西啦。'],
+  };
+
+  /// Взять строки панели `{kind, title_ru, body_ru, title_en, …}`.
+  static void applyServer(Object? rows) {
+    if (rows is! List) return;
+    final out = <String, Map<BearLanguage, SmartCopy>>{};
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final kind = row['kind']?.toString();
+      if (kind == null) continue;
+      final seed = _seed[kind];
+      for (final (i, lang) in BearLanguage.values.indexed) {
+        final title = row['title_${lang.name}'], body = row['body_${lang.name}'];
+        if (title is! String || body is! String) continue;
+        if (title.trim().isEmpty || body.trim().isEmpty) continue;
+        if (seed != null && seed[2 * i] == title && seed[2 * i + 1] == body) {
+          continue;
+        }
+        (out[kind] ??= {})[lang] = SmartCopy(title, body);
+      }
+    }
+    _edited = out;
+  }
+
+  /// Текст панели для вида и языка, если его переписали.
+  static SmartCopy? edited(String kind, BearLanguage lang) =>
+      _edited[kind]?[lang];
+
+  /// Забыть тексты панели — для тестов.
+  static void reset() => _edited = const {};
+}
+
 SmartCopy _compose(
   String kinds, {
   required String name,
@@ -104,6 +157,10 @@ SmartCopy _compose(
     );
   }
   final kind = list.single;
+  final edited = NotificationTexts.edited(kind, lang);
+  if (edited != null) {
+    return SmartCopy(_fill(edited.title, name), _fill(edited.body, name));
+  }
   final byTrait = kind == 'miss' ? _missByTrait[lang]![trait] : null;
   final variants = _variants[lang]![kind] ?? _variants[lang]!['event']!;
   final pick = variants[seed.abs() % variants.length];

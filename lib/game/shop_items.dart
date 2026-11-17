@@ -43,18 +43,42 @@ enum ItemKind {
   };
 }
 
+/// Цены вещей с сервера (КП 15.4): настройка `item_prices` в
+/// `game_config`, её правят в панели «Каталог и цены». До 17.11 приложение
+/// показывало цены из каталога, и правка в панели до магазина не доходила.
+abstract final class ItemPrices {
+  static Map<String, int> _prices = const {};
+
+  /// Взять цены из настроек сервера: `{item_prices: {id: цена}}`. Чего нет
+  /// или что не число — остаётся из каталога.
+  static void apply(Map<String, dynamic> config) {
+    final raw = config['item_prices'];
+    if (raw is! Map) return;
+    _prices = {
+      for (final e in raw.entries)
+        if (e.value is num && (e.value as num) >= 0)
+          e.key.toString(): (e.value as num).round(),
+    };
+  }
+
+  static int? of(String id) => _prices[id];
+
+  /// Забыть цены сервера — для тестов.
+  static void reset() => _prices = const {};
+}
+
 /// Предмет игры.
 class ShopItem {
   const ShopItem({
     required this.id,
     required this.group,
     required this.title,
-    required this.price,
+    required int price,
     required this.kind,
     this.photo = false,
     this.slotValue,
     this.suitsFrom = BearStage.newborn,
-  });
+  }) : _price = price;
 
   final String id;
 
@@ -77,11 +101,12 @@ class ShopItem {
 
   final String title;
 
-  /// Цена в монетах.
-  ///
-  /// ЗАГЛУШКА: по КП 10.9 цены рассчитываются и утверждаются отдельно до
-  /// запуска магазина, а по 15.4 меняются из панели управления.
-  final int price;
+  /// Цена в монетах. По КП 15.4 меняется из панели управления
+  /// (`game_config.item_prices`, [ItemPrices]); значение в каталоге — на
+  /// случай, когда сервера нет. Списывает всё равно сервер, по той же
+  /// таблице.
+  int get price => ItemPrices.of(id) ?? _price;
+  final int _price;
 
   final ItemKind kind;
 

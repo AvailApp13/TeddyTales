@@ -23,10 +23,12 @@ import 'game/referral_info.dart';
 import 'game/game_state.dart';
 import 'game/pet_name.dart';
 import 'game/pet_profile.dart';
+import 'game/shop_items.dart' show ItemPrices;
 import 'l10n/l10n.dart';
 import 'notifications/notification_service.dart';
 import 'notifications/push_registration.dart';
-import 'notifications/smart_texts.dart' show notificationName;
+import 'notifications/smart_texts.dart'
+    show NotificationTexts, notificationName;
 import 'alarm/wake_alarm.dart';
 import 'audio/sounds.dart';
 import 'game/test_stubs.dart';
@@ -448,11 +450,16 @@ class _TeddyTalesAppState extends State<TeddyTalesApp> {
     }
   }
 
-  /// Цены блюд и награды рецептов из панели управления (КП 15.3, 15.4).
-  /// Не пришли — остаются цены из каталога; списывает всё равно сервер.
+  /// Цены блюд, награды рецептов и цены вещей из панели управления
+  /// (КП 15.3, 15.4). Не пришли — остаются цены из каталога; списывает всё
+  /// равно сервер.
   Future<void> _loadFoodPrices() async {
     try {
-      FoodPrices.apply(await widget.boot.store.config());
+      final config = await widget.boot.store.config();
+      FoodPrices.apply(config);
+      ItemPrices.apply(config);
+      BearPhrases.applyServer(config[kPhrasesKey]);
+      NotificationTexts.applyServer(config[kNotificationTextsKey]);
       if (mounted) setState(() {});
     } on Object catch (error) {
       debugPrint('Цены блюд с сервера не пришли: $error');

@@ -412,12 +412,28 @@ class SupabaseStore implements ProgressStore, AccountAuth {
   Future<Map<String, dynamic>> config() async {
     try {
       final rows = await _client.from('game_config').select('key, value');
-      return {for (final row in rows) row['key'].toString(): row['value']};
+      return {
+        for (final row in rows) row['key'].toString(): row['value'],
+        // Реплики и тексты уведомлений из панели (КП 15.3) — рядом с
+        // настройками, под своими ключами. Не прочитались — приложение
+        // говорит текстами из кода, настройки от этого не страдают.
+        kPhrasesKey: await _content('phrases'),
+        kNotificationTextsKey: await _content('notification_texts'),
+      };
     } on Object catch (error) {
       throw ProgressStoreException(
         'Не удалось прочитать настройки',
         cause: error,
       );
+    }
+  }
+
+  Future<List<dynamic>?> _content(String table) async {
+    try {
+      return await _client.from(table).select();
+    } on Object catch (error) {
+      debugPrint('Таблица $table не прочиталась: $error');
+      return null;
     }
   }
 

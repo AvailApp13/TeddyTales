@@ -77,6 +77,8 @@ abstract interface class ProgressStore {
   Future<void> setPlaced(String itemId, {required bool placed, String? slot});
 
   /// Настройки игры: скорости, тайминги, награды, цены (КП 5.6, 15.4).
+  /// Сервер кладёт сюда же реплики ([kPhrasesKey]) и тексты уведомлений
+  /// ([kNotificationTextsKey]) из панели управления.
   Future<Map<String, dynamic>> config();
 
   /// Удалить аккаунт целиком: кабинет, мишку, покупки, историю. Требование
@@ -125,3 +127,9 @@ class ProgressStoreException implements Exception {
   String toString() =>
       'ProgressStoreException: $message${cause == null ? '' : ' ($cause)'}';
 }
+
+/// Ключ реплик панели в [ProgressStore.config] — строки таблицы `phrases`.
+const kPhrasesKey = 'content.phrases';
+
+/// Ключ текстов уведомлений панели — строки таблицы `notification_texts`.
+const kNotificationTextsKey = 'content.notification_texts';
