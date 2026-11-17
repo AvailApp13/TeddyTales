@@ -156,9 +156,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(close, findsOneWidget);
 
-    // Вверх за шапку — во весь рост.
-    final title = find.text('Магазин');
+    // Список категорий — панель по высоте плиток и выше не тянется:
+    // пустая панель под тремя плитками (заказчик 17.11).
+    final shop = find.text('Магазин');
+    final rest = tester.getTopLeft(shop).dy;
+    await tester.drag(shop, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(shop).dy, closeTo(rest, 2));
+
+    // В категории — вверх за шапку во весь рост.
+    await tester.tap(find.text('Мебель'));
+    await tester.pumpAndSettle();
+    final title = find.text('Мебель').first;
     final half = tester.getTopLeft(title).dy;
+    expect(half, lessThan(rest), reason: 'в категорию панель поднимается');
     await tester.drag(title, const Offset(0, -300));
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(title).dy, lessThan(half - 200));

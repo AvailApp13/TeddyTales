@@ -229,10 +229,17 @@ class _ShopScreenState extends State<ShopScreen>
   /// открытая витрина перенастраивает свою прокрутку, и панель оставалась
   /// низкой. Начинаем через кадр — когда прежний уровень уже убран: панель
   /// двигается только при одной прокрутке («Too many elements»).
-  late final AnimationController _height = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 280),
-  )..addListener(_applyHeight);
+  late final AnimationController _height;
+
+  @override
+  void initState() {
+    super.initState();
+    // Не лениво: иначе контроллер впервые создавался бы в dispose.
+    _height = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    )..addListener(_applyHeight);
+  }
   double _heightFrom = 0;
   double _heightTo = 0;
 
@@ -326,10 +333,17 @@ class _ShopScreenState extends State<ShopScreen>
     sheet.jumpTo(
       (sheet.size - sheet.pixelsToSize(d.delta.dy)).clamp(
         ShopScreen.closeAt,
-        ShopScreen.full,
+        _topSize,
       ),
     );
   }
+
+  /// Выше чего панель тянется: список категорий — не выше своих плиток
+  /// (заказчик 17.11: пустая панель под тремя плитками), витрина — во весь
+  /// рост.
+  double get _topSize => _tab == null && widget.categoriesRest != null
+      ? widget.categoriesRest!
+      : ShopScreen.full;
 
   void _release(DragEndDetails d) {
     final sheet = widget.sheet;
@@ -340,14 +354,13 @@ class _ShopScreenState extends State<ShopScreen>
     if (v > 700) {
       to = size > ShopScreen.half + 0.04 ? ShopScreen.half : ShopScreen.closeAt;
     } else if (v < -700) {
-      to = ShopScreen.full;
+      to = _topSize;
     } else {
       to = [
         ShopScreen.closeAt,
         if (_tab == null && widget.categoriesRest != null)
-          widget.categoriesRest!,
-        ShopScreen.half,
-        ShopScreen.full,
+          widget.categoriesRest!
+        else ...[ShopScreen.half, ShopScreen.full],
       ].reduce((a, b) => (a - size).abs() < (b - size).abs() ? a : b);
     }
     sheet.animateTo(
