@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — регистрация в App Store и Google Play на компанию</title>
+<style>
+  /* Шрифт тот же, что в приложении. */
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 12mm 15mm 10mm; }
+
+  :root {
+    --ink: #4A3B2A;
+    --ink-soft: #8A7A68;
+    --line: #E3D7C6;
+    --cream: #FBF6EE;
+    --sage: #7FA98A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 9.7pt;
+    line-height: 1.38;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 18pt;
+    font-weight: 800;
+    margin: 0 0 1mm;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 12pt;
+    font-weight: 800;
+    margin: 4mm 0 1.6mm;
+    padding-bottom: 1mm;
+    border-bottom: 1.5pt solid var(--sage);
+    break-after: avoid;
+  }
+
+  .meta {
+    font-size: 9pt;
+    color: var(--ink-soft);
+    margin-bottom: 3mm;
+  }
+
+  .company {
+    background: var(--cream);
+    border-left: 2.5pt solid var(--sage);
+    padding: 2.5mm 4mm;
+    margin: 0 0 1mm;
+  }
+
+  ol, ul { margin: 0; padding-left: 5.5mm; }
+  li { margin-bottom: 0.8mm; break-inside: avoid; }
+  b { font-weight: 800; }
+
+  .src {
+    margin-top: 3mm;
+    padding-top: 1.5mm;
+    border-top: 0.75pt solid var(--line);
+    font-size: 8pt;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<h1>Регистрация в App Store и Google Play на компанию</h1>
+<div class="meta">Что запросить у TeddyTales · 13.10.2026</div>
+
+<div class="company">
+  <b>Компания:</b> TeddyTales®, Пекин. Юрлицо уточнить; по открытым данным —
+  <b>BeiJing TianYi Culture Media Co., Ltd.</b>
+</div>
+
+<h2>1. Нужно для обоих магазинов</h2>
+<ol>
+  <li><b>Точное юридическое название</b> компании на английском — как в
+    бизнес-лицензии.</li>
+  <li><b>Скан бизнес-лицензии</b> (Business License) и единый код компании
+    (USCC, 18 знаков).</li>
+  <li><b>Юридический адрес</b> — дословно как в лицензии.</li>
+  <li><b>Номер D-U-N-S.</b> Если его нет — запросить бесплатно у Dun &amp; Bradstreet
+    через страницу Apple, приходит до 5 рабочих дней. Название и адрес в D-U-N-S
+    должны совпасть с лицензией буква в букву: из-за расхождений отказывают
+    чаще всего.</li>
+  <li><b>Сайт компании</b> — рабочий, на своём домене. Страницы соцсетей не
+    подходят.</li>
+  <li><b>Рабочая почта на домене компании</b> (например, dev@teddytales.com):
+    на неё заводятся оба аккаунта.</li>
+  <li><b>Телефон компании.</b></li>
+  <li><b>Ответственное лицо с правом подписи</b> от компании: ФИО латиницей,
+    должность, телефон, почта, паспорт. Apple ему звонит, Google может
+    попросить документ.</li>
+  <li><b>Банковская карта для взносов:</b> Apple — 99 USD в год, Google — 25 USD
+    один раз.</li>
+</ol>
+
+<h2>2. Apple — дополнительно</h2>
+<ul>
+  <li><b>Apple Account</b> ответственного лица на рабочую почту, с
+    двухфакторной защитой.</li>
+  <li><b>Звонок от Apple</b> для проверки — быть готовыми назвать D-U-N-S и
+    данные компании.</li>
+  <li><b>Для покупок в приложении</b> (App Store Connect → «Соглашения, налоги и
+    банковские операции»): банковский счёт компании (банк, SWIFT, номер счёта,
+    получатель — компания), налоговая форма W-8BEN-E с налоговым номером,
+    контакты руководителя, финансов, юриста и техподдержки.</li>
+  <li><b>App Store материкового Китая:</b> нужны номер ICP-регистрации и, для
+    игры с покупками, номер одобрения NPPA — это долго. Без них публикуем во
+    всех странах, кроме материкового Китая.</li>
+</ul>
+
+<h2>3. Google Play — дополнительно</h2>
+<ul>
+  <li><b>Отдельный Google-аккаунт</b> компании на рабочую почту.</li>
+  <li><b>Тип аккаунта «Организация»</b>, номер D-U-N-S вводится при
+    регистрации.</li>
+  <li><b>Для страницы в магазине:</b> имя разработчика, почта и телефон для
+    пользователей, сайт. Адрес компании будет виден публично.</li>
+  <li><b>Платёжный профиль продавца:</b> название и адрес — как в D-U-N-S,
+    банковский счёт для выплат, налоговые данные.</li>
+  <li><b>Проверка:</b> Google может попросить документы компании и паспорт
+    ответственного лица — на это даётся около месяца.</li>
+  <li><b>Плюс компании:</b> обязательное закрытое тестирование (12 тестировщиков,
+    14 дней) требуется только от личных аккаунтов.</li>
+</ul>
+
+<h2>4. После регистрации</h2>
+<ul>
+  <li><b>Apple:</b> App Store Connect → Users and Access → пригласить
+    разработчика с ролью Admin.</li>
+  <li><b>Google:</b> Play Console → Users and permissions → пригласить
+    разработчика с правами администратора.</li>
+  <li><b>Пароли не пересылать:</b> ключи для сборок и проверки покупок
+    разработчик создаёт сам по приглашению.</li>
+</ul>
+
+<div class="src">
+  Источники: developer.apple.com/programs/enroll · developer.apple.com/support/D-U-N-S ·
+  support.google.com/googleplay/android-developer · developer.apple.com/help/app-store-connect
+</div>
+
+</body>
+</html>

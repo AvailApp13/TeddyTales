@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeddyTales — спальня по слоям: вторая партия</title>
+<style>
+  /* Шрифт тот же, что в приложении. */
+  @font-face {
+    font-family: 'Nunito';
+    src: url('../assets/fonts/Nunito.ttf') format('truetype');
+    font-weight: 200 1000;
+  }
+
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+
+  :root {
+    --ink: #1A202E;
+    --ink-soft: #6C7789;
+    --line: #DCE2EB;
+    --paper: #F6F8FB;
+    --red: #C9432F;
+    --red-soft: #FBEDEA;
+    --green: #2E8A5E;
+    --green-soft: #EAF5EF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 1.5mm;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+  }
+
+  .lead { color: var(--ink-soft); font-size: 11pt; margin: 0 0 5mm; max-width: 150mm; }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 800;
+    margin: 5mm 0 2.5mm;
+    padding-bottom: 1.2mm;
+    border-bottom: 1.5pt solid var(--ink);
+    break-after: avoid;
+  }
+
+  p { margin: 0 0 2.5mm; }
+  ul { margin: 0 0 3mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.2mm; }
+
+  .page-break { break-before: page; }
+
+  figure { margin: 0 0 4mm; break-inside: avoid; }
+
+  figure img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 225mm;
+  }
+
+  figcaption { font-size: 9pt; color: var(--ink-soft); margin-top: 1.5mm; }
+
+  .verdict { display: flex; flex-direction: column; gap: 2mm; margin-bottom: 4mm; }
+
+  .row {
+    display: flex;
+    gap: 3mm;
+    padding: 2.5mm 3mm;
+    border-radius: 2mm;
+    break-inside: avoid;
+  }
+
+  .row.good { background: var(--green-soft); }
+  .row.bad  { background: var(--red-soft); }
+
+  .mark { font-weight: 800; font-size: 11pt; flex: none; width: 4mm; }
+  .row.good .mark { color: var(--green); }
+  .row.bad .mark { color: var(--red); }
+
+  .row b { display: block; font-size: 10.5pt; }
+  .row span { color: var(--ink-soft); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4mm;
+    break-inside: avoid;
+  }
+
+  th, td { text-align: left; padding: 1.8mm 2.5mm; border-bottom: 0.6pt solid var(--line); }
+
+  th {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    border-bottom: 1pt solid var(--ink);
+  }
+
+  td.num { font-weight: 700; }
+  td.wrong { color: var(--red); }
+  tr.want td { background: var(--green-soft); }
+  tr.want td.num { color: var(--green); }
+
+  .note {
+    background: var(--green-soft);
+    border-left: 2pt solid var(--green);
+    padding: 2.5mm 3mm;
+    margin: 0 0 4mm;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .note b { color: var(--green); }
+
+  .warn {
+    background: var(--red-soft);
+    border-left: 2pt solid var(--red);
+    padding: 2.5mm 3mm;
+    margin: 0 0 4mm;
+    border-radius: 0 2mm 2mm 0;
+  }
+
+  .warn b { color: var(--red); }
+
+  code {
+    font-family: ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-size: 9.5pt;
+    background: var(--paper);
+    padding: 0.3mm 1mm;
+    border-radius: 1mm;
+  }
+
+  footer {
+    break-before: avoid;
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 0.6pt solid var(--line);
+    font-size: 9pt;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<h1>Вторая партия: набор собрался</h1>
+<p class="lead">
+  Пришли три варианта мишки и ещё одно одеяло. Проверил каждый файл.
+  Главное: полуприкрытые и зевок сделаны из одного файла — этого хватает,
+  чтобы собрать всё остальное. Больше от GPT ничего не нужно.
+</p>
+
+<h2>Приёмка</h2>
+
+<div class="verdict">
+  <div class="row good">
+    <span class="mark">✓</span>
+    <span>
+      <b>Полуприкрытые глаза и зевок</b>
+      Сделаны из одного файла: внутри фигуры отличаются ровно глазами и ртом,
+      силуэт расходится на 0,3 процента. Это то, чего не хватало в первой
+      партии. Годятся.
+    </span>
+  </div>
+  <div class="row good">
+    <span class="mark">✓</span>
+    <span>
+      <b>Глаза закрыты — собрал сам, ничего просить не надо</b>
+      Раз эти два файла совпадают, глаза можно взять у зевка (закрытые),
+      а рот у полуприкрытых (закрытый). Шва нет, проверил. Третий вариант
+      готов.
+    </span>
+  </div>
+  <div class="row bad">
+    <span class="mark">✕</span>
+    <span>
+      <b>Глаза открыты — отдельный рисунок, и он не нужен</b>
+      С остальными двумя не совпадает: силуэт расходится почти на 2 процента,
+      мордочка шире, нос крупнее, ткань капюшона другая. Но мишка в спальне
+      спит — открытые глаза в этой комнате не показываются вовсе. Выкидываем.
+    </span>
+  </div>
+  <div class="row bad">
+    <span class="mark">✕</span>
+    <span>
+      <b>Одеяло присылать больше не надо</b>
+      Новое расходится с исходной картинкой на 10 процентов непрозрачных
+      точек, старое — на 3,5. Оставляем то, что приняли в первой партии.
+    </span>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Размеры</h2>
+
+<figure>
+  <img src="bedroom-brief/v2-sizes.jpg" alt="Размеры файлов второй партии">
+  <figcaption>
+    Белый прямоугольник — холст 941 × 1672. Красная рамка — где на нём
+    оказалась фигура. Справа зелёным — где она должна быть.
+  </figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Размер фигуры</th><th>Левый верхний угол</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>глаза открыты</td><td class="num wrong">840 × 956</td><td class="num wrong">77, 373</td></tr>
+    <tr><td>полуприкрытые</td><td class="num wrong">850 × 957</td><td class="num wrong">71, 374</td></tr>
+    <tr><td>зевок</td><td class="num wrong">850 × 957</td><td class="num wrong">70, 375</td></tr>
+    <tr class="want"><td><b>как надо</b></td><td class="num">236 × 260</td><td class="num">355, 690</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>Размер — не проблема.</b> Фигура в 3,6 раза крупнее нужной, но все три
+  файла в одном масштабе, а это и требовалось. Привожу к 236 × 260 и ставлю
+  в точку 355, 690 одной командой на своей стороне.
+</div>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Почему набор сходится</h2>
+
+<figure>
+  <img src="bedroom-brief/v2-same.jpg" alt="Карты отличий между вариантами">
+  <figcaption>
+    Светится то, чем файлы отличаются друг от друга. Слева — пара из одного
+    файла: внутри фигуры горят только глаза, нос и рот, а тонкая линия по краю
+    это волосок от пересохранения. Справа — пара из разных рисунков: горит
+    весь контур, мордочка и лапы.
+  </figcaption>
+</figure>
+
+<figure>
+  <img src="bedroom-brief/v2-faces.jpg" alt="Четыре мордочки рядом">
+  <figcaption>
+    Слева мишка с исходной картинки комнаты. Дальше присланные варианты в том
+    размере, в котором они встанут в комнату. У «открытых» другая ткань
+    капюшона, другая шерсть и шире мордочка — это другая игрушка.
+    Полуприкрытые и зевок — одна и та же.
+  </figcaption>
+</figure>
+
+<!-- ------------------------------------------------------------------ -->
+<div class="page-break"></div>
+
+<h2>Что получилось</h2>
+
+<figure>
+  <img src="bedroom-brief/v2-scene.jpg" alt="Три состояния мишки в комнате">
+  <figcaption>
+    Слои сложены: комната без мишки, мишка, передний край одеяла, свет
+    ночника. Первый кадр — исходная картинка, как она выглядела до разбора.
+    Дальше три состояния, между которыми мишка переключается.
+  </figcaption>
+</figure>
+
+<h2>Что дальше</h2>
+
+<p>Всё, что нужно для оживления спальни, теперь есть:</p>
+
+<table>
+  <thead><tr><th>Слой</th><th>Откуда</th></tr></thead>
+  <tbody>
+    <tr><td><code>room.png</code> — комната без мишки</td><td>первая партия</td></tr>
+    <tr><td><code>blanket_front.png</code> — передний край одеяла</td><td>первая партия</td></tr>
+    <tr><td><code>lamp_glow.png</code> — свет ночника</td><td>первая партия</td></tr>
+    <tr><td><code>bear_eyes_half.png</code> — полуприкрытые глаза</td><td>вторая партия</td></tr>
+    <tr><td><code>bear_yawn.png</code> — зевок</td><td>вторая партия</td></tr>
+    <tr><td><code>bear_eyes_closed.png</code> — глаза закрыты</td><td>собрано из двух предыдущих</td></tr>
+  </tbody>
+</table>
+
+<p>Из этого собирается:</p>
+
+<ul>
+  <li><b>Дыхание</b> — слой мишки ходит вверх-вниз на один-два процента
+      высоты, цикл около четырёх секунд. Низ уходит под передний край
+      одеяла, поэтому шва не видно.</li>
+  <li><b>Сонное моргание</b> — подмена между полуприкрытыми и закрытыми
+      глазами, с неровными паузами, чтобы не читалось как метроном.</li>
+  <li><b>Зевок</b> — редкая короткая подмена на третий вариант.</li>
+  <li><b>Свет ночника</b> — еле заметно дышит вместе с мишкой.</li>
+  <li><b>Буквы z</b> над кроватью уже работают, остаются как есть.</li>
+</ul>
+
+<div class="warn">
+  <b>Жду команды.</b> Файлы приняты и лежат у меня, но в приложение я ничего
+  не ставлю без твоего слова. Скажешь — соберу и выложу в живое приложение.
+</div>
+
+<footer>
+  TeddyTales · спальня по слоям, вторая партия. Обмеры сняты с
+  <code>assets/rooms/bedroom.jpg</code>, 941 × 1672. Все координаты — точки
+  этого изображения, отсчёт от левого верхнего угла.
+</footer>
+
+</body>
+</html>

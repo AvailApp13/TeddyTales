@@ -1,0 +1,116 @@
+{
+ "_": "Выражения мордочки девочки (JOY) — Higgsfield gpt_image_2_5, правка кадра assets_src/rive/girl/joy_face_1024.jpg (media 7ff9750d-0067-44bc-9ba6-320570c0f099), 1:1, 1k, по 2 варианта. План одобрен заказчиком 14.10. Промт = common + text. 14.10, заказчик: «девочка должна быть женственной… эмоции ярче» — подписи ещё не сделанных выражений уточнены (по-девичьи); количество и кредиты плана те же. used — какое задание стоит в риге (19.10, сверено по md5 с результатом задания).",
+ "model": "gpt_image_2_5",
+ "aspect_ratio": "1:1",
+ "resolution": "1k",
+ "variants": 2,
+ "media": "7ff9750d-0067-44bc-9ba6-320570c0f099",
+ "common": "Edit this photo. It is a close-up of the face of a real white plush teddy bear toy: long soft pure-white fur, two black glossy bead eyes, a brown felt nose with a thin stitched line under it, a small stitched mouth, the collar of a green knit cardigan at the bottom edge. Keep the picture identical: same framing and zoom, the eyes, nose and mouth exactly in the same places and the same size (do not move, resize, rotate or crop anything), same soft studio light, same pure-white fur colour and texture, same nose, same cardigan. Change only the facial expression, as if the toy came to life, made of its own fur and stitching. Photorealistic plush toy, no cartoon outlines, no blush, no tears, no extra objects. Expression: ",
+ "faces": [
+  {
+   "name": "laugh",
+   "quality": "max",
+   "text": "joyful laughter - both eyes squeezed shut into happy upward arcs (closed eyelids of white fur with a dark lash line, shaped like an upside-down U), the mouth wide open in a big laugh showing the dark inside of the mouth and a pink tongue, cheeks raised high.",
+   "jobs": [
+    "2962d7c5-cc6f-424a-a82d-5b4cb4e476d8",
+    "201708c0-e42f-46bb-a41d-c2948a2d0ff2"
+   ]
+  },
+  {
+   "name": "yawn",
+   "quality": "max",
+   "text": "a dainty little yawn - both eyes squeezed shut with crinkled fur, the mouth opened into a small neat round o showing the dark inside and a pink tongue at the bottom.",
+   "jobs": [
+    "c00e9ea5-2fd6-45ba-8112-22b7a0248e8b",
+    "1db50df5-18c0-4438-adf7-fb627c96193a"
+   ]
+  },
+  {
+   "name": "chew_open",
+   "quality": "max",
+   "text": "dainty, girlish chewing with the mouth slightly open - happy squint (the fur under the eyes pushes up, the black beads still visible), a small neat rounded mouth opening showing a little pink tongue, round cheeks puffed out with food.",
+   "jobs": [
+    "6d07bcbc-0d5b-433b-bd62-24d93d7f0032",
+    "e02fc65c-b327-4ff4-867f-bfb9644570a5"
+   ]
+  },
+  {
+   "name": "surprised",
+   "quality": "max",
+   "text": "a sweet girlish surprise (\"oh!\") - the bead eyes wide open, round and sparkling with bright highlights, the fur around the eyes lifted, a small delicate round o mouth showing a little pink tongue.",
+   "jobs": [
+    "40c7894d-a4eb-43c5-8ce6-8dda1dc61cf0",
+    "c5ad108d-d32e-450a-80ac-2b406dbe74fe"
+   ],
+   "used": "c5ad108d-d32e-450a-80ac-2b406dbe74fe"
+  },
+  {
+   "name": "eyes_closed",
+   "quality": "max",
+   "text": "calm, gently closed eyes - both eyes closed: eyelids of the same white fur with a thin dark curved lash line where the black beads were, peaceful look; the nose and mouth stay exactly as they are.",
+   "jobs": [
+    "cc008827-0b98-401c-8cd3-9f4f148f9085"
+   ]
+  },
+  {
+   "name": "sad",
+   "quality": "max",
+   "text": "a soft girlish sadness - the inner ends of the brows raised so the fur above each eye slants down toward the outside, heavy upper eyelids of fur cover the top of the bead eyes, a small trembling downturned mouth, about to cry.",
+   "jobs": [
+    "acbfff80-a4b8-4d87-955a-c06ff0499b2a",
+    "26f4ee64-798c-4ed7-9067-08ac24284d85"
+   ],
+   "used": "acbfff80-a4b8-4d87-955a-c06ff0499b2a"
+  },
+  {
+   "name": "upset",
+   "quality": "max",
+   "text": "a cute girlish pout, offended but not angry - heavy eyelids half covering the beads, the lips pushed forward into a small rounded pout slightly to one side, round cheeks a little puffed.",
+   "jobs": [
+    "3b9e956c-63d9-4f42-ad81-947873694c0c",
+    "aabc2026-bf5b-4ccf-97fb-2aa82fe18ce4"
+   ],
+   "used": "aabc2026-bf5b-4ccf-97fb-2aa82fe18ce4"
+  },
+  {
+   "name": "sleepy",
+   "quality": "max",
+   "text": "a sweet drowsy look - heavy upper eyelids of white fur cover the upper half of the bead eyes, a soft relaxed tiny mouth.",
+   "jobs": [
+    "f1ccae7a-ae7b-4ae6-a1cc-5deecb603c00",
+    "d30ecb3f-14b1-4481-80ff-226882b9be4f"
+   ],
+   "used": "f1ccae7a-ae7b-4ae6-a1cc-5deecb603c00"
+  },
+  {
+   "name": "chew_closed",
+   "quality": "max",
+   "text": "contentedly chewing a treat with the mouth closed, cute and girlish - happy squint (the fur under the eyes pushes up, the black beads still visible), the mouth closed in a tiny cat-like w-shaped smile, round cheeks puffed out with food.",
+   "jobs": [
+    "ed3a8a24-ec18-4298-8532-490ae74e1359",
+    "2cbceed7-e6d4-4f8f-9877-ec7b7060c621"
+   ]
+  },
+  {
+   "name": "smile",
+   "quality": "xhigh",
+   "text": "a sweet girlish smile - the mouth opens into a small happy smile showing a little pink tongue, cheeks lifted, the bead eyes smiling but open.",
+   "jobs": [
+    "b6fc6ca6-96b5-475d-ab92-53bca55c510e",
+    "660c0957-abfc-4c8a-aed7-383abf319329"
+   ]
+  },
+  {
+   "name": "laugh2",
+   "quality": "xhigh",
+   "text": "a soft girlish giggle - both eyes closed into happy upward arcs (upside-down U), the mouth open in a medium sweet smile showing a pink tongue, cheeks raised.",
+   "jobs": []
+  },
+  {
+   "name": "lick",
+   "quality": "xhigh",
+   "text": "licking the lips after something tasty, cute and girlish - blissful squint, a closed smile, the tip of a pink tongue peeking out at the corner of the mouth.",
+   "jobs": []
+  }
+ ]
+}
